@@ -1,11 +1,14 @@
-import demoRouter from './demo'
 import Router from 'koa-router'
-import { loginRouter, privateRouter } from './auth'
+import { loginRouter } from './auth'
 import { AppKoaContext } from '@/types/global'
+import { middlewareJwt, middlewareJwtCatcher } from '../lib/auth'
 
-const routes = [demoRouter, loginRouter, privateRouter]
+const routes = [loginRouter]
 
 const apiRouter = new Router<unknown, AppKoaContext>()
+apiRouter.use(middlewareJwtCatcher)
+apiRouter.use(middlewareJwt.unless({ path: ['/login'] }))
+
 routes.forEach(route => apiRouter.use('/api', route.routes(), route.allowedMethods()))
 
 export default apiRouter
