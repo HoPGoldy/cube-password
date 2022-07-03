@@ -64,6 +64,10 @@ export interface AppStorage {
      * 主题色
      */
     theme: AppTheme
+    /**
+     * 上次登录所用 ip
+     */
+    commonIp?: string
 }
 
 /**

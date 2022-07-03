@@ -41,6 +41,12 @@ loginRouter.post('/register', async ctx => {
         return
     }
 
+    const { passwordSalt, passwordSha } = await getAppStorage()
+    if (passwordSalt && passwordSha) {
+        response(ctx, { code: 401, msg: '已经注册' })
+        return
+    }
+
     await updateAppStorage({ passwordSalt: salt, passwordSha: code })
     response(ctx, { code: 200 })
 })

@@ -7,7 +7,7 @@ const routes = [loginRouter]
 
 const apiRouter = new Router<unknown, AppKoaContext>()
 apiRouter.use(middlewareJwtCatcher)
-apiRouter.use(middlewareJwt.unless({ path: ['/login'] }))
+apiRouter.use(middlewareJwt.unless({ path: ['/login', '/register'] }))
 
 routes.forEach(route => apiRouter.use('/api', route.routes(), route.allowedMethods()))
 

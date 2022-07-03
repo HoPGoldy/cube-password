@@ -1,7 +1,7 @@
 import lokijs from 'lokijs'
 import { ensureDir } from 'fs-extra'
-import { DB_NAME, STORAGE_PATH } from '@/config'
 import { AppStorage, AppTheme, CertificateDetail, CertificateField, CertificateGroup, DetailCheckLog, LoginLog } from '@/types/app'
+import { DB_NAME, STORAGE_PATH } from '@/config'
 
 /**
  * 全局唯一的 loki 实例缓存

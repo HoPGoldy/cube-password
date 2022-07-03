@@ -5,7 +5,7 @@ import Loading from './components/Loading'
 
 const Home = lazy(() => import('./pages/Home'))
 const RequestDemo = lazy(() => import('./pages/RequestDemo'))
-const AuthDemo = lazy(() => import('./pages/AuthDemo'))
+const Register = lazy(() => import('./pages/Register'))
 
 export const Routes: FC = () => {
     const routes = useRoutes([
@@ -26,13 +26,13 @@ export const Routes: FC = () => {
             )
         },
         {
-            path: '/authDemo',
+            path: '/register',
             element: (
                 <Suspense fallback={<Loading />}>
-                    <AuthDemo />
+                    <Register />
                 </Suspense>
             )
-        },
+        }
     ])
 
     return routes

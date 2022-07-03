@@ -3,8 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "module": "commonjs",
+    "noUnusedLocals": false,
     "noEmit": false
   },
-  "include": ["src/index.ts", "src/server/*.ts"],
-  "exclude": ["src/client"]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./src/client"]
 }

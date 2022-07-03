@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { AppConfigProvider } from './components/AppConfigProvider'
 import { UserProvider } from './components/UserProvider'
 import { Routes } from './route'
 
@@ -13,11 +14,13 @@ function App() {
                 <Link to="/authDemo">Auth</Link>
             </nav>
 
-            <UserProvider>
-                <Routes>
-                    <Routes />
-                </Routes>
-            </UserProvider>
+            <AppConfigProvider>
+                <UserProvider>
+                    <Routes>
+                        <Routes />
+                    </Routes>
+                </UserProvider>
+            </AppConfigProvider>
         </div>
     )
 }
