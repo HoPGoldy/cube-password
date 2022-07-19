@@ -21,5 +21,11 @@ export default defineConfig({
     plugins: [react()],
     build: {
         outDir: 'dist/client',
+        rollupOptions: {
+            input: {
+                main: resolve(__dirname, 'index.html'),
+                register: resolve(__dirname, 'register.html')
+            }
+        }
     }
 })

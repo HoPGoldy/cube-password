@@ -13,9 +13,7 @@ const globalRouter = new Router<any, AppKoaContext>()
 globalRouter.get('/global', async ctx => {
     const appStorage = await getAppStorage()
     const respData: AppConfig = {
-        theme: appStorage.theme,
-        init: !!(appStorage.passwordSalt && appStorage.passwordSha),
-        salt: appStorage.passwordSalt
+        theme: appStorage.theme
     }
 
     response(ctx, { code: 200, data: respData })

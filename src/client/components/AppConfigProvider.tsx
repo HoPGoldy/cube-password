@@ -1,6 +1,7 @@
 import React, { Dispatch, FC, SetStateAction, useEffect, useState } from 'react'
 import { fetchAppConfig } from '../services/user'
 import { AppConfig } from '@/types/appConfig'
+import { Notify } from 'react-vant'
 
 export const AppConfigContext = React.createContext<[
     AppConfig | undefined,
@@ -10,12 +11,16 @@ export const AppConfigContext = React.createContext<[
 export const AppConfigProvider: FC = (props) => {
     const [appConfig, setAppConfig] = useState<AppConfig>()
 
-    const initAppConfig = async () => {
-        const resp = await fetchAppConfig()
-        console.log('resp', resp)
-    }
-
     useEffect(() => {
+        const initAppConfig = async () => {
+            const resp = await fetchAppConfig()
+            if (resp.code !== 200 || !resp.data) {
+                Notify.show({ type: 'danger', message: resp.msg || '获取配置失败' })
+                return
+            }
+            setAppConfig(resp.data)
+        }
+
         initAppConfig()
     }, [])
 

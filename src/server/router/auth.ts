@@ -1,11 +1,26 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
-import sha512 from 'crypto-js/sha512'
-import { getAppStorage, getLoginLogCollection, updateAppStorage } from '../lib/loki'
-import { createToken } from '../lib/auth'
+import { getAppStorage, saveLoki, updateAppStorage } from '../lib/loki'
+import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
+import Joi from 'joi'
+import { sha } from '@/utils/common'
+import { STATUS_CODE } from '@/config'
 
 const loginRouter = new Router<any, AppKoaContext>()
+
+// 请求登录
+loginRouter.post('/requireLogin', async ctx => {
+    const { passwordSalt } = await getAppStorage()
+    if (!passwordSalt) {
+        response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
+        return
+    }
+
+    const challenge = createChallengeCode()
+
+    response(ctx, { code: 200, data: { salt: passwordSalt, challenge } })
+})
 
 // 登录接口
 loginRouter.post('/login', async ctx => {
@@ -13,19 +28,25 @@ loginRouter.post('/login', async ctx => {
 
     // const loginCollection = await getLoginLogCollection()
 
-    if (!code) {
+    if (!code || typeof code !== 'string') {
         response(ctx, { code: 401, msg: '无效的主密码凭证' })
         return
     }
 
-    const { passwordSalt, passwordSha } = await getAppStorage()
-    if (!passwordSalt || !passwordSha) {
-        response(ctx, { code: 401, msg: '请先注册' })
+    const challengeCode = popChallengeCode()
+    if (!challengeCode) {
+        response(ctx, { code: 401, msg: '挑战码错误' })
         return
     }
 
-    if (sha512(passwordSalt + code).toString().toUpperCase() !== passwordSha) {
-        response(ctx, { code: 401, msg: '登录凭证不正确' })
+    const { passwordSha } = await getAppStorage()
+    if (!passwordSha) {
+        response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
+        return
+    }
+
+    if (sha(passwordSha + challengeCode) !== code) {
+        response(ctx, { code: 401, msg: '密码错误，请检查主密码是否正确' })
         return
     }
 
@@ -33,22 +54,28 @@ loginRouter.post('/login', async ctx => {
     response(ctx, { code: 200, data: { token } })
 })
 
-loginRouter.post('/register', async ctx => {
-    const { code, salt } = ctx.request.body
+const registerSchema = Joi.object<{ code: string, salt: string }>({
+    code: Joi.string().required(),
+    salt: Joi.string().required()
+})
 
-    if (!code || !salt) {
+loginRouter.post('/register', async ctx => {
+    const { value, error } = registerSchema.validate(ctx.request.body)
+    if (!value || error) {
         response(ctx, { code: 401, msg: '无效的主密码凭证' })
         return
     }
+    const { code, salt } = value
 
     const { passwordSalt, passwordSha } = await getAppStorage()
     if (passwordSalt && passwordSha) {
-        response(ctx, { code: 401, msg: '已经注册' })
+        response(ctx, { code: STATUS_CODE.ALREADY_REGISTER, msg: '已经注册' })
         return
     }
 
     await updateAppStorage({ passwordSalt: salt, passwordSha: code })
     response(ctx, { code: 200 })
+    await saveLoki()
 })
 
 export { loginRouter }

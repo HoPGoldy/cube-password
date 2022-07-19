@@ -1,13 +1,15 @@
 import Router from 'koa-router'
 import { loginRouter } from './auth'
+import { globalRouter } from './app'
 import { AppKoaContext } from '@/types/global'
 import { middlewareJwt, middlewareJwtCatcher } from '../lib/auth'
 
-const routes = [loginRouter]
+const routes = [globalRouter, loginRouter]
+const publicPath = ['/api/global', '/api/requireLogin', '/api/login', '/api/register']
 
 const apiRouter = new Router<unknown, AppKoaContext>()
 apiRouter.use(middlewareJwtCatcher)
-apiRouter.use(middlewareJwt.unless({ path: ['/login', '/register'] }))
+apiRouter.use(middlewareJwt.unless({ path: publicPath }))
 
 routes.forEach(route => apiRouter.use('/api', route.routes(), route.allowedMethods()))
 

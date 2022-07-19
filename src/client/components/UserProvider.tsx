@@ -1,13 +1,16 @@
 import React, { Dispatch, FC, SetStateAction, useState } from 'react'
-import { UserInfo } from '@/types/demo'
+
+export interface UserProfile {
+    token: string
+}
 
 export const UserContext = React.createContext<[
-    UserInfo | undefined,
-    Dispatch<SetStateAction<UserInfo | undefined>>
+    UserProfile | undefined,
+    Dispatch<SetStateAction<UserProfile | undefined>>
 ]>([undefined, () => console.error('UserContext is not initialized')])
 
 export const UserProvider: FC = (props) => {
-    const [user, setUser] = useState<UserInfo>()
+    const [user, setUser] = useState<UserProfile>()
 
     return (
         <UserContext.Provider value={[user, setUser]}>

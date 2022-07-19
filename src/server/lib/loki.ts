@@ -43,13 +43,16 @@ export const saveLoki = async (): Promise<void> => {
  * @param collectionName 集合名
  * @returns 一个 async 函数，调用后返回对应的集合
  */
-const createCollectionAccessor = <T extends Record<string | number, any>>(collectionName: string) => {
+export const createCollectionAccessor = <T extends Record<string | number, any>>(
+    collectionName: string,
+    initOption?: Partial<CollectionOptions<T>>
+) => {
     return async () => {
         const loki = await getLoki()
         const collection = loki.getCollection<T>(collectionName)
         if (collection) return collection
 
-        return loki.addCollection<T>(collectionName)
+        return loki.addCollection<T>(collectionName, initOption)
     }
 }
 

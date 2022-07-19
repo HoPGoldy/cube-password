@@ -1,12 +1,18 @@
 import { sendGet, sendPost } from './base'
 import { AppConfig } from '@/types/appConfig'
-import sha512 from 'crypto-js/sha512'
 import { nanoid } from 'nanoid'
+import { sha } from '@/utils/common'
+import { RequireLoginResp } from '@/types/http'
+import { UserProfile } from '../components/UserProvider'
+
+export const requireLogin = async () => {
+    return sendPost<RequireLoginResp>('/requireLogin')
+}
 
 /** 登录 */
-export const login = async (password: string, salt: string) => {
-    return sendPost<{ token: string }>('/login', {
-        code: sha512(salt + password).toString().toUpperCase()
+export const login = async (password: string, salt: string, challenge: string) => {
+    return sendPost<UserProfile>('/login', {
+        code: sha(sha(salt + password) + challenge)
     })
 }
 
@@ -14,12 +20,12 @@ export const login = async (password: string, salt: string) => {
 export const register = async (password: string) => {
     const salt = nanoid()
     return sendPost<{ token: string }>('/register', {
-        code: sha512(salt + password).toString().toUpperCase(),
+        code: sha(salt + password),
         salt
     })
 }
 
 /** 获取应用全局配置 */
 export const fetchAppConfig = async () => {
-    return sendGet<AppConfig>('/appConfig')
+    return sendGet<AppConfig>('/global')
 }

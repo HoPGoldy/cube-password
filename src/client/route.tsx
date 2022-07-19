@@ -1,37 +1,31 @@
-import React, { FC, lazy, Suspense, useLayoutEffect, useState } from 'react'
+import React, { ComponentType, FC, lazy, Suspense, useLayoutEffect, useState } from 'react'
 import { Router, useRoutes } from 'react-router-dom'
 import { createBrowserHistory } from 'history'
 import Loading from './components/Loading'
+import { AppContainer } from './components/AppContainer'
 
-const Home = lazy(() => import('./pages/Home'))
-const RequestDemo = lazy(() => import('./pages/RequestDemo'))
-const Register = lazy(() => import('./pages/Register'))
+const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
+    const Comp = lazy(compLoader)
+    return (
+        <Suspense fallback={<Loading />}>
+            <Comp />
+        </Suspense>
+    )
+}
 
 export const Routes: FC = () => {
     const routes = useRoutes([
         {
             path: '/',
-            element: (
-                <Suspense fallback={<Loading />}>
-                    <Home />
-                </Suspense>
-            )
+            children: [
+                { path: '/', element: lazyLoad(() => import('./pages/Home')) },
+                { path: '/requestDemo', element: lazyLoad(() => import('./pages/RequestDemo')) },
+            ],
+            element: <AppContainer />
         },
         {
-            path: '/requestDemo',
-            element: (
-                <Suspense fallback={<Loading />}>
-                    <RequestDemo />
-                </Suspense>
-            )
-        },
-        {
-            path: '/register',
-            element: (
-                <Suspense fallback={<Loading />}>
-                    <Register />
-                </Suspense>
-            )
+            path: '/login',
+            element: lazyLoad(() => import('./pages/Login'))
         }
     ])
 
@@ -51,9 +45,9 @@ export const BrowserRouter: FC = (props) => {
         action: history.action,
         location: history.location
     })
-  
+
     useLayoutEffect(() => history.listen(setState), [history])
-  
+
     return (
         <Router
             {...props}
