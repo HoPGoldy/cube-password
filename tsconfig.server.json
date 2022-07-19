@@ -4,6 +4,7 @@
     "outDir": "dist",
     "module": "commonjs",
     "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noEmit": false
   },
   "include": ["./src/**/*.ts"],
