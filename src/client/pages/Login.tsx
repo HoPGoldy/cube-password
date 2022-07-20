@@ -3,6 +3,7 @@ import React, { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Notify } from 'react-vant'
 import { UserContext } from '../components/UserProvider'
+import { setToken } from '../services/base'
 import { login, requireLogin } from '../services/user'
 
 const Register = () => {
@@ -27,8 +28,8 @@ const Register = () => {
             return
         }
 
-        Notify.show({ type: 'success', message: '登录成功' })
         setUserProfile(loginResp.data)
+        setToken(loginResp.data.token)
         navigate('/')
     }
 

@@ -7,6 +7,10 @@ export interface CertificateGroup {
      */
     name: string
     /**
+     * 分组备注
+     */
+    remark?: string
+    /**
      * 分组密码 sha512 摘要
      */
     passwordSha?: string
@@ -41,7 +45,7 @@ export interface CertificateDetail {
     /**
      * 凭证所属分组 id
      */
-    groupId: string
+    groupId: number
     /**
      * 凭证的加密内容（解密后为凭证字段数组）
      */
@@ -68,6 +72,10 @@ export interface AppStorage {
      * 上次登录所用 ip
      */
     commonIp?: string
+    /**
+     * 默认展示的分组 id
+     */
+    defaultGroupId: number
 }
 
 /**

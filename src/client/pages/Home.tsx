@@ -1,20 +1,39 @@
-import React, { useState } from 'react'
-import { Button } from 'react-vant'
+import React, { useEffect, useState } from 'react'
+import { CertificateGroupDetail } from '@/types/http'
+import { Button, Notify } from 'react-vant'
+import { getFirstScreen } from '../services/certificateGroup'
+import { CertificateDetail } from '@/types/app'
+import { GroupSidebar } from '../components/GroupSidebar'
 
 const Home = () => {
-    const [count, setCount] = useState(0)
+    const [groupList, setGroupList] = useState<CertificateGroupDetail[]>([])
+    const [selectedGroup, setSelectedGroup] = useState<number>(0)
+    const [certificateList, setCertificateList] = useState<CertificateDetail[]>([])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const resp = await getFirstScreen()
+            console.log('resp', resp)
+            if (resp.code !== 200 || !resp.data) {
+                Notify.show({ type: 'danger', message: resp.msg || '获取数据失败' })
+                return
+            }
+
+            setGroupList(resp.data.groups)
+            setSelectedGroup(resp.data.defaultGroupId)
+            setCertificateList(resp.data.certificates)
+        }
+        fetchData()
+    }, [])
 
     return (
-        <div>
-            <p className="text-2xl font-bold">Hello Vite + React!</p>
-            <p className='mt-4'>
-                <Button type="primary" onClick={() => setCount((count) => count + 1)}>
-                    count is: {count}
-                </Button>
-            </p>
-            <p className='mt-4'>
-                Edit <code>App.tsx</code> and save to test HMR updates.
-            </p>
+        <div className='flex'>
+            <aside className='h-screen w-64 bg-red-300'>
+                <GroupSidebar groups={groupList} selectId={selectedGroup} />
+            </aside>
+            <main className='h-screen bg-blue-100 flex-grow'>
+
+            </main>
         </div>
     )
 }

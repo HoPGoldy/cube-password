@@ -19,6 +19,8 @@ export const getLoki = async (): Promise<lokijs> => {
     return new Promise(resolve => {
         lokiInstances = new lokijs(STORAGE_PATH + '/' + DB_NAME, {
             autoload: true,
+            autosave: true,
+            autosaveInterval: 1000 * 60 * 60 * 24,
             autoloadCallback: () => resolve(lokiInstances)
         })
     })
@@ -45,14 +47,17 @@ export const saveLoki = async (): Promise<void> => {
  */
 export const createCollectionAccessor = <T extends Record<string | number, any>>(
     collectionName: string,
-    initOption?: Partial<CollectionOptions<T>>
+    initOption?: Partial<CollectionOptions<T>>,
+    initData?: T[]
 ) => {
     return async () => {
         const loki = await getLoki()
         const collection = loki.getCollection<T>(collectionName)
         if (collection) return collection
 
-        return loki.addCollection<T>(collectionName, initOption)
+        const newCollection = loki.addCollection<T>(collectionName, initOption)
+        if (initData) newCollection.insert(initData)
+        return newCollection
     }
 }
 
@@ -63,7 +68,7 @@ const getAppStorageCollection = createCollectionAccessor<AppStorage>('global')
  */
 export const getAppStorage = async () => {
     const collection = await getAppStorageCollection()
-    return collection.data[0] || collection.insert({ theme: AppTheme.Light })
+    return collection.data[0] || collection.insert({ theme: AppTheme.Light, defaultGroupId: 1 })
 }
 
 /**
@@ -72,7 +77,7 @@ export const getAppStorage = async () => {
 export const updateAppStorage = async (newStorage: Partial<AppStorage>) => {
     const collection = await getAppStorageCollection()
 
-    const oldStorage = collection.data[0] || collection.insert({ theme: AppTheme.Light })
+    const oldStorage = collection.data[0] || collection.insert({ theme: AppTheme.Light, defaultGroupId: 1 })
     const fullStorage = { ...oldStorage, ...newStorage }
     collection.update(fullStorage)
 }
@@ -90,7 +95,7 @@ export const getDetailCheckLogCollection = createCollectionAccessor<DetailCheckL
 /**
  * 获取分组集合
  */
-export const getGroupCollection = createCollectionAccessor<CertificateGroup>('group')
+export const getGroupCollection = createCollectionAccessor<CertificateGroup>('group', undefined, [{ name: '我的密码' }])
 
 /**
  * 获取默认凭证字段集合

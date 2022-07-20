@@ -2,7 +2,7 @@ import React, { ComponentType, FC, lazy, Suspense, useLayoutEffect, useState } f
 import { Router, useRoutes } from 'react-router-dom'
 import { createBrowserHistory } from 'history'
 import Loading from './components/Loading'
-import { AppContainer } from './components/AppContainer'
+import { LoginAuth } from './components/LoginAuth'
 
 const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
     const Comp = lazy(compLoader)
@@ -18,10 +18,9 @@ export const Routes: FC = () => {
         {
             path: '/',
             children: [
-                { path: '/', element: lazyLoad(() => import('./pages/Home')) },
-                { path: '/requestDemo', element: lazyLoad(() => import('./pages/RequestDemo')) },
+                { path: '/', element: lazyLoad(() => import('./pages/Home')) }
             ],
-            element: <AppContainer />
+            element: <LoginAuth />
         },
         {
             path: '/login',

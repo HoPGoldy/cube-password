@@ -14,4 +14,8 @@ export const DB_NAME = 'storage.json'
 export const STATUS_CODE = {
     NOT_REGISTER: 40101,
     ALREADY_REGISTER: 40102,
+    /**
+     * 因为关联了其他资源所以无法删除
+     */
+    CANT_DELETE: 40601
 }

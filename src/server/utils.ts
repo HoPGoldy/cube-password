@@ -8,6 +8,7 @@ const initialResponse: AppResponse = {
 }
 
 export const response = (ctx: Context, { code, msg, data }: AppResponse = initialResponse) => {
+    if (code === 401) ctx.status = code
     ctx.body = {
         code,
         msg,
