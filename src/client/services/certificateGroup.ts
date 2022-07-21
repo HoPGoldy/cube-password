@@ -1,5 +1,5 @@
 import { CertificateGroup } from '@/types/app'
-import { FirstScreenResp } from '@/types/http'
+import { AddGroupResp, FirstScreenResp } from '@/types/http'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
 
 /**
@@ -13,7 +13,7 @@ export const getFirstScreen = async () => {
  * 新增分组
  */
 export const addGroup = async (detail: CertificateGroup) => {
-    return sendPost<CertificateGroup>('/addGroup', detail)
+    return sendPost<AddGroupResp>('/addGroup', detail)
 }
 
 /**

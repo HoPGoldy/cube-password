@@ -630,6 +630,11 @@
     "@types/koa-compose" "*"
     "@types/node" "*"
 
+"@types/lodash@^4.14.182":
+  version "4.14.182"
+  resolved "https://registry.npmmirror.com/@types/lodash/-/lodash-4.14.182.tgz#05301a4d5e62963227eaafe0ce04dd77c54ea5c2"
+  integrity sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==
+
 "@types/lokijs@^1.5.7":
   version "1.5.7"
   resolved "https://registry.npmmirror.com/@types/lokijs/-/lokijs-1.5.7.tgz#5eb4b189149681a89acad6dc8adb088f6025feb3"

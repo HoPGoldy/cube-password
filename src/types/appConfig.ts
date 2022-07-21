@@ -8,4 +8,8 @@ export interface AppConfig {
      * 应用主题
      */
     theme: AppTheme
+    /**
+     * 主按钮颜色
+     */
+    buttonColor: string
 }

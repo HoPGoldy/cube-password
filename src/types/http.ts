@@ -16,3 +16,8 @@ export interface CertificateGroupDetail {
     name: string
     remark?: string
 }
+
+export interface AddGroupResp {
+    newList: CertificateGroupDetail[]
+    newId: number
+}

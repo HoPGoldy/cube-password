@@ -18,7 +18,7 @@ export const login = async (password: string, salt: string, challenge: string) =
 
 /** 注册 */
 export const register = async (password: string) => {
-    const salt = nanoid()
+    const salt = nanoid(128)
     return sendPost<{ token: string }>('/register', {
         code: sha(salt + password),
         salt

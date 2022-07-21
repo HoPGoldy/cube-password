@@ -21,7 +21,6 @@ export const setToken = (newToken: string | undefined) => {
  * @param requestInit 请求初始化配置
  */
 const fetcher = async <T = Response>(url: string, requestInit: RequestInit = {}): Promise<T> => {
-    console.log('url', url)
     const init = {
         ...requestInit,
         headers: { ...requestInit.headers },

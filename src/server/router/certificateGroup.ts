@@ -2,10 +2,10 @@ import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
 import Joi from 'joi'
-import { getAppStorage, getCertificateCollection, getGroupCollection } from '../lib/loki'
+import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
 import { STATUS_CODE } from '@/config'
-import { CertificateGroupDetail, FirstScreenResp } from '@/types/http'
+import { AddGroupResp, CertificateGroupDetail, FirstScreenResp } from '@/types/http'
 import { replaceLokiInfo } from '@/utils/common'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
@@ -70,9 +70,9 @@ groupRouter.get('/firstScreen', async ctx => {
 
 const addGroupSchema = Joi.object<CertificateGroup>({
     name: Joi.string().required(),
-    remark: Joi.string(),
-    passwordSha: Joi.string(),
-    passwordSalt: Joi.string(),
+    remark: Joi.string().empty(),
+    passwordSha: Joi.string().empty(),
+    passwordSalt: Joi.string().empty(),
 }).with('passwordSha', 'passwordSalt')
 
 /**
@@ -91,8 +91,15 @@ groupRouter.post('/addGroup', async ctx => {
         response(ctx, { code: 500, msg: '新增分组失败' })
         return
     }
+    const newList = await getCertificateGroupList()
 
-    response(ctx, { code: 200, data: result })
+    const data: AddGroupResp = {
+        newList,
+        newId: (result as any).$loki
+    }
+
+    response(ctx, { code: 200, data })
+    saveLoki()
 })
 
 const updateGroupSchema = Joi.object<Partial<CertificateGroup>>({

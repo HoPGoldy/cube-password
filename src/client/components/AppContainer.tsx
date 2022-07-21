@@ -25,7 +25,7 @@ export const AppContainer = () => {
 
     return (
         <div className='flex'>
-            <aside className='h-screen w-64'>
+            <aside className='h-screen w-64 hidden md:block'>
                 <Sidebar />
             </aside>
             <main className='h-screen flex-grow'>
