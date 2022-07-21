@@ -1,8 +1,8 @@
 import React, { FC, useContext } from 'react'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { UserContext } from './UserProvider'
 
-export const LoginAuth: FC = () => {
+export const LoginAuth: FC = ({ children }) => {
     const [user] = useContext(UserContext)
 
     if (!user) {
@@ -12,6 +12,6 @@ export const LoginAuth: FC = () => {
     }
 
     return (
-        <Outlet />
+        <>{children}</>
     )
 }

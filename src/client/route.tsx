@@ -3,6 +3,7 @@ import { Router, useRoutes } from 'react-router-dom'
 import { createBrowserHistory } from 'history'
 import Loading from './components/Loading'
 import { LoginAuth } from './components/LoginAuth'
+import { AppContainer } from './components/AppContainer'
 
 const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
     const Comp = lazy(compLoader)
@@ -18,9 +19,14 @@ export const Routes: FC = () => {
         {
             path: '/',
             children: [
-                { path: '/', element: lazyLoad(() => import('./pages/Home')) }
+                { path: '/group/:groupId', element: lazyLoad(() => import('./pages/GroupList')) },
+                { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
             ],
-            element: <LoginAuth />
+            element: (
+                <LoginAuth>
+                    <AppContainer />
+                </LoginAuth>
+            )
         },
         {
             path: '/login',

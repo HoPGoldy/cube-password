@@ -1,0 +1,6 @@
+@import "./tailwind.css";
+@import './sidebar.css';
+
+body {
+    @apply bg-slate-200;
+}

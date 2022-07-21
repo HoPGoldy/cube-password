@@ -34,7 +34,7 @@ const Register = () => {
     }
 
     return (
-        <div>
+        <div className='m-8'>
             登录页面，请输入主密码：
             <input
                 placeholder="请输入文本"

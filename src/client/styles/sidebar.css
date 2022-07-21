@@ -1,0 +1,9 @@
+@layer components {
+    .sidebar-select {
+        @apply bg-slate-200 text-black;
+    }
+
+    .sidebar-not-select {
+        @apply hover:bg-slate-100
+    }
+}
