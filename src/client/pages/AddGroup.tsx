@@ -7,6 +7,8 @@ import { ArrowLeft } from '@react-vant/icons'
 import { GroupContext } from '../components/GroupProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { addGroup } from '../services/certificateGroup'
+import { AppConfigContext } from '../components/AppConfigProvider'
+import { useNavigate } from 'react-router-dom'
 
 interface GroupForm {
     name: string
@@ -17,7 +19,9 @@ interface GroupForm {
 
 const AddGroup = () => {
     const { setGroupList, setSelectedGroup } = useContext(GroupContext)
+    const [config] = useContext(AppConfigContext)
     const [form] = Form.useForm<GroupForm>()
+    const navigate = useNavigate()
 
     const onSubmit = async () => {
         const values = await form.validateFields()
@@ -51,7 +55,7 @@ const AddGroup = () => {
     return (
         <div>
             <PageContent>
-                <div className='mx-auto w-5/12 mt-8'>
+                <div className='px-8 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-8'>
                     <Space direction="vertical" gap={16} className='w-full'>
                         <Card round>
                             <Card.Header style={{ justifyContent: 'center' }}>新建分组</Card.Header>
@@ -97,18 +101,20 @@ const AddGroup = () => {
                             </Form>
                         </Card>
 
-                        <Button type="primary" block onClick={onSubmit}>
-                            提交
-                        </Button>
+                        <div className='hidden md:block'>
+                            <Button type="primary" block onClick={onSubmit} color={config?.buttonColor}>
+                                提交
+                            </Button>
+                        </div>
                     </Space>
                 </div>
             </PageContent>
 
             <PageAction>
-                <ActionIcon>
+                <ActionIcon onClick={() => navigate(-1)}>
                     <ArrowLeft fontSize={24} />
                 </ActionIcon>
-                <ActionButton>选择文件并导入</ActionButton>
+                <ActionButton onClick={onSubmit}>提交</ActionButton>
             </PageAction>
         </div>
     )

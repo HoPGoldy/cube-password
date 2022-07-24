@@ -11,7 +11,7 @@ import { AppConfigContext } from './AppConfigProvider'
  */
 export const PageContent: FC = (props) => {
     return (
-        <div className="overflow-y-auto relative md:h-screen h-[calc(100vh - 72px)]">
+        <div className="overflow-y-auto relative md:h-screen h-page-content">
             {props.children}
         </div>
     )
