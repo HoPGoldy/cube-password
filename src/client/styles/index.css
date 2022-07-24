@@ -4,3 +4,25 @@
 body {
     @apply bg-slate-200;
 }
+
+@media (min-width: 1024px) {
+    body {
+        font-size: 16px;
+    }
+
+    :root {
+        --rv-font-size-xs: 12px !important;
+        --rv-font-size-sm: 14px !important;
+        --rv-font-size-md: 16px !important;
+        --rv-font-size-lg: 18px !important;
+    
+        --rv-padding-base: 1rem !important;
+        --rv-padding-xs: 1.25rem !important;
+        --rv-padding-sm: 1.5rem !important;
+        --rv-padding-md: 2rem !important;
+        --rv-padding-lg: 3rem !important;
+        --rv-padding-xl: 4rem !important;
+    
+        --rv-cell-vertical-padding: var(--rv-padding-xs) !important;
+    }
+}

@@ -9,6 +9,7 @@ import { ActionButton, ActionIcon, PageAction, PageContent } from '../components
 import { addGroup } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from 'react-router-dom'
+import Header from '../components/Header'
 
 interface GroupForm {
     name: string
@@ -43,8 +44,6 @@ const AddGroup = () => {
         Notify.show({ type: 'success', message: '分组添加成功' })
         setGroupList(resp.data.newList)
         setSelectedGroup(resp.data.newId)
-
-        console.log('resp', resp)
     }
 
     const validatePassword = async (_: any, value: string) => {
@@ -55,11 +54,11 @@ const AddGroup = () => {
     return (
         <div>
             <PageContent>
-                <div className='px-8 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-8'>
+                <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-4'>
                     <Space direction="vertical" gap={16} className='w-full'>
-                        <Card round>
-                            <Card.Header style={{ justifyContent: 'center' }}>新建分组</Card.Header>
-                        </Card>
+                        <Header className='text-center'>
+                            新建分组
+                        </Header>
 
                         <Card round>
                             <Form

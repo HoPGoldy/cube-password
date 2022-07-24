@@ -19,7 +19,7 @@ export const Routes: FC = () => {
         {
             path: '/',
             children: [
-                { path: '/group/:groupId', element: lazyLoad(() => import('./pages/GroupList')) },
+                { path: '/group/:groupId', element: lazyLoad(() => import('./pages/CertificateList')) },
                 { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
             ],
             element: (

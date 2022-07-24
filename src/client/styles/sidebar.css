@@ -1,9 +1,27 @@
 @layer components {
     .sidebar-select {
-        @apply bg-slate-200 text-black;
+        @apply bg-slate-200 text-black font-bold relative;
+    }
+
+    .sidebar-select .top-out-rounded {
+        @apply absolute -top-4 right-0 h-4 w-4 bg-slate-200 cursor-default;
+    }
+
+    .sidebar-select .top-out-rounded::after {
+        content: '';
+        @apply absolute top-0 left-0 h-4 w-4 bg-white rounded-br-lg;
+    }
+
+    .sidebar-select .bottom-out-rounded {
+        @apply absolute -bottom-4 right-0 h-4 w-4 bg-slate-200 cursor-default;
+    }
+
+    .sidebar-select .bottom-out-rounded::after {
+        content: '';
+        @apply absolute bottom-0 left-0 h-4 w-4 bg-white rounded-tr-lg;
     }
 
     .sidebar-not-select {
-        @apply hover:bg-slate-100
+        @apply hover:bg-slate-100;
     }
 }

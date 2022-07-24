@@ -35,10 +35,12 @@ export const Sidebar: FC = () => {
         return (
             <Link to={group.url} key={group.id}>
                 <div
-                    className={`ml-2 my-4 p-2 pl-4 transition ${selectedClassName}`}
+                    className={`ml-2 my-4 p-4 transition rounded-tl-lg rounded-bl-lg relative ${selectedClassName}`}
                     onClick={() => onTabClick(group.id)}
                 >
+                    <div className='top-out-rounded'></div>
                     {group.name}
+                    <div className='bottom-out-rounded'></div>
                 </div>
             </Link>
         )
@@ -54,7 +56,7 @@ export const Sidebar: FC = () => {
 
     return (
         <section className='py-4 pl-4 bg-white h-full'>
-            <header className='text-center'>
+            <header className='text-center font-bold text-lg h-[44px] leading-[44px]'>
                 密码本
             </header>
             {groupList.map(formatGroupItem).map(renderGroupItem)}
