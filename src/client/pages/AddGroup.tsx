@@ -54,58 +54,56 @@ const AddGroup = () => {
     return (
         <div>
             <PageContent>
+                <Header className='font-bold md:font-normal'>
+                    新建分组
+                </Header>
+
                 <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-4'>
-                    <Space direction="vertical" gap={16} className='w-full'>
-                        <Header className='text-center'>
-                            新建分组
-                        </Header>
-
-                        <Card round>
-                            <Form
-                                colon
-                                form={form}
-                                inputAlign="left"
+                    <Card round>
+                        <Form
+                            colon
+                            form={form}
+                            inputAlign="left"
+                        >
+                            <Form.Item
+                                name="name"
+                                label="分组名称"
+                                rules={[{ required: true, message: '分组名称不得为空' }]}
                             >
-                                <Form.Item
-                                    name="name"
-                                    label="分组名称"
-                                    rules={[{ required: true, message: '分组名称不得为空' }]}
-                                >
-                                    <Field required placeholder="请输入分组名称" />
-                                </Form.Item>
-                                <Form.Item
-                                    name="password"
-                                    label="分组密码"
-                                >
-                                    <Field type="password" placeholder="可选，查看该分组内容时需要输入此密码" />
-                                </Form.Item>
-                                <Form.Item
-                                    name="passwordConfirm"
-                                    label="重复密码"
-                                    validateTrigger="onChange"
-                                    rules={[{ required: false, validator: validatePassword }]}
-                                >
-                                    <Field type="password" placeholder="请输入相同的密码" />
-                                </Form.Item>
-                                <Form.Item name="remark" label="分组备注">
-                                    <Field
-                                        rows={2}
-                                        autosize
-                                        type="textarea"
-                                        placeholder="请输入备注内容"
-                                        maxlength={250}
-                                        showWordLimit
-                                    />
-                                </Form.Item>
-                            </Form>
-                        </Card>
+                                <Field required placeholder="请输入分组名称" />
+                            </Form.Item>
+                            <Form.Item
+                                name="password"
+                                label="分组密码"
+                            >
+                                <Field type="password" placeholder="可选，查看该分组内容时需要输入此密码" />
+                            </Form.Item>
+                            <Form.Item
+                                name="passwordConfirm"
+                                label="重复密码"
+                                validateTrigger="onChange"
+                                rules={[{ required: false, validator: validatePassword }]}
+                            >
+                                <Field type="password" placeholder="请输入相同的密码" />
+                            </Form.Item>
+                            <Form.Item name="remark" label="分组备注">
+                                <Field
+                                    rows={2}
+                                    autosize
+                                    type="textarea"
+                                    placeholder="请输入备注内容"
+                                    maxlength={50}
+                                    showWordLimit
+                                />
+                            </Form.Item>
+                        </Form>
+                    </Card>
 
-                        <div className='hidden md:block'>
-                            <Button type="primary" block onClick={onSubmit} color={config?.buttonColor}>
-                                提交
-                            </Button>
-                        </div>
-                    </Space>
+                    <div className='hidden md:block mt-4'>
+                        <Button type="primary" block onClick={onSubmit} color={config?.buttonColor}>
+                            提交
+                        </Button>
+                    </div>
                 </div>
             </PageContent>
 

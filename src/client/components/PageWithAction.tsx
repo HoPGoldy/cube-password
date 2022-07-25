@@ -24,7 +24,7 @@ export const PageContent: FC = (props) => {
  */
 export const PageAction: FC = (props) => {
     return (
-        <div className="p-2 flex flex-row md:hidden h-[72px]">
+        <div className="p-2 flex flex-row md:hidden h-bottombar">
             {props.children}
         </div>
     )

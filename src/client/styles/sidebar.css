@@ -1,6 +1,6 @@
 @layer components {
     .sidebar-select {
-        @apply bg-slate-200 text-black font-bold relative;
+        @apply bg-slate-200 text-black relative;
     }
 
     .sidebar-select .top-out-rounded {
@@ -9,7 +9,7 @@
 
     .sidebar-select .top-out-rounded::after {
         content: '';
-        @apply absolute top-0 left-0 h-4 w-4 bg-white rounded-br-lg;
+        @apply absolute top-0 left-0 h-4 w-4 bg-slate-700 rounded-br-lg;
     }
 
     .sidebar-select .bottom-out-rounded {
@@ -18,10 +18,10 @@
 
     .sidebar-select .bottom-out-rounded::after {
         content: '';
-        @apply absolute bottom-0 left-0 h-4 w-4 bg-white rounded-tr-lg;
+        @apply absolute bottom-0 left-0 h-4 w-4 bg-slate-700 rounded-tr-lg;
     }
 
     .sidebar-not-select {
-        @apply hover:bg-slate-100;
+        @apply hover:bg-slate-500;
     }
 }

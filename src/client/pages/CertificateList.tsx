@@ -1,8 +1,8 @@
-import { CertificateGroup } from '@/types/app'
+import { CertificateField, CertificateGroup } from '@/types/app'
 import { sha } from '@/utils/common'
 import { nanoid } from 'nanoid'
 import React, { useContext } from 'react'
-import { Form, Card, Field, Space, Button, Notify } from 'react-vant'
+import { Form, Button, Notify } from 'react-vant'
 import { ArrowLeft } from '@react-vant/icons'
 import { GroupContext } from '../components/GroupProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
@@ -10,6 +10,8 @@ import { addGroup } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
+import { SettingO } from '@react-vant/icons'
+import { CertificateListItem } from '@/types/http'
 
 interface GroupForm {
     name: string
@@ -18,8 +20,28 @@ interface GroupForm {
     remark?: string
 }
 
+export interface CertificateItem {
+    id: number
+    name: string
+    groupId: number
+    updateTime: number
+    password: string
+    otherFields: CertificateField[]
+}
+
+const mockCertificateList: CertificateListItem[] = [
+    { id: 1, name: 'b站', updateTime: '2022-07-25' },
+    { id: 2, name: '知乎', updateTime: '2022-07-25' },
+    { id: 3, name: '微博', updateTime: '2022-07-25' },
+    { id: 4, name: '抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音抖音', updateTime: '2022-07-25' },
+    { id: 5, name: '美团', updateTime: '2022-07-25' },
+    { id: 6, name: '腾讯', updateTime: '2022-07-25' },
+    { id: 7, name: '淘宝', updateTime: '2022-07-25' },
+    
+]
+
 const CertificateList = () => {
-    const { setGroupList, setSelectedGroup } = useContext(GroupContext)
+    const { setGroupList, setSelectedGroup, groupList, selectedGroup } = useContext(GroupContext)
     const [config] = useContext(AppConfigContext)
     const [form] = Form.useForm<GroupForm>()
     const navigate = useNavigate()
@@ -48,21 +70,53 @@ const CertificateList = () => {
         console.log('resp', resp)
     }
 
+    const groupInfo = groupList.find(item => item.id === selectedGroup)
+
+    const renderCertificateItem = (item: CertificateListItem) => {
+        return (
+            <div
+                key={item.id}
+                className='mx-2 mb-4 pr-4 bg-white relative rounded-lg py-2 px-4 w-col-1 lg:w-col-2 xl:w-col-3 cursor-pointer'
+            >
+                <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
+                <div className='text-gray-600'>{item.updateTime}</div>
+                {/* <div
+                    style={{ background: config?.buttonColor }}
+                    className='absolute transition top-0 right-0 bottom-0 w-2 opacity-50 rounded-r-lg'
+                ></div> */}
+            </div>
+        )
+    }
+
     return (
         <div>
             <PageContent>
-                <div className='m-4'>
-                    <Space direction="vertical" gap={16} className='w-full'>
-                        <div className='flex'>
-                            <Header className='grow mr-4'>
-                                我的密码
-                            </Header>
-
-                            <Button color={config?.buttonColor} style={{ height: 44 }}>
-                                新建密码
-                            </Button>
+                <Header>
+                    <div className='grow shrink ml-2 overflow-hidden flex flex-col justify-center'>
+                        <div
+                            className='text-lg md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
+                            title={groupInfo?.name}
+                        >
+                            {groupInfo?.name}
                         </div>
-                    </Space>
+                        {groupInfo?.remark && 
+                        <div
+                            className='mt-2 md:mt-0 text-sm text-slate-500 md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
+                            title={groupInfo?.remark}
+                        >
+                            {groupInfo?.remark}
+                        </div>}
+                    </div>
+                    <div className='shrink-0 items-center hidden md:flex flex-nowrap'>
+                        <SettingO fontSize={24} className='cursor-pointer mx-4' />
+                        <Button color={config?.buttonColor}>
+                            + 新建密码
+                        </Button>
+                    </div>
+                </Header>
+
+                <div className='mt-4 mx-2 flex flex-wrap justify-start'>
+                    {mockCertificateList.map(renderCertificateItem)}
                 </div>
             </PageContent>
 

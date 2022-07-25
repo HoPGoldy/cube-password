@@ -47,6 +47,10 @@ export interface CertificateDetail {
      */
     groupId: number
     /**
+     * 凭证最后更新实际
+     */
+    updateTime: number
+    /**
      * 凭证的加密内容（解密后为凭证字段数组）
      */
     content: string

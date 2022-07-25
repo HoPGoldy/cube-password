@@ -5,8 +5,17 @@ module.exports = {
     ],
     theme: {
         extend: {
+            width: {
+                'sidebar': 'var(--kmp-sidebar-width)',
+                'page-content': 'calc(100vw - var(--kmp-sidebar-width))',
+                // 实现凭证列表在不同屏幕上的列数不同
+                'col-1': 'calc(100% - 1rem)',
+                'col-2': 'calc(50% - 1rem)',
+                'col-3': 'calc(33.3% - 1rem)'
+            },
             height: {
-                'page-content': 'calc(100vh - 72px)'
+                'bottombar': 'var(--kmp-bottombar-height)',
+                'page-content': 'calc(100vh - var(--kmp-bottombar-height))'
             }
         }
     },

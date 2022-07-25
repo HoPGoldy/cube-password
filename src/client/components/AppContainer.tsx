@@ -25,10 +25,10 @@ export const AppContainer = () => {
 
     return (
         <div className='flex'>
-            <aside className='h-screen w-64 hidden md:block'>
+            <aside className='h-screen w-sidebar hidden md:block'>
                 <Sidebar />
             </aside>
-            <main className='h-screen flex-grow'>
+            <main className='h-screen w-page-content flex-grow'>
                 <Outlet />
             </main>
         </div>

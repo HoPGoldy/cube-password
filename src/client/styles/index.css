@@ -5,6 +5,13 @@ body {
     @apply bg-slate-200;
 }
 
+:root {
+    /* 桌面端的侧边栏宽度 */
+    --kmp-sidebar-width: 256px;
+    /* 移动端的底部操作栏高度 */
+    --kmp-bottombar-height: 72px;
+}
+
 @media (min-width: 1024px) {
     body {
         font-size: 16px;
@@ -15,13 +22,13 @@ body {
         --rv-font-size-sm: 14px !important;
         --rv-font-size-md: 16px !important;
         --rv-font-size-lg: 18px !important;
-    
-        --rv-padding-base: 1rem !important;
-        --rv-padding-xs: 1.25rem !important;
-        --rv-padding-sm: 1.5rem !important;
-        --rv-padding-md: 2rem !important;
-        --rv-padding-lg: 3rem !important;
-        --rv-padding-xl: 4rem !important;
+
+        --rv-padding-base: 0.75rem !important;
+        --rv-padding-xs: 1rem !important;
+        --rv-padding-sm: 1.25rem !important;
+        --rv-padding-md: 1.5rem !important;
+        --rv-padding-lg: 1.75rem !important;
+        --rv-padding-xl: 2rem !important;
     
         --rv-cell-vertical-padding: var(--rv-padding-xs) !important;
     }

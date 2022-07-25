@@ -6,8 +6,11 @@ interface Props {
 }
 
 const Header: FC<Props> = (props) => {
+    const baseClass = 'bg-white flex flex-nowrap select-none'
+    const smClass = 'm-4 p-2 text-lg text-center rounded-lg justify-center'
+    const mdClass = 'md:m-0 md:p-4 md:text-left md:justify-start md:rounded-none md:border-b md:border-gray-300'
     return (
-        <div className={'font-bold text-lg bg-white rounded-lg py-2 px-4 ' + props.className} style={props.style}>
+        <div className={[baseClass, smClass, mdClass, props.className || ''].join(' ')} style={props.style}>
             {props.children}
         </div>
     )

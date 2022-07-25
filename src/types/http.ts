@@ -1,4 +1,4 @@
-import { CertificateDetail } from './app'
+import { CertificateDetail, CertificateField } from './app'
 
 export interface RequireLoginResp {
     salt: string
@@ -20,4 +20,10 @@ export interface CertificateGroupDetail {
 export interface AddGroupResp {
     newList: CertificateGroupDetail[]
     newId: number
+}
+
+export interface CertificateListItem {
+    id: number
+    name: string
+    updateTime: string
 }

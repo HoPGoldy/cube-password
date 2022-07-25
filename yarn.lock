@@ -409,7 +409,7 @@
     "@react-spring/shared" "~9.4.5"
     "@react-spring/types" "~9.4.5"
 
-"@react-vant/icons@0.0.6":
+"@react-vant/icons@0.0.6", "@react-vant/icons@^0.0.6":
   version "0.0.6"
   resolved "https://registry.npmmirror.com/@react-vant/icons/-/icons-0.0.6.tgz#643e08ad95d12a6311530f9e2e12fe2071d0bb75"
   integrity sha512-E60Xu2QU8I+OwGGGA6zbED1JVjiih00QEHNrf5DfZ5cCaFb9PmksAzFPVLkuFMkiFNblUfR3NyE59cdsv/91qg==
