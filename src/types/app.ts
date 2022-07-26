@@ -47,7 +47,7 @@ export interface CertificateDetail {
      */
     groupId: number
     /**
-     * 凭证最后更新实际
+     * 凭证最后更新时间
      */
     updateTime: number
     /**

@@ -2,7 +2,8 @@ import { CertificateField, CertificateGroup } from '@/types/app'
 import { sha } from '@/utils/common'
 import { nanoid } from 'nanoid'
 import React, { useContext } from 'react'
-import { Form, Button, Notify } from 'react-vant'
+import { Form, Notify } from 'react-vant'
+import { Button } from '@/client/components/Button'
 import { ArrowLeft } from '@react-vant/icons'
 import { GroupContext } from '../components/GroupProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
@@ -76,7 +77,7 @@ const CertificateList = () => {
         return (
             <div
                 key={item.id}
-                className='mx-2 mb-4 pr-4 bg-white relative rounded-lg py-2 px-4 w-col-1 lg:w-col-2 xl:w-col-3 cursor-pointer'
+                className='mx-2 mb-4 pr-4 bg-white relative rounded-lg py-2 px-4 w-col-1 lg:w-col-2 xl:w-col-3 cursor-pointer hover:ring ring-slate-500 active:bg-slate-200 transition'
             >
                 <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
                 <div className='text-gray-600'>{item.updateTime}</div>
@@ -108,7 +109,7 @@ const CertificateList = () => {
                         </div>}
                     </div>
                     <div className='shrink-0 items-center hidden md:flex flex-nowrap'>
-                        <SettingO fontSize={24} className='cursor-pointer mx-4' />
+                        <SettingO fontSize={24} className='cursor-pointer mx-4 hover:opacity-75' />
                         <Button color={config?.buttonColor}>
                             + 新建密码
                         </Button>
