@@ -5,13 +5,15 @@ import { AppResponse } from '@/types/global'
 // 后端地址
 const baseURL = 'api/'
 
-let token: undefined | string
+let token = localStorage.getItem('token')
 
 /**
  * 设置请求中携带的用户 token
  */
-export const setToken = (newToken: string | undefined) => {
+export const setToken = (newToken: string | null) => {
     token = newToken
+    if (!newToken) localStorage.removeItem('token')
+    else localStorage.setItem('token', newToken)
 }
 
 /**

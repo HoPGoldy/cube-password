@@ -1,7 +1,7 @@
 import { CertificateField, CertificateGroup } from '@/types/app'
 import { sha } from '@/utils/common'
 import { nanoid } from 'nanoid'
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { Form, Notify } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { ArrowLeft } from '@react-vant/icons'
@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { SettingO } from '@react-vant/icons'
 import { CertificateListItem } from '@/types/http'
+import CertificateDetail from '../components/CertificateDetail'
 
 interface GroupForm {
     name: string
@@ -47,28 +48,12 @@ const CertificateList = () => {
     const [form] = Form.useForm<GroupForm>()
     const navigate = useNavigate()
 
-    const onSubmit = async () => {
-        const values = await form.validateFields()
-        const salt = nanoid(128)
+    const [detailVisible, setDetailVisible] = useState(false)
+    const [showCertificateId, setShowCertificateId] = useState(undefined)
 
-        const postData: CertificateGroup = {
-            name: values.name,
-            remark: values.remark || undefined,
-            passwordSha: values.password ? sha(salt + values.password) : undefined,
-            passwordSalt: values.password ? salt : undefined
-        }
-
-        const resp = await addGroup(postData)
-        if (resp.code !== 200 || !resp.data) {
-            Notify.show({ type: 'danger', message: resp.msg || '分组添加失败' })
-            return
-        }
-
-        Notify.show({ type: 'success', message: '分组添加成功' })
-        setGroupList(resp.data.newList)
-        setSelectedGroup(resp.data.newId)
-
-        console.log('resp', resp)
+    const onAddCertificate = async () => {
+        setDetailVisible(true)
+        setShowCertificateId(undefined)
     }
 
     const groupInfo = groupList.find(item => item.id === selectedGroup)
@@ -110,7 +95,7 @@ const CertificateList = () => {
                     </div>
                     <div className='shrink-0 items-center hidden md:flex flex-nowrap'>
                         <SettingO fontSize={24} className='cursor-pointer mx-4 hover:opacity-75' />
-                        <Button color={config?.buttonColor}>
+                        <Button color={config?.buttonColor} onClick={onAddCertificate}>
                             + 新建密码
                         </Button>
                     </div>
@@ -119,13 +104,15 @@ const CertificateList = () => {
                 <div className='mt-4 mx-2 flex flex-wrap justify-start'>
                     {mockCertificateList.map(renderCertificateItem)}
                 </div>
+
+                <CertificateDetail visible={detailVisible} onClose={() => setDetailVisible(false)} />
             </PageContent>
 
             <PageAction>
                 <ActionIcon onClick={() => navigate(-1)}>
                     <ArrowLeft fontSize={24} />
                 </ActionIcon>
-                <ActionButton onClick={onSubmit}>新建密码</ActionButton>
+                <ActionButton onClick={onAddCertificate}>新建密码</ActionButton>
             </PageAction>
         </div>
     )
