@@ -5,6 +5,11 @@ body {
     @apply bg-slate-200;
 }
 
+/* 关闭 password 自带的显示隐藏功能 */
+input[type="password"]::-ms-reveal{
+    display: none;
+}
+
 :root {
     /* 桌面端的侧边栏宽度 */
     --kmp-sidebar-width: 256px;
