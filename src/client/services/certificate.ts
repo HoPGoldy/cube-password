@@ -2,6 +2,7 @@ import { CertificateDetail, CertificateField, CertificateGroup } from '@/types/a
 import { AppResponse } from '@/types/global'
 import { AddGroupResp, CertificateDetailResp, FirstScreenResp } from '@/types/http'
 import { aes, aesDecrypt } from '@/utils/common'
+import { useMutation, useQuery } from 'react-query'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
 
 /**
@@ -35,6 +36,41 @@ export const getCertificate = async (id: number, password: string): Promise<Cert
     return resp as CertificateFrontendDetail
 }
 
-export const updateCertificate = async (id: number, data: Partial<CertificateDetail>) => {
+export const useCertificateDetail = (id: number, password: string) => {
+    return useQuery(['certificate', id], () => getCertificate(id, password))
+}
+
+export const updateCertificate1 = async (id: number, data: Partial<CertificateDetail>) => {
     return sendPut(`/certificate/${id}`, data)
 }
+
+interface PostData {
+    id?: number
+    name: string
+    groupId: number
+    fields: CertificateField[]
+}
+
+export const useUpdateCertificate = (password: string) => {
+    const updateCertificate = (detail: PostData) => {
+        // 更新凭证
+        if ('id' in detail) {
+            const updateData: Partial<PostData & { content?: string }> = { ...detail }
+            delete updateData.fields
+            if (detail.fields) {
+                updateData.content = aes(JSON.stringify(detail.fields), password)
+            }
+
+            return sendPut(`/certificate/${detail.id}`, updateData)
+        }
+        // 新增凭证
+        else {
+            const { fields, groupId, name } = detail
+            const content = aes(JSON.stringify(fields), password)
+            return sendPost('/certificate', { name, groupId, content })
+        }
+    }
+
+    return useMutation(updateCertificate)
+}
+

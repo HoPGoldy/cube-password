@@ -35,6 +35,7 @@
     "qs": "^6.11.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-query": "3.39.2",
     "react-router-dom": "^6.3.0",
     "react-vant": "^2.0.0-alpha.46"
   },

@@ -3,6 +3,7 @@ import { Routes } from './route'
 import { AppConfigProvider } from './components/AppConfigProvider'
 import { UserProvider } from './components/UserProvider'
 import { GroupProvider } from './components/GroupProvider'
+import { QueryProvider } from './components/QueryClientProvider'
 import { ConfigProvider } from 'react-vant'
 
 const themeVars = {
@@ -12,15 +13,17 @@ const themeVars = {
 
 function App() {
     return (
-        <ConfigProvider themeVars={themeVars}>
-            <AppConfigProvider>
-                <UserProvider>
-                    <GroupProvider>
-                        <Routes />
-                    </GroupProvider>
-                </UserProvider>
-            </AppConfigProvider>
-        </ConfigProvider>
+        <QueryProvider>
+            <ConfigProvider themeVars={themeVars}>
+                <AppConfigProvider>
+                    <UserProvider>
+                        <GroupProvider>
+                            <Routes />
+                        </GroupProvider>
+                    </UserProvider>
+                </AppConfigProvider>
+            </ConfigProvider>
+        </QueryProvider>
     )
 }
 

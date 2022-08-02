@@ -6,7 +6,7 @@ import { AppConfigContext } from './AppConfigProvider'
 import CertificateFieldItem from './CertificateFieldItem'
 import { CertificateField } from '@/types/app'
 import { UserContext } from './UserProvider'
-import { addCertificate, getCertificate, updateCertificate } from '../services/certificate'
+import { addCertificate, getCertificate, useUpdateCertificate } from '../services/certificate'
 import { AppResponse } from '@/types/global'
 import { aes } from '@/utils/common'
 
@@ -39,6 +39,8 @@ const CertificateDetail: FC<Props> = (props) => {
     const newFieldIndex = useRef(1)
     // 弹出框元素引用
     const dialogRef = useRef<HTMLDivElement>(null)
+    // 提交凭证
+    const { mutate, isLoading: submiting } = useUpdateCertificate(userProfile?.password || '')
 
     // 初始化窗口
     useEffect(() => {
@@ -90,6 +92,7 @@ const CertificateDetail: FC<Props> = (props) => {
             return
         }
 
+        mutate({ id: certificateId, name: title, fields, groupId })
         let resp: AppResponse
         // 更新凭证
         if (certificateId) {
@@ -199,6 +202,7 @@ const CertificateDetail: FC<Props> = (props) => {
                     className='!mt-4 !w-[75%] md:!w-[50%]'
                     color={config?.buttonColor}
                     onClick={onFinish}
+                    loading={submiting}
                 >
                     {certificateId ? '更新' : '提交'}
                 </Button>}
