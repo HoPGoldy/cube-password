@@ -2,8 +2,11 @@ import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
 import Joi from 'joi'
-import { getCertificateCollection } from '../lib/loki'
+import dayjs from 'dayjs'
+import { getCertificateCollection, saveLoki } from '../lib/loki'
 import { CertificateDetail } from '@/types/app'
+import { CertificateDetailResp } from '@/types/http'
+import { DATE_FORMATTER } from '@/config'
 
 const certificateRouter = new Router<unknown, AppKoaContext>()
 
@@ -14,7 +17,14 @@ certificateRouter.get('/certificate/:certificateId', async ctx => {
     const { certificateId } = ctx.params
     const collection = await getCertificateCollection()
     const certificate = collection.get(Number(certificateId))
-    response(ctx, { code: 200, data: certificate })
+
+    const data: CertificateDetailResp = {
+        name: certificate.name,
+        content: certificate.content,
+        updateTime: dayjs(certificate.updateTime).format(DATE_FORMATTER),
+        createTime: dayjs(certificate.meta.created).format(DATE_FORMATTER)
+    }
+    response(ctx, { code: 200, data })
 })
 
 /**
@@ -24,12 +34,14 @@ certificateRouter.delete('/certificate/:certificateId', async ctx => {
     const { certificateId } = ctx.params
     const collection = await getCertificateCollection()
     const result = collection.findAndRemove({ $loki: Number(certificateId) })
+
     response(ctx, { code: 200, data: result })
+    saveLoki()
 })
 
 const addCertificateSchema = Joi.object<CertificateDetail>({
     name: Joi.string().required(),
-    groupId: Joi.string().required(),
+    groupId: Joi.number().required(),
     content: Joi.string().required()
 })
 
@@ -44,18 +56,22 @@ certificateRouter.post('/certificate', async ctx => {
     }
 
     const collection = await getCertificateCollection()
-    const result = collection.insertOne(value)
+    const result = collection.insertOne({
+        ...value,
+        updateTime: new Date().valueOf()
+    })
     if (!result) {
         response(ctx, { code: 500, msg: '新增凭证失败' })
         return
     }
 
     response(ctx, { code: 200, data: { id: result.$loki } })
+    saveLoki()
 })
 
 const updateCertificateSchema = Joi.object<Partial<CertificateDetail>>({
     name: Joi.string(),
-    groupId: Joi.string(),
+    groupId: Joi.number(),
     content: Joi.string()
 })
 
@@ -71,13 +87,11 @@ certificateRouter.put('/certificate/:certificateId', async ctx => {
     }
 
     const collection = await getCertificateCollection()
-    const result = collection.findAndUpdate({ $loki: Number(certificateId) }, old => {
-        return {
-            ...old,
-            ...value
-        }
-    })
-    response(ctx, { code: 200, data: result })
+    const item = collection.get(+certificateId)
+    if (item) collection.update({ ...item, ...value })
+
+    response(ctx, { code: 200 })
+    saveLoki()
 })
 
 export { certificateRouter }

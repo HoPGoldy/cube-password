@@ -1,15 +1,29 @@
-import sha512 from 'crypto-js/sha512'
+import CryptoJS from 'crypto-js'
+
+const { SHA256, SHA512, AES, MD5, enc, mode, pad } = CryptoJS
 
 export const sha = (str: string) => {
-    return sha512(str).toString().toUpperCase()
+    return SHA512(str).toString().toUpperCase()
 }
 
-export const hasLokiObj = <T extends Record<any, any>>(obj: T): obj is T & LokiObj => {
-    if (typeof obj !== 'object') return false
-    if (!('$loki' in obj && typeof obj.$loki === 'string')) return false
-    if (!('meta' in obj) || typeof obj.meta !== 'object') return false
+export const aes = (str: string, password: string) => {
+    const key = enc.Utf8.parse(MD5(password).toString())
+    const iv = enc.Utf8.parse(SHA256(password).toString())
 
-    return true
+    const srcs = enc.Utf8.parse(str)
+    const encrypted = AES.encrypt(srcs, key, { iv: iv, mode: mode.CBC, padding: pad.Pkcs7 })
+    return encrypted.ciphertext.toString()
+}
+
+export const aesDecrypt = (str: string, password: string) => {
+    const key = enc.Utf8.parse(MD5(password).toString())
+    const iv = enc.Utf8.parse(SHA256(password).toString())
+
+    const encryptedHexStr = enc.Hex.parse(str)
+    const srcs = enc.Base64.stringify(encryptedHexStr)
+    const decrypt = AES.decrypt(srcs, key, { iv: iv, mode: mode.CBC, padding: pad.Pkcs7 })
+    const decryptedStr = decrypt.toString(enc.Utf8)
+    return decryptedStr.toString()
 }
 
 /**

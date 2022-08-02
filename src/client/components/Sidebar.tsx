@@ -3,6 +3,8 @@ import React, { FC, useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { GroupContext } from './GroupProvider'
 import { Edit, CouponO } from '@react-vant/icons'
+import { getGroupCertificates } from '../services/certificateGroup'
+import { Notify } from 'react-vant'
 
 interface TabDetail {
     id: number | string
@@ -16,7 +18,7 @@ const STATIC_TABS: TabDetail[] = [
 ]
 
 export const Sidebar: FC = () => {
-    const { groupList, selectedGroup, setSelectedGroup } = useContext(GroupContext)
+    const { groupList, selectedGroup, setSelectedGroup, refetchCertificateList } = useContext(GroupContext)
     const [selectedTab, setSelectedTab] = useState<string | number>(0)
     const navigate = useNavigate()
     const location = useLocation()
@@ -26,7 +28,10 @@ export const Sidebar: FC = () => {
         if (groupList.length <= 0) return
         setSelectedTab(selectedGroup)
         navigate(`/group/${selectedGroup}`)
+        refetchCertificateList()
     }, [selectedGroup])
+
+    
 
     // 路由变化时跟随切换侧边栏选中项
     useEffect(() => {
@@ -77,7 +82,7 @@ export const Sidebar: FC = () => {
             <header className='text-center font-bold text-lg h-[44px] leading-[44px]'>
                 密码本
             </header>
-            {groupList.map(formatGroupItem).map(renderGroupItem)}
+            {(groupList || []).map(formatGroupItem).map(renderGroupItem)}
             {STATIC_TABS.map(renderGroupItem)}
         </section>
     )

@@ -19,3 +19,8 @@ export const STATUS_CODE = {
      */
     CANT_DELETE: 40601
 }
+
+/**
+ * 统一的日期格式化
+ */
+export const DATE_FORMATTER = 'YYYY-MM-DD HH:mm:ss'

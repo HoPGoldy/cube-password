@@ -2,10 +2,11 @@ import Router from 'koa-router'
 import { loginRouter } from './auth'
 import { globalRouter } from './app'
 import { groupRouter } from './certificateGroup'
+import { certificateRouter } from './certificate'
 import { AppKoaContext } from '@/types/global'
 import { middlewareJwt, middlewareJwtCatcher } from '../lib/auth'
 
-const routes = [globalRouter, loginRouter, groupRouter]
+const routes = [globalRouter, loginRouter, certificateRouter, groupRouter]
 const publicPath = ['/api/global', '/api/requireLogin', '/api/login', '/api/register']
 
 const apiRouter = new Router<unknown, AppKoaContext>()

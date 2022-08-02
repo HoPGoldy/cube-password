@@ -1,10 +1,9 @@
 import React, { FC, useState } from 'react'
 import { CertificateField } from '@/types/app'
 import { Clear, Eye, ClosedEye } from '@react-vant/icons'
-
+import Textarea from './Textarea'
 
 interface Props {
-    widthClass?: string
     showDelete?: boolean
     value?: CertificateField
     onChange?: (value: CertificateField) => void
@@ -12,7 +11,7 @@ interface Props {
 }
 
 const CertificateFieldItem: FC<Props> = (props) => {
-    const { widthClass, value, onChange, showDelete = true, onDelete } = props
+    const { value, onChange, showDelete = true, onDelete } = props
     const [hiddenPassword, setHiddenPassword] = useState(true)
 
     const isPassword = !!['密码', 'password'].find(text => value?.label.includes(text))
@@ -28,7 +27,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
     }
 
     return (
-        <div className={'px-4 pb-4 relative ' + widthClass}>
+        <div className={'px-4 pb-4 relative w-full lg:w-[50%] 2xl:w-[50%]'}>
             <input
                 type="text"
                 value={value?.label}
@@ -45,15 +44,15 @@ const CertificateFieldItem: FC<Props> = (props) => {
                             border border-slate-300 rounded-md shadow-sm placeholder-slate-400
                             focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
                     /> :
-                    <textarea
+                    <Textarea
                         value={value?.value}
                         onChange={onValueChange}
-                        rows={1}
-                        className='block px-3 py-2 w-full min-h-[42px] 
+                        className='block px-3 py-2 w-full 
                             border border-slate-300 rounded-md shadow-sm placeholder-slate-400
                             focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
                     />
             }
+
             {isPassword && (hiddenPassword ?
                 <Eye className='absolute right-14 top-11 cursor-pointer' fontSize={18} onClick={() => setHiddenPassword(false)} /> :
                 <ClosedEye className='absolute right-14 top-11 cursor-pointer' fontSize={18} onClick={() => setHiddenPassword(true)} />

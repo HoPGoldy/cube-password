@@ -3,7 +3,6 @@ import { AppConfig } from '@/types/appConfig'
 import { nanoid } from 'nanoid'
 import { sha } from '@/utils/common'
 import { RequireLoginResp } from '@/types/http'
-import { UserProfile } from '../components/UserProvider'
 
 export const requireLogin = async () => {
     return sendPost<RequireLoginResp>('/requireLogin')
@@ -11,7 +10,7 @@ export const requireLogin = async () => {
 
 /** 登录 */
 export const login = async (password: string, salt: string, challenge: string) => {
-    return sendPost<UserProfile>('/login', {
+    return sendPost<{ token: string }>('/login', {
         code: sha(sha(salt + password) + challenge)
     })
 }

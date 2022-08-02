@@ -1,5 +1,5 @@
 import { CertificateGroup } from '@/types/app'
-import { AddGroupResp, FirstScreenResp } from '@/types/http'
+import { AddGroupResp, CertificateListItem, FirstScreenResp } from '@/types/http'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
 
 /**
@@ -7,6 +7,13 @@ import { sendGet, sendPost, sendPut, sendDelete } from './base'
  */
 export const getFirstScreen = async () => {
     return sendGet<FirstScreenResp>('/firstScreen')
+}
+
+/**
+ * 获取指定分组的下属凭证
+ */
+export const getGroupCertificates = async (groupId: number) => {
+    return sendGet<CertificateListItem[]>(`/group/${groupId}/certificates`)
 }
 
 /**

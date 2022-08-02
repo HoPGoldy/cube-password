@@ -1,5 +1,5 @@
 import { STATUS_CODE } from '@/config'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Notify } from 'react-vant'
 import { UserContext } from '../components/UserProvider'
@@ -10,6 +10,12 @@ const Register = () => {
     const [, setUserProfile] = useContext(UserContext)
     const navigate = useNavigate()
     const [password, setPassword] = useState('')
+
+    // 临时功能，开发自动登录
+    useEffect(() => {
+        if (!password) setPassword('123')
+        else onRegister()
+    }, [password])
 
     const onRegister = async () => {
         const resp = await requireLogin()
@@ -28,7 +34,7 @@ const Register = () => {
             return
         }
 
-        setUserProfile(loginResp.data)
+        setUserProfile({ password, token: loginResp.data.token })
         setToken(loginResp.data.token)
         navigate('/')
     }
@@ -37,6 +43,7 @@ const Register = () => {
         <div className='m-8'>
             登录页面，请输入主密码：
             <input
+                autoFocus
                 placeholder="请输入文本"
                 value={password}
                 onInput={e => setPassword((e.target as any).value)}

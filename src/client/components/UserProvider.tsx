@@ -2,6 +2,7 @@ import React, { Dispatch, FC, SetStateAction, useState } from 'react'
 
 export interface UserProfile {
     token: string
+    password: string
 }
 
 export const UserContext = React.createContext<[

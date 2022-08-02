@@ -3,7 +3,7 @@ import { history } from '../route'
 import { AppResponse } from '@/types/global'
 
 // 后端地址
-const baseURL = 'api/'
+const baseURL = '/api'
 
 let token = localStorage.getItem('token')
 
@@ -29,7 +29,7 @@ const fetcher = async <T = Response>(url: string, requestInit: RequestInit = {})
     }
     if (token) (init.headers as any).Authorization = `Bearer ${token}`
 
-    const pureUrl = url.startsWith('/') ? url.substring(1) : url
+    const pureUrl = url.startsWith('/') ? url : ('/' + url)
     const resp = await fetch(baseURL + pureUrl, init)
 
     if (resp.status === 401) {

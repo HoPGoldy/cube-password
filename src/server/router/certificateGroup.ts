@@ -3,10 +3,11 @@ import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
 import Joi from 'joi'
 import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki } from '../lib/loki'
-import { CertificateGroup } from '@/types/app'
-import { STATUS_CODE } from '@/config'
-import { AddGroupResp, CertificateGroupDetail, FirstScreenResp } from '@/types/http'
+import { CertificateDetail, CertificateGroup } from '@/types/app'
+import { DATE_FORMATTER, STATUS_CODE } from '@/config'
+import { AddGroupResp, CertificateGroupDetail, CertificateListItem, FirstScreenResp } from '@/types/http'
 import { replaceLokiInfo } from '@/utils/common'
+import dayjs from 'dayjs'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
@@ -28,9 +29,15 @@ const getCertificateGroupDetail = async (groupId: number) => {
     return collection.get(groupId)
 }
 
-const getCertificateList = async (groupId: number) => {
+const getCertificateList = async (groupId: number): Promise<CertificateListItem[]> => {
     const collection = await getCertificateCollection()
-    return  collection.find({ groupId })
+    return collection.find({ groupId }).map(item => {
+        return {
+            id: item.$loki,
+            name: item.name,
+            updateTime: dayjs(item.updateTime).format(DATE_FORMATTER)
+        }
+    })
 }
 
 /**
@@ -39,15 +46,8 @@ const getCertificateList = async (groupId: number) => {
  */
 groupRouter.get('/group/:groupId/certificates', async ctx => {
     const { groupId } = ctx.params
-    const [certificates, detail] = await Promise.all([
-        getCertificateList(Number(groupId)),
-        getCertificateGroupDetail(Number(groupId))
-    ])
-
-    response(ctx, { code: 200, data: {
-        ...detail,
-        certificates
-    }})
+    const certificates = await getCertificateList(Number(groupId))
+    response(ctx, { code: 200, data: certificates })
 })
 
 /**

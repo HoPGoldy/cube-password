@@ -16,6 +16,11 @@ module.exports = {
             height: {
                 'bottombar': 'var(--kmp-bottombar-height)',
                 'page-content': 'calc(100vh - var(--kmp-bottombar-height))'
+            },
+            transitionProperty: {
+                'w': 'width',
+                'h': 'height',
+                'spacing': 'margin, padding',
             }
         }
     },
