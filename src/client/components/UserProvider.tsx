@@ -1,7 +1,7 @@
 import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
 import React, { Dispatch, FC, SetStateAction, useEffect, useState } from 'react'
 import { Notify } from 'react-vant'
-import { useGroupCertificates } from '../services/certificateGroup'
+import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
 
 export interface UserProfile {
     token: string
@@ -21,6 +21,7 @@ interface Context {
      */
     groupList: CertificateGroupDetail[]
     setGroupList: Dispatch<SetStateAction<CertificateGroupDetail[]>>
+    refetchGroupList: () => Promise<unknown>
 
     /**
      * 当前选中的分组
@@ -64,15 +65,24 @@ export const UserProvider: FC = (props) => {
         }
 
         setCertificateList(certificateListResp.data)
-        
     }, [certificateListResp])
+
+    const refetchGroupList = async () => {
+        const resp = await getGroupList()
+        if (resp.code !== 200 || !resp.data) {
+            Notify.show({ message: '获取凭证列表失败', type: 'danger' })
+            return
+        }
+
+        setGroupList(resp.data)
+    }
 
     const value = {
         userProfile, setUserProfile,
         groupList, setGroupList,
         selectedGroup, setSelectedGroup,
         certificateList, setCertificateList,
-        refetchCertificateList,
+        refetchCertificateList, refetchGroupList,
         certificateListLoading
     }
 

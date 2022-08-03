@@ -7,7 +7,7 @@ import { ActionButton, ActionIcon, PageAction, PageContent } from '../components
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
+import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
 
@@ -27,8 +27,8 @@ const CertificateList = () => {
     const [showCertificateId, setShowCertificateId] = useState<number | undefined>(undefined)
     // 引入列表编辑功能
     const {
-        showConfigArea, showNewGroupDialog, configButtons, selectedItem, setSelectedItem,
-        onSwitchConfigArea, onConfirmMove
+        showConfigArea, configButtons, selectedItem, setSelectedItem,
+        onSwitchConfigArea, getNewGroupSelectProps
     } = useEditor()
 
     // 添加新的凭证
@@ -44,20 +44,6 @@ const CertificateList = () => {
     }
 
     const groupInfo = groupList.find(item => item.id === selectedGroup)
-
-    const renderMoveGroupItem = (item: CertificateGroupDetail) => {
-        return (
-            <div
-                key={item.id}
-                className='
-                    rounded-lg  ring-slate-300 py-2 mt-2 transition border border-slate-300 cursor-pointer 
-                    hover:bg-slate-300 hover:ring-slate-500 hover:ring 
-                    select-none
-                '
-                onClick={() => onConfirmMove(item.id)}
-            >{item.name}</div>
-        )
-    }
 
     // 渲染操作按钮
     const renderConfigButton = (item: ConfigButtonProps) => {
@@ -172,17 +158,7 @@ const CertificateList = () => {
                     certificateId={showCertificateId}
                 />
 
-                <Dialog
-                    visible={showNewGroupDialog}
-                    title="请选择要移动到的分组"
-                    showCancelButton={false}
-                    showConfirmButton={false}
-                    closeOnClickOverlay
-                >
-                    <div className='px-4 pt-6 pb-8 text-center'>
-                        {groupList.filter(item => item.id !== selectedGroup).map(renderMoveGroupItem)}
-                    </div>
-                </Dialog>
+                <Dialog {...getNewGroupSelectProps()} />
             </PageContent>
 
             <PageAction>

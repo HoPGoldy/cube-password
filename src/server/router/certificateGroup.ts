@@ -27,11 +27,6 @@ groupRouter.get('/group', async ctx => {
     response(ctx, { code: 200, data })
 })
 
-const getCertificateGroupDetail = async (groupId: number) => {
-    const collection = await getGroupCollection()
-    return collection.get(groupId)
-}
-
 const getCertificateList = async (groupId: number): Promise<CertificateListItem[]> => {
     const collection = await getCertificateCollection()
     return collection.find({ groupId }).map(item => {
@@ -126,9 +121,12 @@ groupRouter.delete('/group/:groupId', async ctx => {
     }
 
     const collection = await getGroupCollection()
+    if (collection.data.length <= 1) {
+        response(ctx, { code: STATUS_CODE.CANT_DELETE, msg: '不能移除最后一个分组' })
+        return
+    }
     // 移除分组
     const needDeleteGroup = collection.get(+groupId)
-    console.log('被移除分组', needDeleteGroup)
     collection.remove(needDeleteGroup)
 
     const { defaultGroupId } = await getAppStorage()
@@ -138,8 +136,6 @@ groupRouter.delete('/group/:groupId', async ctx => {
     if (defaultGroupId === +groupId) {
         newDefaultId = (collection.data[0] as unknown as LokiObj).$loki
         await updateAppStorage({ defaultGroupId: newDefaultId })
-
-        console.log('新的默认分组', collection.data[0])
     }
     else newDefaultId = defaultGroupId
 

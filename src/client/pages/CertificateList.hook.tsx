@@ -4,6 +4,8 @@ import { Clear, Delete, Sort, Checked } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { useMoveCertificate, useDeleteCertificate } from '../services/certificate'
 import { useDeleteGroup } from '../services/certificateGroup'
+import { CertificateGroupDetail } from '@/types/http'
+import { DialogProps } from 'react-vant/es/dialog/PropsType'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -12,13 +14,15 @@ interface ConfigButtonProps {
 }
 
 export const useEditor = () => {
-    const { certificateList, selectedGroup, setUserProfile, setSelectedGroup } = useContext(UserContext)
+    const { groupList, certificateList, selectedGroup, setUserProfile, setSelectedGroup, refetchGroupList } = useContext(UserContext)
     // 是否显示操作按钮组
-    const [showConfigArea, setShowConfigArea] = useState(true)
+    const [showConfigArea, setShowConfigArea] = useState(false)
     // 被选中的凭证
     const [selectedItem, setSelectedItem] = useState<Record<number, boolean>>({})
     // 是否显示选择新分组弹窗
     const [showNewGroupDialog, setShowNewGroupDialog] = useState(false)
+    // 要移动到的目标分组
+    const [targetMoveGroupId, setTargetMoveGroupId] = useState<number | undefined>(undefined)
     // 移除分组
     const { mutate: deleteGroup } = useDeleteGroup((defaultGroupId: number) => {
         setUserProfile?.(old => {
@@ -26,6 +30,7 @@ export const useEditor = () => {
             return { ...old, defaultGroupId }
         })
         setSelectedGroup(defaultGroupId)
+        refetchGroupList()
     })
     // 移除凭证
     const { mutate: deleteCertificate } = useDeleteCertificate(selectedGroup)
@@ -48,6 +53,49 @@ export const useEditor = () => {
 
         moveCertificate({ ids, newGroupId })
         setShowNewGroupDialog(false)
+    }
+
+    const renderMoveGroupItem = (item: CertificateGroupDetail) => {
+        return (
+            <div
+                key={item.id}
+                className={
+                    'rounded-lg  ring-slate-300 py-2 mt-2 transition border border-slate-300 cursor-pointer ' +
+                    'hover:ring hover:ring-slate-500 active:scale-90 ' +
+                    '' +
+                    (targetMoveGroupId === item.id ? 'bg-slate-500 text-white hover:bg-slate-500' : 'hover:bg-slate-300 hover:text-black ')
+                }
+                onClick={() => setTargetMoveGroupId(item.id)}
+            >{item.name}</div>
+        )
+    }
+
+    const getNewGroupSelectProps = (): DialogProps => {
+        return {
+            visible: showNewGroupDialog,
+            title: '请选择要移动到的分组',
+            confirmButtonText: '移动',
+            showCancelButton: true,
+            closeOnClickOverlay: true,
+            onCancel: () => setShowNewGroupDialog(false),
+            onClose: () => setShowNewGroupDialog(false),
+            onConfirm: async () => {
+                if (!targetMoveGroupId) {
+                    Notify.show({ type: 'warning', message: '请选择要转移到的分组' })
+                    return
+                }
+                await onConfirmMove(targetMoveGroupId)
+                setTargetMoveGroupId(undefined)
+            },
+
+            children: (
+                <div className='text-center p-4'>
+                    {groupList.length <= 1
+                        ? <div className='text-gray-500'>没有可以转移到的分组</div>
+                        : groupList.filter(item => item.id !== selectedGroup).map(renderMoveGroupItem)}
+                </div>
+            )
+        }
     }
 
     const onDeleteGroup = async () => {
@@ -79,6 +127,11 @@ export const useEditor = () => {
     }
 
     const onMoveCertificate = async () => {
+        if (groupList.length <= 1) {
+            Notify.show({ type: 'warning', message: '没有可以转移的分组' })
+            return
+        }
+
         if (Object.keys(selectedItem).length === 0) {
             Notify.show({ type: 'warning', message: '请选择至少一个凭证' })
             return
@@ -117,6 +170,6 @@ export const useEditor = () => {
 
     return {
         showConfigArea, showNewGroupDialog, configButtons, selectedItem, setSelectedItem,
-        onSwitchConfigArea, onConfirmMove
+        onSwitchConfigArea, onConfirmMove, getNewGroupSelectProps
     }
 }

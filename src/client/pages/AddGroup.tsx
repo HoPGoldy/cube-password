@@ -93,7 +93,7 @@ const AddGroup = () => {
                     新建分组
                 </Header>
 
-                <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-4'>
+                <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 2xl:w-1/3 mt-4'>
                     <Form form={form} className='rounded-lg py-4 px-6 bg-white'>
                         <Form.Item
                             name="name"

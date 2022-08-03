@@ -1,9 +1,19 @@
 import { useMutation, useQuery } from 'react-query'
 import { CertificateGroup } from '@/types/app'
-import { AddGroupResp, CertificateListItem } from '@/types/http'
+import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
 import { Notify } from 'react-vant'
-import { queryClient } from '../components/QueryClientProvider'
+
+/**
+ * 获取分组列表
+ */
+export const getGroupList = async () => {
+    return sendGet<CertificateGroupDetail[]>('/group')
+}
+
+export const useGroupList = () => {
+    return useQuery('groupList', getGroupList)
+}
 
 /**
  * 获取指定分组的下属凭证
