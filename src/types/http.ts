@@ -37,7 +37,6 @@ export interface CertificateDetailResp<T = string> {
 export interface CertificateGroupDetail {
     id: number
     name: string
-    remark?: string
 }
 
 export interface AddGroupResp {
@@ -61,4 +60,15 @@ export interface LoginResp {
      * 默认展示的分组
      */
     defaultGroupId: number
+}
+
+/**
+ * 凭证移动请求数据
+ */
+export interface CertificateMoveReqBody {
+    ids: number[]
+    /**
+     * 要移动到的新分组
+     */
+    newGroupId: number
 }

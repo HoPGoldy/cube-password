@@ -1,8 +1,8 @@
 import { CertificateGroup } from '@/types/app'
 import { sha } from '@/utils/common'
 import { nanoid } from 'nanoid'
-import React, { useContext } from 'react'
-import { Form, Card, Field, Notify } from 'react-vant'
+import React, { useContext, FC } from 'react'
+import { Form, Notify } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { ArrowLeft } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
@@ -16,7 +16,42 @@ interface GroupForm {
     name: string
     password?: string
     passwordConfirm?: string
-    remark?: string
+}
+
+interface FieldProps {
+    type?: 'text' | 'password'
+    value?: string
+    label?: string
+    placeholder?: string
+    error?: boolean
+    errorMessage?: string
+    onChange?: (value: string) => void
+}
+
+const Field: FC<FieldProps> = (props) => {
+    const { type = 'text', label, value, onChange, error, errorMessage } = props
+
+    const colorClass = error
+        ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+        : 'border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+
+    return (
+        <div className='flex flex-col md:flex-row md:items-center'>
+            <span className='mr-4'>{label}</span>
+            <div className='grow'>
+                <input
+                    type={type}
+                    value={value}
+                    onChange={e => onChange && onChange(e.target.value)}
+                    placeholder={props.placeholder}
+                    className={'block px-3 py-2 min-h-[42px] my-2 w-full transition ' +
+                        'border border-solid rounded-md shadow-sm placeholder-slate-400 ' +
+                        'focus:outline-none ' + colorClass}
+                />
+                {error && <div className='text-red-500 text-sm'>{errorMessage}</div>}
+            </div>
+        </div>
+    )
 }
 
 const AddGroup = () => {
@@ -31,7 +66,6 @@ const AddGroup = () => {
 
         const postData: CertificateGroup = {
             name: values.name,
-            remark: values.remark || undefined,
             passwordSha: values.password ? sha(salt + values.password) : undefined,
             passwordSalt: values.password ? salt : undefined
         }
@@ -60,50 +94,42 @@ const AddGroup = () => {
                 </Header>
 
                 <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-4'>
-                    <Card round>
-                        <Form
-                            colon
-                            form={form}
-                            inputAlign="left"
+                    <Form form={form} className='rounded-lg py-4 px-6 bg-white'>
+                        <Form.Item
+                            name="name"
+                            label="分组名称"
+                            rules={[{ required: true, message: '分组名称不得为空' }]}
+                            customField
                         >
-                            <Form.Item
-                                name="name"
-                                label="分组名称"
-                                rules={[{ required: true, message: '分组名称不得为空' }]}
-                            >
-                                <Field required placeholder="请输入分组名称" />
-                            </Form.Item>
-                            <Form.Item
-                                name="password"
-                                label="分组密码"
-                            >
-                                <Field type="password" placeholder="可选，查看该分组内容时需要输入此密码" />
-                            </Form.Item>
-                            <Form.Item
-                                name="passwordConfirm"
-                                label="重复密码"
-                                validateTrigger="onChange"
-                                rules={[{ required: false, validator: validatePassword }]}
-                            >
-                                <Field type="password" placeholder="请输入相同的密码" />
-                            </Form.Item>
-                            <Form.Item name="remark" label="分组备注">
-                                <Field
-                                    rows={2}
-                                    autosize
-                                    type="textarea"
-                                    placeholder="请输入备注内容"
-                                    maxlength={50}
-                                    showWordLimit
-                                />
-                            </Form.Item>
-                        </Form>
-                    </Card>
+                            <Field />
+                        </Form.Item>
+                        <Form.Item
+                            name="password"
+                            label="分组密码"
+                            customField
+                        >
+                            <Field type='password' />
+                        </Form.Item>
+                        <Form.Item
+                            name="passwordConfirm"
+                            validateTrigger="onChange"
+                            customField
+                            label="重复密码"
+                            rules={[{ required: false, validator: validatePassword }]}
+                        >
+                            <Field type='password' />
+                        </Form.Item>
+                    </Form>
 
-                    <div className='hidden md:block mt-4'>
-                        <Button type="primary" block onClick={onSubmit} color={config?.buttonColor}>
+                    <div className='hidden md:block mt-6'>
+                        <Button block onClick={onSubmit} color={config?.buttonColor}>
                             提交
                         </Button>
+                    </div>
+
+                    <div className='w-full text-center text-gray-500 mt-6 select-none text-sm'>
+                        分组密码非必填<br />
+                        填写后仅用于查看分组，凭证依旧使用主密码进行加密
                     </div>
                 </div>
             </PageContent>
@@ -112,7 +138,7 @@ const AddGroup = () => {
                 <ActionIcon onClick={() => navigate(-1)}>
                     <ArrowLeft fontSize={24} />
                 </ActionIcon>
-                <ActionButton onClick={onSubmit}>提交</ActionButton>
+                <ActionButton onClick={onSubmit}>新建</ActionButton>
             </PageAction>
         </div>
     )

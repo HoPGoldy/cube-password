@@ -22,7 +22,7 @@ input[type="password"]::-ms-reveal{
         font-size: 16px;
     }
 
-    :root {
+    /* :root {
         --rv-font-size-xs: 12px !important;
         --rv-font-size-sm: 14px !important;
         --rv-font-size-md: 16px !important;
@@ -36,5 +36,5 @@ input[type="password"]::-ms-reveal{
         --rv-padding-xl: 2rem !important;
     
         --rv-cell-vertical-padding: var(--rv-padding-xs) !important;
-    }
+    } */
 }

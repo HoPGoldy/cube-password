@@ -7,9 +7,7 @@ import { setToken } from '../services/base'
 import { login, requireLogin } from '../services/user'
 
 const Register = () => {
-    const ctx = useContext(UserContext)
-    console.log('ctx', ctx)
-    const { setUserProfile, setGroupList, setSelectedGroup } = ctx
+    const { setUserProfile, setGroupList, setSelectedGroup } = useContext(UserContext)
     const navigate = useNavigate()
     const [password, setPassword] = useState('')
 

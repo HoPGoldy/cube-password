@@ -1,9 +1,9 @@
 
-import { CertificateDetailResp } from '@/types/http'
+import { CertificateDetailResp, CertificateMoveReqBody } from '@/types/http'
 import { useMutation, useQuery } from 'react-query'
 import { Notify } from 'react-vant'
 import { queryClient } from '../components/QueryClientProvider'
-import { sendGet, sendPost, sendPut, sendDelete } from './base'
+import { sendGet, sendPost, sendPut } from './base'
 
 /**
  * 获取凭证详情
@@ -55,6 +55,42 @@ export const useUpdateCertificate = (onSuccess: () => void) => {
             }
 
             onSuccess()
+        }
+    })
+}
+
+const deleteCertificate = async (ids: number[]) => {
+    return sendPut('/certificate/delete', { ids })
+}
+
+export const useDeleteCertificate = (groupId: number) => {
+    return useMutation(deleteCertificate, {
+        onSuccess: data => {
+            if (data.code !== 200) {
+                Notify.show({ type: 'danger', message: data.msg })
+                return
+            }
+
+            Notify.show({ type: 'success', message: '删除成功' })
+            queryClient.fetchQuery(['group', groupId, 'certificates'])
+        }
+    })
+}
+
+const moveCertificate = async (detail: CertificateMoveReqBody) => {
+    return sendPut('/certificate/move', detail)
+}
+
+export const useMoveCertificate = (groupId: number) => {
+    return useMutation(moveCertificate, {
+        onSuccess: data => {
+            if (data.code !== 200) {
+                Notify.show({ type: 'danger', message: data.msg })
+                return
+            }
+
+            Notify.show({ type: 'success', message: '移动成功' })
+            queryClient.fetchQuery(['group', groupId, 'certificates'])
         }
     })
 }

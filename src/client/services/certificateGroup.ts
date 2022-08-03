@@ -1,13 +1,14 @@
-import { useQuery } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import { CertificateGroup } from '@/types/app'
 import { AddGroupResp, CertificateListItem } from '@/types/http'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
+import { Notify } from 'react-vant'
+import { queryClient } from '../components/QueryClientProvider'
 
 /**
  * 获取指定分组的下属凭证
  */
 export const getGroupCertificates = async (groupId: number) => {
-    console.log('正在请求', groupId)
     return sendGet<CertificateListItem[]>(`/group/${groupId}/certificates`)
 }
 
@@ -34,13 +35,19 @@ export const updateGroup = async (id: number, detail: CertificateGroup) => {
 /**
  * 删除指定分组
  */
-export const deleteGroup = async (id: string) => {
+export const deleteGroup = async (id: number) => {
     return sendDelete(`/group/${id}`)
 }
 
-/**
- * 把一个分组下的凭证全部转移到另一个分组
- */
-export const moveCertificates = async (groupId: number, toGroupId: number) => {
-    return sendPut('/group/moveAll/', { groupId, toGroupId })
+export const useDeleteGroup = (onSuccess: () => unknown) => {
+    return useMutation(deleteGroup, {
+        onSuccess: data => {
+            if (data.code !== 200) {
+                Notify.show({ type: 'danger', message: data.msg })
+                return
+            }
+
+            Notify.show({ type: 'success', message: '删除成功' })
+        }
+    })
 }

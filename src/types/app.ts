@@ -7,10 +7,6 @@ export interface CertificateGroup {
      */
     name: string
     /**
-     * 分组备注
-     */
-    remark?: string
-    /**
      * 分组密码 sha512 摘要
      */
     passwordSha?: string

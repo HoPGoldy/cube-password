@@ -55,7 +55,6 @@ groupRouter.get('/group/:groupId/certificates', async ctx => {
 
 const addGroupSchema = Joi.object<CertificateGroup>({
     name: Joi.string().required(),
-    remark: Joi.string().empty(),
     passwordSha: Joi.string().empty(),
     passwordSalt: Joi.string().empty(),
 }).with('passwordSha', 'passwordSalt')
@@ -89,7 +88,6 @@ groupRouter.post('/addGroup', async ctx => {
 
 const updateGroupSchema = Joi.object<Partial<CertificateGroup>>({
     name: Joi.string(),
-    remark: Joi.string(),
     passwordSha: Joi.string(),
     passwordSalt: Joi.string(),
 }).with('passwordSha', 'passwordSalt')
@@ -129,21 +127,6 @@ groupRouter.delete('/group/:groupId', async ctx => {
 
     const collection = await getGroupCollection()
     const result = collection.findAndRemove({ $loki: Number(groupId) })
-    response(ctx, { code: 200, data: result })
-})
-
-/**
- * 将分组下的所有凭证移动到其他分组
- */
-groupRouter.put('/group/moveAll/', async ctx => {
-    const { groupId, toGroupId } = ctx.request.body
-    const collection = await getCertificateCollection()
-    const result = collection.findAndUpdate({ groupId: Number(groupId) }, old => {
-        return {
-            ...old,
-            groupId: Number(toGroupId)
-        }
-    })
     response(ctx, { code: 200, data: result })
 })
 
