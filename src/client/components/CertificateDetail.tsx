@@ -6,9 +6,8 @@ import { AppConfigContext } from './AppConfigProvider'
 import CertificateFieldItem from './CertificateFieldItem'
 import { CertificateField } from '@/types/app'
 import { UserContext } from './UserProvider'
-import { addCertificate, getCertificate, useUpdateCertificate } from '../services/certificate'
-import { AppResponse } from '@/types/global'
-import { aes } from '@/utils/common'
+import { useCertificateDetail, useUpdateCertificate } from '../services/certificate'
+import { aes, aesDecrypt } from '@/utils/common'
 
 const { useClickAway } = hooks
 
@@ -28,7 +27,7 @@ const CertificateDetail: FC<Props> = (props) => {
     const { groupId, certificateId, visible, onClose } = props
     const [form] = Form.useForm()
     const [config] = useContext(AppConfigContext)
-    const [userProfile] = useContext(UserContext)
+    const { userProfile } = useContext(UserContext)
     // 是否修改了凭证内容
     const [contentChange, setContentChange] = useState(false)
     // 页面是否加载中
@@ -39,41 +38,57 @@ const CertificateDetail: FC<Props> = (props) => {
     const newFieldIndex = useRef(1)
     // 弹出框元素引用
     const dialogRef = useRef<HTMLDivElement>(null)
+    // 获取凭证详情
+    const { refetch } = useCertificateDetail(certificateId)
     // 提交凭证
-    const { mutate, isLoading: submiting } = useUpdateCertificate(userProfile?.password || '')
+    const { mutate, isLoading: submiting } = useUpdateCertificate(() => {
+        Notify.show({ type: 'success', message: `${certificateId ? '更新' : '添加'}成功` })
+        onClose(true)
+    })
 
     // 初始化窗口
     useEffect(() => {
-        setContentChange(false)
+        if (!userProfile) {
+            Notify.show({ type: 'danger', message: '无法解析主密码，请重新登录' })
+            return
+        }
 
         const init = async () => {
-            if (!userProfile) {
-                Notify.show({ type: 'danger', message: '无法解析主密码，请重新登录' })
+            setLoading(true)
+            if (!certificateId) {
+                setTitle('新密码')
+                form.setFieldValue('fields', DEFAULT_FIELDS)
+                setLoading(false)
                 return
             }
 
-            if (certificateId) {
-                setLoading(true)
-                setTitle('载入中')
-                const resp = await getCertificate(certificateId, userProfile.password)
-                setLoading(false)
+            setTitle('载入中')
+            const { data: resp } = await refetch()
 
-                if (resp.code !== 200 || !resp.data) {
-                    Notify.show({ type: 'danger', message: resp.msg || '获取凭证失败' })
-                    return
-                }
-                setTitle(resp.data.name)
-                form.setFieldValue('fields', resp.data.content)
+            if (!resp || resp.code !== 200 || !resp.data) {
+                Notify.show({ type: 'danger', message: resp?.msg || '获取凭证失败' })
+                setTitle('载入失败')
+                return
             }
-            else {
-                setTitle('新密码')
-                setLoading(false)
-                form.setFieldValue('fields', DEFAULT_FIELDS)
+
+            setTitle(resp.data.name)
+            try {
+                const content = JSON.parse(aesDecrypt(resp.data.content, userProfile.password))
+                form.setFieldValue('fields', content)
             }
+            catch (e) {
+                Notify.show({ type: 'danger', message: resp?.msg || '凭证解密失败' })
+            }
+            setLoading(false)
         }
 
         init()
     }, [certificateId])
+
+    useEffect(() => {
+        if (visible) return
+        setContentChange(false)
+    }, [visible])
 
     const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value)
@@ -92,29 +107,12 @@ const CertificateDetail: FC<Props> = (props) => {
             return
         }
 
-        mutate({ id: certificateId, name: title, fields, groupId })
-        let resp: AppResponse
-        // 更新凭证
-        if (certificateId) {
-            resp = await updateCertificate(certificateId, {
-                name: title,
-                groupId,
-                content: aes(JSON.stringify(fields), userProfile.password)
-            })
-        }
-        // 新增凭证
-        else {
-            resp = await addCertificate(title, groupId, fields, userProfile.password)
-        }
-
-        const tip = certificateId ? '更新' : '添加'
-        if (resp.code !== 200) {
-            Notify.show({ type: 'danger', message: resp.msg || `${tip}失败` })
-            return
-        }
-
-        Notify.show({ type: 'success', message: `${tip}成功` })
-        onClose(true)
+        mutate({
+            id: certificateId,
+            name: title,
+            content: aes(JSON.stringify(fields), userProfile.password),
+            groupId
+        })
     }
 
     // 关闭弹出框确认
@@ -193,7 +191,7 @@ const CertificateDetail: FC<Props> = (props) => {
 
             <div className='flex flex-row justify-between'>
                 <Button
-                    className={'!mt-4 md:!mr-4 ' + (showUpdateBtn ? '!w-[20%] md:!w-[50%]' : '!w-full')}
+                    className={'!mt-4 ' + (showUpdateBtn ? '!w-[20%] md:!w-[50%] md:!mr-4' : '!w-full')}
                     onClick={onConfirmClose}
                 >
                     返回
@@ -206,7 +204,6 @@ const CertificateDetail: FC<Props> = (props) => {
                 >
                     {certificateId ? '更新' : '提交'}
                 </Button>}
-                
             </div>
         </>)
     }
@@ -230,7 +227,7 @@ const CertificateDetail: FC<Props> = (props) => {
                     <div className='hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500'>
                         <Question className='mr-2' /> 标题名和字段名均可修改
                     </div>
-                    
+
                     {renderContent()}
                 </div>
             </div>

@@ -7,7 +7,9 @@ import { setToken } from '../services/base'
 import { login, requireLogin } from '../services/user'
 
 const Register = () => {
-    const [, setUserProfile] = useContext(UserContext)
+    const ctx = useContext(UserContext)
+    console.log('ctx', ctx)
+    const { setUserProfile, setGroupList, setSelectedGroup } = ctx
     const navigate = useNavigate()
     const [password, setPassword] = useState('')
 
@@ -33,8 +35,11 @@ const Register = () => {
             Notify.show({ type: 'danger', message: loginResp.msg || '登录失败' })
             return
         }
+        const { token, defaultGroupId, groups } = loginResp.data
 
-        setUserProfile({ password, token: loginResp.data.token })
+        setUserProfile({ password, token, defaultGroupId })
+        setGroupList(groups)
+        setSelectedGroup(defaultGroupId)
         setToken(loginResp.data.token)
         navigate('/')
     }

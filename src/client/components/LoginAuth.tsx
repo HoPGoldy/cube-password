@@ -3,9 +3,9 @@ import { Navigate } from 'react-router-dom'
 import { UserContext } from './UserProvider'
 
 export const LoginAuth: FC = ({ children }) => {
-    const [user] = useContext(UserContext)
+    const { userProfile } = useContext(UserContext)
 
-    if (!user) {
+    if (!userProfile) {
         return (
             <Navigate to="/login" replace />
         )

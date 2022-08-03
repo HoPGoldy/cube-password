@@ -6,6 +6,8 @@ import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
 import Joi from 'joi'
 import { sha } from '@/utils/common'
 import { STATUS_CODE } from '@/config'
+import { getCertificateGroupList } from './certificateGroup'
+import { LoginResp } from '@/types/http'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -39,7 +41,7 @@ loginRouter.post('/login', async ctx => {
         return
     }
 
-    const { passwordSha } = await getAppStorage()
+    const { passwordSha, defaultGroupId } = await getAppStorage()
     if (!passwordSha) {
         response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
         return
@@ -51,7 +53,15 @@ loginRouter.post('/login', async ctx => {
     }
 
     const token = await createToken()
-    response(ctx, { code: 200, data: { token } })
+    const groups = await getCertificateGroupList()
+
+    const data: LoginResp = {
+        token,
+        groups,
+        defaultGroupId
+    }
+
+    response(ctx, { code: 200, data })
 })
 
 const registerSchema = Joi.object<{ code: string, salt: string }>({

@@ -5,7 +5,7 @@ import React, { useContext } from 'react'
 import { Form, Card, Field, Notify } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { ArrowLeft } from '@react-vant/icons'
-import { GroupContext } from '../components/GroupProvider'
+import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { addGroup } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
@@ -20,7 +20,7 @@ interface GroupForm {
 }
 
 const AddGroup = () => {
-    const { setGroupList, setSelectedGroup } = useContext(GroupContext)
+    const { setGroupList, setSelectedGroup } = useContext(UserContext)
     const [config] = useContext(AppConfigContext)
     const [form] = Form.useForm<GroupForm>()
     const navigate = useNavigate()

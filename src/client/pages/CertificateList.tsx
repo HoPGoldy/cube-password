@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import { Button } from '@/client/components/Button'
 import { Loading } from 'react-vant'
 import { ArrowLeft, SettingO } from '@react-vant/icons'
-import { GroupContext } from '../components/GroupProvider'
+import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from 'react-router-dom'
@@ -11,7 +11,7 @@ import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 
 const CertificateList = () => {
-    const { certificateList, groupList, selectedGroup, refetchCertificateList } = useContext(GroupContext)
+    const { certificateList, groupList, selectedGroup, refetchCertificateList, certificateListLoading } = useContext(UserContext)
     const [config] = useContext(AppConfigContext)
     const navigate = useNavigate()
 
@@ -50,7 +50,7 @@ const CertificateList = () => {
     }
 
     const renderCertificateList = () => {
-        if (!certificateList) return (
+        if (!certificateList || certificateListLoading) return (
             <div className='flex justify-center items-center text-gray-400 w-full mt-16 select-none'>
                 <Loading className='mr-2' /> 加载中，请稍后...
             </div>

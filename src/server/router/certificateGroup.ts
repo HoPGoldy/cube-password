@@ -2,16 +2,19 @@ import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
 import Joi from 'joi'
-import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki } from '../lib/loki'
-import { CertificateDetail, CertificateGroup } from '@/types/app'
+import { getCertificateCollection, getGroupCollection, saveLoki } from '../lib/loki'
+import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
-import { AddGroupResp, CertificateGroupDetail, CertificateListItem, FirstScreenResp } from '@/types/http'
+import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
 import { replaceLokiInfo } from '@/utils/common'
 import dayjs from 'dayjs'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
-const getCertificateGroupList = async () => {
+/**
+ * 获取分组列表
+ */
+export const getCertificateGroupList = async () => {
     const collection = await getGroupCollection()
     return collection.data.map<CertificateGroupDetail>(replaceLokiInfo)
 }
@@ -48,24 +51,6 @@ groupRouter.get('/group/:groupId/certificates', async ctx => {
     const { groupId } = ctx.params
     const certificates = await getCertificateList(Number(groupId))
     response(ctx, { code: 200, data: certificates })
-})
-
-/**
- * 获取首屏内容
- * 包含分组列表和当前分组的详情
- */
-groupRouter.get('/firstScreen', async ctx => {
-    const { defaultGroupId } = await getAppStorage()
-    const certificates = await getCertificateList(defaultGroupId)
-    const groups = await getCertificateGroupList()
-
-    const data: FirstScreenResp = {
-        certificates,
-        groups,
-        defaultGroupId
-    }
-
-    response(ctx, { code: 200, data })
 })
 
 const addGroupSchema = Joi.object<CertificateGroup>({

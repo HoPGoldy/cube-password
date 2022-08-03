@@ -1,76 +1,60 @@
-import { CertificateDetail, CertificateField, CertificateGroup } from '@/types/app'
-import { AppResponse } from '@/types/global'
-import { AddGroupResp, CertificateDetailResp, FirstScreenResp } from '@/types/http'
-import { aes, aesDecrypt } from '@/utils/common'
+
+import { CertificateDetailResp } from '@/types/http'
 import { useMutation, useQuery } from 'react-query'
+import { Notify } from 'react-vant'
+import { queryClient } from '../components/QueryClientProvider'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
-
-/**
- * 新增凭证
- */
-export const addCertificate = async (name: string, groupId: number, fields: CertificateField[], password: string) => {
-    const content = aes(JSON.stringify(fields), password)
-    return sendPost('/certificate', { name, groupId, content })
-}
-
-type CertificateFrontendDetail = AppResponse<CertificateDetailResp<CertificateField[]>>
 
 /**
  * 获取凭证详情
  * 内部会对后端传来的加密凭证进行解密
  */
-export const getCertificate = async (id: number, password: string): Promise<CertificateFrontendDetail> => {
-    const resp = await sendGet<CertificateDetailResp>(`/certificate/${id}`)
-    if (resp.code !== 200 || !resp.data) return resp as CertificateFrontendDetail
-
-    try {
-        const content = JSON.parse(aesDecrypt(resp.data.content, password))
-        resp.data.content = content
-    }
-    catch (e) {
-        console.error('凭证解密失败', e)
-        resp.code = 400
-        resp.msg = '凭证解密失败，请联系管理员'
-    }
-
-    return resp as CertificateFrontendDetail
+export const getCertificate = async (id: number | undefined) => {
+    return await sendGet<CertificateDetailResp>(`/certificate/${id}`)
 }
 
-export const useCertificateDetail = (id: number, password: string) => {
-    return useQuery(['certificate', id], () => getCertificate(id, password))
-}
-
-export const updateCertificate1 = async (id: number, data: Partial<CertificateDetail>) => {
-    return sendPut(`/certificate/${id}`, data)
+export const useCertificateDetail = (id: number | undefined) => {
+    return useQuery(['certificate', id], () => getCertificate(id), {
+        enabled: false,
+    })
 }
 
 interface PostData {
     id?: number
     name: string
     groupId: number
-    fields: CertificateField[]
+    content: string
 }
 
-export const useUpdateCertificate = (password: string) => {
-    const updateCertificate = (detail: PostData) => {
-        // 更新凭证
-        if ('id' in detail) {
-            const updateData: Partial<PostData & { content?: string }> = { ...detail }
-            delete updateData.fields
-            if (detail.fields) {
-                updateData.content = aes(JSON.stringify(detail.fields), password)
-            }
-
-            return sendPut(`/certificate/${detail.id}`, updateData)
-        }
-        // 新增凭证
-        else {
-            const { fields, groupId, name } = detail
-            const content = aes(JSON.stringify(fields), password)
-            return sendPost('/certificate', { name, groupId, content })
-        }
+const updateCertificate = async (detail: PostData) => {
+    // 新增凭证
+    if (!detail.id) {
+        const resp = await sendPost('/certificate', detail)
+        return { resp, detail }
     }
 
-    return useMutation(updateCertificate)
+    const data = { ...detail }
+    delete data.id
+    // 更新凭证
+    const resp = await sendPut(`/certificate/${detail.id}`, data)
+
+    return { resp, detail }
 }
 
+export const useUpdateCertificate = (onSuccess: () => void) => {
+    return useMutation(updateCertificate, {
+        onSuccess: data => {
+            if (data.resp.code !== 200) {
+                Notify.show({ type: 'danger', message: data.resp.msg })
+                return
+            }
+
+            // 更新请求缓存
+            if (data.detail.id) {
+                queryClient.setQueryData(['certificate', data.detail.id], data.detail)
+            }
+
+            onSuccess()
+        }
+    })
+}

@@ -25,24 +25,6 @@ export interface CertificateListItem {
 }
 
 /**
- * 应用进入首页后要获取的数据
- */
-export interface FirstScreenResp {
-    /**
-     * 默认的分组 id
-     */
-    defaultGroupId: number
-    /**
-     * 默认分组的凭证列表
-     */
-    certificates: CertificateListItem[]
-    /**
-     * 所有的分组信息
-     */
-    groups: CertificateGroupDetail[]
-}
-
-/**
  * 凭证详情接口返回值
  */
 export interface CertificateDetailResp<T = string> {
@@ -61,4 +43,22 @@ export interface CertificateGroupDetail {
 export interface AddGroupResp {
     newList: CertificateGroupDetail[]
     newId: number
+}
+
+/**
+ * 登录接口返回值
+ */
+export interface LoginResp {
+    /**
+     * 用户鉴权令牌
+     */
+    token: string
+    /**
+     * 用户所有的分组信息
+     */
+    groups: CertificateGroupDetail[]
+    /**
+     * 默认展示的分组
+     */
+    defaultGroupId: number
 }
