@@ -56,8 +56,7 @@ export const useEditor = () => {
             return
         }
 
-        moveCertificate({ ids, newGroupId })
-        setShowNewGroupDialog(false)
+        await moveCertificate({ ids, newGroupId })
     }
 
     const renderMoveGroupItem = (item: CertificateGroupDetail) => {
@@ -91,6 +90,7 @@ export const useEditor = () => {
                 }
                 await onConfirmMove(targetMoveGroupId)
                 setTargetMoveGroupId(undefined)
+                setShowNewGroupDialog(false)
             },
 
             children: (
@@ -110,6 +110,7 @@ export const useEditor = () => {
             confirmButtonColor: '#ef4444',
             onConfirm: async () => {
                 await deleteGroup(selectedGroup)
+                setShowConfigArea(false)
             }
         })
     }
@@ -125,10 +126,12 @@ export const useEditor = () => {
             message: `确定要删除这 ${ids.length} 个凭证？删除后将无法恢复`,
             confirmButtonText: '删除',
             confirmButtonColor: '#ef4444',
-            closeOnClickOverlay: true
+            closeOnClickOverlay: true,
+            onConfirm: async () => {
+                await deleteCertificate(ids)
+                setShowConfigArea(false)
+            }
         })
-
-        deleteCertificate(ids)
     }
 
     const onMoveCertificate = async () => {
