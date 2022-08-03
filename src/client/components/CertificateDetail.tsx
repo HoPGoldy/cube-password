@@ -174,7 +174,7 @@ const CertificateDetail: FC<Props> = (props) => {
                                 )
                             })}
                         </div>
-                        <div className='mx-4 pt-4 pb-6'>
+                        <div className='mx-4 mt-4 pb-4'>
                             <Button
                                 plain
                                 className='!border-slate-300'
@@ -202,7 +202,7 @@ const CertificateDetail: FC<Props> = (props) => {
                     onClick={onFinish}
                     loading={submiting}
                 >
-                    {certificateId ? '更新' : '提交'}
+                    {certificateId ? '更新' : '保存'}
                 </Button>}
             </div>
         </>)
@@ -221,7 +221,9 @@ const CertificateDetail: FC<Props> = (props) => {
                     <input
                         type="text"
                         value={title}
+                        autoFocus
                         onChange={onTitleChange}
+                        placeholder="请输入密码名"
                         className='font-bold text-xl bg-inherit mb-4'
                     />
                     <div className='hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500'>
