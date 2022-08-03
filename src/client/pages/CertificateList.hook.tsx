@@ -1,4 +1,4 @@
-import React, { useContext, useState, ReactElement } from 'react'
+import React, { useContext, useState, ReactElement, useEffect } from 'react'
 import { Dialog, Notify } from 'react-vant'
 import { Clear, Delete, Sort, Checked } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
@@ -36,6 +36,11 @@ export const useEditor = () => {
     const { mutate: deleteCertificate } = useDeleteCertificate(selectedGroup)
     // 移动凭证
     const { mutate: moveCertificate } = useMoveCertificate(selectedGroup)
+
+    // 选择了其他的分组，隐藏操作按钮
+    useEffect(() => {
+        setShowConfigArea(false)
+    }, [selectedGroup])
 
     // 切换是否显示编辑模式
     const onSwitchConfigArea = () => {

@@ -39,7 +39,7 @@ const Register = () => {
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
         setToken(loginResp.data.token)
-        navigate('/')
+        navigate('/group')
     }
 
     return (
