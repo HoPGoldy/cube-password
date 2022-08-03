@@ -12,7 +12,7 @@ interface ConfigButtonProps {
 }
 
 export const useEditor = () => {
-    const { certificateList, selectedGroup } = useContext(UserContext)
+    const { certificateList, selectedGroup, setUserProfile, setSelectedGroup } = useContext(UserContext)
     // 是否显示操作按钮组
     const [showConfigArea, setShowConfigArea] = useState(true)
     // 被选中的凭证
@@ -20,8 +20,12 @@ export const useEditor = () => {
     // 是否显示选择新分组弹窗
     const [showNewGroupDialog, setShowNewGroupDialog] = useState(false)
     // 移除分组
-    const { mutate: deleteGroup } = useDeleteGroup((data: any) => {
-        console.log(data)
+    const { mutate: deleteGroup } = useDeleteGroup((defaultGroupId: number) => {
+        setUserProfile?.(old => {
+            if (!old) return old
+            return { ...old, defaultGroupId }
+        })
+        setSelectedGroup(defaultGroupId)
     })
     // 移除凭证
     const { mutate: deleteCertificate } = useDeleteCertificate(selectedGroup)
@@ -67,7 +71,8 @@ export const useEditor = () => {
         await Dialog.confirm({
             message: `确定要删除这 ${ids.length} 个凭证？删除后将无法恢复`,
             confirmButtonText: '删除',
-            confirmButtonColor: '#ef4444'
+            confirmButtonColor: '#ef4444',
+            closeOnClickOverlay: true
         })
 
         deleteCertificate(ids)

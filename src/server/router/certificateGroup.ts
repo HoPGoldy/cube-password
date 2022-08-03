@@ -2,7 +2,7 @@ import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
 import Joi from 'joi'
-import { getCertificateCollection, getGroupCollection, saveLoki } from '../lib/loki'
+import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
 import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
@@ -126,8 +126,25 @@ groupRouter.delete('/group/:groupId', async ctx => {
     }
 
     const collection = await getGroupCollection()
-    const result = collection.findAndRemove({ $loki: Number(groupId) })
-    response(ctx, { code: 200, data: result })
+    // 移除分组
+    const needDeleteGroup = collection.get(+groupId)
+    console.log('被移除分组', needDeleteGroup)
+    collection.remove(needDeleteGroup)
+
+    const { defaultGroupId } = await getAppStorage()
+
+    // 看一下是不是把默认分组移除了，是的话就更新一下
+    let newDefaultId: number
+    if (defaultGroupId === +groupId) {
+        newDefaultId = (collection.data[0] as unknown as LokiObj).$loki
+        await updateAppStorage({ defaultGroupId: newDefaultId })
+
+        console.log('新的默认分组', collection.data[0])
+    }
+    else newDefaultId = defaultGroupId
+
+    response(ctx, { code: 200, data: newDefaultId })
+    saveLoki()
 })
 
 export { groupRouter }

@@ -36,18 +36,19 @@ export const updateGroup = async (id: number, detail: CertificateGroup) => {
  * 删除指定分组
  */
 export const deleteGroup = async (id: number) => {
-    return sendDelete(`/group/${id}`)
+    return sendDelete<number>(`/group/${id}`)
 }
 
-export const useDeleteGroup = (onSuccess: () => unknown) => {
+export const useDeleteGroup = (onSuccess: (nextDefaultGroupId: number) => unknown) => {
     return useMutation(deleteGroup, {
         onSuccess: data => {
-            if (data.code !== 200) {
+            if (data.code !== 200 || !data.data) {
                 Notify.show({ type: 'danger', message: data.msg })
                 return
             }
 
             Notify.show({ type: 'success', message: '删除成功' })
+            onSuccess(data.data)
         }
     })
 }

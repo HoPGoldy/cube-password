@@ -73,6 +73,7 @@ certificateRouter.put('/certificate/move', async ctx => {
     })
 
     response(ctx, { code: 200 })
+    saveLoki()
 })
 
 const addCertificateSchema = Joi.object<CertificateDetail>({

@@ -177,7 +177,7 @@ const CertificateList = () => {
                     title="请选择要移动到的分组"
                     showCancelButton={false}
                     showConfirmButton={false}
-                    closeOnClickOverlay={true}
+                    closeOnClickOverlay
                 >
                     <div className='px-4 pt-6 pb-8 text-center'>
                         {groupList.filter(item => item.id !== selectedGroup).map(renderMoveGroupItem)}
