@@ -47,12 +47,15 @@ const CertificateFieldItem: FC<Props> = (props) => {
     const renderIconButton = (buttonProps: IconButtonProps) => {
         const { Icon, className, onClick } = buttonProps
         return (
-            <div className={
-                'ml-2 my-1 h-[34px] w-[34px] flex justify-center items-center rounded-lg shrink-0 ' +
-                'hover:ring active:scale-90 transition cursor-pointer ' +
-                className
-            }>
-                <Icon color='white' fontSize={24} onClick={onClick} />
+            <div
+                className={
+                    'ml-2 my-1 h-[34px] w-[34px] flex justify-center items-center rounded-lg shrink-0 ' +
+                    'hover:ring active:scale-90 transition cursor-pointer ' +
+                    className
+                }
+                onClick={onClick}
+            >
+                <Icon color='white' fontSize={24} />
             </div>
         )
     }
@@ -70,17 +73,19 @@ const CertificateFieldItem: FC<Props> = (props) => {
                     <input
                         type={hiddenPassword ? 'password' : 'text'}
                         value={value?.value}
+                        disabled
                         onChange={e => onValueChange(e.target.value)}
                         className='block grow px-3 py-2 w-full min-h-[42px] 
-                            border border-slate-300 rounded-md shadow-sm placeholder-slate-400
-                            focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+                            border border-slate-300 bg-slate-100 hover:bg-white rounded-md shadow-sm placeholder-slate-400 
+                            focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500'
                     /> :
                     <Textarea
                         value={value?.value}
                         onChange={e => onValueChange(e.target.value)}
+                        disabled
                         className='block grow px-3 py-2 w-full 
-                            border border-slate-300 rounded-md shadow-sm placeholder-slate-400
-                            focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+                            border border-slate-300 bg-slate-100 hover:bg-white rounded-md shadow-sm placeholder-slate-400 
+                            focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500'
                     />
                 }
 

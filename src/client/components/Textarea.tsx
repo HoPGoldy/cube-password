@@ -3,6 +3,7 @@ import React, { ChangeEventHandler, FC, useEffect, useRef, useState } from 'reac
 interface Props {
     className?: string
     value?: string
+    disabled?: boolean
     onChange: ChangeEventHandler<HTMLTextAreaElement>
 }
 
@@ -10,7 +11,7 @@ interface Props {
  * 支持自适应高度的 textarea
  */
 const Textarea: FC<Props> = (props) => {
-    const { className, value, onChange } = props
+    const { className, value, disabled, onChange } = props
     const [textareaHeight, setTextareaHeight] = useState(42)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -23,6 +24,7 @@ const Textarea: FC<Props> = (props) => {
         <textarea
             ref={textareaRef}
             value={value}
+            disabled={disabled}
             onChange={onChange}
             rows={1}
             style={{ height: textareaHeight + 'px' }}
