@@ -3,9 +3,10 @@ import { Dialog, Notify } from 'react-vant'
 import { Clear, Delete, Sort, Checked } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { useMoveCertificate, useDeleteCertificate } from '../services/certificate'
-import { useDeleteGroup } from '../services/certificateGroup'
+import { deleteGroup } from '../services/certificateGroup'
 import { CertificateGroupDetail } from '@/types/http'
 import { DialogProps } from 'react-vant/es/dialog/PropsType'
+import { useMutation } from 'react-query'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -23,23 +24,28 @@ export const useEditor = () => {
     const [showNewGroupDialog, setShowNewGroupDialog] = useState(false)
     // 要移动到的目标分组
     const [targetMoveGroupId, setTargetMoveGroupId] = useState<number | undefined>(undefined)
-    // 移除分组
-    const { mutate: deleteGroup } = useDeleteGroup((defaultGroupId: number) => {
-        setUserProfile?.(old => {
-            if (!old) return old
-            return { ...old, defaultGroupId }
-        })
-        setSelectedGroup(defaultGroupId)
-        refetchGroupList()
-    })
     // 移除凭证
     const { mutate: deleteCertificate } = useDeleteCertificate(selectedGroup)
     // 移动凭证
     const { mutate: moveCertificate } = useMoveCertificate(selectedGroup)
+    // 移除分组
+    const { mutate: runDeleteGroup } = useMutation(deleteGroup, {
+        onSuccess: defaultGroupId => {
+            Notify.show({ type: 'success', message: '删除成功' })
+
+            setUserProfile?.(old => {
+                if (!old) return old
+                return { ...old, defaultGroupId }
+            })
+            setSelectedGroup(defaultGroupId)
+            refetchGroupList()
+        }
+    })
 
     // 选择了其他的分组，隐藏操作按钮
     useEffect(() => {
         setShowConfigArea(false)
+        setSelectedItem({})
     }, [selectedGroup])
 
     // 切换是否显示编辑模式
@@ -109,7 +115,7 @@ export const useEditor = () => {
             confirmButtonText: '删除',
             confirmButtonColor: '#ef4444',
             onConfirm: async () => {
-                await deleteGroup(selectedGroup)
+                await runDeleteGroup(selectedGroup)
                 setShowConfigArea(false)
             }
         })

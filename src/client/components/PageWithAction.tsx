@@ -62,7 +62,7 @@ type ActionButtonProps = {
  * 底部操作栏中的按钮
  */
 export const ActionButton: FC<ActionButtonProps> = (props) => {
-    const [config] = useContext(AppConfigContext)
+    const config = useContext(AppConfigContext)
     const styles = { background: props.color || config?.buttonColor || 'f000' }
 
     return (

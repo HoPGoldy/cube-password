@@ -18,27 +18,26 @@ const Register = () => {
     }, [password])
 
     const onRegister = async () => {
-        const resp = await requireLogin()
-        if (resp.code !== 200 || !resp.data) {
-            if (resp.code === STATUS_CODE.NOT_REGISTER) {
-                Notify.show({ type: 'danger', message: resp.msg || '请先注册' })
+        const resp = await requireLogin().catch(error => {
+            if (error.code === STATUS_CODE.NOT_REGISTER) {
+                Notify.show({ type: 'danger', message: error.msg || '请先注册' })
                 location.pathname = 'register.html'
             }
-            return
-        }
+        })
 
-        const { salt, challenge } = resp.data
-        const loginResp = await login(password, salt, challenge)
-        if (loginResp.code !== 200 || !loginResp.data) {
-            Notify.show({ type: 'danger', message: loginResp.msg || '登录失败' })
-            return
-        }
-        const { token, defaultGroupId, groups } = loginResp.data
+        if (!resp) return
+        const { salt, challenge } = resp
+        const loginResp = await login(password, salt, challenge).catch(error => {
+            Notify.show({ type: 'danger', message: error.msg || '登录失败' })
+        })
+
+        if (!loginResp) return
+        const { token, defaultGroupId, groups } = loginResp
 
         setUserProfile({ password, token, defaultGroupId })
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
-        setToken(loginResp.data.token)
+        setToken(loginResp.token)
         navigate('/group')
     }
 

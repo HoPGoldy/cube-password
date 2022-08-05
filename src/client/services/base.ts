@@ -1,6 +1,8 @@
 import qs from 'qs'
 import { history } from '../route'
 import { AppResponse } from '@/types/global'
+import { Notify } from 'react-vant'
+import { useQuery } from 'react-query'
 
 // 后端地址
 const baseURL = '/api'
@@ -22,7 +24,7 @@ export const setToken = (newToken: string | null) => {
  * @param url 请求 url
  * @param requestInit 请求初始化配置
  */
-const fetcher = async <T = Response>(url: string, requestInit: RequestInit = {}): Promise<T> => {
+const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}): Promise<T> => {
     const init = {
         ...requestInit,
         headers: { ...requestInit.headers },
@@ -36,7 +38,13 @@ const fetcher = async <T = Response>(url: string, requestInit: RequestInit = {})
         history.push('/login', { replace: true })
     }
 
-    return resp.json()
+    const data: AppResponse<T> = await resp.json()
+    if (data.code !== 200) {
+        Notify.show({ type: 'danger', message: data.msg || '未知错误' })
+        throw data
+    }
+
+    return data.data as T
 }
 
 /**
@@ -49,7 +57,7 @@ export const sendGet = async function <T>(url: string, query = {}) {
     const requestUrl = url + qs.stringify(query, { addQueryPrefix: true })
     const config: RequestInit = { method: 'GET' }
 
-    return fetcher<AppResponse<T>>(requestUrl, config)
+    return fetcher<T>(requestUrl, config)
 }
 
 /**
@@ -65,7 +73,7 @@ export const sendPost = async function <T>(url: string, body = {}) {
         body: JSON.stringify(body)
     }
 
-    return fetcher<AppResponse<T>>(url, config)
+    return fetcher<T>(url, config)
 }
 
 /**
@@ -81,7 +89,7 @@ export const sendPut = async function <T>(url: string, body = {}) {
         body: JSON.stringify(body)
     }
 
-    return fetcher<AppResponse<T>>(url, config)
+    return fetcher<T>(url, config)
 }
 
 /**
@@ -97,5 +105,11 @@ export const sendDelete = async function <T>(url: string, body = {}) {
         body: JSON.stringify(body)
     }
 
-    return fetcher<AppResponse<T>>(url, config)
+    return fetcher<T>(url, config)
+}
+
+type GetOptions = Parameters<typeof useQuery>[2]
+
+export const useFetch = (url: string, query = {}, options?: GetOptions) => {
+    return useQuery([url, query], () => sendGet(url, query), options)
 }

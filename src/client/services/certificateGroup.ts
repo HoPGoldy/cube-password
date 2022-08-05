@@ -52,13 +52,8 @@ export const deleteGroup = async (id: number) => {
 export const useDeleteGroup = (onSuccess: (nextDefaultGroupId: number) => unknown) => {
     return useMutation(deleteGroup, {
         onSuccess: data => {
-            if (data.code !== 200 || !data.data) {
-                Notify.show({ type: 'danger', message: data.msg })
-                return
-            }
-
             Notify.show({ type: 'success', message: '删除成功' })
-            onSuccess(data.data)
+            onSuccess(data)
         }
     })
 }

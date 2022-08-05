@@ -28,7 +28,7 @@ const DEFAULT_FIELDS: CertificateField[] = [
 const CertificateDetail: FC<Props> = (props) => {
     const { groupId, certificateId, visible, onClose } = props
     const [form] = Form.useForm()
-    const [config] = useContext(AppConfigContext)
+    const config = useContext(AppConfigContext)
     const { userProfile } = useContext(UserContext)
     // 是否禁用编辑，在查看详情时为 true
     const [disabled, setDisabled] = useState(true)
@@ -75,20 +75,18 @@ const CertificateDetail: FC<Props> = (props) => {
 
             setTitle('载入中')
             const { data: resp } = await refetch()
-
-            if (!resp || resp.code !== 200 || !resp.data) {
-                Notify.show({ type: 'danger', message: resp?.msg || '获取凭证失败' })
+            if (!resp) {
                 setTitle('载入失败')
                 return
             }
 
-            setTitle(resp.data.name)
+            setTitle(resp.name)
             try {
-                const content = JSON.parse(aesDecrypt(resp.data.content, userProfile.password))
+                const content = JSON.parse(aesDecrypt(resp.content, userProfile.password))
                 form.setFieldValue('fields', content)
             }
             catch (e) {
-                Notify.show({ type: 'danger', message: resp?.msg || '凭证解密失败' })
+                Notify.show({ type: 'danger', message: '凭证解密失败' })
             }
             setLoading(false)
         }

@@ -56,7 +56,7 @@ const Field: FC<FieldProps> = (props) => {
 
 const AddGroup = () => {
     const { setGroupList, setSelectedGroup } = useContext(UserContext)
-    const [config] = useContext(AppConfigContext)
+    const config = useContext(AppConfigContext)
     const [form] = Form.useForm<GroupForm>()
     const navigate = useNavigate()
 
@@ -71,14 +71,11 @@ const AddGroup = () => {
         }
 
         const resp = await addGroup(postData)
-        if (resp.code !== 200 || !resp.data) {
-            Notify.show({ type: 'danger', message: resp.msg || '分组添加失败' })
-            return
-        }
 
         Notify.show({ type: 'success', message: '分组添加成功' })
-        setGroupList(resp.data.newList)
-        setSelectedGroup(resp.data.newId)
+        setGroupList(resp.newList)
+        setSelectedGroup(resp.newId)
+        navigate('/group')
     }
 
     const validatePassword = async (_: any, value: string) => {

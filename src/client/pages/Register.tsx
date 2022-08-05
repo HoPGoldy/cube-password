@@ -6,11 +6,7 @@ const Register = () => {
     const [password, setPassword] = useState('')
 
     const onRegister = async () => {
-        const resp = await register(password)
-        if (resp.code !== 200) {
-            Notify.show({ type: 'danger', message: resp.msg || '注册失败' })
-            return
-        }
+        await register(password)
         Notify.show({ type: 'success', message: '注册成功' })
         location.pathname = ''
     }

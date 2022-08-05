@@ -1,6 +1,5 @@
 import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
-import React, { Dispatch, FC, SetStateAction, useEffect, useState } from 'react'
-import { Notify } from 'react-vant'
+import React, { Dispatch, FC, SetStateAction, useState } from 'react'
 import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
 
 export interface UserProfile {
@@ -33,7 +32,6 @@ interface Context {
      * 当前选中分组的下属凭证列表
      */
     certificateList: CertificateListItem[] | undefined
-    setCertificateList: Dispatch<SetStateAction<CertificateListItem[] | undefined>>
     refetchCertificateList: () => Promise<unknown>
     /**
      * 当前选中分组是否加载中
@@ -50,39 +48,22 @@ export const UserProvider: FC = (props) => {
     const [userProfile, setUserProfile] = useState<UserProfile>()
     const [groupList, setGroupList] = useState<CertificateGroupDetail[]>([])
     const [selectedGroup, setSelectedGroup] = useState<number>(0)
-    const [certificateList, setCertificateList] = useState<CertificateListItem[] | undefined>([])
     const {
-        data: certificateListResp,
+        data: certificateList,
         refetch: refetchCertificateList,
         isLoading: certificateListLoading
     } = useGroupCertificates(selectedGroup)
 
-    useEffect(() => {
-        if (selectedGroup === 0 || certificateListLoading) return
-        if (certificateListResp?.code !== 200 || !certificateListResp.data) {
-            Notify.show({ message: '获取凭证列表失败', type: 'danger' })
-            return
-        }
-
-        setCertificateList(certificateListResp.data)
-    }, [certificateListResp])
-
     const refetchGroupList = async () => {
         const resp = await getGroupList()
-        if (resp.code !== 200 || !resp.data) {
-            Notify.show({ message: '获取凭证列表失败', type: 'danger' })
-            return
-        }
-
-        setGroupList(resp.data)
+        setGroupList(resp)
     }
 
     const value = {
         userProfile, setUserProfile,
         groupList, setGroupList,
-        selectedGroup, setSelectedGroup,
-        certificateList, setCertificateList,
-        refetchCertificateList, refetchGroupList,
+        selectedGroup, setSelectedGroup, refetchGroupList,
+        certificateList, refetchCertificateList,
         certificateListLoading
     }
 

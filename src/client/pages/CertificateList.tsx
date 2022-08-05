@@ -1,6 +1,6 @@
 import React, { useContext, useState, ReactElement, useEffect } from 'react'
 import { Button } from '@/client/components/Button'
-import { Dialog, Loading, Notify } from 'react-vant'
+import { Dialog, Loading } from 'react-vant'
 import { ArrowLeft, SettingO } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
@@ -23,7 +23,7 @@ const CertificateList = () => {
         certificateList, groupList, selectedGroup, certificateListLoading,
         refetchCertificateList, refetchGroupList
     } = useContext(UserContext)
-    const [config] = useContext(AppConfigContext)
+    const config = useContext(AppConfigContext)
     const navigate = useNavigate()
     // 是否显示详情页
     const [detailVisible, setDetailVisible] = useState(false)
@@ -62,12 +62,7 @@ const CertificateList = () => {
             return    
         }
 
-        const resp = await updateGroup(selectedGroup, { name: groupTitle })
-        if (resp.code !== 200) {
-            Notify.show({ type: 'danger', message: resp.msg })
-            return
-        }
-
+        await updateGroup(selectedGroup, { name: groupTitle })
         refetchGroupList()
     }
 
