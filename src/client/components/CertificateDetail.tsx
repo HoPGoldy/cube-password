@@ -19,8 +19,10 @@ interface Props {
 }
 
 const DEFAULT_FIELDS: CertificateField[] = [
+    { label: '网址', value: '' },
+    { label: '用户名', value: '' },
     { label: '密码', value: '' },
-    { label: '网址', value: '' }
+    { label: '备注', value: '' }
 ]
 
 const CertificateDetail: FC<Props> = (props) => {
@@ -28,6 +30,8 @@ const CertificateDetail: FC<Props> = (props) => {
     const [form] = Form.useForm()
     const [config] = useContext(AppConfigContext)
     const { userProfile } = useContext(UserContext)
+    // 是否禁用编辑，在查看详情时为 true
+    const [disabled, setDisabled] = useState(true)
     // 是否修改了凭证内容
     const [contentChange, setContentChange] = useState(false)
     // 页面是否加载中
@@ -48,6 +52,12 @@ const CertificateDetail: FC<Props> = (props) => {
 
     // 初始化窗口
     useEffect(() => {
+        if (!visible) {
+            setContentChange(false)
+            setDisabled(true)
+            return
+        }
+        
         if (!userProfile) {
             Notify.show({ type: 'danger', message: '无法解析主密码，请重新登录' })
             return
@@ -59,6 +69,7 @@ const CertificateDetail: FC<Props> = (props) => {
                 setTitle('新密码')
                 form.setFieldValue('fields', DEFAULT_FIELDS)
                 setLoading(false)
+                setDisabled(false)
                 return
             }
 
@@ -83,11 +94,6 @@ const CertificateDetail: FC<Props> = (props) => {
         }
 
         init()
-    }, [certificateId])
-
-    useEffect(() => {
-        if (visible) return
-        setContentChange(false)
     }, [visible])
 
     const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,6 +131,10 @@ const CertificateDetail: FC<Props> = (props) => {
             })
         }
         onClose(false)
+    }
+
+    const onEdit = () => {
+        setDisabled(old => !old)
     }
 
     // 点击外部时触发关闭
@@ -165,6 +175,7 @@ const CertificateDetail: FC<Props> = (props) => {
                                         key={idx}
                                         customField
                                         name={[field.name]}
+                                        disabled={disabled}
                                     >
                                         <CertificateFieldItem
                                             showDelete={fields.length > 1}
@@ -174,7 +185,7 @@ const CertificateDetail: FC<Props> = (props) => {
                                 )
                             })}
                         </div>
-                        <div className='mx-4 mt-4 pb-4'>
+                        {!disabled && <div className='mx-4 mt-4 pb-4'>
                             <Button
                                 plain
                                 className='!border-slate-300'
@@ -184,20 +195,26 @@ const CertificateDetail: FC<Props> = (props) => {
                             >
                                 新增字段
                             </Button>
-                        </div>
+                        </div>}
                     </>)}
                 </Form.List>
             </Form>
 
-            <div className='flex flex-row justify-between'>
+            <div className='flex flex-row justify-between gap-4'>
                 <Button
-                    className={'!mt-4 ' + (showUpdateBtn ? '!w-[20%] md:!w-[50%] md:!mr-4' : '!w-full')}
+                    className='!mt-4 grow'
                     onClick={onConfirmClose}
                 >
                     返回
                 </Button>
+                {disabled && <Button
+                    className='!mt-4 grow'
+                    onClick={onEdit}
+                >
+                    编辑
+                </Button>}
                 {showUpdateBtn && <Button
-                    className='!mt-4 !w-[75%] md:!w-[50%]'
+                    className='!mt-4 grow'
                     color={config?.buttonColor}
                     onClick={onFinish}
                     loading={submiting}
@@ -222,13 +239,16 @@ const CertificateDetail: FC<Props> = (props) => {
                         type="text"
                         value={title}
                         autoFocus
+                        disabled={disabled}
                         onChange={onTitleChange}
                         placeholder="请输入密码名"
                         className='font-bold text-xl bg-inherit mb-4'
                     />
-                    <div className='hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500'>
+                    {!disabled && <div className='
+                        hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500
+                    '>
                         <Question className='mr-2' /> 标题名和字段名均可修改
-                    </div>
+                    </div>}
 
                     {renderContent()}
                 </div>

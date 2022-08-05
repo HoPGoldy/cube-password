@@ -1,6 +1,6 @@
-import React, { useContext, useState, ReactElement } from 'react'
+import React, { useContext, useState, ReactElement, useEffect } from 'react'
 import { Button } from '@/client/components/Button'
-import { Dialog, Loading } from 'react-vant'
+import { Dialog, Loading, Notify } from 'react-vant'
 import { ArrowLeft, SettingO } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
@@ -10,6 +10,7 @@ import Header from '../components/Header'
 import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
+import { updateGroup } from '../services/certificateGroup'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -18,7 +19,10 @@ interface ConfigButtonProps {
 }
 
 const CertificateList = () => {
-    const { certificateList, groupList, selectedGroup, refetchCertificateList, certificateListLoading } = useContext(UserContext)
+    const {
+        certificateList, groupList, selectedGroup, certificateListLoading,
+        refetchCertificateList, refetchGroupList
+    } = useContext(UserContext)
     const [config] = useContext(AppConfigContext)
     const navigate = useNavigate()
     // 是否显示详情页
@@ -30,6 +34,8 @@ const CertificateList = () => {
         showConfigArea, configButtons, selectedItem, setSelectedItem,
         onSwitchConfigArea, getNewGroupSelectProps
     } = useEditor()
+    // 分组标题
+    const [groupTitle, setGroupTitle] = useState('')
 
     // 添加新的凭证
     const onAddCertificate = async (certificateId: number | undefined) => {
@@ -43,7 +49,27 @@ const CertificateList = () => {
         setDetailVisible(false)
     }
 
-    const groupInfo = groupList.find(item => item.id === selectedGroup)
+    useEffect(() => {
+        const groupInfo = groupList.find(item => item.id === selectedGroup)
+        setGroupTitle(groupInfo?.name || '未命名分组')
+    }, [selectedGroup])
+
+    // 更新用户输入的分组名
+    const onSubmitGroupTitle = async () => {
+        if (!groupTitle) {
+            const groupInfo = groupList.find(item => item.id === selectedGroup)
+            setGroupTitle(groupInfo?.name || '未命名分组')
+            return    
+        }
+
+        const resp = await updateGroup(selectedGroup, { name: groupTitle })
+        if (resp.code !== 200) {
+            Notify.show({ type: 'danger', message: resp.msg })
+            return
+        }
+
+        refetchGroupList()
+    }
 
     // 渲染操作按钮
     const renderConfigButton = (item: ConfigButtonProps) => {
@@ -118,12 +144,22 @@ const CertificateList = () => {
             <PageContent>
                 <Header>
                     <div className='grow shrink ml-2 overflow-hidden flex flex-col justify-center'>
-                        <div
+                        {/* <div
                             className='text-lg md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
-                            title={groupInfo?.name}
+                            title={groupTitle}
                         >
-                            {groupInfo?.name}
-                        </div>
+                            {groupTitle}
+                        </div> */}
+                        <input
+                            className='text-lg md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
+                            onChange={e => setGroupTitle(e.target.value)}
+                            onBlur={onSubmitGroupTitle}
+                            onKeyUp={e => {
+                                if (e.key === 'Enter') (e.target as HTMLElement).blur()
+                            }}
+                            placeholder='请输入分组名称'
+                            value={groupTitle}
+                        ></input>
                     </div>
                     <div className='shrink-0 items-center flex flex-nowrap'>
                         <SettingO

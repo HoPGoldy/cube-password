@@ -44,9 +44,9 @@ const Field: FC<FieldProps> = (props) => {
                     value={value}
                     onChange={e => onChange && onChange(e.target.value)}
                     placeholder={props.placeholder}
-                    className={'block px-3 py-2 min-h-[42px] my-2 w-full transition ' +
+                    className={'block px-3 py-2 min-h-[42px] my-2 w-full bg-slate-100 hover:bg-white transition ' +
                         'border border-solid rounded-md shadow-sm placeholder-slate-400 ' +
-                        'focus:outline-none ' + colorClass}
+                        'focus:outline-none focus:bg-white ' + colorClass}
                 />
                 {error && <div className='text-red-500 text-sm'>{errorMessage}</div>}
             </div>

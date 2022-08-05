@@ -99,13 +99,15 @@ groupRouter.put('/group/:groupId', async ctx => {
     }
 
     const collection = await getGroupCollection()
-    const result = collection.findAndUpdate({ $loki: Number(groupId) }, old => {
-        return {
-            ...old,
-            ...value
-        }
-    })
-    response(ctx, { code: 200, data: result })
+    const item = collection.get(+groupId)
+    if (!item) {
+        response(ctx, { code: 500, msg: '分组不存在' })
+        return
+    }
+
+    collection.update({ ...item, ...value })
+    response(ctx, { code: 200 })
+    saveLoki()
 })
 
 /**
