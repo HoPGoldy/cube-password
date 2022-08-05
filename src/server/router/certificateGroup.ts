@@ -1,6 +1,6 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { response } from '../utils'
+import { response, validate } from '../utils'
 import Joi from 'joi'
 import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
@@ -42,11 +42,22 @@ const getCertificateList = async (groupId: number): Promise<CertificateListItem[
  * 查询分组详情
  * 包含分组下的所有凭证头数据
  */
-groupRouter.get('/group/:groupId/certificates', async ctx => {
-    const { groupId } = ctx.params
-    const certificates = await getCertificateList(Number(groupId))
-    response(ctx, { code: 200, data: certificates })
-})
+groupRouter.get('/group/:groupId/certificates', 
+    async ctx => {
+        const { groupId } = ctx.params
+        const groupToken = ctx.request.header['group-token']
+        if (!groupToken) {
+            response(ctx, { code: STATUS_CODE.GROUP_NOT_VERIFY_PASSWORD })
+            return
+        }
+        console.log()
+    },
+    async ctx => {
+        const { groupId } = ctx.params
+        const certificates = await getCertificateList(Number(groupId))
+        response(ctx, { code: 200, data: certificates })
+    }
+)
 
 const addGroupSchema = Joi.object<CertificateGroup>({
     name: Joi.string().required(),
@@ -58,14 +69,11 @@ const addGroupSchema = Joi.object<CertificateGroup>({
  * 新增分组
  */
 groupRouter.post('/addGroup', async ctx => {
-    const { value, error } = addGroupSchema.validate(ctx.request.body)
-    if (!value || error) {
-        response(ctx, { code: 400, msg: '分组信息不正确' })
-        return
-    }
+    const body = validate(ctx, addGroupSchema)
+    if (!body) return
 
     const collection = await getGroupCollection()
-    const result = collection.insert(value)
+    const result = collection.insert(body)
     if (!result) {
         response(ctx, { code: 500, msg: '新增分组失败' })
         return
@@ -92,11 +100,8 @@ const updateGroupSchema = Joi.object<Partial<CertificateGroup>>({
  */
 groupRouter.put('/group/:groupId', async ctx => {
     const { groupId } = ctx.params
-    const { value, error } = updateGroupSchema.validate(ctx.request.body)
-    if (!value || error) {
-        response(ctx, { code: 400, msg: '分组信息不正确' })
-        return
-    }
+    const body = validate(ctx, updateGroupSchema)
+    if (!body) return
 
     const collection = await getGroupCollection()
     const item = collection.get(+groupId)
@@ -105,7 +110,7 @@ groupRouter.put('/group/:groupId', async ctx => {
         return
     }
 
-    collection.update({ ...item, ...value })
+    collection.update({ ...item, ...body })
     response(ctx, { code: 200 })
     saveLoki()
 })

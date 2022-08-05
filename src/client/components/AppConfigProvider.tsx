@@ -6,7 +6,11 @@ import { useQuery } from 'react-query'
 export const AppConfigContext = React.createContext<AppConfig | undefined>(undefined)
 
 export const AppConfigProvider: FC = (props) => {
-    const { data: appConfig, isLoading: isLoadingConfig } = useQuery('appConfig', fetchAppConfig)
+    const { data: appConfig, isLoading: isLoadingConfig } = useQuery('appConfig', fetchAppConfig, {
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+    })
 
     return (
         <AppConfigContext.Provider value={appConfig}>

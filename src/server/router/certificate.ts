@@ -1,6 +1,6 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { response } from '../utils'
+import { response, validate } from '../utils'
 import Joi from 'joi'
 import dayjs from 'dayjs'
 import { getCertificateCollection, saveLoki } from '../lib/loki'
@@ -9,6 +9,12 @@ import { CertificateDetailResp, CertificateMoveReqBody } from '@/types/http'
 import { DATE_FORMATTER } from '@/config'
 
 const certificateRouter = new Router<unknown, AppKoaContext>()
+
+certificateRouter.use(async (ctx, next) => {
+    console.log('访问凭证路由')
+    // response(ctx, { code: 200, msg: '接口' })
+    next()
+})
 
 /**
  * 查询加密数据
@@ -35,14 +41,11 @@ const deleteCertificateSchema = Joi.object<{ ids: number[] }>({
  * 删除加密数据
  */
 certificateRouter.put('/certificate/delete', async ctx => {
-    const { value, error } = deleteCertificateSchema.validate(ctx.request.body)
-    if (!value || error) {
-        response(ctx, { code: 400, msg: '数据结构不正确' })
-        return
-    }
+    const body = validate(ctx, deleteCertificateSchema)
+    if (!body) return
 
     const collection = await getCertificateCollection()
-    value.ids.forEach(id => collection.remove(id))
+    body.ids.forEach(id => collection.remove(id))
 
     response(ctx, { code: 200 })
     saveLoki()
@@ -57,14 +60,10 @@ const moveCertificateSchema = Joi.object<CertificateMoveReqBody>({
  * 将指定凭证移动到目标分组
  */
 certificateRouter.put('/certificate/move', async ctx => {
-    const { value, error } = moveCertificateSchema.validate(ctx.request.body)
-    if (!value || error) {
-        console.log('error', error)
-        response(ctx, { code: 400, msg: '数据结构不正确' })
-        return
-    }
+    const body = validate(ctx, moveCertificateSchema)
+    if (!body) return
 
-    const { ids, newGroupId } = value
+    const { ids, newGroupId } = body
     const collection = await getCertificateCollection()
 
     ids.forEach(id => {
@@ -86,15 +85,12 @@ const addCertificateSchema = Joi.object<CertificateDetail>({
  * 添加加密数据
  */
 certificateRouter.post('/certificate', async ctx => {
-    const { value, error } = addCertificateSchema.validate(ctx.request.body)
-    if (!value || error) {
-        response(ctx, { code: 400, msg: '凭证信息不正确' })
-        return
-    }
+    const body = validate(ctx, addCertificateSchema)
+    if (!body) return
 
     const collection = await getCertificateCollection()
     const result = collection.insertOne({
-        ...value,
+        ...body,
         updateTime: new Date().valueOf()
     })
     if (!result) {
@@ -117,15 +113,12 @@ const updateCertificateSchema = Joi.object<Partial<CertificateDetail>>({
  */
 certificateRouter.put('/certificate/:certificateId', async ctx => {
     const { certificateId } = ctx.params
-    const { value, error } = updateCertificateSchema.validate(ctx.request.body)
-    if (!value || error) {
-        response(ctx, { code: 400, msg: '凭证信息不正确' })
-        return
-    }
+    const body = validate(ctx, updateCertificateSchema)
+    if (!body) return
 
     const collection = await getCertificateCollection()
     const item = collection.get(+certificateId)
-    if (item) collection.update({ ...item, ...value })
+    if (item) collection.update({ ...item, ...body })
 
     response(ctx, { code: 200 })
     saveLoki()

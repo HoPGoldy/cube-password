@@ -70,7 +70,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
             <div
                 className={
                     'ml-2 my-1 h-[34px] w-[34px] flex justify-center items-center rounded-lg shrink-0 ' +
-                    'hover:ring active:scale-90 transition cursor-pointer ' +
+                    'hover:ring active:scale-90 transition cursor-pointer select-none ' +
                     className
                 }
                 onClick={onClick}
@@ -87,7 +87,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
                 value={value?.label}
                 disabled={disabled}
                 onChange={e => onLabelChange(e.target.value)}
-                className='mb-2 w-full'
+                className='mb-2 w-full disabled:bg-white'
             />
             <div className='flex items-start'>
                 {isPassword ?
@@ -96,13 +96,13 @@ const CertificateFieldItem: FC<Props> = (props) => {
                         value={value?.value}
                         disabled={disabled}
                         onChange={e => onValueChange(e.target.value)}
-                        className={'min-h-[42px] ' + fieldClass + (disabled ? '' : enableClass)}
+                        className={'min-h-[42px] ' + fieldClass + (disabled ? 'disabled:bg-white' : enableClass)}
                     /> :
                     <Textarea
                         value={value?.value}
                         onChange={e => onValueChange(e.target.value)}
                         disabled={disabled}
-                        className={fieldClass + (disabled ? '' : enableClass)}
+                        className={fieldClass + (disabled ? 'disabled:bg-white' : enableClass)}
                     />
                 }
 
