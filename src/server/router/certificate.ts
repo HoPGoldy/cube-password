@@ -1,6 +1,6 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { response, validate } from '../utils'
+import { hasGroupLogin, response, validate } from '../utils'
 import Joi from 'joi'
 import dayjs from 'dayjs'
 import { getCertificateCollection, saveLoki } from '../lib/loki'
@@ -10,19 +10,16 @@ import { DATE_FORMATTER } from '@/config'
 
 const certificateRouter = new Router<unknown, AppKoaContext>()
 
-certificateRouter.use(async (ctx, next) => {
-    console.log('访问凭证路由')
-    // response(ctx, { code: 200, msg: '接口' })
-    next()
-})
-
 /**
  * 查询加密数据
  */
 certificateRouter.get('/certificate/:certificateId', async ctx => {
-    const { certificateId } = ctx.params
+    const certificateId = +ctx.params.certificateId
     const collection = await getCertificateCollection()
-    const certificate = collection.get(Number(certificateId))
+
+    const certificate = collection.get(certificateId)
+    // 找不到凭证也返回分组未解密，防止攻击者猜到哪些 id 上有信息
+    if (!await hasGroupLogin(ctx, certificate?.groupId)) return
 
     const data: CertificateDetailResp = {
         name: certificate.name,
@@ -45,6 +42,12 @@ certificateRouter.put('/certificate/delete', async ctx => {
     if (!body) return
 
     const collection = await getCertificateCollection()
+    // 先保证所有的凭证分组都登录了
+    for (const certificateId of body.ids) {
+        const certificate = collection.get(certificateId)
+        if (!await hasGroupLogin(ctx, certificate?.groupId)) return
+    }
+
     body.ids.forEach(id => collection.remove(id))
 
     response(ctx, { code: 200 })
@@ -88,6 +91,8 @@ certificateRouter.post('/certificate', async ctx => {
     const body = validate(ctx, addCertificateSchema)
     if (!body) return
 
+    if (!await hasGroupLogin(ctx, body.groupId)) return
+
     const collection = await getCertificateCollection()
     const result = collection.insertOne({
         ...body,
@@ -118,6 +123,8 @@ certificateRouter.put('/certificate/:certificateId', async ctx => {
 
     const collection = await getCertificateCollection()
     const item = collection.get(+certificateId)
+    if (!await hasGroupLogin(ctx, item?.groupId)) return
+
     if (item) collection.update({ ...item, ...body })
 
     response(ctx, { code: 200 })

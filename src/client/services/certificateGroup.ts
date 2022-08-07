@@ -1,8 +1,20 @@
 import { useMutation, useQuery } from 'react-query'
 import { CertificateGroup } from '@/types/app'
-import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
+import { AddGroupResp, CertificateGroupDetail, CertificateListItem, RequireLoginResp } from '@/types/http'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
 import { Notify } from 'react-vant'
+import { sha } from '@/utils/common'
+
+export const requireLogin = async (groupId: number) => {
+    return sendPost<RequireLoginResp>(`/group/requireLogin/${groupId}`)
+}
+
+/** 登录 */
+export const login = async (groupId: number, password: string, salt: string, challenge: string) => {
+    return sendPost<{ token: string }>(`/group/login/${groupId}`, {
+        code: sha(sha(salt + password) + challenge)
+    })
+}
 
 /**
  * 获取分组列表

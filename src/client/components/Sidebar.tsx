@@ -1,13 +1,14 @@
 import { CertificateGroupDetail } from '@/types/http'
 import React, { FC, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Edit, CouponO } from '@react-vant/icons'
+import { Edit, CouponO, Lock } from '@react-vant/icons'
 import { UserContext } from './UserProvider'
 
 interface TabDetail {
     id: number | string
     name: string
     url: string
+    requireLogin?: boolean
     prefix?: () => JSX.Element
 }
 
@@ -45,6 +46,12 @@ export const Sidebar: FC = () => {
         setSelectedTab(tabItem.id)
     }
 
+    const renderTabIcon = (group: TabDetail) => {
+        if (group.prefix) return group.prefix()
+        if (group.requireLogin) return <Lock className='shrink-0' fontSize={20} />
+        return <CouponO className='shrink-0' fontSize={20} />
+    }
+
     const renderGroupItem = (group: TabDetail) => {
         const selectedClassName = selectedTab === group.id ? 'sidebar-select' : 'sidebar-not-select'
         return (
@@ -54,7 +61,7 @@ export const Sidebar: FC = () => {
                 onClick={() => onTabClick(group)}
             >
                 <div className='top-out-rounded'></div>
-                {group.prefix ? group.prefix() : <CouponO className='shrink-0' fontSize={20} />}
+                {renderTabIcon(group)}
                 <span className='ml-2 whitespace-nowrap text-ellipsis overflow-hidden'>{group.name}</span>
                 <div className='bottom-out-rounded'></div>
             </div>
@@ -65,6 +72,7 @@ export const Sidebar: FC = () => {
         return {
             id: group.id,
             name: group.name,
+            requireLogin: group.requireLogin,
             url: '/group'
         }
     }

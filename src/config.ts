@@ -14,8 +14,14 @@ export const DB_NAME = 'storage.json'
 export const STATUS_CODE = {
     NOT_REGISTER: 40101,
     ALREADY_REGISTER: 40102,
-    // 分组未验证密码
+    /**
+     * 分组未验证密码
+     */
     GROUP_NOT_VERIFY_PASSWORD: 40103,
+    /**
+     * 分组密码错误
+     */
+    GROUP_PASSWORD_ERROR: 40104,
     /**
      * 因为关联了其他资源所以无法删除
      */

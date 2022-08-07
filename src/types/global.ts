@@ -1,3 +1,5 @@
+import { Context } from 'koa'
+
 /**
  * 后端接口返回的数据格式
  */
@@ -7,6 +9,13 @@ export type AppResponse<T = unknown> = {
     data?: T
 }
 
-export interface AppKoaContext {
+export interface MyJwtPayload {
+    groups?: number[]
+    lat: number
+    exp: number
+}
+
+export type AppKoaContext = Context & {
     request: { body: Record<string, unknown> }
+    state?: { user: MyJwtPayload }
 }

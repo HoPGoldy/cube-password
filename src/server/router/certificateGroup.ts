@@ -1,13 +1,14 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { response, validate } from '../utils'
+import { hasGroupLogin, response, validate } from '../utils'
 import Joi from 'joi'
 import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
 import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
-import { replaceLokiInfo } from '@/utils/common'
+import { sha } from '@/utils/common'
 import dayjs from 'dayjs'
+import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
@@ -16,7 +17,15 @@ const groupRouter = new Router<unknown, AppKoaContext>()
  */
 export const getCertificateGroupList = async () => {
     const collection = await getGroupCollection()
-    return collection.data.map<CertificateGroupDetail>(replaceLokiInfo)
+    return collection.data.map<CertificateGroupDetail>(item => {
+        const newItem: CertificateGroupDetail = {
+            id: (item as unknown as LokiObj).$loki,
+            name: item.name,
+            requireLogin: !!(item.passwordSalt && item.passwordSha)
+        }
+
+        return newItem
+    })
 }
 
 /**
@@ -42,22 +51,16 @@ const getCertificateList = async (groupId: number): Promise<CertificateListItem[
  * 查询分组详情
  * 包含分组下的所有凭证头数据
  */
-groupRouter.get('/group/:groupId/certificates', 
-    async ctx => {
-        const { groupId } = ctx.params
-        const groupToken = ctx.request.header['group-token']
-        if (!groupToken) {
-            response(ctx, { code: STATUS_CODE.GROUP_NOT_VERIFY_PASSWORD })
-            return
-        }
-        console.log()
-    },
-    async ctx => {
-        const { groupId } = ctx.params
-        const certificates = await getCertificateList(Number(groupId))
-        response(ctx, { code: 200, data: certificates })
+groupRouter.get('/group/:groupId/certificates', async ctx => {
+    const groupId = +ctx.params.groupId
+    if (!await hasGroupLogin(ctx, groupId, false)) {
+        response(ctx, { code: 200, data: [] })
+        return
     }
-)
+
+    const certificates = await getCertificateList(groupId)
+    response(ctx, { code: 200, data: certificates })
+})
 
 const addGroupSchema = Joi.object<CertificateGroup>({
     name: Joi.string().required(),
@@ -99,12 +102,14 @@ const updateGroupSchema = Joi.object<Partial<CertificateGroup>>({
  * 更新分组信息
  */
 groupRouter.put('/group/:groupId', async ctx => {
-    const { groupId } = ctx.params
+    const groupId = +ctx.params.groupId
+    if (!await hasGroupLogin(ctx, groupId)) return
+
     const body = validate(ctx, updateGroupSchema)
     if (!body) return
 
     const collection = await getGroupCollection()
-    const item = collection.get(+groupId)
+    const item = collection.get(groupId)
     if (!item) {
         response(ctx, { code: 500, msg: '分组不存在' })
         return
@@ -119,9 +124,11 @@ groupRouter.put('/group/:groupId', async ctx => {
  * 删除分组
  */
 groupRouter.delete('/group/:groupId', async ctx => {
-    const { groupId } = ctx.params
+    const groupId = +ctx.params.groupId
+    if (!await hasGroupLogin(ctx, groupId)) return
+
     const certificateCollection = await getCertificateCollection()
-    const includesCertificate = certificateCollection.find({ groupId: Number(groupId) })
+    const includesCertificate = certificateCollection.find({ groupId })
     if (includesCertificate.length) {
         response(ctx, { code: STATUS_CODE.CANT_DELETE, msg: '分组下存在凭证，不能删除' })
         return
@@ -148,6 +155,69 @@ groupRouter.delete('/group/:groupId', async ctx => {
 
     response(ctx, { code: 200, data: newDefaultId })
     saveLoki()
+})
+
+/**
+ * 分组登录
+ */
+groupRouter.post('/group/login/:groupId', async ctx => {
+    const { code } = ctx.request.body
+    if (!code || typeof code !== 'string') {
+        response(ctx, { code: 401, msg: '无效的分组密码凭证' })
+        return
+    }
+
+    const collection = await getGroupCollection()
+    const groupId = Number(ctx.params.groupId)
+    const item = collection.get(groupId)
+    if (!item) {
+        response(ctx, { code: 404, msg: '分组不存在' })
+        return
+    }
+
+    const challengeCode = popChallengeCode('groupid' + groupId)
+    if (!challengeCode) {
+        response(ctx, { code: 200, msg: '挑战码错误' })
+        return
+    }
+
+    const { passwordSha } = collection.get(groupId)
+    if (!passwordSha) {
+        response(ctx, { code: 200, msg: '分组不需要密码' })
+        return
+    }
+
+    if (sha(passwordSha + challengeCode) !== code) {
+        response(ctx, { code: STATUS_CODE.GROUP_PASSWORD_ERROR, msg: '密码错误，请检查分组密码是否正确' })
+        return
+    }
+
+    // 把本分组添加到 token 里
+    const { groups = [] } = ctx.state?.user || {}
+    groups.push(groupId)
+    const token = await createToken({ groups })
+    response(ctx, { code: 200, data: { token } })
+})
+
+/**
+ * 请求分组登录
+ */
+groupRouter.post('/group/requireLogin/:groupId', async ctx => {
+    const collection = await getGroupCollection()
+    const groupId = Number(ctx.params.groupId)
+    const groupItem = collection.get(groupId)
+    if (!groupItem) {
+        response(ctx, { code: 404, msg: '分组不存在' })
+        return
+    }
+    const { passwordSha, passwordSalt } = groupItem
+    if (!passwordSha || !passwordSalt) {
+        response(ctx, { code: 200, msg: '分组不需要密码' })
+        return
+    }
+
+    const challenge = createChallengeCode('groupid' + groupId)
+    response(ctx, { code: 200, data: { salt: passwordSalt, challenge } })
 })
 
 export { groupRouter }

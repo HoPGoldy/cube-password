@@ -1,8 +1,8 @@
-import React, { useContext, useState, ReactElement, useEffect } from 'react'
+import React, { useContext, useState, ReactElement, useEffect, useMemo } from 'react'
 import { Button } from '@/client/components/Button'
 import { Dialog, Loading } from 'react-vant'
 import { ArrowLeft, SettingO } from '@react-vant/icons'
-import { UserContext } from '../components/UserProvider'
+import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
 import { updateGroup } from '../services/certificateGroup'
+import GroupLogin from '../components/GroupLogin'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -23,6 +24,7 @@ const CertificateList = () => {
         certificateList, groupList, selectedGroup, certificateListLoading,
         refetchCertificateList, refetchGroupList
     } = useContext(UserContext)
+    const jwtPayload = useJwtPayload()
     const config = useContext(AppConfigContext)
     const navigate = useNavigate()
     // 是否显示详情页
@@ -36,6 +38,11 @@ const CertificateList = () => {
     } = useEditor()
     // 分组标题
     const [groupTitle, setGroupTitle] = useState('')
+    // 是否完成登录了
+    const hasLogin = useMemo(() => {
+        const groupInfo = groupList.find(item => item.id === selectedGroup)
+        return !groupInfo?.requireLogin || hasGroupLogin(jwtPayload, selectedGroup)
+    }, [groupList, selectedGroup, jwtPayload])
 
     // 添加新的凭证
     const onAddCertificate = async (certificateId: number | undefined) => {
@@ -117,6 +124,8 @@ const CertificateList = () => {
     }
 
     const renderCertificateList = () => {
+        if (!hasLogin) return <GroupLogin />
+
         if (!certificateList || certificateListLoading) return (
             <div className='flex justify-center items-center text-gray-400 w-full mt-16 select-none'>
                 <Loading className='mr-2' /> 加载中，请稍后...
@@ -149,6 +158,7 @@ const CertificateList = () => {
                             className='text-lg md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
                             onChange={e => setGroupTitle(e.target.value)}
                             onBlur={onSubmitGroupTitle}
+                            disabled={!hasLogin}
                             onKeyUp={e => {
                                 if (e.key === 'Enter') (e.target as HTMLElement).blur()
                             }}
@@ -156,20 +166,22 @@ const CertificateList = () => {
                             value={groupTitle}
                         ></input>
                     </div>
-                    <div className='shrink-0 items-center flex flex-nowrap'>
-                        <SettingO
-                            fontSize={24}
-                            className='cursor-pointer mx-2 hover:opacity-75'
-                            onClick={onSwitchConfigArea}
-                        />
-                        <Button
-                            className='!hidden md:!block !mx-2'
-                            color={config?.buttonColor}
-                            onClick={() => onAddCertificate(undefined)}
-                        >
-                            + 新建密码
-                        </Button>
-                    </div>
+                    {hasLogin && (
+                        <div className='shrink-0 items-center flex flex-nowrap'>
+                            <SettingO
+                                fontSize={24}
+                                className='cursor-pointer mx-2 hover:opacity-75'
+                                onClick={onSwitchConfigArea}
+                            />
+                            <Button
+                                className='!hidden md:!block !mx-2'
+                                color={config?.buttonColor}
+                                onClick={() => onAddCertificate(undefined)}
+                            >
+                                + 新建密码
+                            </Button>
+                        </div>
+                    )}
                 </Header>
 
                 <div

@@ -64,23 +64,23 @@ export const middlewareJwt = jwtKoa({ secret: getJwtSecretKey })
 /**
  * 生成新的 jwt token
  */
-export const createToken = async () => {
+export const createToken = async (payload: Record<string, any> = {}) => {
     const secret = await getJwtSecretKey()
-    return jwt.sign({ }, secret, { expiresIn: 1000 * 60 * 30 })
+    return jwt.sign(payload, secret, { expiresIn: 1000 * 60 * 30 })
 }
 
 /**
  * 由于这个应用是给单个用户使用的，所以全局只会保存一个挑战码
  */
-let challengeCode: string | undefined
+const challengeCodes: Record<string, string> = {}
 
 /**
  * 弹出暂存的挑战码
  * 弹出后需要调用 createChallengeCode 才能使用新的挑战码
  */
-export const popChallengeCode = () => {
-    const existCode = challengeCode
-    challengeCode = undefined
+export const popChallengeCode = (key: string) => {
+    const existCode = challengeCodes[key]
+    delete challengeCodes[key]
     return existCode
 }
 
@@ -88,11 +88,11 @@ export const popChallengeCode = () => {
  * 生成新的挑战码
  * 会在指定实际后清空
  */
-export const createChallengeCode = () => {
+export const createChallengeCode = (key: string) => {
     const newCode = nanoid()
-    challengeCode = newCode
+    challengeCodes[key] = newCode
     setTimeout(() => {
-        challengeCode = undefined
+        delete challengeCodes[key]
     }, 1000 * 60)
-    return challengeCode
+    return challengeCodes[key]
 }

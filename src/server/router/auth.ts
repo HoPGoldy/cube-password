@@ -19,7 +19,7 @@ loginRouter.post('/requireLogin', async ctx => {
         return
     }
 
-    const challenge = createChallengeCode()
+    const challenge = createChallengeCode('login')
 
     response(ctx, { code: 200, data: { salt: passwordSalt, challenge } })
 })
@@ -35,7 +35,7 @@ loginRouter.post('/login', async ctx => {
         return
     }
 
-    const challengeCode = popChallengeCode()
+    const challengeCode = popChallengeCode('login')
     if (!challengeCode) {
         response(ctx, { code: 401, msg: '挑战码错误' })
         return

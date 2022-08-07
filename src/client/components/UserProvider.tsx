@@ -1,5 +1,6 @@
+import { MyJwtPayload } from '@/types/global'
 import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
-import React, { Dispatch, FC, SetStateAction, useState } from 'react'
+import React, { Dispatch, FC, SetStateAction, useContext, useMemo, useState } from 'react'
 import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
 
 export interface UserProfile {
@@ -72,4 +73,27 @@ export const UserProvider: FC = (props) => {
             {props.children}
         </UserContext.Provider>
     )
+}
+
+export const useJwtPayload = () => {
+    const { userProfile } = useContext(UserContext)
+    const payload = useMemo<MyJwtPayload>(() => {
+        if (!userProfile || !userProfile.token) {
+            return undefined
+        }
+
+        return JSON.parse(decodeURIComponent(escape(window.atob(userProfile.token.split('.')[1]))))
+    }, [userProfile])
+
+    return payload
+}
+
+/**
+ * 判断一个分组是否登录
+ * @param payload jwt 的载荷信息
+ * @param groupId 要判断的分组 id
+ */
+export const hasGroupLogin = (payload: MyJwtPayload, groupId: number) => {
+    if (!payload.groups) return false
+    return payload.groups.includes(groupId)
 }

@@ -34,9 +34,22 @@ export interface CertificateDetailResp<T = string> {
     updateTime: string
 }
 
+/**
+ * 分组的元数据
+ */
 export interface CertificateGroupDetail {
+    /**
+     * 分组 id
+     */
     id: number
+    /**
+     * 分组名
+     */
     name: string
+    /**
+     * 分组是否需要密码
+     */
+    requireLogin: boolean
 }
 
 export interface AddGroupResp {
