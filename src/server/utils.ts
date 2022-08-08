@@ -61,3 +61,16 @@ export const hasGroupLogin = async (ctx: AppKoaContext, groupId?: number, sendRe
 
     return true
 }
+
+/**
+ * 获得请求发送方的 ip
+ * @link https://juejin.cn/post/6844904056784175112
+ * @param   {Context}  ctx
+ * @return  {string}
+ */
+export function getIp(ctx: AppKoaContext) {
+    const xRealIp = ctx.get('X-Real-Ip')
+    const { ip } = ctx
+    const { remoteAddress } = ctx.req.connection
+    return xRealIp || ip || remoteAddress
+}
