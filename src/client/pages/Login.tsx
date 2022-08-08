@@ -16,7 +16,7 @@ const Register = () => {
 
     // 临时功能，开发自动登录
     useEffect(() => {
-        if (!password) setPassword('123')
+        if (!password) setPassword('123456')
         else onSubmit()
     }, [password])
 
