@@ -6,7 +6,6 @@ import dayjs from 'dayjs'
 import { getLogCollection } from '../lib/loki'
 import { HttpRequestLog } from '@/types/app'
 import { LogListResp, LogSearchFilter } from '@/types/http'
-import { DATE_FORMATTER } from '@/config'
 import { Next } from 'koa'
 import { queryIp } from '../lib/queryIp'
 import { getIp } from '../utils'
@@ -30,13 +29,13 @@ const recordLog = async (ctx: AppKoaContext) => {
 
     const collection = await getLogCollection()
     collection.insertOne(logDetail)
-    console.log('logDetail', logDetail)
+    // console.log('logDetail', logDetail)
 }
 
 const middlewareLogger = async (ctx: AppKoaContext, next: Next) => {
     await next()
     // 不记录查看日志的请求
-    if (ctx.url.startsWith('/api/log')) return
+    if (ctx.url.startsWith('/api/logs')) return
     recordLog(ctx)
 }
 
@@ -50,7 +49,7 @@ const logQuerySchema = Joi.object<LogSearchFilter>({
 /**
  * 查询日志数据
  */
-loggerRouter.get('/log', async ctx => {
+loggerRouter.get('/logs', async ctx => {
     const { error, value } = logQuerySchema.validate(ctx.query)
     if (!value || error) {
         response(ctx, { code: 400, msg: '数据结构不正确' })
@@ -63,13 +62,10 @@ loggerRouter.get('/log', async ctx => {
         .chain()
 
     const targetLogs = queryChain
+        .simplesort('date', { desc: true })
         .offset((pageIndex - 1) * pageSize)
         .limit(pageSize)
         .data({ removeMeta: true })
-        .map(item => ({
-            ...item,
-            date: dayjs(item.date).format(DATE_FORMATTER),
-        }))
 
     const data: LogListResp = {
         entries: targetLogs,

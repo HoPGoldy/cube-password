@@ -1,5 +1,7 @@
 
+import { DATE_FORMATTER } from '@/config'
 import { LogListResp, LogSearchFilter } from '@/types/http'
+import dayjs from 'dayjs'
 import { useQuery } from 'react-query'
 import { sendGet } from './base'
 
@@ -7,7 +9,15 @@ import { sendGet } from './base'
  * 获取日志列表
  */
 export const getLogs = async (query: LogSearchFilter) => {
-    return await sendGet<LogListResp>('/log', query)
+    const resp = await sendGet<LogListResp>('/logs', query)
+    return {
+        ...resp,
+        entries: resp.entries.map(item => ({
+            ...item,
+            date: dayjs(item.date).format(DATE_FORMATTER),
+            location: (item.location || '').split('|').filter(str => str !== '0').join(', ')
+        })),
+    }
 }
 
 export const useLogList = (query: LogSearchFilter) => {
