@@ -28,8 +28,6 @@ loginRouter.post('/requireLogin', async ctx => {
 loginRouter.post('/login', async ctx => {
     const { code } = ctx.request.body
 
-    // const loginCollection = await getLoginLogCollection()
-
     if (!code || typeof code !== 'string') {
         response(ctx, { code: 401, msg: '无效的主密码凭证' })
         return

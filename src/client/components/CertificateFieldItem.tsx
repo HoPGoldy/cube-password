@@ -60,7 +60,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
             return
         }
         copy(value.value)
-        Notify.show({ type: 'success', message: '已复制' })
+        Notify.show({ type: 'success', message: '已复制' + value.label })
     }
 
     // 渲染输入框后面的小按钮

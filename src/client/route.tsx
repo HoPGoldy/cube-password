@@ -21,6 +21,7 @@ export const Routes: FC = () => {
             children: [
                 { path: '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
                 { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
+                { path: '/log', element: lazyLoad(() => import('./pages/LogList')) }
             ],
             element: (
                 <LoginAuth>

@@ -1,27 +1,27 @@
 import lokijs from 'lokijs'
 import { ensureDir } from 'fs-extra'
-import { AppStorage, AppTheme, CertificateDetail, CertificateField, CertificateGroup, DetailCheckLog, LoginLog } from '@/types/app'
-import { DB_NAME, STORAGE_PATH } from '@/config'
+import { AppStorage, AppTheme, CertificateDetail, CertificateGroup, HttpRequestLog } from '@/types/app'
+import { STORAGE_PATH } from '@/config'
 
 /**
- * 全局唯一的 loki 实例缓存
+ * 全局的 loki 实例缓存
  */
-let lokiInstances: lokijs
+const lokiInstances: Record<string, lokijs> = {}
 
 /**
  * 获取全局 loki 存储实例
  */
-export const getLoki = async (): Promise<lokijs> => {
-    if (lokiInstances) return lokiInstances
+export const getLoki = async (name = 'storage'): Promise<lokijs> => {
+    if (lokiInstances[name]) return lokiInstances[name]
 
     await ensureDir(STORAGE_PATH)
 
     return new Promise(resolve => {
-        lokiInstances = new lokijs(STORAGE_PATH + '/' + DB_NAME, {
+        lokiInstances[name] = new lokijs(`${STORAGE_PATH}/${name}.json`, {
             autoload: true,
             autosave: true,
             autosaveInterval: 1000 * 60 * 60 * 24,
-            autoloadCallback: () => resolve(lokiInstances)
+            autoloadCallback: () => resolve(lokiInstances[name])
         })
     })
 }
@@ -29,15 +29,22 @@ export const getLoki = async (): Promise<lokijs> => {
 /**
  * 保存数据到本地
  */
-export const saveLoki = async (): Promise<void> => {
+export const saveLoki = async (name = 'storage'): Promise<void> => {
     return new Promise((resolve, reject) => {
         if (!lokiInstances) return resolve()
 
-        lokiInstances.saveDatabase(err => {
+        lokiInstances[name].saveDatabase(err => {
             if (err) reject(err)
             resolve()
         })
     })
+}
+
+interface CreateAccessorArgs<T> {
+    lokiName?: string
+    collectionName: string,
+    initOption?: Partial<CollectionOptions<T>>,
+    initData?: T[]
 }
 
 /**
@@ -45,13 +52,11 @@ export const saveLoki = async (): Promise<void> => {
  * @param collectionName 集合名
  * @returns 一个 async 函数，调用后返回对应的集合
  */
-export const createCollectionAccessor = <T extends Record<string | number, any>>(
-    collectionName: string,
-    initOption?: Partial<CollectionOptions<T>>,
-    initData?: T[]
-) => {
+export const createCollectionAccessor = <T extends Record<string | number, any>>(arg: CreateAccessorArgs<T>) => {
+    const { lokiName, collectionName, initData, initOption } = arg
+
     return async () => {
-        const loki = await getLoki()
+        const loki = await getLoki(lokiName)
         const collection = loki.getCollection<T>(collectionName)
         if (collection) return collection
 
@@ -61,7 +66,9 @@ export const createCollectionAccessor = <T extends Record<string | number, any>>
     }
 }
 
-const getAppStorageCollection = createCollectionAccessor<AppStorage>('global')
+const getAppStorageCollection = createCollectionAccessor<AppStorage>({
+    collectionName: 'global'
+})
 
 /**
  * 获取应用全局数据
@@ -83,26 +90,30 @@ export const updateAppStorage = async (newStorage: Partial<AppStorage>) => {
 }
 
 /**
- * 获取登录日志集合
+ * 获取日志集合
  */
-export const getLoginLogCollection = createCollectionAccessor<LoginLog>('loginLog')
-
-/**
- * 获取详情查看日志集合
- */
-export const getDetailCheckLogCollection = createCollectionAccessor<DetailCheckLog>('detailCheckLog')
+export const getLogCollection = createCollectionAccessor<HttpRequestLog>({
+    lokiName: 'log',
+    collectionName: 'requestLog',
+    initOption: {
+        // 只保存近一个月的日志
+        ttl: 1000 * 60 * 60 * 24 * 30,
+        // 每天清理一次
+        ttlInterval: 1000 * 60 * 60 * 24
+    }
+})
 
 /**
  * 获取分组集合
  */
-export const getGroupCollection = createCollectionAccessor<CertificateGroup>('group', undefined, [{ name: '我的密码' }])
-
-/**
- * 获取默认凭证字段集合
- */
-export const getDefaultFieldCollection = createCollectionAccessor<CertificateField>('defaultField')
+export const getGroupCollection = createCollectionAccessor<CertificateGroup>({
+    collectionName: 'group',
+    initData: [{ name: '我的密码' }]
+})
 
 /**
  * 获取凭证集合
  */
-export const getCertificateCollection = createCollectionAccessor<CertificateDetail>('certificate')
+export const getCertificateCollection = createCollectionAccessor<CertificateDetail>({
+    collectionName: 'certificate'
+})

@@ -87,37 +87,49 @@ export enum AppTheme {
 }
 
 /**
- * 登录日志
+ * 接口请求日志
  */
-export interface LoginLog {
+export interface HttpRequestLog {
     /**
-     * 请求登录的 ip
+     * 发起请求的 ip
      */
-    ip: string
+    ip?: string
     /**
-     * 请求登录的时间
+     * ip 所在地
+     * 使用 | 分割，未知的会填为 0，例如：中国|0|江苏省|苏州市|电信
      */
-    requestDate: number
+    location?: string
     /**
-     * 是否通过登录
+     * 请求日期毫秒时间戳
      */
-    pass: boolean
-}
-
-/**
- * 凭证查看日志
- */
-export interface DetailCheckLog {
+    date: number | string
     /**
-     * 请求查看的 ip
+     * 请求方法，比如 GET
      */
-    ip: string
+    method: string
     /**
-     * 请求的时间
+     * HTTP 响应状态码，比如 200
      */
-    requestDate: number
+    responseHttpStatus: number
     /**
-     * 查看的凭证名称
+     * 响应内部的应用状态码
      */
-    certificateName: string
+    responseStatus: number
+    /**
+     * 请求携带的 body 数据
+     */
+    requestBody: string
+    /**
+     * 请求携带的 url 参数
+     */
+    requestParams: string
+    /**
+     * 请求的接口路径
+     */
+    url: string
+    /**
+     * 请求的接口路由
+     * 例如：/api/v1/certificates/:id
+     */
+    route: string
 }

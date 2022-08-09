@@ -74,3 +74,19 @@ export function getIp(ctx: AppKoaContext) {
     const { remoteAddress } = ctx.req.connection
     return xRealIp || ip || remoteAddress
 }
+
+/**
+ * 获取请求访问的接口路由
+ * 会把 params 里的值还原成对应的键名
+ */
+export function getRequestRoute (ctx: AppKoaContext) {
+    const { url, params } = ctx
+    if (!params) return url
+
+    const route = Object.entries(params).reduce((url, param) => {
+        const [ key, value ] = param
+        return url.replace(value as string, `:${key}`)
+    }, url)
+
+    return route
+}

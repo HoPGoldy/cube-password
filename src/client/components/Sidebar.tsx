@@ -1,7 +1,7 @@
 import { CertificateGroupDetail } from '@/types/http'
 import React, { FC, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Edit, CouponO, Lock } from '@react-vant/icons'
+import { Edit, Exchange, CouponO, Lock } from '@react-vant/icons'
 import { UserContext } from './UserProvider'
 
 interface TabDetail {
@@ -13,7 +13,8 @@ interface TabDetail {
 }
 
 const STATIC_TABS: TabDetail[] = [
-    { id: 'addNew', name: '新增分组', url: '/addGroup', prefix: () => <Edit fontSize={20} /> }
+    { id: 'addNew', name: '新增分组', url: '/addGroup', prefix: () => <Edit fontSize={20} /> },
+    { id: 'log', name: '访问日志', url: '/log', prefix: () => <Exchange fontSize={20} /> }
 ]
 
 export const Sidebar: FC = () => {
@@ -83,6 +84,7 @@ export const Sidebar: FC = () => {
                 密码本
             </header>
             {(groupList || []).map(formatGroupItem).map(renderGroupItem)}
+            <div className='my-4 mx-4 mr-8 bg-slate-400 h-[1px]'></div>
             {STATIC_TABS.map(renderGroupItem)}
         </section>
     )

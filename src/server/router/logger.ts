@@ -1,0 +1,82 @@
+import Router from 'koa-router'
+import { AppKoaContext } from '@/types/global'
+import { getRequestRoute, response } from '../utils'
+import Joi from 'joi'
+import dayjs from 'dayjs'
+import { getLogCollection } from '../lib/loki'
+import { HttpRequestLog } from '@/types/app'
+import { LogListResp, LogSearchFilter } from '@/types/http'
+import { DATE_FORMATTER } from '@/config'
+import { Next } from 'koa'
+import { queryIp } from '../lib/queryIp'
+import { getIp } from '../utils'
+
+const recordLog = async (ctx: AppKoaContext) => {
+    const logDetail: HttpRequestLog = {
+        ip: getIp(ctx),
+        method: ctx.method,
+        url: ctx.url,
+        route: getRequestRoute(ctx),
+        responseHttpStatus: ctx.status,
+        responseStatus: (ctx.body as any)?.code,
+        date: dayjs().valueOf(),
+        requestParams: ctx.params,
+        requestBody: ctx.request.body,
+    }
+
+    if (logDetail.ip?.startsWith('::ffff:')) {
+        logDetail.location = await queryIp(logDetail.ip?.replace('::ffff:', ''))
+    }
+
+    const collection = await getLogCollection()
+    collection.insertOne(logDetail)
+    console.log('logDetail', logDetail)
+}
+
+const middlewareLogger = async (ctx: AppKoaContext, next: Next) => {
+    await next()
+    // 不记录查看日志的请求
+    if (ctx.url.startsWith('/api/log')) return
+    recordLog(ctx)
+}
+
+const loggerRouter = new Router<unknown, AppKoaContext>()
+
+const logQuerySchema = Joi.object<LogSearchFilter>({
+    pageIndex: Joi.number().integer().min(1).default(1),
+    pageSize: Joi.number().integer().min(1).default(10),
+})
+
+/**
+ * 查询日志数据
+ */
+loggerRouter.get('/log', async ctx => {
+    const { error, value } = logQuerySchema.validate(ctx.query)
+    if (!value || error) {
+        response(ctx, { code: 400, msg: '数据结构不正确' })
+        return
+    }
+    const { pageIndex, pageSize } = value
+    const collection = await getLogCollection()
+
+    const queryChain = collection
+        .chain()
+
+    const targetLogs = queryChain
+        .offset((pageIndex - 1) * pageSize)
+        .limit(pageSize)
+        .data({ removeMeta: true })
+        .map(item => ({
+            ...item,
+            date: dayjs(item.date).format(DATE_FORMATTER),
+        }))
+
+    const data: LogListResp = {
+        entries: targetLogs,
+        total: queryChain.count()
+    }
+
+    response(ctx, { code: 200, data })
+})
+
+export { loggerRouter, middlewareLogger }

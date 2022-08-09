@@ -1,3 +1,5 @@
+import { HttpRequestLog } from './app'
+
 export interface RequireLoginResp {
     salt: string
     challenge: string
@@ -84,4 +86,20 @@ export interface CertificateMoveReqBody {
      * 要移动到的新分组
      */
     newGroupId: number
+}
+
+/**
+ * 日志查询筛选器
+ */
+export interface LogSearchFilter {
+    pageIndex: number
+    pageSize: number
+}
+
+/**
+ * 日志查询响应
+ */
+export interface LogListResp {
+    entries: Exclude<HttpRequestLog, 'date'>[]
+    total: number
 }

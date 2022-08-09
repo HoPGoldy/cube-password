@@ -47,7 +47,7 @@ const Register = () => {
 
     const onSubmit = async () => {
         await register(password)
-        Notify.show({ type: 'success', message: '注册成功' })
+        Notify.show({ type: 'success', message: '初始化完成' })
         location.pathname = ''
     }
 
@@ -144,7 +144,10 @@ const Register = () => {
                                     }
                                     placeholder="重复主密码"
                                     value={repeatPassword}
-                                    onChange={e => setRepeatPassword(e.target.value)}
+                                    onChange={e => {
+                                        setRepeatPassword(e.target.value)
+                                        if (repeatPwdError) setRepeatPwdError('')
+                                    }}
                                     onKeyUp={e => {
                                         if (e.key === 'Enter') onInputedRepeatPassword()
                                     }}
