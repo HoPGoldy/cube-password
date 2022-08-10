@@ -45,6 +45,7 @@ const loggerRouter = new Router<unknown, AppKoaContext>()
 const logQuerySchema = Joi.object<LogSearchFilter>({
     pageIndex: Joi.number().integer().min(1).default(1),
     pageSize: Joi.number().integer().min(1).default(10),
+    routes: Joi.string().allow(''),
 })
 
 /**
@@ -56,11 +57,14 @@ loggerRouter.get('/logs', async ctx => {
         response(ctx, { code: 400, msg: '数据结构不正确' })
         return
     }
-    const { pageIndex, pageSize } = value
+    const { pageIndex, pageSize, routes } = value
     const collection = await getLogCollection()
 
     const queryChain = collection
         .chain()
+        .find({
+            route: { '$containsAny': routes?.split(',') }
+        })
 
     const targetLogs = queryChain
         .simplesort('date', { desc: true })

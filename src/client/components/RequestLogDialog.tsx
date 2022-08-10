@@ -1,0 +1,85 @@
+import { HttpRequestLog } from '@/types/app'
+import React, { FC } from 'react'
+import { Dialog } from 'react-vant'
+
+export const METHOD_BG_COLOR: Record<string, string> = {
+    GET: 'bg-sky-600',
+    POST: 'bg-green-600',
+    PUT: 'bg-orange-600',
+    DELETE: 'bg-red-600',
+}
+
+export const METHOD_TEXT_COLOR: Record<string, string> = {
+    GET: 'text-sky-600',
+    POST: 'text-green-600',
+    PUT: 'text-orange-600',
+    DELETE: 'text-red-600',
+}
+
+interface Props {
+    details?: HttpRequestLog
+    onClose: () => void
+}
+
+export const RequestLogDialog: FC<Props> = (props) => {
+    const { details, onClose } = props
+
+    return (
+        <Dialog
+            visible={!!details}
+            showCancelButton
+            showConfirmButton={false}
+            cancelButtonText="关闭"
+            onCancel={onClose}
+            onClose={onClose}
+        >
+            <div className='p-4'>
+                <header className='flex flex-row flex-nowrap justify-between items-center mb-4 pb-4 border-b'>
+                    <div>
+                        <div className='text-lg font-bold'>{details?.name}</div>
+                        <div className='text-sm'>
+                            <span className='mr-4'>HTTP {details?.responseHttpStatus}</span>
+                            <span>响应状态码 {details?.responseStatus}</span>
+                        </div>
+                    </div>
+                    <div className={
+                        'text-white py-1 px-2 rounded ' + 
+                        METHOD_BG_COLOR[details?.method || '']
+                    }>
+                        {details?.method}
+                    </div>
+                </header>
+                
+                <div className='mb-1'>
+                    <span>请求接口：</span>
+                    <span className='float-right text-slate-500'>{details?.url}</span>
+                </div>
+                <div className='mb-1'>
+                    <span>请求 ip：</span>
+                    <span className='float-right text-slate-500'>{details?.ipType}</span>
+                    <span className='float-right text-slate-500'>{details?.ip}</span>
+                </div>
+                <div className='mb-1'>
+                    <span>ip 所在地：</span>
+                    <span className='float-right text-slate-500'>{details?.location}</span>
+                </div>
+                <div className='mb-1'>
+                    <span>请求时间：</span>
+                    <span className='float-right text-slate-500'>{details?.date}</span>
+                </div>
+                <div className='mb-1'>
+                    <div>请求 params：</div>
+                    <code className='bg-slate-200 rounded p-2 mt-1 overflow-auto block'>
+                        {details?.requestParams}
+                    </code>
+                </div>
+                <div className='mb-1'>
+                    <div>请求 body：</div>
+                    <code className='bg-slate-200 rounded p-2 mt-1 overflow-auto block'>
+                        {details?.requestBody}
+                    </code>
+                </div>
+            </div>
+        </Dialog>
+    )
+}

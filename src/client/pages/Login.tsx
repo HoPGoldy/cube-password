@@ -41,7 +41,7 @@ const Register = () => {
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
         setToken(loginResp.token)
-        navigate('/log')
+        navigate('/securityEntry')
     }
 
     return (

@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { ArrowLeft } from '@react-vant/icons'
-import { Dialog } from 'react-vant'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
@@ -9,25 +8,15 @@ import { LogSearchFilter } from '@/types/http'
 import Pagination from '../components/Pagination'
 import Table, { TableColConfig } from '../components/Table'
 import { HttpRequestLog } from '@/types/app'
+import { Button } from '../components/Button'
+import { AppConfigContext } from '../components/AppConfigProvider'
+import { METHOD_BG_COLOR, METHOD_TEXT_COLOR, RequestLogDialog } from '../components/RequestLogDialog'
 
-const METHOD_BG_COLOR: Record<string, string> = {
-    GET: 'bg-sky-600',
-    POST: 'bg-green-600',
-    PUT: 'bg-orange-600',
-    DELETE: 'bg-red-600',
-}
-
-const METHOD_TEXT_COLOR: Record<string, string> = {
-    GET: 'text-sky-600',
-    POST: 'text-green-600',
-    PUT: 'text-orange-600',
-    DELETE: 'text-red-600',
-}
-
-const LogList = () => {
+const LogRequest = () => {
+    const config = useContext(AppConfigContext)
     const navigate = useNavigate()
     // 查询条件
-    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10 })
+    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10, routes: ['/requireLogin', '/login'] })
     // 正在展示的日志详情
     const [dialogDetail, setDialogDetail] = useState<HttpRequestLog | undefined>(undefined)
     // 日志列表
@@ -94,7 +83,18 @@ const LogList = () => {
         <div>
             <PageContent>
                 <Header className='font-bold md:font-normal'>
-                    访问日志
+                    <div className='flex flex-nowrap items-center justify-between w-full'>
+                        访问日志
+                        <div className='shrink-0 items-center flex flex-nowrap'>
+                            <Button
+                                className='!hidden md:!block !mx-2'
+                                color={config?.buttonColor}
+                                onClick={() => navigate(-1)}
+                            >
+                                返 回
+                            </Button>
+                        </div>
+                    </div>
                 </Header>
 
                 <div className='w-full overflow-hidden'>
@@ -108,62 +108,10 @@ const LogList = () => {
                         }}
                     />
 
-                    <Dialog
-                        visible={!!dialogDetail}
-                        showCancelButton
-                        showConfirmButton={false}
-                        cancelButtonText="关闭"
-                        onCancel={() => setDialogDetail(undefined)}
+                    <RequestLogDialog
+                        details={dialogDetail}
                         onClose={() => setDialogDetail(undefined)}
-                    >
-                        <div className='p-4'>
-                            <header className='flex flex-row flex-nowrap justify-between items-center mb-4 pb-4 border-b'>
-                                <div>
-                                    <div className='text-lg font-bold'>{dialogDetail?.name}</div>
-                                    <div className='text-sm'>
-                                        <span className='mr-4'>HTTP {dialogDetail?.responseHttpStatus}</span>
-                                        <span>响应状态码 {dialogDetail?.responseStatus}</span>
-                                    </div>
-                                </div>
-                                <div className={
-                                    'text-white py-1 px-2 rounded ' + 
-                                    METHOD_BG_COLOR[dialogDetail?.method || '']
-                                }>
-                                    {dialogDetail?.method}
-                                </div>
-                            </header>
-                            
-                            <div className='mb-1'>
-                                <span>请求接口：</span>
-                                <span className='float-right text-slate-500'>{dialogDetail?.url}</span>
-                            </div>
-                            <div className='mb-1'>
-                                <span>请求 ip：</span>
-                                <span className='float-right text-slate-500'>{dialogDetail?.ipType}</span>
-                                <span className='float-right text-slate-500'>{dialogDetail?.ip}</span>
-                            </div>
-                            <div className='mb-1'>
-                                <span>ip 所在地：</span>
-                                <span className='float-right text-slate-500'>{dialogDetail?.location}</span>
-                            </div>
-                            <div className='mb-1'>
-                                <span>请求时间：</span>
-                                <span className='float-right text-slate-500'>{dialogDetail?.date}</span>
-                            </div>
-                            <div className='mb-1'>
-                                <div>请求 params：</div>
-                                <code className='bg-slate-200 rounded p-2 mt-1 overflow-auto block'>
-                                    {dialogDetail?.requestParams}
-                                </code>
-                            </div>
-                            <div className='mb-1'>
-                                <div>请求 body：</div>
-                                <code className='bg-slate-200 rounded p-2 mt-1 overflow-auto block'>
-                                    {dialogDetail?.requestBody}
-                                </code>
-                            </div>
-                        </div>
-                    </Dialog>
+                    />
                 </div>
             </PageContent>
 
@@ -177,4 +125,4 @@ const LogList = () => {
     )
 }
 
-export default LogList
+export default LogRequest

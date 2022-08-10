@@ -54,7 +54,7 @@ const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}):
  * @param query 请求的参数，会拼接到 url 后面
  */
 export const sendGet = async function <T>(url: string, query = {}) {
-    const requestUrl = url + qs.stringify(query, { addQueryPrefix: true })
+    const requestUrl = url + qs.stringify(query, { addQueryPrefix: true, arrayFormat: 'comma' })
     const config: RequestInit = { method: 'GET' }
 
     return fetcher<T>(requestUrl, config)

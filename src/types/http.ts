@@ -94,6 +94,7 @@ export interface CertificateMoveReqBody {
 export interface LogSearchFilter {
     pageIndex: number
     pageSize: number
+    routes?: string
 }
 
 /**

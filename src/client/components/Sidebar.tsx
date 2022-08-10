@@ -1,7 +1,7 @@
 import { CertificateGroupDetail } from '@/types/http'
 import React, { FC, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Edit, Exchange, CouponO, Lock } from '@react-vant/icons'
+import { Plus, Gem, Coupon, Lock } from '@react-vant/icons'
 import { UserContext } from './UserProvider'
 
 interface TabDetail {
@@ -13,8 +13,8 @@ interface TabDetail {
 }
 
 const STATIC_TABS: TabDetail[] = [
-    { id: 'addNew', name: '新增分组', url: '/addGroup', prefix: () => <Edit fontSize={20} /> },
-    { id: 'log', name: '访问日志', url: '/log', prefix: () => <Exchange fontSize={20} /> }
+    { id: 'addNew', name: '新增分组', url: '/addGroup', prefix: () => <Plus fontSize={20} /> },
+    { id: 'securityEntry', name: '安全管理', url: '/securityEntry', prefix: () => <Gem fontSize={20} /> }
 ]
 
 export const Sidebar: FC = () => {
@@ -50,7 +50,7 @@ export const Sidebar: FC = () => {
     const renderTabIcon = (group: TabDetail) => {
         if (group.prefix) return group.prefix()
         if (group.requireLogin) return <Lock className='shrink-0' fontSize={20} />
-        return <CouponO className='shrink-0' fontSize={20} />
+        return <Coupon className='shrink-0' fontSize={20} />
     }
 
     const renderGroupItem = (group: TabDetail) => {
