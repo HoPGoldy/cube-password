@@ -7,13 +7,14 @@ import { getCertificateCollection, saveLoki } from '../lib/loki'
 import { CertificateDetail } from '@/types/app'
 import { CertificateDetailResp, CertificateMoveReqBody } from '@/types/http'
 import { DATE_FORMATTER } from '@/config'
+import { setAlias } from '../lib/routeAlias'
 
 const certificateRouter = new Router<unknown, AppKoaContext>()
 
 /**
  * 查询加密数据
  */
-certificateRouter.get('/certificate/:certificateId', async ctx => {
+certificateRouter.get(setAlias('/certificate/:certificateId', '查询凭证详情'), async ctx => {
     const certificateId = +ctx.params.certificateId
     const collection = await getCertificateCollection()
 
@@ -37,7 +38,7 @@ const deleteCertificateSchema = Joi.object<{ ids: number[] }>({
 /**
  * 删除加密数据
  */
-certificateRouter.put('/certificate/delete', async ctx => {
+certificateRouter.put(setAlias('/certificate/delete', '删除凭证', 'PUT'), async ctx => {
     const body = validate(ctx, deleteCertificateSchema)
     if (!body) return
 
@@ -62,7 +63,7 @@ const moveCertificateSchema = Joi.object<CertificateMoveReqBody>({
 /**
  * 将指定凭证移动到目标分组
  */
-certificateRouter.put('/certificate/move', async ctx => {
+certificateRouter.put(setAlias('/certificate/move', '凭证移动分组', 'PUT'), async ctx => {
     const body = validate(ctx, moveCertificateSchema)
     if (!body) return
 
@@ -87,7 +88,7 @@ const addCertificateSchema = Joi.object<CertificateDetail>({
 /**
  * 添加加密数据
  */
-certificateRouter.post('/certificate', async ctx => {
+certificateRouter.post(setAlias('/certificate', '添加新凭证', 'POST'), async ctx => {
     const body = validate(ctx, addCertificateSchema)
     if (!body) return
 
@@ -116,7 +117,7 @@ const updateCertificateSchema = Joi.object<Partial<CertificateDetail>>({
 /**
  * 修改加密数据
  */
-certificateRouter.put('/certificate/:certificateId', async ctx => {
+certificateRouter.put(setAlias('/certificate/:certificateId', '更新凭证详情', 'PUT'), async ctx => {
     const { certificateId } = ctx.params
     const body = validate(ctx, updateCertificateSchema)
     if (!body) return

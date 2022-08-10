@@ -31,7 +31,7 @@ const LogList = () => {
                 </div>
             )
         } },
-        { dataIndex: 'url', title: 'URL' },
+        { dataIndex: 'name', title: '请求' },
         { dataIndex: 'location', title: 'ip 来源', width: '25%' },
         { dataIndex: 'date', title: '请求时间', width: '200px' },
         { dataIndex: 'operation', title: '操作', width: '10%', render: () => {

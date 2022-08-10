@@ -81,12 +81,13 @@ export function getIp(ctx: AppKoaContext) {
  */
 export function getRequestRoute (ctx: AppKoaContext) {
     const { url, params } = ctx
-    if (!params) return url
+    const pureUrl = url.split('?')[0]
+    if (!params) return pureUrl
 
-    const route = Object.entries(params).reduce((url, param) => {
+    const route = Object.entries(params).reduce((prevUrl, param) => {
         const [ key, value ] = param
-        return url.replace(value as string, `:${key}`)
-    }, url)
+        return prevUrl.replace(value as string, `:${key}`)
+    }, pureUrl)
 
     return route
 }

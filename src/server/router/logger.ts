@@ -9,6 +9,7 @@ import { LogListResp, LogSearchFilter } from '@/types/http'
 import { Next } from 'koa'
 import { queryIp } from '../lib/queryIp'
 import { getIp } from '../utils'
+import { getAlias } from '../lib/routeAlias'
 
 const recordLog = async (ctx: AppKoaContext) => {
     const logDetail: HttpRequestLog = {
@@ -66,6 +67,10 @@ loggerRouter.get('/logs', async ctx => {
         .offset((pageIndex - 1) * pageSize)
         .limit(pageSize)
         .data({ removeMeta: true })
+        .map(item => ({
+            ...item,
+            name: getAlias(item.route, item.method)
+        }))
 
     const data: LogListResp = {
         entries: targetLogs,

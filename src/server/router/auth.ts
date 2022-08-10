@@ -8,11 +8,12 @@ import { sha } from '@/utils/common'
 import { STATUS_CODE } from '@/config'
 import { getCertificateGroupList } from './certificateGroup'
 import { LoginResp } from '@/types/http'
+import { setAlias } from '../lib/routeAlias'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
 // 请求登录
-loginRouter.post('/requireLogin', async ctx => {
+loginRouter.post(setAlias('/requireLogin', '请求登录授权', 'POST'), async ctx => {
     const { passwordSalt } = await getAppStorage()
     if (!passwordSalt) {
         response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
@@ -25,7 +26,7 @@ loginRouter.post('/requireLogin', async ctx => {
 })
 
 // 登录接口
-loginRouter.post('/login', async ctx => {
+loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
     const { code } = ctx.request.body
 
     if (!code || typeof code !== 'string') {
@@ -67,7 +68,7 @@ const registerSchema = Joi.object<{ code: string, salt: string }>({
     salt: Joi.string().required()
 })
 
-loginRouter.post('/register', async ctx => {
+loginRouter.post(setAlias('/register', '应用初始化', 'POST'), async ctx => {
     const { value, error } = registerSchema.validate(ctx.request.body)
     if (!value || error) {
         response(ctx, { code: 401, msg: '无效的主密码凭证' })

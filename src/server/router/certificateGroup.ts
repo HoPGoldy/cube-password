@@ -9,6 +9,7 @@ import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/typ
 import { sha } from '@/utils/common'
 import dayjs from 'dayjs'
 import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
+import { setAlias } from '../lib/routeAlias'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
@@ -31,7 +32,7 @@ export const getCertificateGroupList = async () => {
 /**
  * 查询分组列表
  */
-groupRouter.get('/group', async ctx => {
+groupRouter.get(setAlias('/group', '查询分组列表'), async ctx => {
     const data = await getCertificateGroupList()
     response(ctx, { code: 200, data })
 })
@@ -51,7 +52,7 @@ const getCertificateList = async (groupId: number): Promise<CertificateListItem[
  * 查询分组详情
  * 包含分组下的所有凭证头数据
  */
-groupRouter.get('/group/:groupId/certificates', async ctx => {
+groupRouter.get(setAlias('/group/:groupId/certificates', '查询分组下属凭证'), async ctx => {
     const groupId = +ctx.params.groupId
     if (!await hasGroupLogin(ctx, groupId, false)) {
         response(ctx, { code: 200, data: [] })
@@ -71,7 +72,7 @@ const addGroupSchema = Joi.object<CertificateGroup>({
 /**
  * 新增分组
  */
-groupRouter.post('/addGroup', async ctx => {
+groupRouter.post(setAlias('/addGroup', '新增分组', 'POST'), async ctx => {
     const body = validate(ctx, addGroupSchema)
     if (!body) return
 
@@ -101,7 +102,7 @@ const updateGroupSchema = Joi.object<Partial<CertificateGroup>>({
 /**
  * 更新分组信息
  */
-groupRouter.put('/group/:groupId', async ctx => {
+groupRouter.put(setAlias('/group/:groupId', '更新分组配置', 'PUT'), async ctx => {
     const groupId = +ctx.params.groupId
     if (!await hasGroupLogin(ctx, groupId)) return
 
@@ -123,7 +124,7 @@ groupRouter.put('/group/:groupId', async ctx => {
 /**
  * 删除分组
  */
-groupRouter.delete('/group/:groupId', async ctx => {
+groupRouter.delete(setAlias('/group/:groupId', '删除分组', 'DELETE'), async ctx => {
     const groupId = +ctx.params.groupId
     if (!await hasGroupLogin(ctx, groupId)) return
 
@@ -160,7 +161,7 @@ groupRouter.delete('/group/:groupId', async ctx => {
 /**
  * 分组登录
  */
-groupRouter.post('/group/login/:groupId', async ctx => {
+groupRouter.post(setAlias('/group/login/:groupId', '请求分组解密授权', 'POST'), async ctx => {
     const { code } = ctx.request.body
     if (!code || typeof code !== 'string') {
         response(ctx, { code: 401, msg: '无效的分组密码凭证' })
@@ -202,7 +203,7 @@ groupRouter.post('/group/login/:groupId', async ctx => {
 /**
  * 请求分组登录
  */
-groupRouter.post('/group/requireLogin/:groupId', async ctx => {
+groupRouter.post(setAlias('/group/requireLogin/:groupId', '分组解密', 'POST'), async ctx => {
     const collection = await getGroupCollection()
     const groupId = Number(ctx.params.groupId)
     const groupItem = collection.get(groupId)

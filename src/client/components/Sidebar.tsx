@@ -79,7 +79,7 @@ export const Sidebar: FC = () => {
     }
 
     return (
-        <section className='py-4 pl-4 bg-slate-700 h-full text-white'>
+        <section className='py-4 pl-4 bg-slate-700 h-screen overflow-y-auto text-white'>
             <header className='text-center font-bold text-lg h-[44px] leading-[44px]'>
                 密码本
             </header>

@@ -100,6 +100,10 @@ export interface HttpRequestLog {
      */
     location?: string
     /**
+     * 这个接口的可读别名
+     */
+    name?: string
+    /**
      * 请求日期毫秒时间戳
      */
     date: number | string
