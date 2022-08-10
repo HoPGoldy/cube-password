@@ -32,13 +32,12 @@ const SecurityMonitor = () => {
                         安全模块会监控所有请求并分析意图
                     </div>
                     <div>
-                        <Link to="/loginLogs">
+                        <Link to="/logLogin">
                             <div>登录日志</div>
                         </Link>
-                        <div>分组访问日志</div>
                         <div>凭证查看日志</div>
-                        <Link to="/requestLogs">
-                            <div>完整请求日志</div>
+                        <Link to="/logRequest">
+                            <div>完整访问日志</div>
                         </Link>
                     </div>
                 </div>

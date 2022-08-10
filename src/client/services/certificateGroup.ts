@@ -6,12 +6,12 @@ import { Notify } from 'react-vant'
 import { sha } from '@/utils/common'
 
 export const requireLogin = async (groupId: number) => {
-    return sendPost<RequireLoginResp>(`/group/requireLogin/${groupId}`)
+    return sendPost<RequireLoginResp>(`/group/requireUnlock/${groupId}`)
 }
 
 /** 登录 */
 export const login = async (groupId: number, password: string, salt: string, challenge: string) => {
-    return sendPost<{ token: string }>(`/group/login/${groupId}`, {
+    return sendPost<{ token: string }>(`/group/unlock/${groupId}`, {
         code: sha(sha(salt + password) + challenge)
     })
 }

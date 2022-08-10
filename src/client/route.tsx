@@ -22,8 +22,9 @@ export const Routes: FC = () => {
                 { path: '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
                 { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
                 { path: '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
-                { path: '/requestLogs', element: lazyLoad(() => import('./pages/LogRequest')) },
-                { path: '/loginLogs', element: lazyLoad(() => import('./pages/LogLogin')) }
+                { path: '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
+                { path: '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
+                
             ],
             element: (
                 <LoginAuth>

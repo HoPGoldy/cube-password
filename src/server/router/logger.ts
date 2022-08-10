@@ -60,11 +60,13 @@ loggerRouter.get('/logs', async ctx => {
     const { pageIndex, pageSize, routes } = value
     const collection = await getLogCollection()
 
-    const queryChain = collection
-        .chain()
-        .find({
-            route: { '$containsAny': routes?.split(',') }
+    let queryChain = collection.chain()
+
+    if (routes) {
+        queryChain = queryChain.find({
+            route: { '$containsAny': routes.split(',') }
         })
+    }
 
     const targetLogs = queryChain
         .simplesort('date', { desc: true })

@@ -2,7 +2,7 @@
 import { DATE_FORMATTER } from '@/config'
 import { LogListResp, LogSearchFilter } from '@/types/http'
 import dayjs from 'dayjs'
-import { useQuery } from 'react-query'
+import { useQuery, useInfiniteQuery } from 'react-query'
 import { sendGet } from './base'
 
 /**
@@ -38,3 +38,19 @@ export const useLogList = (query: LogSearchFilter) => {
         keepPreviousData: true
     })
 }
+
+// export const useLoginLogList = () => {
+//     return useInfiniteQuery(
+//         ['loginLog', { pageIndex: 1, pageSize: 10, routes: '/requireLogin,/login' }],
+//         ({ queryKey, pageParam }) => {
+//             return getLogs({ ...queryKey[1] as LogSearchFilter, ...pageParam })
+//         },
+//         {
+//             getNextPageParam: (lastPage, pages) => {
+//                 // 最后一个没数据了，不再请求
+//                 if (pages[pages.length - 1].entries.length <= 0) return undefined
+//                 return { pageIndex: pages.length + 1 }
+//             },
+//         }
+//     )
+// }

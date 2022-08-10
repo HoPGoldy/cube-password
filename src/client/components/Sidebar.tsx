@@ -39,7 +39,7 @@ export const Sidebar: FC = () => {
     // 切换 tab，如果是非分组，就直接导航
     const onTabClick = (tabItem: TabDetail) => {
         const { id, url } = tabItem
-        if (selectedTab === id) return
+        if (selectedTab === id && location.pathname === url) return
 
         if (typeof id === 'number') setSelectedGroup(id)
         // 路由不同了才会跳，不然会出现页面闪烁的情况

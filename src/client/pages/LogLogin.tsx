@@ -10,34 +10,41 @@ import Table, { TableColConfig } from '../components/Table'
 import { HttpRequestLog } from '@/types/app'
 import { Button } from '../components/Button'
 import { AppConfigContext } from '../components/AppConfigProvider'
-import { METHOD_BG_COLOR, METHOD_TEXT_COLOR, RequestLogDialog } from '../components/RequestLogDialog'
+import { METHOD_TEXT_COLOR, RequestLogDialog } from '../components/RequestLogDialog'
 
-const LogRequest = () => {
+const LogLogin = () => {
     const config = useContext(AppConfigContext)
     const navigate = useNavigate()
     // 查询条件
-    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10, routes: ['/requireLogin', '/login'] })
+    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10, routes: '/requireLogin,/login' })
     // 正在展示的日志详情
     const [dialogDetail, setDialogDetail] = useState<HttpRequestLog | undefined>(undefined)
     // 日志列表
     const { data: logList, isPreviousData } = useLogList(queryFilter)
 
     const tableCol: TableColConfig[] = [
-        { dataIndex: 'method', title: '类型', width: '100px', render: (data) => {
+        { dataIndex: 'method', title: '结果', width: '100px', render: (_, data: HttpRequestLog) => {
+            let bgColor = 'bg-gray-600'
+            let text = '预请求'
+            if (!data.route.endsWith('requireLogin')) {
+                bgColor = (data.responseStatus === 200) ? 'bg-green-600' : 'bg-red-600'
+                text = (data.responseStatus === 200) ? '成功' : '失败'
+            }
+
             return (
                 <div
                     className={
-                        'pl-4 py-2 shrink-0 w-[100px] rounded-tl-lg rounded-bl-lg text-white font-bold '
-                        + METHOD_BG_COLOR[data as string]
+                        'pl-4 py-2 shrink-0 w-[100px] rounded-tl-lg rounded-bl-lg text-white '
+                        + bgColor
                     }
                     key='method'
-                >{data}</div>
+                >{text}</div>
             )
         } },
         { dataIndex: 'name', title: '请求' },
         { dataIndex: 'location', title: 'ip 来源', width: '25%' },
-        { dataIndex: 'date', title: '请求时间', width: '200px' },
-        { dataIndex: 'operation', title: '操作', width: '10%', render: (_, data) => {
+        { dataIndex: 'date', title: '登录时间', width: '200px' },
+        { dataIndex: 'operation', title: '操作', width: '10%', render: (_, data: HttpRequestLog) => {
             return (
                 <div
                     className='pl-4 py-2 shrink-0 w-[10%] text-sky-500 cursor-pointer'
@@ -84,7 +91,7 @@ const LogRequest = () => {
             <PageContent>
                 <Header className='font-bold md:font-normal'>
                     <div className='flex flex-nowrap items-center justify-between w-full'>
-                        访问日志
+                        登录日志
                         <div className='shrink-0 items-center flex flex-nowrap'>
                             <Button
                                 className='!hidden md:!block !mx-2'
@@ -125,4 +132,4 @@ const LogRequest = () => {
     )
 }
 
-export default LogRequest
+export default LogLogin
