@@ -66,11 +66,18 @@ loggerRouter.get('/logs', async ctx => {
         .simplesort('date', { desc: true })
         .offset((pageIndex - 1) * pageSize)
         .limit(pageSize)
-        .data({ removeMeta: true })
-        .map(item => ({
-            ...item,
-            name: getAlias(item.route, item.method)
-        }))
+        .data()
+        .map(item => {
+            const data: Partial<HttpRequestLog & LokiObj> = {
+                ...item,
+                id: item.$loki,
+                name: getAlias(item.route, item.method)
+            }
+            delete data.meta
+            delete data.$loki
+
+            return data as HttpRequestLog
+        })
 
     const data: LogListResp = {
         entries: targetLogs,

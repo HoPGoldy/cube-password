@@ -90,10 +90,16 @@ export enum AppTheme {
  * 接口请求日志
  */
 export interface HttpRequestLog {
+    id?: number
     /**
      * 发起请求的 ip
      */
     ip?: string
+    /**
+     * ip 的版本
+     * 后端不存，前端通过 ip 自己解析
+     */
+    ipType?: 'ipv4' | 'ipv6'
     /**
      * ip 所在地
      * 使用 | 分割，未知的会填为 0，例如：中国|0|江苏省|苏州市|电信
