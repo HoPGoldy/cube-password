@@ -10,6 +10,26 @@ import Pagination from '../components/Pagination'
 import Table, { TableColConfig } from '../components/Table'
 import { HttpRequestLog } from '@/types/app'
 
+const NOTICE_TYPE = {
+    INFO: 'info',
+    WARNING: 'warning',
+    DANGER: 'danger',
+}
+
+interface SecurityNotice {
+    title: string
+    content: string
+    date: string
+    id: number
+    type: (typeof NOTICE_TYPE)[keyof typeof NOTICE_TYPE]
+}
+
+const notices: SecurityNotice[] = [
+    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 1, type: NOTICE_TYPE.INFO },
+    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 2, type: NOTICE_TYPE.WARNING },
+    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 3, type: NOTICE_TYPE.DANGER },
+]
+
 const SecurityMonitor = () => {
     const navigate = useNavigate()
     // 查询条件
@@ -19,6 +39,10 @@ const SecurityMonitor = () => {
     // 日志列表
     const { data: logList, isPreviousData } = useLogList(queryFilter)
 
+    const renderNotice = (notice: any) => {
+
+    }
+
     return (
         <div>
             <PageContent>
@@ -26,19 +50,40 @@ const SecurityMonitor = () => {
                     安全管理
                 </Header>
 
-                <div className='w-full overflow-hidden'>
-                    <div>
-                        安全模块运行中
-                        安全模块会监控所有请求并分析意图
+                <div className='w-full overflow-hidden cursor-default'>
+                    <div className='m-4 p-4 bg-green-500 rounded-lg text-white flex flex-nowarp items-center justify-between'>
+                        <div className='flex flex-nowarp items-center'>
+                            <div className='mr-4 text-4xl'>
+                                🌈
+                            </div>
+                            <div>
+                                <div className='font-bold text-xl mb-2'>
+                                    安全模块运行中
+                                </div>
+                                <div>
+                                    <span>
+                                        已运行 1 天，已检查请求 1021 次
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className='float-right'>
+                            查看安全规则
+                        </div>
                     </div>
                     <div>
-                        <Link to="/logLogin">
-                            <div>登录日志</div>
-                        </Link>
-                        <div>凭证查看日志</div>
-                        <Link to="/logRequest">
-                            <div>完整访问日志</div>
-                        </Link>
+                        <div>
+                            
+                        </div>
+                        <div>
+                            <Link to="/logLogin">
+                                <div>登录日志</div>
+                            </Link>
+                            <div>凭证查看日志</div>
+                            <Link to="/logRequest">
+                                <div>完整访问日志</div>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </PageContent>
