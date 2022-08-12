@@ -65,7 +65,9 @@ const SecurityMonitor = () => {
                             <Link to="/logLogin">
                                 <div>登录日志</div>
                             </Link>
-                            <div>凭证查看日志</div>
+                            <Link to="/LogCertificate">
+                                <div>凭证查看日志</div>
+                            </Link>
                             <Link to="/logRequest">
                                 <div>完整访问日志</div>
                             </Link>

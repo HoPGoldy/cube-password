@@ -1,49 +1,57 @@
-import React, { useContext, useState } from 'react'
+import React, { ReactNode, useContext, useState } from 'react'
+import { Lock } from '@react-vant/icons'
 import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { useLogList } from '../services/log'
+import { useCertificateLogList } from '../services/log'
 import { LogSearchFilter } from '@/types/http'
 import Pagination from '../components/Pagination'
 import Table, { TableColConfig } from '../components/Table'
-import { HttpRequestLog } from '@/types/app'
+import { CertificateQueryLog, HttpRequestLog } from '@/types/app'
 import { Button } from '../components/Button'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { RequestLogDialog } from '../components/RequestLogDialog'
 
-const LogLogin = () => {
+const LogCertificate = () => {
     const config = useContext(AppConfigContext)
     const navigate = useNavigate()
     // 查询条件
-    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10, routes: '/requireLogin,/login' })
+    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10 })
     // 正在展示的日志详情
     const [dialogDetail, setDialogDetail] = useState<HttpRequestLog | undefined>(undefined)
     // 日志列表
-    const { data: logList, isPreviousData } = useLogList(queryFilter)
+    const { data: logList, isPreviousData } = useCertificateLogList(queryFilter)
 
     const tableCol: TableColConfig[] = [
-        { dataIndex: 'method', title: '结果', width: '100px', render: (_, data: HttpRequestLog) => {
-            let bgColor = 'bg-gray-600'
-            let text = '预请求'
-            if (!data.route.endsWith('requireLogin')) {
-                bgColor = (data.responseStatus === 200) ? 'bg-green-600' : 'bg-red-600'
-                text = (data.responseStatus === 200) ? '成功' : '失败'
-            }
+        { dataIndex: 'certificateName', title: '凭证名', render: (_, data: CertificateQueryLog) => {
+            let title: ReactNode
+            if (data.removed) title = <div className='text-red-500'>凭证已删除</div>
+            else if (data.groupUnencrypted) title = <div className='text-transparent select-none' style={{ textShadow: '2px 2px 10px #000000' }}>凭证加密中</div>
+            else title = <div>{data.certificateName}</div>
 
             return (
                 <div
-                    className={
-                        'pl-4 py-2 shrink-0 w-[100px] rounded-tl-lg rounded-bl-lg text-white '
-                        + bgColor
-                    }
+                    className='pl-4 py-2 shrink-0 basis-0 grow rounded-tl-lg rounded-bl-lgfont-bold'
                     key='method'
-                >{text}</div>
+                >{title}</div>
             )
         } },
-        { dataIndex: 'name', title: '请求' },
-        { dataIndex: 'location', title: 'ip 来源', width: '25%' },
-        { dataIndex: 'date', title: '登录时间', width: '200px' },
-        { dataIndex: 'operation', title: '操作', width: '10%', render: (_, data: HttpRequestLog) => {
+        { dataIndex: 'groupName', title: '所在分组', render: (_, data: CertificateQueryLog) => {
+            return (
+                <div
+                    className='py-2 shrink-0 basis-0 grow rounded-tl-lg rounded-bl-lg font-bold flex items-center'
+                    key='method'
+                >
+                    {data.groupName}
+                    {data.groupUnencrypted && <span className='ml-2 flex items-center bg-slate-500 text-white px-1 rounded text-sm'>
+                        <Lock className='mr-1' /> 分组加密中
+                    </span>}
+                </div>
+            )
+        } },
+        { dataIndex: 'location', title: '来源', width: '200px' },
+        { dataIndex: 'date', title: '查看时间', width: '200px' },
+        { dataIndex: 'operation', title: '操作', width: '10%', render: (_, data: CertificateQueryLog) => {
             return (
                 <div
                     className='pl-4 py-2 shrink-0 w-[10%] text-sky-500 cursor-pointer'
@@ -54,13 +62,11 @@ const LogLogin = () => {
         } },
     ]
 
-    const renderMobileTableRow = (item: HttpRequestLog) => {
-        let textColor = 'text-gray-600'
-        let text = '预请求'
-        if (!item.route.endsWith('requireLogin')) {
-            textColor = (item.responseStatus === 200) ? 'text-green-600' : 'text-red-600'
-            text = (item.responseStatus === 200) ? '成功' : '失败'
-        }
+    const renderMobileTableRow = (item: CertificateQueryLog) => {
+        let title: ReactNode
+        if (item.removed) title = <div className='text-red-500'>凭证已删除</div>
+        else if (item.groupUnencrypted) title = <div className='text-transparent select-none' style={{ textShadow: '2px 2px 10px #000000' }}>凭证加密中</div>
+        else title = <div>{item.certificateName}</div>
 
         return (
             <div
@@ -68,16 +74,21 @@ const LogLogin = () => {
                 key={item.id}
                 onClick={() => setDialogDetail(item)}
             >
-                <div className='flex justify-between mb-2 font-bold'>
-                    <span>{item.name}</span>
-                    <span className={textColor}>{text}</span>
+                <div className='flex justify-between items-baseline mb-2 font-bold'>
+                    <span>{title}</span>
+                    <span className='text-slate-500 flex items-center'>
+                        {item.groupName}
+                        {item.groupUnencrypted && <span className='ml-2 flex items-center bg-slate-500 text-white px-1 rounded text-sm'>
+                            <Lock className='mr-1' /> 分组加密中
+                        </span>}
+                    </span>
                 </div>
                 <div className='flex justify-between mb-1'>
                     <span>来源</span>
                     <span className='text-slate-500'>{item.location}</span>
                 </div>
                 <div className='flex justify-between'>
-                    <span>请求时间</span>
+                    <span>查看时间</span>
                     <span className='text-slate-500'>{item.date}</span>
                 </div>
             </div>
@@ -97,7 +108,7 @@ const LogLogin = () => {
             <PageContent>
                 <Header className='font-bold md:font-normal'>
                     <div className='flex flex-nowrap items-center justify-center md:justify-between w-full'>
-                        登录日志
+                        凭证查看日志
                         <div className='hidden shrink-0 items-center md:flex flex-nowrap mx-2'>
                             <Button
                                 color={config?.buttonColor}
@@ -134,4 +145,4 @@ const LogLogin = () => {
     )
 }
 
-export default LogLogin
+export default LogCertificate

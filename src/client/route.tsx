@@ -24,6 +24,7 @@ export const Routes: FC = () => {
                 { path: '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
                 { path: '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
                 { path: '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
+                { path: '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
                 
             ],
             element: (
