@@ -39,3 +39,11 @@ export const replaceLokiInfo = <T>(item: Record<any, any>): T & { id: number } =
     delete newItem.$loki
     return newItem as T & { id: number }
 }
+
+/**
+ * 把后端存储的区域字符串转换为阅读友好形式
+ */
+export const formatLocation = (location?: string) => {
+    if (!location) return '未知地点'
+    return location.split('|').filter(str => str !== '0').join(', ')
+}

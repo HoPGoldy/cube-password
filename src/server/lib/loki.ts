@@ -1,6 +1,6 @@
 import lokijs from 'lokijs'
 import { ensureDir } from 'fs-extra'
-import { AppStorage, AppTheme, CertificateDetail, CertificateGroup, HttpRequestLog } from '@/types/app'
+import { AppStorage, AppTheme, CertificateDetail, CertificateGroup, HttpRequestLog, SecurityNotice, SecurityNoticeType } from '@/types/app'
 import { STORAGE_PATH } from '@/config'
 
 /**
@@ -102,6 +102,32 @@ export const getLogCollection = createCollectionAccessor<HttpRequestLog>({
         ttlInterval: 1000 * 60 * 60 * 24
     }
 })
+
+/**
+ * 获取安全通知集合
+ */
+export const getSecurityNoticeCollection = createCollectionAccessor<SecurityNotice>({
+    lokiName: 'log',
+    collectionName: 'securityNotice',
+    initOption: {
+        // 只保存近一个月的日志
+        ttl: 1000 * 60 * 60 * 24 * 30,
+        // 每天清理一次
+        ttlInterval: 1000 * 60 * 60 * 24
+    }
+})
+
+/**
+ * 发布一条新的安全通知
+ */
+export const insertSecurityNotice = async (
+    type: SecurityNoticeType,
+    title: string,
+    content: string
+) => {
+    const noticeCollection = await getSecurityNoticeCollection()
+    noticeCollection.insert({ type, title, content, date: new Date().valueOf() })
+}
 
 /**
  * 获取分组集合

@@ -9,6 +9,7 @@ import { STATUS_CODE } from '@/config'
 import { getCertificateGroupList } from './certificateGroup'
 import { LoginResp } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
+import { recordLoginFail } from '../lib/security'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -31,12 +32,15 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
 
     if (!code || typeof code !== 'string') {
         response(ctx, { code: 401, msg: '无效的主密码凭证' })
+        recordLoginFail()
         return
     }
 
     const challengeCode = popChallengeCode('login')
     if (!challengeCode) {
         response(ctx, { code: 401, msg: '挑战码错误' })
+        
+        recordLoginFail()
         return
     }
 
@@ -48,6 +52,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
 
     if (sha(passwordSha + challengeCode) !== code) {
         response(ctx, { code: 401, msg: '密码错误，请检查主密码是否正确' })
+        recordLoginFail()
         return
     }
 

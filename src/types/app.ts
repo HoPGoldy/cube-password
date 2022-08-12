@@ -128,11 +128,11 @@ export interface HttpRequestLog {
     /**
      * 请求携带的 body 数据
      */
-    requestBody: string
+    requestBody: Record<string, any>
     /**
      * 请求携带的 url 参数
      */
-    requestParams: string
+    requestParams: Record<string, any>
     /**
      * 请求的接口路径
      */
@@ -142,4 +142,52 @@ export interface HttpRequestLog {
      * 例如：/api/v1/certificates/:id
      */
     route: string
+}
+
+export type CertificateQueryLog = HttpRequestLog & {
+    /**
+     * 凭证名称
+     */
+    certificateName: string
+    /**
+     * 凭证分组
+     */
+    groupName: string
+    /**
+     * 凭证是否被移除了
+     */
+    removed?: boolean
+    /**
+     * 凭证分组是否未解密
+     */
+    groupUnencrypted?: boolean
+}
+
+export enum SecurityNoticeType {
+    Info = 1,
+    Warning,
+    Danger
+}
+
+export interface SecurityNotice {
+    /**
+     * 通知标题
+     */
+    title: string
+    /**
+     * 具体描述，支持 HTML
+     */
+    content: string
+    /**
+     * 通知发布时间
+     */
+    date: number
+    /**
+     * 通知严重程度
+     */
+    type: SecurityNoticeType
+    /**
+     * 用户是否已读
+     */
+    isRead?: boolean
 }

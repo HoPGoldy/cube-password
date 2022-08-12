@@ -1,5 +1,8 @@
-import { STATUS_CODE } from '@/config'
+import { DATE_FORMATTER, STATUS_CODE } from '@/config'
+import { HttpRequestLog } from '@/types/app'
 import { AppKoaContext, AppResponse } from '@/types/global'
+import { formatLocation } from '@/utils/common'
+import dayjs from 'dayjs'
 import Joi from 'joi'
 import { Context } from 'koa'
 import { getGroupCollection } from './lib/loki'
@@ -90,4 +93,17 @@ export function getRequestRoute (ctx: AppKoaContext) {
     }, pureUrl)
 
     return route
+}
+
+/**
+ * 生成安全通知的通用前缀
+ */
+export const getNoticeContentPrefix = (log?: HttpRequestLog) => {
+    if (!log) {
+        console.log('安全中间件找不到 log 数据')
+        return `未知 ip 于 ${dayjs().format(DATE_FORMATTER)} 时`
+    }
+
+    const { location, ip = '未知 ip' } = log
+    return `来自 ${formatLocation(location)} 的 ip 地址(${ip}) 于 ${dayjs().format(DATE_FORMATTER)} 时`
 }

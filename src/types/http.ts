@@ -1,4 +1,4 @@
-import { HttpRequestLog } from './app'
+import { HttpRequestLog, SecurityNoticeType } from './app'
 
 export interface RequireLoginResp {
     salt: string
@@ -103,4 +103,12 @@ export interface LogSearchFilter {
 export interface LogListResp {
     entries: Exclude<HttpRequestLog, 'date'>[]
     total: number
+}
+
+export interface SecurityNoticeResp {
+    title: string
+    content: string
+    date: string
+    id: number
+    type: SecurityNoticeType
 }

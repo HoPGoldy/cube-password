@@ -8,26 +8,12 @@ import { useLogList } from '../services/log'
 import { LogSearchFilter } from '@/types/http'
 import Pagination from '../components/Pagination'
 import Table, { TableColConfig } from '../components/Table'
-import { HttpRequestLog } from '@/types/app'
-
-const NOTICE_TYPE = {
-    INFO: 'info',
-    WARNING: 'warning',
-    DANGER: 'danger',
-}
-
-interface SecurityNotice {
-    title: string
-    content: string
-    date: string
-    id: number
-    type: (typeof NOTICE_TYPE)[keyof typeof NOTICE_TYPE]
-}
+import { HttpRequestLog, SecurityNotice, SecurityNoticeType } from '@/types/app'
 
 const notices: SecurityNotice[] = [
-    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 1, type: NOTICE_TYPE.INFO },
-    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 2, type: NOTICE_TYPE.WARNING },
-    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 3, type: NOTICE_TYPE.DANGER },
+    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 1, type: SecurityNoticeType.Info },
+    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 2, type: SecurityNoticeType.Warning },
+    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 3, type: SecurityNoticeType.Danger },
 ]
 
 const SecurityMonitor = () => {
