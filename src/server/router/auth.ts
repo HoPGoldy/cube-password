@@ -1,7 +1,7 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { response } from '../utils'
-import { getAppStorage, saveLoki, updateAppStorage } from '../lib/loki'
+import { getNoticeContentPrefix, response } from '../utils'
+import { getAppStorage, getSecurityNoticeCollection, insertSecurityNotice, saveLoki, updateAppStorage } from '../lib/loki'
 import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
 import Joi from 'joi'
 import { sha } from '@/utils/common'
@@ -10,6 +10,7 @@ import { getCertificateGroupList } from './certificateGroup'
 import { LoginResp } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
 import { recordLoginFail } from '../lib/security'
+import { SecurityNoticeType } from '@/types/app'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -39,7 +40,11 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
     const challengeCode = popChallengeCode('login')
     if (!challengeCode) {
         response(ctx, { code: 401, msg: '挑战码错误' })
-        
+        insertSecurityNotice(
+            SecurityNoticeType.Danger,
+            '未授权状态下进行登录操作',
+            `${getNoticeContentPrefix(ctx.log)}发起了一次非法登录，正常使用不会导致该情况发生，判断为攻击操作。`
+        )
         recordLoginFail()
         return
     }
@@ -59,10 +64,14 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
     const token = await createToken()
     const groups = await getCertificateGroupList()
 
+    const noticeCollection = await getSecurityNoticeCollection()
+    const unReadNoticeCount = await noticeCollection.chain().find({ isRead: false }).count()
+
     const data: LoginResp = {
         token,
         groups,
-        defaultGroupId
+        defaultGroupId,
+        hasNotice: unReadNoticeCount >= 1
     }
 
     response(ctx, { code: 200, data })

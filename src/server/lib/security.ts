@@ -1,3 +1,4 @@
+import { DATE_FORMATTER } from '@/config'
 import { SecurityNoticeType } from '@/types/app'
 import { AppKoaContext } from '@/types/global'
 import dayjs from 'dayjs'
@@ -5,19 +6,88 @@ import { Next } from 'koa'
 import { getNoticeContentPrefix, response } from '../utils'
 import { getGroupCollection, insertSecurityNotice } from './loki'
 
-const createLoginLock = () => {
-    let loginDisabled = false
+export interface LoginRecordDetail {
+    /**
+     * 要显示的错误登录信息
+     * 不一定是所有的，一般都是今天的错误信息
+     */
+    records: string[]
+    /**
+     * 是否被锁定
+     */
+    disable: boolean
+    /**
+     * 是否无限期锁定
+     */
+    dead: boolean
+}
 
+/**
+ * 创建登录重试管理器
+ * 同一天内最多失败三次，超过三次后锁定
+ * 连续失败锁定两天后锁死应用后台，拒绝所有请求
+ */
+const createLoginLock = (excludePath: string) => {
+    // 系统是被被锁定
+    let loginDisabled = false
+    // 解除锁定的计时器
+    let unlockTimer: NodeJS.Timeout | undefined
+    // 当前失败的登录次数日期
     const loginFailRecords: number[] = []
 
+    /**
+     * 增加登录失败记录
+     */
     const recordLoginFail = () => {
         loginFailRecords.push(new Date().valueOf())
-        if (loginFailRecords.length >= 3) loginDisabled = true
+
+        // 如果今天失败三次了，就锁定
+        const todayFail = loginFailRecords.filter(date => {
+            return dayjs(date).isSame(dayjs(), 'day')
+        })
+        if (todayFail.length < 3) return
+        loginDisabled = true
+
+        // 如果昨天也失败了三次（也就是失败了两天），就不会在解除锁定了
+        const yesterdayFail = loginFailRecords.filter(date => {
+            return dayjs(date).isSame(dayjs().subtract(1, 'day'), 'day')
+        })
+        if (yesterdayFail.length < 3) return
+        // 24 小时后解除锁定
+        unlockTimer = setTimeout(() => {
+            loginDisabled = false
+            unlockTimer = undefined
+        }, 1000 * 60 * 60 * 24)
     }
 
+    /**
+     * 获取当前登录失败情况
+     */
+    const getLockDetail = (): LoginRecordDetail => {
+        const records = loginFailRecords
+            .filter(date => {
+                return dayjs(date).isSame(dayjs(), 'day')
+            })
+            .map(date => dayjs(date).format(DATE_FORMATTER))
+
+        return {
+            records,
+            disable: loginDisabled,
+            // 如果被禁用了，而且还没有解锁计时器，那就说明是永久锁定
+            dead: loginDisabled && !unlockTimer
+        }
+    }
+
+    /**
+     * 登录锁定中间件
+     * 用于在锁定时拦截所有中间件
+     */
     const loginLockMiddleware = async (ctx: AppKoaContext, next: Next) => {
+        // 全局配置接口不会拒绝，不然就裂开了
+        if (ctx.url.endsWith(excludePath)) return await next()
+
         try {
-            if (loginDisabled) throw new Error('登录是吧次数过多，请求被拒绝')
+            if (loginDisabled) throw new Error('登录失败次数过多，请求被拒绝')
             await next()
         }
         catch (e)  {
@@ -26,11 +96,11 @@ const createLoginLock = () => {
         }
     }
 
-    return { recordLoginFail, loginLockMiddleware }
+    return { recordLoginFail, loginLockMiddleware, getLockDetail }
 }
 
-const { recordLoginFail, loginLockMiddleware } = createLoginLock()
-export { recordLoginFail, loginLockMiddleware }
+const { recordLoginFail, loginLockMiddleware, getLockDetail } = createLoginLock('/global')
+export { recordLoginFail, loginLockMiddleware, getLockDetail }
 
 type SecurityChecker = (ctx: AppKoaContext, next: Next) => Promise<unknown>
 

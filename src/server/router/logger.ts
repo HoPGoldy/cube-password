@@ -1,16 +1,20 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { getRequestRoute, hasGroupLogin, response } from '../utils'
+import { getRequestRoute, hasGroupLogin, response, validate } from '../utils'
 import Joi from 'joi'
 import dayjs from 'dayjs'
-import { getCertificateCollection, getGroupCollection, getLogCollection } from '../lib/loki'
+import { getCertificateCollection, getGroupCollection, getLogCollection, getSecurityNoticeCollection } from '../lib/loki'
 import { CertificateQueryLog, HttpRequestLog } from '@/types/app'
-import { LogListResp, LogSearchFilter } from '@/types/http'
+import { LogListResp, LogSearchFilter, NoticeListResp, NoticeSearchFilter, PageSearchFilter, SecurityNoticeResp } from '@/types/http'
 import { Next } from 'koa'
 import { queryIp } from '../lib/queryIp'
 import { getIp } from '../utils'
 import { getAlias } from '../lib/routeAlias'
+import { DATE_FORMATTER } from '@/config'
 
+/**
+ * 从 ctx 生成日志对象
+ */
 const createLog = async (ctx: AppKoaContext) => {
     const logDetail: HttpRequestLog = {
         ip: getIp(ctx),
@@ -29,6 +33,9 @@ const createLog = async (ctx: AppKoaContext) => {
     return logDetail
 }
 
+/**
+ * 日记记录中间件
+ */
 const middlewareLogger = async (ctx: AppKoaContext, next: Next) => {
     await next()
     // 不记录查看日志的请求
@@ -93,7 +100,7 @@ loggerRouter.get('/logs', async ctx => {
     response(ctx, { code: 200, data })
 })
 
-const certificateLogQuerySchema = Joi.object<LogSearchFilter>({
+const certificateLogQuerySchema = Joi.object<PageSearchFilter>({
     pageIndex: Joi.number().integer().min(1).default(1),
     pageSize: Joi.number().integer().min(1).default(10)
 })
@@ -166,6 +173,76 @@ loggerRouter.get('/logs/certificates', async ctx => {
     }
 
     response(ctx, { code: 200, data })
+})
+
+const securityNoticeQuerySchema = Joi.object<NoticeSearchFilter>({
+    pageIndex: Joi.number().integer().min(1).default(1),
+    pageSize: Joi.number().integer().min(1).default(10),
+    isRead: Joi.bool().allow(undefined).default(undefined)
+})
+
+/**
+ * 查询通知数据
+ */
+loggerRouter.get('/notices', async ctx => {
+    const { error, value } = securityNoticeQuerySchema.validate(ctx.query)
+    if (!value || error) {
+        response(ctx, { code: 400, msg: '数据结构不正确' })
+        return
+    }
+    const { pageIndex, pageSize, isRead } = value
+    const collection = await getSecurityNoticeCollection()
+
+    const queryChain = collection.chain().find({ isRead })
+
+    const targetLogs = queryChain
+        .simplesort('date', { desc: true })
+        .offset((pageIndex - 1) * pageSize)
+        .limit(pageSize)
+        .data()
+        .map(item => {
+            const data: Partial<SecurityNoticeResp & LokiObj> = {
+                ...item,
+                date: dayjs(item.date).format(DATE_FORMATTER),
+                id: item.$loki,
+            }
+            delete data.meta
+            delete data.$loki
+
+            return data as SecurityNoticeResp
+        })
+
+    const data: NoticeListResp = {
+        entries: targetLogs,
+        total: queryChain.count()
+    }
+
+    response(ctx, { code: 200, data })
+})
+
+const noticeReadSchema = Joi.object<{ isRead: boolean }>({
+    isRead: Joi.bool().required()
+})
+
+/**
+ * 更新通知的已读 / 未读状态
+ */
+loggerRouter.post('/notice/:noticeId/read', async ctx => {
+    const noticeId = +ctx.params.noticeId
+    const body = validate(ctx, noticeReadSchema)
+    if (!body) return
+
+    const collection = await getSecurityNoticeCollection()
+    const item = collection.get(noticeId)
+    if (!item) {
+        response(ctx, { code: 500, msg: '通知不存在' })
+        return
+    }
+
+    item.isRead = body.isRead
+    collection.update(item)
+
+    response(ctx, { code: 200 })
 })
 
 export { loggerRouter, middlewareLogger }

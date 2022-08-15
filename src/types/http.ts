@@ -75,6 +75,10 @@ export interface LoginResp {
      * 默认展示的分组
      */
     defaultGroupId: number
+    /**
+     * 是否有未读通知
+     */
+    hasNotice: boolean
 }
 
 /**
@@ -89,12 +93,28 @@ export interface CertificateMoveReqBody {
 }
 
 /**
+ * 带分页的查询条件
+ */
+export interface PageSearchFilter {
+    /**
+     * 要查询的分页
+     */
+    pageIndex: number
+    /**
+     * 每个分页的条数
+     */
+    pageSize: number
+}
+
+/**
  * 日志查询筛选器
  */
-export interface LogSearchFilter {
-    pageIndex: number
-    pageSize: number
+export type LogSearchFilter = PageSearchFilter & {
     routes?: string
+}
+
+export type NoticeSearchFilter = PageSearchFilter & {
+    isRead?: boolean
 }
 
 /**
@@ -102,6 +122,11 @@ export interface LogSearchFilter {
  */
 export interface LogListResp {
     entries: Exclude<HttpRequestLog, 'date'>[]
+    total: number
+}
+
+export interface NoticeListResp {
+    entries: SecurityNoticeResp[]
     total: number
 }
 
