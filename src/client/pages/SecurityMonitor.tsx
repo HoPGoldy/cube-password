@@ -4,29 +4,66 @@ import { Dialog } from 'react-vant'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { useLogList } from '../services/log'
-import { LogSearchFilter } from '@/types/http'
+import { useNoticeList } from '../services/log'
+import { PageSearchFilter, SecurityNoticeResp } from '@/types/http'
 import Pagination from '../components/Pagination'
 import Table, { TableColConfig } from '../components/Table'
 import { HttpRequestLog, SecurityNotice, SecurityNoticeType } from '@/types/app'
+import { Button } from '../components/Button'
+import { ActionSheet } from 'react-vant'
 
-const notices: SecurityNotice[] = [
-    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 1, type: SecurityNoticeType.Info },
-    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 2, type: SecurityNoticeType.Warning },
-    { title: '通知标题', content: '通知内容', date: '2020-01-01', id: 3, type: SecurityNoticeType.Danger },
+interface LogLink {
+    name: string
+    subname: string
+    to: string
+}
+
+const logLinks: LogLink[] = [
+    { name: '登录日志', subname: '应用登录历史', to: '/logLogin' },
+    { name: '凭证查看日志', subname: '凭证详情的查看历史', to: '/LogCertificate' },
+    { name: '完整访问日志', subname: '应用接受的所有请求', to: '/logRequest' },
 ]
+
+const noticeConfig = {
+    [SecurityNoticeType.Danger]: { ring: 'ring-red-500', bg: 'bg-red-500' },
+    [SecurityNoticeType.Warning]: { ring: 'ring-orange-500', bg: 'bg-orange-500' },
+    [SecurityNoticeType.Info]: { ring: 'ring-key-500', bg: 'bg-key-500' },
+}
 
 const SecurityMonitor = () => {
     const navigate = useNavigate()
-    // 查询条件
-    const [queryFilter, setQueryFilter] = useState<LogSearchFilter>({ pageIndex: 1, pageSize: 10 })
-    // 正在展示的日志详情
-    const [dialogDetail, setDialogDetail] = useState<HttpRequestLog | undefined>(undefined)
-    // 日志列表
-    const { data: logList, isPreviousData } = useLogList(queryFilter)
+    // 日志列表，首页里只看前十条
+    const { data: logList } = useNoticeList({ pageIndex: 1, pageSize: 10 })
+    const [logSelectorVisible, setLogSelectorVisible] = useState(false)
 
-    const renderNotice = (notice: any) => {
+    const renderNotice = (notice: SecurityNoticeResp) => {
+        const color = noticeConfig[notice.type]
 
+        return (
+            <div key={notice.id} className={'bg-white rounded-lg m-4 hover:ring transition ' + color.ring}>
+                <div className={'flex flex-nowrap justify-between text-white px-4 py-2 rounded-tl-lg rounded-tr-lg ' + color.bg}>
+                    <span className='font-bold'>{notice.title}</span>
+                    <span>{notice.date}</span>
+                </div>
+                <div className='py-2 px-4'>
+                    {notice.content}
+                </div>
+            </div>
+        )
+    }
+
+    const rnederLogLink = (item: LogLink) => {
+        return (
+            <div key={item.to} className='m-4 ml-0'>
+                <Button block onClick={() => onSelectLogLink(item)}>
+                    {item.name}
+                </Button>
+            </div>
+        )
+    }
+
+    const onSelectLogLink = (item: LogLink) => {
+        navigate(item.to)
     }
 
     return (
@@ -37,7 +74,7 @@ const SecurityMonitor = () => {
                 </Header>
 
                 <div className='w-full overflow-hidden cursor-default'>
-                    <div className='m-4 p-4 bg-green-500 rounded-lg text-white flex flex-nowarp items-center justify-between'>
+                    <div className='mx-4 p-4 bg-green-500 rounded-lg text-white flex flex-nowarp items-center justify-between'>
                         <div className='flex flex-nowarp items-center'>
                             <div className='mr-4 text-4xl'>
                                 🌈
@@ -48,39 +85,39 @@ const SecurityMonitor = () => {
                                 </div>
                                 <div>
                                     <span>
-                                        已运行 1 天，已检查请求 1021 次
+                                        已运行 1 天，检查请求 1021 次
                                     </span>
                                 </div>
                             </div>
                         </div>
-                        <div className='float-right'>
+                        <div className='hidden md:block float-right'>
                             查看安全规则
                         </div>
                     </div>
-                    <div>
-                        <div>
-                            
+                    <div className='flex flex-nowrap'>
+                        <div className='md:w-2/3'>
+                            {logList?.entries.map(renderNotice)}
                         </div>
-                        <div>
-                            <Link to="/logLogin">
-                                <div>登录日志</div>
-                            </Link>
-                            <Link to="/LogCertificate">
-                                <div>凭证查看日志</div>
-                            </Link>
-                            <Link to="/logRequest">
-                                <div>完整访问日志</div>
-                            </Link>
+                        <div className='md:w-1/3 hidden md:block'>
+                            {logLinks.map(rnederLogLink)}
                         </div>
                     </div>
                 </div>
             </PageContent>
 
+            <ActionSheet
+                visible={logSelectorVisible}
+                actions={logLinks}
+                onCancel={() => setLogSelectorVisible(false)}
+                onSelect={item => onSelectLogLink(item as LogLink)}
+                cancelText="取消"
+            />
+
             <PageAction>
                 <ActionIcon onClick={() => navigate(-1)}>
                     <ArrowLeft fontSize={24} />
                 </ActionIcon>
-                <ActionButton onClick={() => navigate(-1)}>返回</ActionButton>
+                <ActionButton onClick={() => setLogSelectorVisible(true)}>查看日志</ActionButton>
             </PageAction>
         </div>
     )

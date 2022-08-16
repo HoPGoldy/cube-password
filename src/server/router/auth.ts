@@ -11,6 +11,7 @@ import { LoginResp } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
 import { recordLoginFail } from '../lib/security'
 import { SecurityNoticeType } from '@/types/app'
+import { createLog } from './logger'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -37,13 +38,15 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         return
     }
 
+    const log = await createLog(ctx)
+
     const challengeCode = popChallengeCode('login')
     if (!challengeCode) {
         response(ctx, { code: 401, msg: '挑战码错误' })
         insertSecurityNotice(
             SecurityNoticeType.Danger,
             '未授权状态下进行登录操作',
-            `${getNoticeContentPrefix(ctx.log)}发起了一次非法登录，正常使用不会导致该情况发生，判断为攻击操作。`
+            `${getNoticeContentPrefix(log)}发起了一次非法登录，正常使用不会导致该情况发生，判断为攻击操作。`
         )
         recordLoginFail()
         return
@@ -57,6 +60,11 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
 
     if (sha(passwordSha + challengeCode) !== code) {
         response(ctx, { code: 401, msg: '密码错误，请检查主密码是否正确' })
+        insertSecurityNotice(
+            SecurityNoticeType.Warning,
+            '登录失败',
+            `${getNoticeContentPrefix(log)}使用了错误的密码登录，请确保是本人操作。`
+        )
         recordLoginFail()
         return
     }

@@ -15,7 +15,7 @@ import { DATE_FORMATTER } from '@/config'
 /**
  * 从 ctx 生成日志对象
  */
-const createLog = async (ctx: AppKoaContext) => {
+export const createLog = async (ctx: AppKoaContext) => {
     const logDetail: HttpRequestLog = {
         ip: getIp(ctx),
         method: ctx.method,
@@ -178,7 +178,7 @@ loggerRouter.get('/logs/certificates', async ctx => {
 const securityNoticeQuerySchema = Joi.object<NoticeSearchFilter>({
     pageIndex: Joi.number().integer().min(1).default(1),
     pageSize: Joi.number().integer().min(1).default(10),
-    isRead: Joi.bool().allow(undefined).default(undefined)
+    isRead: Joi.bool()
 })
 
 /**

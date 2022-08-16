@@ -127,6 +127,7 @@ export const insertSecurityNotice = async (
 ) => {
     const noticeCollection = await getSecurityNoticeCollection()
     noticeCollection.insert({ type, title, content, date: new Date().valueOf() })
+    saveLoki('log')
 }
 
 /**
