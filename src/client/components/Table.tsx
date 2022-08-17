@@ -53,7 +53,7 @@ const Table: FC<Props> = (props) => {
     }
 
     return (
-        <div className='mx-4 my-0 md:my-4 cursor-default'>
+        <div className='m-4 mb-0 md:my-4 cursor-default'>
             <div className='hidden lg:flex flex-nowrap rounded-lg'>
                 {columns.map(renderTableHeader)}
             </div>

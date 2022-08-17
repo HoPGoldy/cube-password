@@ -193,7 +193,8 @@ loggerRouter.get('/notices', async ctx => {
     const { pageIndex, pageSize, isRead } = value
     const collection = await getSecurityNoticeCollection()
 
-    const queryChain = collection.chain().find({ isRead })
+    let queryChain = collection.chain()
+    if (isRead !== undefined) queryChain = queryChain.find({ isRead })
 
     const targetLogs = queryChain
         .simplesort('date', { desc: true })

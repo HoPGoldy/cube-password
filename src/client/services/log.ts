@@ -1,9 +1,9 @@
 
 import { DATE_FORMATTER } from '@/config'
-import { LogListResp, LogSearchFilter, NoticeListResp, PageSearchFilter } from '@/types/http'
+import { LogListResp, LogSearchFilter, NoticeListResp, NoticeSearchFilter } from '@/types/http'
 import dayjs from 'dayjs'
 import { useQuery } from 'react-query'
-import { sendGet } from './base'
+import { sendGet, sendPost } from './base'
 
 /**
  * 获取日志列表
@@ -76,12 +76,12 @@ export const useCertificateLogList = (query: LogSearchFilter) => {
 /**
  * 获取通知列表
  */
-export const getNotice = async (query: PageSearchFilter) => {
+export const getNotice = async (query: NoticeSearchFilter) => {
     const resp = await sendGet<NoticeListResp>('notices', query)
     return resp
 }
 
-export const useNoticeList = (query: PageSearchFilter) => {
+export const useNoticeList = (query: NoticeSearchFilter) => {
     return useQuery(['notices', query], () => getNotice(query), {
         keepPreviousData: true
     })
@@ -90,3 +90,6 @@ export const useNoticeList = (query: PageSearchFilter) => {
 /**
  * 切换通知已读/未读状态
  */
+export const toggleNoticeRead = async (id: number, isRead: boolean) => {
+    return sendPost(`notice/${id}/read`, { isRead })
+}

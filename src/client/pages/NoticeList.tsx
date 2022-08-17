@@ -11,6 +11,7 @@ import { Button } from '../components/Button'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { RequestLogDialog } from '../components/RequestLogDialog'
 import { SecurityNotice } from '../components/SecurityNotice'
+import { queryClient } from '../components/QueryClientProvider'
 
 const LogLogin = () => {
     const config = useContext(AppConfigContext)
@@ -19,6 +20,10 @@ const LogLogin = () => {
     const [queryFilter, setQueryFilter] = useState<PageSearchFilter>({ pageIndex: 1, pageSize: 10 })
     // 日志列表
     const { data: noticeList, isPreviousData } = useNoticeList(queryFilter)
+
+    const onNoticeChange = () => {
+        queryClient.fetchQuery(['notices', queryFilter])
+    }
 
     const renderNoticeList = () => {
         if (isPreviousData) {
@@ -37,7 +42,7 @@ const LogLogin = () => {
         }
 
         return (<>
-            {noticeList.entries.map(item => <SecurityNotice key={item.id} detail={item} />)}
+            {noticeList.entries.map(item => <SecurityNotice key={item.id} detail={item} onChange={onNoticeChange} />)}
             <Pagination
                 className='w-full md:w-auto md:float-right px-4 pb-2 md:pb-4'
                 total={noticeList?.total}

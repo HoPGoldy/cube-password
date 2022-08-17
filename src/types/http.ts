@@ -135,5 +135,6 @@ export interface SecurityNoticeResp {
     content: string
     date: string
     id: number
+    isRead?: boolean
     type: SecurityNoticeType
 }
