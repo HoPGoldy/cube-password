@@ -1,16 +1,12 @@
 import React, { useState } from 'react'
 import { ArrowLeft } from '@react-vant/icons'
-import { Dialog } from 'react-vant'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { useNoticeList } from '../services/log'
-import { PageSearchFilter, SecurityNoticeResp } from '@/types/http'
-import Pagination from '../components/Pagination'
-import Table, { TableColConfig } from '../components/Table'
-import { HttpRequestLog, SecurityNotice, SecurityNoticeType } from '@/types/app'
 import { Button } from '../components/Button'
 import { ActionSheet } from 'react-vant'
+import { SecurityNotice } from '../components/SecurityNotice'
 
 interface LogLink {
     name: string
@@ -24,33 +20,13 @@ const logLinks: LogLink[] = [
     { name: '完整访问日志', subname: '应用接受的所有请求', to: '/logRequest' },
 ]
 
-const noticeConfig = {
-    [SecurityNoticeType.Danger]: { ring: 'ring-red-500', bg: 'bg-red-500' },
-    [SecurityNoticeType.Warning]: { ring: 'ring-orange-500', bg: 'bg-orange-500' },
-    [SecurityNoticeType.Info]: { ring: 'ring-key-500', bg: 'bg-key-500' },
-}
+
 
 const SecurityMonitor = () => {
     const navigate = useNavigate()
     // 日志列表，首页里只看前十条
-    const { data: logList } = useNoticeList({ pageIndex: 1, pageSize: 10 })
+    const { data: noticeList } = useNoticeList({ pageIndex: 1, pageSize: 10 })
     const [logSelectorVisible, setLogSelectorVisible] = useState(false)
-
-    const renderNotice = (notice: SecurityNoticeResp) => {
-        const color = noticeConfig[notice.type]
-
-        return (
-            <div key={notice.id} className={'bg-white rounded-lg m-4 hover:ring transition ' + color.ring}>
-                <div className={'flex flex-nowrap justify-between text-white px-4 py-2 rounded-tl-lg rounded-tr-lg ' + color.bg}>
-                    <span className='font-bold'>{notice.title}</span>
-                    <span>{notice.date}</span>
-                </div>
-                <div className='py-2 px-4'>
-                    {notice.content}
-                </div>
-            </div>
-        )
-    }
 
     const rnederLogLink = (item: LogLink) => {
         return (
@@ -60,6 +36,18 @@ const SecurityMonitor = () => {
                 </Button>
             </div>
         )
+    }
+
+    const renderNoticeList = () => {
+        if (!noticeList || noticeList.entries.length <= 0) {
+            return (
+                <div className='text-center m-4 text-slate-500'>
+                    暂无通知
+                </div>
+            )
+        }
+
+        return noticeList.entries.map(item => <SecurityNotice key={item.id} detail={item} />)
     }
 
     const onSelectLogLink = (item: LogLink) => {
@@ -74,7 +62,7 @@ const SecurityMonitor = () => {
                 </Header>
 
                 <div className='w-full overflow-hidden cursor-default'>
-                    <div className='mx-4 p-4 bg-green-500 rounded-lg text-white flex flex-nowarp items-center justify-between'>
+                    <div className='mx-4 md:mt-4 p-4 bg-green-500 rounded-lg text-white flex flex-nowarp items-center justify-between'>
                         <div className='flex flex-nowarp items-center'>
                             <div className='mr-4 text-4xl'>
                                 🌈
@@ -95,8 +83,13 @@ const SecurityMonitor = () => {
                         </div>
                     </div>
                     <div className='flex flex-nowrap'>
-                        <div className='md:w-2/3'>
-                            {logList?.entries.map(renderNotice)}
+                        <div className='w-full md:w-2/3'>
+                            {renderNoticeList()}
+                            <div className='text-center m-4 text-slate-500'>
+                                <Link to="/NoticeList">
+                                    查看历史通知
+                                </Link>
+                            </div>
                         </div>
                         <div className='md:w-1/3 hidden md:block'>
                             {logLinks.map(rnederLogLink)}
