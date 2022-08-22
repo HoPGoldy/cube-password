@@ -34,7 +34,7 @@ const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}):
     const pureUrl = url.startsWith('/') ? url : ('/' + url)
     const resp = await fetch(baseURL + pureUrl, init)
 
-    if (resp.status === 401) {
+    if (resp.status === 401 && history.location.pathname !== '/login') {
         history.push('/login', { replace: true })
     }
 

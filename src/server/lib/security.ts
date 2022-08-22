@@ -22,12 +22,17 @@ export interface LoginRecordDetail {
     dead: boolean
 }
 
+interface LoginLockProps {
+    excludePath?: string[]
+}
+
 /**
  * 创建登录重试管理器
  * 同一天内最多失败三次，超过三次后锁定
  * 连续失败锁定两天后锁死应用后台，拒绝所有请求
  */
-const createLoginLock = (excludePath: string) => {
+const createLoginLock = (props: LoginLockProps) => {
+    const { excludePath = [] } = props
     // 系统是被被锁定
     let loginDisabled = false
     // 解除锁定的计时器
@@ -52,11 +57,12 @@ const createLoginLock = (excludePath: string) => {
         const yesterdayFail = loginFailRecords.filter(date => {
             return dayjs(date).isSame(dayjs().subtract(1, 'day'), 'day')
         })
-        if (yesterdayFail.length < 3) return
+        if (yesterdayFail.length >= 3) return
         // 24 小时后解除锁定
         unlockTimer = setTimeout(() => {
             loginDisabled = false
             unlockTimer = undefined
+            console.log('登录失败次数过多导致的锁定已解除')
         }, 1000 * 60 * 60 * 24)
     }
 
@@ -83,8 +89,9 @@ const createLoginLock = (excludePath: string) => {
      * 用于在锁定时拦截所有中间件
      */
     const loginLockMiddleware = async (ctx: AppKoaContext, next: Next) => {
-        // 全局配置接口不会拒绝，不然就裂开了
-        if (ctx.url.endsWith(excludePath)) return await next()
+        const isAccessPath = !!excludePath.find(path => ctx.url.endsWith(path))
+        // 允许 excludePath 接口正常访问
+        if (isAccessPath) return await next()
 
         try {
             if (loginDisabled) throw new Error('登录失败次数过多，请求被拒绝')
@@ -99,7 +106,7 @@ const createLoginLock = (excludePath: string) => {
     return { recordLoginFail, loginLockMiddleware, getLockDetail }
 }
 
-const { recordLoginFail, loginLockMiddleware, getLockDetail } = createLoginLock('/global')
+const { recordLoginFail, loginLockMiddleware, getLockDetail } = createLoginLock({ excludePath: ['/global', '/logInfo']})
 export { recordLoginFail, loginLockMiddleware, getLockDetail }
 
 type SecurityChecker = (ctx: AppKoaContext, next: Next) => Promise<unknown>

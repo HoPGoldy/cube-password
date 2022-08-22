@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { fetchAppConfig } from '../services/user'
 import { AppConfig } from '@/types/appConfig'
 import { useQuery } from 'react-query'
+import { Loading } from 'react-vant'
 
 export const AppConfigContext = React.createContext<AppConfig | undefined>(undefined)
 
@@ -14,7 +15,10 @@ export const AppConfigProvider: FC = (props) => {
 
     return (
         <AppConfigContext.Provider value={appConfig}>
-            {isLoadingConfig ? <div>Loading...</div> : props.children}
+            {isLoadingConfig 
+                ? <Loading className="my-24" size="36px" vertical>加载中...</Loading>
+                : props.children
+            }
         </AppConfigContext.Provider>
     )
 }

@@ -7,9 +7,9 @@ import Joi from 'joi'
 import { sha } from '@/utils/common'
 import { STATUS_CODE } from '@/config'
 import { getCertificateGroupList } from './certificateGroup'
-import { LoginResp } from '@/types/http'
+import { LoginErrorResp, LoginResp } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
-import { recordLoginFail } from '../lib/security'
+import { getLockDetail, recordLoginFail } from '../lib/security'
 import { SecurityNoticeType } from '@/types/app'
 import { createLog } from './logger'
 
@@ -111,6 +111,21 @@ loginRouter.post(setAlias('/register', '应用初始化', 'POST'), async ctx => 
     })
     response(ctx, { code: 200 })
     await saveLoki()
+})
+
+/**
+ * 查询登录失败接口信息
+ */
+loginRouter.get(setAlias('/logInfo', '登录失败查询'), async ctx => {
+    const lockDetail = getLockDetail()
+
+    const respData: LoginErrorResp = {
+        loginFailure: lockDetail.records,
+        appLock: lockDetail.disable,
+        appFullLock: lockDetail.dead
+    }
+
+    response(ctx, { code: 200, data: respData })
 })
 
 export { loginRouter }

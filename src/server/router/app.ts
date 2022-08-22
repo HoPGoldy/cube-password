@@ -5,7 +5,6 @@ import { getAppStorage } from '../lib/loki'
 import { AppConfig } from '@/types/appConfig'
 import { DEFAULT_COLOR } from '@/constants'
 import { setAlias } from '../lib/routeAlias'
-import { getLockDetail } from '../lib/security'
 
 const globalRouter = new Router<any, AppKoaContext>()
 
@@ -18,14 +17,9 @@ globalRouter.get(setAlias('/global', '获取全局配置'), async ctx => {
     const randIndex = Math.floor(Math.random() * (DEFAULT_COLOR.length))
     const buttonColor = DEFAULT_COLOR[randIndex]
 
-    const lockDetail = getLockDetail()
-
     const respData: AppConfig = {
         theme: appStorage.theme,
-        buttonColor,
-        loginFailure: lockDetail.records,
-        appLock: lockDetail.disable,
-        appFullLock: lockDetail.dead
+        buttonColor
     }
 
     response(ctx, { code: 200, data: respData })

@@ -2,7 +2,7 @@ import { sendGet, sendPost } from './base'
 import { AppConfig } from '@/types/appConfig'
 import { nanoid } from 'nanoid'
 import { sha } from '@/utils/common'
-import { LoginResp, RequireLoginResp } from '@/types/http'
+import { LoginErrorResp, LoginResp, RequireLoginResp } from '@/types/http'
 
 export const requireLogin = async () => {
     return sendPost<RequireLoginResp>('/requireLogin')
@@ -27,4 +27,9 @@ export const register = async (password: string) => {
 /** 获取应用全局配置 */
 export const fetchAppConfig = async () => {
     return sendGet<AppConfig>('/global')
+}
+
+/** 获取登录失败情况 */
+export const fetchLoginFail = async () => {
+    return sendGet<LoginErrorResp>('/logInfo')
 }

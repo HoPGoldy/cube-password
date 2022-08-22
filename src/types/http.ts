@@ -150,3 +150,18 @@ export interface SecurityNoticeResp {
     isRead?: boolean
     type: SecurityNoticeType
 }
+
+export interface LoginErrorResp {
+    /**
+     * 登录错误的日期数组
+     */
+    loginFailure: string[]
+    /**
+     * 应用是否被锁定
+     */
+    appLock: boolean
+    /**
+     * 应用是被被无限期锁定
+     */
+    appFullLock: boolean
+}

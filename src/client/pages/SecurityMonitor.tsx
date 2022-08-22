@@ -102,7 +102,7 @@ const SecurityMonitor = () => {
 
     const renderSecurityRule = (item: SecurityRule) => {
         return (
-            <div className='mb-4'>
+            <div className='mb-4' key={item.name}>
                 <div className='font-bold mb-1'>{item.name}</div>
                 <div className='text-gray-600'>{item.content}</div>
             </div>
