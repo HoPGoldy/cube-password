@@ -128,6 +128,18 @@ export interface LogListResp {
 export interface NoticeListResp {
     entries: SecurityNoticeResp[]
     total: number
+    /**
+     * 当前未读通知里最危险的等级
+     */
+    topLevel?: SecurityNoticeType
+    /**
+     * 应用到现在已经运行了多少天
+     */
+    initTime: number
+    /**
+     * 总共审查了多少请求
+     */
+    totalScanReq: number
 }
 
 export interface SecurityNoticeResp {

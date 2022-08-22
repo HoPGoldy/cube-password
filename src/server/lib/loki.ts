@@ -70,12 +70,16 @@ const getAppStorageCollection = createCollectionAccessor<AppStorage>({
     collectionName: 'global'
 })
 
+const getDefaultAppStorage = (): AppStorage => {
+    return { theme: AppTheme.Light, defaultGroupId: 1, initTime: Date.now() }
+}
+
 /**
  * 获取应用全局数据
  */
 export const getAppStorage = async () => {
     const collection = await getAppStorageCollection()
-    return collection.data[0] || collection.insert({ theme: AppTheme.Light, defaultGroupId: 1 })
+    return collection.data[0] || collection.insert(getDefaultAppStorage())
 }
 
 /**
@@ -84,7 +88,7 @@ export const getAppStorage = async () => {
 export const updateAppStorage = async (newStorage: Partial<AppStorage>) => {
     const collection = await getAppStorageCollection()
 
-    const oldStorage = collection.data[0] || collection.insert({ theme: AppTheme.Light, defaultGroupId: 1 })
+    const oldStorage = collection.data[0] || collection.insert(getDefaultAppStorage())
     const fullStorage = { ...oldStorage, ...newStorage }
     collection.update(fullStorage)
 }
@@ -126,7 +130,7 @@ export const insertSecurityNotice = async (
     content: string
 ) => {
     const noticeCollection = await getSecurityNoticeCollection()
-    noticeCollection.insert({ type, title, content, date: new Date().valueOf() })
+    noticeCollection.insert({ type, title, content, date: new Date().valueOf(), isRead: false })
     saveLoki('log')
 }
 

@@ -10,6 +10,7 @@ import { sha } from '@/utils/common'
 import dayjs from 'dayjs'
 import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
 import { setAlias } from '../lib/routeAlias'
+import { checkIsGroupUnlockSuccess } from '../lib/security'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
@@ -203,7 +204,7 @@ groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), asy
 /**
  * 请求分组解锁
  */
-groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密授权', 'POST'), async ctx => {
+groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密授权', 'POST'), checkIsGroupUnlockSuccess, async ctx => {
     const collection = await getGroupCollection()
     const groupId = Number(ctx.params.groupId)
     const groupItem = collection.get(groupId)

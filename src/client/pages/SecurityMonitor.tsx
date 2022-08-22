@@ -8,6 +8,7 @@ import { Button } from '../components/Button'
 import { ActionSheet, Popup } from 'react-vant'
 import { SecurityNotice } from '../components/SecurityNotice'
 import { queryClient } from '../components/QueryClientProvider'
+import { SecurityNoticeType } from '@/types/app'
 
 interface LogLink {
     name: string
@@ -24,10 +25,62 @@ const logLinks: LogLink[] = [
 
 const unReadNoticeFilter = { pageIndex: 1, pageSize: 10, isRead: false }
 
+interface SecurityRule {
+    name: string
+    content: string
+}
+
+const securityRules: SecurityRule[] = [
+    {
+        name: '登录失败',
+        content: '每天最多允许登录失败三次，超过三次后应用后台将会被锁定 24 小时。如果次日仍然登录失败三次，系统将被完全锁死，只能重启服务。'
+    },
+    {
+        name: '休息时段登录',
+        content: '当休息时段（凌晨0点 - 凌晨5点）出现登录行为时，应用将会记录并通过安全通知提醒用户。'
+    },
+    {
+        name: '登录请求审查',
+        content: '为了保证安全性，应用在登录之前会先预请求授权，因此登录和请求授权总是成对出现的，当单独出现其中一种请求时，将会判断为存在攻击者。'
+    },
+    {
+        name: '分组解密审查',
+        content: '当分组密码错误或者尝试解锁一个不存在的分组时，应用将会记录并通过安全通知提醒用户。'
+    },
+]
+
+const headerConfig = {
+    [SecurityNoticeType.Info]: {
+        bg: 'bg-sky-500',
+        title: '发现安全提示，请检查通知',
+        icon: '🌞'
+    },
+    [SecurityNoticeType.Warning]: {
+        bg: 'bg-orange-500',
+        title: '发现安全风险，请检查通知',
+        icon: '🚧'
+    },
+    [SecurityNoticeType.Danger]: {
+        bg: 'bg-red-500',
+        title: '发现严重安全问题，请尽快修改密码',
+        icon: '🔥'
+    },
+    default: {
+        bg: 'bg-green-500',
+        title: '安全模块运行中',
+        icon: '🌈'
+    },
+}
+
+const getHeaderConfig = (topLevel?: SecurityNoticeType) => {
+    if (topLevel && (topLevel in headerConfig)) return headerConfig[topLevel]
+    return headerConfig.default
+}
+
 const SecurityMonitor = () => {
     const navigate = useNavigate()
     // 日志列表，首页里只看前十条
-    const { data: noticeList } = useNoticeList(unReadNoticeFilter)
+    const { data: noticeInfo, isLoading } = useNoticeList(unReadNoticeFilter)
     // 是否显示日志入口抽屉
     const [logSelectorVisible, setLogSelectorVisible] = useState(false)
     // 是否显示安全规则弹窗
@@ -47,8 +100,17 @@ const SecurityMonitor = () => {
         )
     }
 
+    const renderSecurityRule = (item: SecurityRule) => {
+        return (
+            <div className='mb-4'>
+                <div className='font-bold mb-1'>{item.name}</div>
+                <div className='text-gray-600'>{item.content}</div>
+            </div>
+        )
+    }
+
     const renderNoticeList = () => {
-        if (!noticeList || noticeList.entries.length <= 0) {
+        if (!noticeInfo || noticeInfo.entries.length <= 0) {
             return (
                 <div className='text-center m-4 text-slate-500'>
                     暂无未读通知，可通过“历史通知”选项查看所有已读通知
@@ -56,12 +118,14 @@ const SecurityMonitor = () => {
             )
         }
 
-        return noticeList.entries.map(item => <SecurityNotice key={item.id} detail={item} onChange={onNoticeChange} />)
+        return noticeInfo.entries.map(item => <SecurityNotice key={item.id} detail={item} onChange={onNoticeChange} />)
     }
 
     const onSelectLogLink = (item: LogLink) => {
         navigate(item.to)
     }
+    
+    const headerConfig = getHeaderConfig(noticeInfo?.topLevel)
 
     return (
         <div>
@@ -71,18 +135,21 @@ const SecurityMonitor = () => {
                 </Header>
 
                 <div className='w-full overflow-hidden cursor-default'>
-                    <div className='mx-4 mt-4 p-4 bg-green-500 rounded-lg text-white flex flex-nowarp items-center justify-between'>
+                    <div className={
+                        'mx-4 mt-4 p-4 rounded-lg text-white flex flex-nowarp items-center justify-between transition '
+                        + headerConfig.bg
+                    }>
                         <div className='flex flex-nowarp items-center'>
                             <div className='mr-4 text-4xl'>
-                                🌈
+                                {headerConfig.icon}
                             </div>
                             <div>
                                 <div className='font-bold text-xl mb-2'>
-                                    安全模块运行中
+                                    {headerConfig.title}
                                 </div>
                                 <div>
                                     <span>
-                                        已运行 1 天，检查请求 1021 次
+                                        {isLoading ? '加载中' : `已运行 ${noticeInfo?.initTime} 天，检查请求 ${noticeInfo?.totalScanReq} 次`}
                                     </span>
                                 </div>
                             </div>
@@ -111,10 +178,14 @@ const SecurityMonitor = () => {
             />
 
             <Popup
+                round
+                className='w-[90%] md:w-1/2'
                 visible={ruleVisible}
                 onClose={() => setRuleVisible(false)}
             >
-                <div style={{ padding: '30px 50px' }}>内容</div>
+                <div className='p-4' onClick={() => setRuleVisible(false)}>
+                    {securityRules.map(renderSecurityRule)}
+                </div>
             </Popup>
 
             <PageAction>

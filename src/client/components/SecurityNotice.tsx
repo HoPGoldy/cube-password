@@ -22,11 +22,11 @@ export const SecurityNotice: FC<Props> = (props) => {
     const onClick = async () => {
         await toggleNoticeRead(detail.id, !detail.isRead)
         onChange?.({ ...detail, isRead: !detail.isRead })
-        Notify.show({ type: 'success', message: '通知设置为' + (detail.isRead ? '未读' : '已读') })
+        Notify.show({ type: 'primary', message: '通知设置为' + (detail.isRead ? '未读' : '已读') })
     }
 
     return (
-        <div key={detail.id} className={'bg-white cursor-default rounded-lg m-4 hover:ring transition ' + color.ring + ' ' + (detail.isRead ? 'opacity-60' : '')} onClick={onClick}>
+        <div key={detail.id} className={'bg-white cursor-default rounded-lg m-4 hover:ring transition ' + color.ring + ' ' + (detail.isRead ? 'opacity-50' : '')} onClick={onClick}>
             <div className={'flex flex-nowrap justify-between text-white px-4 py-2 rounded-tl-lg rounded-tr-lg ' + color.bg}>
                 <span className='font-bold'>{detail.title}</span>
                 <span>{detail.date}</span>

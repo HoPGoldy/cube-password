@@ -1,6 +1,5 @@
 import React, { useContext, useState } from 'react'
-import { ArrowLeft } from '@react-vant/icons'
-import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
+import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { useLogList } from '../services/log'
@@ -116,9 +115,6 @@ const LogRequest = () => {
             </PageContent>
 
             <PageAction>
-                <ActionIcon onClick={() => navigate(-1)}>
-                    <ArrowLeft fontSize={24} />
-                </ActionIcon>
                 <ActionButton onClick={() => navigate(-1)}>返回</ActionButton>
             </PageAction>
         </div>

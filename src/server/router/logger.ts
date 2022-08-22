@@ -3,14 +3,15 @@ import { AppKoaContext } from '@/types/global'
 import { getRequestRoute, hasGroupLogin, response, validate } from '../utils'
 import Joi from 'joi'
 import dayjs from 'dayjs'
-import { getCertificateCollection, getGroupCollection, getLogCollection, getSecurityNoticeCollection } from '../lib/loki'
-import { CertificateQueryLog, HttpRequestLog } from '@/types/app'
+import { getAppStorage, getCertificateCollection, getGroupCollection, getLogCollection, getSecurityNoticeCollection } from '../lib/loki'
+import { CertificateQueryLog, HttpRequestLog, SecurityNoticeType } from '@/types/app'
 import { LogListResp, LogSearchFilter, NoticeListResp, NoticeSearchFilter, PageSearchFilter, SecurityNoticeResp } from '@/types/http'
 import { Next } from 'koa'
 import { queryIp } from '../lib/queryIp'
 import { getIp } from '../utils'
 import { getAlias } from '../lib/routeAlias'
 import { DATE_FORMATTER } from '@/config'
+import { setAlias } from '../lib/routeAlias'
 
 /**
  * 从 ctx 生成日志对象
@@ -184,7 +185,7 @@ const securityNoticeQuerySchema = Joi.object<NoticeSearchFilter>({
 /**
  * 查询通知数据
  */
-loggerRouter.get('/notices', async ctx => {
+loggerRouter.get(setAlias('/notices', '查询通知数据'), async ctx => {
     const { error, value } = securityNoticeQuerySchema.validate(ctx.query)
     if (!value || error) {
         response(ctx, { code: 400, msg: '数据结构不正确' })
@@ -195,6 +196,12 @@ loggerRouter.get('/notices', async ctx => {
 
     let queryChain = collection.chain()
     if (isRead !== undefined) queryChain = queryChain.find({ isRead })
+
+    // 获取最严重的通知等级
+    const topLevel = queryChain.mapReduce(
+        item => item.type,
+        arr => Math.max(...arr)
+    ) as SecurityNoticeType
 
     const targetLogs = queryChain
         .simplesort('date', { desc: true })
@@ -213,9 +220,15 @@ loggerRouter.get('/notices', async ctx => {
             return data as SecurityNoticeResp
         })
 
+    const { initTime } = await getAppStorage()
+    const logCollection = await getLogCollection()
+
     const data: NoticeListResp = {
         entries: targetLogs,
-        total: queryChain.count()
+        total: queryChain.count(),
+        topLevel,
+        totalScanReq: logCollection.count(),
+        initTime: dayjs(initTime).diff(dayjs(), 'day')
     }
 
     response(ctx, { code: 200, data })
@@ -228,7 +241,7 @@ const noticeReadSchema = Joi.object<{ isRead: boolean }>({
 /**
  * 更新通知的已读 / 未读状态
  */
-loggerRouter.post('/notice/:noticeId/read', async ctx => {
+loggerRouter.post(setAlias('/notice/:noticeId/read', '设置通知是否已读', 'POST'), async ctx => {
     const noticeId = +ctx.params.noticeId
     const body = validate(ctx, noticeReadSchema)
     if (!body) return

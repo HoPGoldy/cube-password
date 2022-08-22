@@ -15,10 +15,10 @@ const Register = () => {
     const config = useContext(AppConfigContext)
 
     // 临时功能，开发自动登录
-    useEffect(() => {
-        if (!password) setPassword('123456')
-        else onSubmit()
-    }, [password])
+    // useEffect(() => {
+    //     if (!password) setPassword('123456')
+    //     else onSubmit()
+    // }, [password])
 
     const onSubmit = async () => {
         const resp = await requireLogin().catch(error => {
@@ -57,6 +57,7 @@ const Register = () => {
                         border border-slate-300 rounded-md shadow-sm placeholder-slate-400 
                         focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500
                     '
+                    type='password'
                     autoFocus
                     placeholder="请输入主密码"
                     value={password}

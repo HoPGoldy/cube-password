@@ -76,6 +76,10 @@ export interface AppStorage {
      * 默认展示的分组 id
      */
     defaultGroupId: number
+    /**
+     * 初始化时间
+     */
+    initTime: number
 }
 
 /**
@@ -189,5 +193,5 @@ export interface SecurityNotice {
     /**
      * 用户是否已读
      */
-    isRead?: boolean
+    isRead: boolean
 }

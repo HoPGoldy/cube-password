@@ -2,14 +2,11 @@ import React, { useContext, useState } from 'react'
 import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { useLogList, useNoticeList } from '../services/log'
-import { LogSearchFilter, PageSearchFilter } from '@/types/http'
+import { useNoticeList } from '../services/log'
+import { PageSearchFilter } from '@/types/http'
 import Pagination from '../components/Pagination'
-import Table, { TableColConfig } from '../components/Table'
-import { HttpRequestLog } from '@/types/app'
 import { Button } from '../components/Button'
 import { AppConfigContext } from '../components/AppConfigProvider'
-import { RequestLogDialog } from '../components/RequestLogDialog'
 import { SecurityNotice } from '../components/SecurityNotice'
 import { queryClient } from '../components/QueryClientProvider'
 
@@ -64,9 +61,7 @@ const LogLogin = () => {
                             <Button
                                 color={config?.buttonColor}
                                 onClick={() => navigate(-1)}
-                            >
-                                返 回
-                            </Button>
+                            >返 回</Button>
                         </div>
                     </div>
                 </Header>

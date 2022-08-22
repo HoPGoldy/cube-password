@@ -104,7 +104,11 @@ loginRouter.post(setAlias('/register', '应用初始化', 'POST'), async ctx => 
         return
     }
 
-    await updateAppStorage({ passwordSalt: salt, passwordSha: code })
+    await updateAppStorage({
+        passwordSalt: salt,
+        passwordSha: code,
+        initTime: Date.now()
+    })
     response(ctx, { code: 200 })
     await saveLoki()
 })
