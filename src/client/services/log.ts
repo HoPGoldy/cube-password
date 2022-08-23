@@ -1,6 +1,6 @@
 
 import { DATE_FORMATTER } from '@/config'
-import { LogListResp, LogSearchFilter, NoticeListResp, NoticeSearchFilter } from '@/types/http'
+import { LogListResp, LogSearchFilter, NoticeInfoResp, NoticeListResp, NoticeSearchFilter } from '@/types/http'
 import dayjs from 'dayjs'
 import { useQuery } from 'react-query'
 import { sendGet, sendPost } from './base'
@@ -91,5 +91,12 @@ export const useNoticeList = (query: NoticeSearchFilter) => {
  * 切换通知已读/未读状态
  */
 export const toggleNoticeRead = async (id: number, isRead: boolean) => {
-    return sendPost(`notice/${id}/read`, { isRead })
+    return sendPost<NoticeInfoResp>(`notice/${id}/read`, { isRead })
+}
+
+/**
+ * 已读全部
+ */
+export const readAllNotice = async () => {
+    return sendPost<NoticeInfoResp>('notice/readAll')
 }

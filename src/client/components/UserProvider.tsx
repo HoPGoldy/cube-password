@@ -1,5 +1,5 @@
 import { MyJwtPayload } from '@/types/global'
-import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
+import { CertificateGroupDetail, CertificateListItem, NoticeInfoResp } from '@/types/http'
 import React, { Dispatch, FC, SetStateAction, useContext, useMemo, useState } from 'react'
 import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
 
@@ -15,6 +15,12 @@ interface Context {
      */
     userProfile: UserProfile | undefined
     setUserProfile: Dispatch<SetStateAction<UserProfile | undefined>>
+
+    /**
+     * 通知信息
+     */
+    noticeInfo: NoticeInfoResp | undefined
+    setNoticeInfo: Dispatch<SetStateAction<NoticeInfoResp | undefined>>
 
     /**
      * 用户所有的分组列表
@@ -47,6 +53,7 @@ export const UserContext = React.createContext<Context>({} as Context)
  */
 export const UserProvider: FC = (props) => {
     const [userProfile, setUserProfile] = useState<UserProfile>()
+    const [noticeInfo, setNoticeInfo] = useState<NoticeInfoResp>()
     const [groupList, setGroupList] = useState<CertificateGroupDetail[]>([])
     const [selectedGroup, setSelectedGroup] = useState<number>(0)
     const {
@@ -62,6 +69,7 @@ export const UserProvider: FC = (props) => {
 
     const value = {
         userProfile, setUserProfile,
+        noticeInfo, setNoticeInfo,
         groupList, setGroupList,
         selectedGroup, setSelectedGroup, refetchGroupList,
         certificateList, refetchCertificateList,

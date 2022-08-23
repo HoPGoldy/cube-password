@@ -18,7 +18,7 @@ const getLoginErrorTip = (config: LoginErrorResp) => {
 }
 
 const Register = () => {
-    const { setUserProfile, setGroupList, setSelectedGroup } = useContext(UserContext)
+    const { setUserProfile, setGroupList, setSelectedGroup, setNoticeInfo } = useContext(UserContext)
     const passwordInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
     const [password, setPassword] = useState('')
@@ -51,9 +51,10 @@ const Register = () => {
         })
 
         if (!loginResp) return
-        const { token, defaultGroupId, groups } = loginResp
+        const { token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel } = loginResp
 
         setUserProfile({ password, token, defaultGroupId })
+        setNoticeInfo({ unReadNoticeCount, unReadNoticeTopLevel})
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
         setToken(loginResp.token)

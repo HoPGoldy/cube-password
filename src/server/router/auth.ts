@@ -11,7 +11,7 @@ import { LoginErrorResp, LoginResp } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
 import { getLockDetail, recordLoginFail } from '../lib/security'
 import { SecurityNoticeType } from '@/types/app'
-import { createLog } from './logger'
+import { createLog, getNoticeInfo } from './logger'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -74,12 +74,14 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
 
     const noticeCollection = await getSecurityNoticeCollection()
     const unReadNoticeCount = await noticeCollection.chain().find({ isRead: false }).count()
+    const noticeInfo =  await getNoticeInfo()
 
     const data: LoginResp = {
         token,
         groups,
         defaultGroupId,
-        hasNotice: unReadNoticeCount >= 1
+        hasNotice: unReadNoticeCount >= 1,
+        ...noticeInfo
     }
 
     response(ctx, { code: 200, data })

@@ -5,13 +5,14 @@ import { ArrowLeft, SettingO } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
 import { updateGroup } from '../services/certificateGroup'
 import GroupLogin from '../components/GroupLogin'
+import { noticeConfig } from '../components/SecurityNotice'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -21,7 +22,7 @@ interface ConfigButtonProps {
 
 const CertificateList = () => {
     const {
-        certificateList, groupList, selectedGroup, certificateListLoading,
+        certificateList, groupList, noticeInfo, selectedGroup, certificateListLoading,
         refetchCertificateList, refetchGroupList
     } = useContext(UserContext)
     const jwtPayload = useJwtPayload()
@@ -123,6 +124,18 @@ const CertificateList = () => {
         )
     }
 
+    const renderNoticeInfo = () => {
+        if (!noticeInfo || noticeInfo.unReadNoticeCount <= 0) return null
+        const config = noticeConfig[noticeInfo.unReadNoticeTopLevel]
+        return (
+            <Link to="/securityEntry">
+                <div className={'m-4 px-4 py-2 text-white rounded-lg ' + config.bg}>
+                    有 {noticeInfo.unReadNoticeCount} 条未读安全通知，点此查看
+                </div>
+            </Link>
+        )
+    }
+
     const renderCertificateList = () => {
         if (!hasLogin) return <GroupLogin />
 
@@ -192,17 +205,18 @@ const CertificateList = () => {
                     {configButtons.map(renderConfigButton)}
                 </div>
 
+                {renderNoticeInfo()}
                 {renderCertificateList()}
-
-                <CertificateDetail
-                    visible={detailVisible}
-                    onClose={onDetailClose}
-                    groupId={selectedGroup}
-                    certificateId={showCertificateId}
-                />
-
-                <Dialog {...getNewGroupSelectProps()} />
             </PageContent>
+
+            <CertificateDetail
+                visible={detailVisible}
+                onClose={onDetailClose}
+                groupId={selectedGroup}
+                certificateId={showCertificateId}
+            />
+
+            <Dialog {...getNewGroupSelectProps()} />
 
             <PageAction>
                 <ActionIcon onClick={() => navigate(-1)}>

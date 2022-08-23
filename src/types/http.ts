@@ -62,7 +62,7 @@ export interface AddGroupResp {
 /**
  * 登录接口返回值
  */
-export interface LoginResp {
+export type LoginResp = {
     /**
      * 用户鉴权令牌
      */
@@ -79,6 +79,17 @@ export interface LoginResp {
      * 是否有未读通知
      */
     hasNotice: boolean
+} & NoticeInfoResp
+
+export interface NoticeInfoResp {
+    /**
+     * 当前未读通知数量
+     */
+    unReadNoticeCount: number
+    /**
+     * 未读通知中的最高等级
+     */
+    unReadNoticeTopLevel: SecurityNoticeType
 }
 
 /**
@@ -142,12 +153,33 @@ export interface NoticeListResp {
     totalScanReq: number
 }
 
+/**
+ * 安全通知详情
+ */
 export interface SecurityNoticeResp {
+    /**
+     * 标题
+     */
     title: string
+    /**
+     * 通知的内容
+     */
     content: string
+    /**
+     * 通知发布时间
+     */
     date: string
+    /**
+     * 通知索引
+     */
     id: number
+    /**
+     * 是否已读
+     */
     isRead?: boolean
+    /**
+     * 通知等级
+     */
     type: SecurityNoticeType
 }
 

@@ -1,8 +1,9 @@
 import { SecurityNoticeType } from '@/types/app'
 import { SecurityNoticeResp } from '@/types/http'
-import React, { FC } from 'react'
+import React, { FC, useContext } from 'react'
 import { Notify } from 'react-vant'
 import { toggleNoticeRead } from '../services/log'
+import { UserContext } from './UserProvider'
 
 interface Props {
     detail: SecurityNoticeResp
@@ -16,17 +17,19 @@ export const noticeConfig = {
 }
 
 export const SecurityNotice: FC<Props> = (props) => {
+    const { setNoticeInfo } = useContext(UserContext)
     const { detail, onChange } = props
     const color = noticeConfig[detail.type]
 
     const onClick = async () => {
-        await toggleNoticeRead(detail.id, !detail.isRead)
+        const data = await toggleNoticeRead(detail.id, !detail.isRead)
+        setNoticeInfo(data)
         onChange?.({ ...detail, isRead: !detail.isRead })
-        Notify.show({ type: 'primary', message: '通知设置为' + (detail.isRead ? '未读' : '已读') })
+        Notify.show({ type: 'success', message: '通知设置为' + (detail.isRead ? '未读' : '已读') })
     }
 
     return (
-        <div key={detail.id} className={'bg-white cursor-default rounded-lg m-4 hover:ring transition ' + color.ring + ' ' + (detail.isRead ? 'opacity-50' : '')} onClick={onClick}>
+        <div key={detail.id} className={'bg-white cursor-pointer rounded-lg m-4 hover:ring transition ' + color.ring + ' ' + (detail.isRead ? 'opacity-50' : '')} onClick={onClick}>
             <div className={'flex flex-nowrap justify-between text-white px-4 py-2 rounded-tl-lg rounded-tr-lg ' + color.bg}>
                 <span className='font-bold'>{detail.title}</span>
                 <span>{detail.date}</span>

@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { ArrowLeft, OrdersO } from '@react-vant/icons'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { useNoticeList } from '../services/log'
+import { readAllNotice, useNoticeList } from '../services/log'
 import { Button } from '../components/Button'
-import { ActionSheet, Popup } from 'react-vant'
+import { ActionSheet, Popup, Sticky, Dialog } from 'react-vant'
 import { SecurityNotice } from '../components/SecurityNotice'
-import { queryClient } from '../components/QueryClientProvider'
 import { SecurityNoticeType } from '@/types/app'
+import { UserContext } from '../components/UserProvider'
 
 interface LogLink {
     name: string
@@ -79,15 +79,27 @@ const getHeaderConfig = (topLevel?: SecurityNoticeType) => {
 
 const SecurityMonitor = () => {
     const navigate = useNavigate()
+    const { setNoticeInfo } = useContext(UserContext)
     // 日志列表，首页里只看前十条
-    const { data: noticeInfo, isLoading } = useNoticeList(unReadNoticeFilter)
+    const { data: noticeResp, isLoading, refetch: refetchNoticeList } = useNoticeList(unReadNoticeFilter)
     // 是否显示日志入口抽屉
     const [logSelectorVisible, setLogSelectorVisible] = useState(false)
     // 是否显示安全规则弹窗
     const [ruleVisible, setRuleVisible] = useState(false)
 
     const onNoticeChange = () => {
-        queryClient.fetchQuery(['notices', unReadNoticeFilter])
+        refetchNoticeList()
+    }
+
+    const onReadAll = async () => {
+        await Dialog.confirm({
+            title: '清除未读通知',
+            message: '确认要清除么？忽略红色通知可能会导致密码泄露。',
+            confirmButtonText: '清除'
+        })
+        const data = await readAllNotice()
+        setNoticeInfo(data)
+        refetchNoticeList()
     }
 
     const rnederLogLink = (item: LogLink) => {
@@ -110,22 +122,22 @@ const SecurityMonitor = () => {
     }
 
     const renderNoticeList = () => {
-        if (!noticeInfo || noticeInfo.entries.length <= 0) {
+        if (!noticeResp || noticeResp.entries.length <= 0) {
             return (
                 <div className='text-center m-4 text-slate-500'>
-                    暂无未读通知，可通过“历史通知”选项查看所有已读通知
+                    暂无未读通知，可通过 “历史通知” 查看所有已读通知
                 </div>
             )
         }
 
-        return noticeInfo.entries.map(item => <SecurityNotice key={item.id} detail={item} onChange={onNoticeChange} />)
+        return noticeResp.entries.map(item => <SecurityNotice key={item.id} detail={item} onChange={onNoticeChange} />)
     }
 
     const onSelectLogLink = (item: LogLink) => {
         navigate(item.to)
     }
     
-    const headerConfig = getHeaderConfig(noticeInfo?.topLevel)
+    const headerConfig = getHeaderConfig(noticeResp?.topLevel)
 
     return (
         <div>
@@ -149,7 +161,7 @@ const SecurityMonitor = () => {
                                 </div>
                                 <div>
                                     <span>
-                                        {isLoading ? '加载中' : `已运行 ${noticeInfo?.initTime} 天，检查请求 ${noticeInfo?.totalScanReq} 次`}
+                                        {isLoading ? '加载中' : `已运行 ${noticeResp?.initTime} 天，检查请求 ${noticeResp?.totalScanReq} 次`}
                                     </span>
                                 </div>
                             </div>
@@ -163,7 +175,14 @@ const SecurityMonitor = () => {
                             {renderNoticeList()}
                         </div>
                         <div className='md:w-1/3 hidden md:block'>
-                            {logLinks.map(rnederLogLink)}
+                            <Sticky offsetTop={8}>
+                                {(noticeResp?.entries.length || 0) > 0 && <div className='m-4 ml-0'>
+                                    <Button block onClick={onReadAll}>
+                                        清除未读通知
+                                    </Button>
+                                </div>}
+                                {logLinks.map(rnederLogLink)}
+                            </Sticky>
                         </div>
                     </div>
                 </div>

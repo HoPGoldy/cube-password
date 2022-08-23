@@ -3,9 +3,9 @@ import { AppKoaContext } from '@/types/global'
 import { getRequestRoute, hasGroupLogin, response, validate } from '../utils'
 import Joi from 'joi'
 import dayjs from 'dayjs'
-import { getAppStorage, getCertificateCollection, getGroupCollection, getLogCollection, getSecurityNoticeCollection } from '../lib/loki'
+import { getAppStorage, getCertificateCollection, getGroupCollection, getLogCollection, getSecurityNoticeCollection, saveLoki } from '../lib/loki'
 import { CertificateQueryLog, HttpRequestLog, SecurityNoticeType } from '@/types/app'
-import { LogListResp, LogSearchFilter, NoticeListResp, NoticeSearchFilter, PageSearchFilter, SecurityNoticeResp } from '@/types/http'
+import { LogListResp, LogSearchFilter, NoticeInfoResp, NoticeListResp, NoticeSearchFilter, PageSearchFilter, SecurityNoticeResp } from '@/types/http'
 import { Next } from 'koa'
 import { queryIp } from '../lib/queryIp'
 import { getIp } from '../utils'
@@ -256,7 +256,35 @@ loggerRouter.post(setAlias('/notice/:noticeId/read', '设置通知是否已读',
     item.isRead = body.isRead
     collection.update(item)
 
-    response(ctx, { code: 200 })
+    const data: NoticeInfoResp = await getNoticeInfo()
+    response(ctx, { code: 200, data })
 })
+
+/**
+ * 已读所有未读通知
+ */
+loggerRouter.post(setAlias('/notice/readAll', '已读全部安全通知', 'POST'), async ctx => {
+    const collection = await getSecurityNoticeCollection()
+    collection.findAndUpdate({ isRead: false }, old => {
+        old.isRead = true
+    })
+
+    const data: NoticeInfoResp = await getNoticeInfo()
+    response(ctx, { code: 200, data })
+    saveLoki('log')
+})
+
+export const getNoticeInfo = async () => {
+    const collection = await getSecurityNoticeCollection()
+    const queryChain = collection.chain().find({ isRead: false })
+
+    const unReadNoticeTopLevel = queryChain.mapReduce(
+        item => item.type,
+        arr => Math.max(...arr)
+    ) as SecurityNoticeType
+    const unReadNoticeCount = queryChain.count()
+
+    return { unReadNoticeTopLevel, unReadNoticeCount }
+}
 
 export { loggerRouter, middlewareLogger }
