@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react'
-import { ArrowLeft, OrdersO } from '@react-vant/icons'
+import { ArrowLeft, OrdersO, Success } from '@react-vant/icons'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
@@ -156,7 +156,7 @@ const SecurityMonitor = () => {
                                 {headerConfig.icon}
                             </div>
                             <div>
-                                <div className='font-bold text-xl mb-2'>
+                                <div className='font-bold text-lg md:text-xl md:mb-2'>
                                     {headerConfig.title}
                                 </div>
                                 <div>
@@ -214,6 +214,10 @@ const SecurityMonitor = () => {
                 <ActionIcon onClick={() => setRuleVisible(true)}>
                     <OrdersO fontSize={24} />
                 </ActionIcon>
+                {(noticeResp?.entries.length || 0) > 0 &&
+                <ActionIcon onClick={onReadAll}>
+                    <Success fontSize={24} />
+                </ActionIcon>}
                 <ActionButton onClick={() => setLogSelectorVisible(true)}>查看日志</ActionButton>
             </PageAction>
         </div>
