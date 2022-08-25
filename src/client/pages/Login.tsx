@@ -58,7 +58,7 @@ const Register = () => {
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
         setToken(loginResp.token)
-        navigate('/securityEntry')
+        navigate('/group', { replace: true })
     }
 
     const renderLoginError = () => {

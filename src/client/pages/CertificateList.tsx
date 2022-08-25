@@ -1,18 +1,19 @@
 import React, { useContext, useState, ReactElement, useEffect, useMemo } from 'react'
 import { Button } from '@/client/components/Button'
 import { Dialog, Loading } from 'react-vant'
-import { ArrowLeft, SettingO } from '@react-vant/icons'
+import { SettingO, MoreO } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { CertificateListItem } from '@/types/http'
+import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
 import { updateGroup } from '../services/certificateGroup'
 import GroupLogin from '../components/GroupLogin'
 import { noticeConfig } from '../components/SecurityNotice'
+import { GroupSelectSheet } from '../components/GroupSelectSheet'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -160,15 +161,9 @@ const CertificateList = () => {
         <div>
             <PageContent>
                 <Header>
-                    <div className='grow shrink ml-2 overflow-hidden flex flex-col justify-center'>
-                        {/* <div
-                            className='text-lg md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
-                            title={groupTitle}
-                        >
-                            {groupTitle}
-                        </div> */}
+                    <div className='my-2 md:my-0 grow shrink ml-2 overflow-hidden'>
                         <input
-                            className='text-lg md:text-ellipsis md:whitespace-nowrap md:overflow-hidden'
+                            className='w-full text-lg text-ellipsis bg-inherit whitespace-nowrap overflow-hidden'
                             onChange={e => setGroupTitle(e.target.value)}
                             onBlur={onSubmitGroupTitle}
                             disabled={!hasLogin}
@@ -181,7 +176,7 @@ const CertificateList = () => {
                     </div>
                     {hasLogin && (
                         <div className='shrink-0 items-center flex flex-nowrap'>
-                            <SettingO
+                            <MoreO
                                 fontSize={24}
                                 className='cursor-pointer mx-2 hover:opacity-75'
                                 onClick={onSwitchConfigArea}
@@ -219,9 +214,12 @@ const CertificateList = () => {
             <Dialog {...getNewGroupSelectProps()} />
 
             <PageAction>
-                <ActionIcon onClick={() => navigate(-1)}>
-                    <ArrowLeft fontSize={24} />
-                </ActionIcon>
+                <Link to="/setting">
+                    <ActionIcon>
+                        <SettingO fontSize={24} />
+                    </ActionIcon>
+                </Link>
+                <GroupSelectSheet />
                 <ActionButton onClick={() => onAddCertificate(undefined)}>新建密码</ActionButton>
             </PageAction>
         </div>

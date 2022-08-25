@@ -1,7 +1,7 @@
 import { CertificateGroupDetail } from '@/types/http'
 import React, { FC, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Plus, Gem, Coupon, Lock } from '@react-vant/icons'
+import { Plus, Gem, Coupon, Lock, Setting } from '@react-vant/icons'
 import { UserContext } from './UserProvider'
 
 interface TabDetail {
@@ -14,7 +14,8 @@ interface TabDetail {
 
 const STATIC_TABS: TabDetail[] = [
     { id: 'addNew', name: '新增分组', url: '/addGroup', prefix: () => <Plus fontSize={20} /> },
-    { id: 'securityEntry', name: '安全管理', url: '/securityEntry', prefix: () => <Gem fontSize={20} /> }
+    { id: 'securityEntry', name: '安全管理', url: '/securityEntry', prefix: () => <Gem fontSize={20} /> },
+    { id: 'setting', name: '设置', url: '/setting', prefix: () => <Setting fontSize={20} /> }
 ]
 
 export const Sidebar: FC = () => {

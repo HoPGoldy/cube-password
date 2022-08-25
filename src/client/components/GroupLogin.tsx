@@ -30,7 +30,7 @@ const GroupLogin: FC = () => {
         <div className='w-full md:w-2/5 mt-16 mx-auto flex flex-col justify-center items-center'>
             <Lock fontSize={98} className='text-slate-400' />
             <span className='inline-block mt-4 mb-6 text-slate-500'>该分组已加密</span>
-            <div className='w-full flex items-center'>
+            <div className='w-[80%] md:w-full flex items-center'>
                 <input
                     type='password'
                     className='

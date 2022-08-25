@@ -3,6 +3,7 @@
 
 body {
     @apply bg-slate-200;
+    font-size: 16px;
 }
 
 /* 关闭 password 自带的显示隐藏功能 */
@@ -17,24 +18,18 @@ input[type="password"]::-ms-reveal{
     --kmp-bottombar-height: 72px;
 }
 
-@media (min-width: 1024px) {
-    body {
-        font-size: 16px;
-    }
+:root {
+    --rv-font-size-xs: 12px !important;
+    --rv-font-size-sm: 14px !important;
+    --rv-font-size-md: 16px !important;
+    --rv-font-size-lg: 18px !important;
 
-    /* :root {
-        --rv-font-size-xs: 12px !important;
-        --rv-font-size-sm: 14px !important;
-        --rv-font-size-md: 16px !important;
-        --rv-font-size-lg: 18px !important;
+    /* --rv-padding-base: 0.75rem !important;
+    --rv-padding-xs: 1rem !important;
+    --rv-padding-sm: 1.25rem !important;
+    --rv-padding-md: 1.5rem !important;
+    --rv-padding-lg: 1.75rem !important;
+    --rv-padding-xl: 2rem !important;
 
-        --rv-padding-base: 0.75rem !important;
-        --rv-padding-xs: 1rem !important;
-        --rv-padding-sm: 1.25rem !important;
-        --rv-padding-md: 1.5rem !important;
-        --rv-padding-lg: 1.75rem !important;
-        --rv-padding-xl: 2rem !important;
-    
-        --rv-cell-vertical-padding: var(--rv-padding-xs) !important;
-    } */
+    --rv-cell-vertical-padding: var(--rv-padding-xs) !important; */
 }
