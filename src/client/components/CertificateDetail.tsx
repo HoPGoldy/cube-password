@@ -1,5 +1,5 @@
 import React, { FC, useContext, useEffect, useRef, useState } from 'react'
-import { Form, Overlay, Dialog, hooks, Notify } from 'react-vant'
+import { Form, Popup, Dialog, Notify } from 'react-vant'
 import { Question, Plus } from '@react-vant/icons'
 import { Button } from '@/client/components/Button'
 import { AppConfigContext } from './AppConfigProvider'
@@ -8,8 +8,6 @@ import { CertificateField } from '@/types/app'
 import { UserContext } from './UserProvider'
 import { useCertificateDetail, useUpdateCertificate } from '../services/certificate'
 import { aes, aesDecrypt } from '@/utils/common'
-
-const { useClickAway } = hooks
 
 interface Props {
     groupId: number
@@ -40,8 +38,6 @@ const CertificateDetail: FC<Props> = (props) => {
     const [title, setTitle] = useState('')
     // 新建字段时的累加字段名索引
     const newFieldIndex = useRef(1)
-    // 弹出框元素引用
-    const dialogRef = useRef<HTMLDivElement>(null)
     // 获取凭证详情
     const { refetch } = useCertificateDetail(certificateId)
     // 提交凭证
@@ -131,19 +127,6 @@ const CertificateDetail: FC<Props> = (props) => {
         onClose(false)
     }
 
-    const onEdit = () => {
-        setDisabled(old => !old)
-    }
-
-    // 点击外部时触发关闭
-    useClickAway(dialogRef, (e) => {
-        const target = e.target as HTMLElement
-        // 由于点击显示弹窗的按钮也会触发 useClickAway
-        // 所以这里要判断下只有点击遮罩层的 div 元素时才会触发关闭确认
-        if (!target.dataset.outside && !target.classList.contains('overflow-y-auto')) return
-        onConfirmClose()
-    })
-
     const needShowUpdateButton = () => {
         if (loading) return false
         // 新增时一定显示
@@ -202,15 +185,13 @@ const CertificateDetail: FC<Props> = (props) => {
                 <Button
                     className='!mt-4 grow'
                     onClick={onConfirmClose}
-                >
-                    返回
-                </Button>
+                >返回</Button>
+
                 {disabled && <Button
                     className='!mt-4 grow'
-                    onClick={onEdit}
-                >
-                    编辑
-                </Button>}
+                    onClick={() => setDisabled(old => !old)}
+                >编辑</Button>}
+
                 {showUpdateBtn && <Button
                     className='!mt-4 grow'
                     color={config?.buttonColor}
@@ -224,34 +205,31 @@ const CertificateDetail: FC<Props> = (props) => {
     }
 
     return (
-        <Overlay visible={visible} duration={100} className='overflow-y-auto'>
-            <div className='flex justify-center' data-outside>
-                <div
-                    ref={dialogRef}
-                    className='
-                        relative bg-slate-200 p-4 mx-4 mt-[50%] md:mt-10 mb-10 rounded-lg
-                        w-screen md:w-[70vw] xl:w-[70vw] 2xl:w-[60vw]
-                    '
-                >
-                    <input
-                        type="text"
-                        value={title}
-                        autoFocus
-                        disabled={disabled}
-                        onChange={onTitleChange}
-                        placeholder="请输入密码名"
-                        className='font-bold text-xl bg-inherit mb-4'
-                    />
-                    {!disabled && <div className='
-                        hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500
-                    '>
-                        <Question className='mr-2' /> 标题名和字段名均可修改
-                    </div>}
+        <Popup
+            round
+            className='w-[90%] md:w-[70vw] xl:w-[70vw] 2xl:w-[60vw]'
+            visible={visible}
+            onClose={onConfirmClose}
+        >
+            <div className='relative bg-slate-200 p-4 rounded-lg'>
+                <input
+                    type="text"
+                    value={title}
+                    autoFocus
+                    disabled={disabled}
+                    onChange={onTitleChange}
+                    placeholder="请输入密码名"
+                    className='font-bold text-xl bg-inherit mb-4'
+                />
+                {!disabled && <div className='
+                    hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500
+                '>
+                    <Question className='mr-2' /> 标题名和字段名均可修改
+                </div>}
 
-                    {renderContent()}
-                </div>
+                {renderContent()}
             </div>
-        </Overlay>
+        </Popup>
     )
 }
 
