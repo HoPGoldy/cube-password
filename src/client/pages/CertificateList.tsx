@@ -1,17 +1,17 @@
-import React, { useContext, useState, ReactElement, useEffect, useMemo } from 'react'
+import React, { useContext, useState, ReactElement, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/client/components/Button'
 import { Dialog, Loading } from 'react-vant'
 import { SettingO, MoreO } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header'
-import { CertificateGroupDetail, CertificateListItem } from '@/types/http'
+import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
 import { updateGroup } from '../services/certificateGroup'
-import GroupLogin from '../components/GroupLogin'
+import GroupLogin, { GroupUnlockRef } from '../components/GroupLogin'
 import { noticeConfig } from '../components/SecurityNotice'
 import { GroupSelectSheet } from '../components/GroupSelectSheet'
 
@@ -28,7 +28,8 @@ const CertificateList = () => {
     } = useContext(UserContext)
     const jwtPayload = useJwtPayload()
     const config = useContext(AppConfigContext)
-    const navigate = useNavigate()
+    // 登录页组件引用，用于让移动端底部主按钮触发解锁分组
+    const groupUnlockRef = useRef<GroupUnlockRef>(null)
     // 是否显示详情页
     const [detailVisible, setDetailVisible] = useState(false)
     // 当前详情页显示的密码 id，设为空来显示新增页
@@ -41,7 +42,7 @@ const CertificateList = () => {
     // 分组标题
     const [groupTitle, setGroupTitle] = useState('')
     // 是否完成登录了
-    const hasLogin = useMemo(() => {
+    const groupUnlocked = useMemo(() => {
         const groupInfo = groupList.find(item => item.id === selectedGroup)
         return !groupInfo?.requireLogin || hasGroupLogin(jwtPayload, selectedGroup)
     }, [groupList, selectedGroup, jwtPayload])
@@ -56,6 +57,11 @@ const CertificateList = () => {
     const onDetailClose = (needRefresh: boolean) => {
         needRefresh && refetchCertificateList()
         setDetailVisible(false)
+    }
+
+    const onClickMainBtn = () => {
+        if (groupUnlocked) onAddCertificate(undefined)
+        else groupUnlockRef.current?.unlock()
     }
 
     useEffect(() => {
@@ -138,7 +144,7 @@ const CertificateList = () => {
     }
 
     const renderCertificateList = () => {
-        if (!hasLogin) return <GroupLogin />
+        if (!groupUnlocked) return <GroupLogin ref={groupUnlockRef} />
 
         if (!certificateList || certificateListLoading) return (
             <div className='flex justify-center items-center text-gray-400 w-full mt-16 select-none'>
@@ -166,7 +172,7 @@ const CertificateList = () => {
                             className='w-full text-lg text-ellipsis bg-inherit whitespace-nowrap overflow-hidden'
                             onChange={e => setGroupTitle(e.target.value)}
                             onBlur={onSubmitGroupTitle}
-                            disabled={!hasLogin}
+                            disabled={!groupUnlocked}
                             onKeyUp={e => {
                                 if (e.key === 'Enter') (e.target as HTMLElement).blur()
                             }}
@@ -174,7 +180,7 @@ const CertificateList = () => {
                             value={groupTitle}
                         ></input>
                     </div>
-                    {hasLogin && (
+                    {groupUnlocked && (
                         <div className='shrink-0 items-center flex flex-nowrap'>
                             <MoreO
                                 fontSize={24}
@@ -220,7 +226,9 @@ const CertificateList = () => {
                     </ActionIcon>
                 </Link>
                 <GroupSelectSheet />
-                <ActionButton onClick={() => onAddCertificate(undefined)}>新建密码</ActionButton>
+                <ActionButton onClick={onClickMainBtn}>
+                    {groupUnlocked ? '新建密码' : '解 锁'}
+                </ActionButton>
             </PageAction>
         </div>
     )
