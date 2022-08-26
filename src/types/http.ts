@@ -197,3 +197,8 @@ export interface LoginErrorResp {
      */
     appFullLock: boolean
 }
+
+export interface CountInfoResp {
+    group: number
+    certificate: number
+}

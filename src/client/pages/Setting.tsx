@@ -1,30 +1,39 @@
-import { CertificateGroup } from '@/types/app'
-import { sha } from '@/utils/common'
-import { nanoid } from 'nanoid'
-import React, { useContext, FC } from 'react'
-import { Card, Cell, Form, Notify, Space, Switch } from 'react-vant'
-import { Button } from '@/client/components/Button'
-import { ArrowDown, ArrowLeft, Contact, Close, GemO, LikeO, ManagerO, StarO } from '@react-vant/icons'
+import React, { useContext, useEffect } from 'react'
+import { Card, Cell, Space, Switch } from 'react-vant'
+import { Contact, Close, GemO, LikeO, StarO } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
-import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
-import { addGroup } from '../services/certificateGroup'
+import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import router from '@/server/router'
 import { Statistic } from '../components/Statistic'
-
-interface GroupForm {
-    name: string
-    password?: string
-    passwordConfirm?: string
-}
+import { setToken } from '../services/base'
+import { useQuery } from 'react-query'
+import { fetchCountInfo, requireChangePwd } from '../services/user'
 
 const SettingPage = () => {
-    const { setGroupList, setSelectedGroup } = useContext(UserContext)
+    const { setUserProfile } = useContext(UserContext)
     const config = useContext(AppConfigContext)
-    const [form] = Form.useForm<GroupForm>()
     const navigate = useNavigate()
+    // 数量统计接口
+    const { data: countInfo } = useQuery('/getCountInfo', fetchCountInfo)
+
+    const onLogout = () => {
+        setUserProfile(undefined)
+        setToken(null)
+        navigate('/login', { replace: true })
+    }
+
+    useEffect(() => {
+        const fetch = async () => {
+            const resp = await requireChangePwd()
+            console.log('resp', resp)
+        }
+    
+        fetch()
+    }, [])
+    
 
     return (
         <div>
@@ -38,8 +47,8 @@ const SettingPage = () => {
                         <Card round>
                             <Card.Body>
                                 <div className="flex flex-row justify-around">
-                                    <Statistic label="分组数量" value={111} />
-                                    <Statistic label="凭证数量" value={222} />
+                                    <Statistic label="分组数量" value={countInfo?.group || '---'} />
+                                    <Statistic label="凭证数量" value={countInfo?.certificate || '---'} />
                                 </div>
                             </Card.Body>
                         </Card>
@@ -56,11 +65,13 @@ const SettingPage = () => {
                                     // onChange={onSwitchDark}
                                 />}
                             />
-                            <Cell title="关于" icon={<LikeO />} isLink />
+                            <Link to="/about">
+                                <Cell title="关于" icon={<LikeO />} isLink />
+                            </Link>
                         </Card>
 
                         <Card round>
-                            <Cell title="登出" icon={<Close />} isLink />
+                            <Cell title="登出" icon={<Close />} isLink onClick={onLogout} />
                         </Card>
                     </Space>
                 </div>
