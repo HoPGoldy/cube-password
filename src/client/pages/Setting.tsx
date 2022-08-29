@@ -10,7 +10,8 @@ import router from '@/server/router'
 import { Statistic } from '../components/Statistic'
 import { setToken } from '../services/base'
 import { useQuery } from 'react-query'
-import { fetchCountInfo, requireChangePwd } from '../services/user'
+import { fetchCountInfo, requireChangePwd, setAppTheme } from '../services/user'
+import { AppTheme } from '@/types/app'
 
 const SettingPage = () => {
     const { setUserProfile } = useContext(UserContext)
@@ -33,7 +34,12 @@ const SettingPage = () => {
     
         fetch()
     }, [])
-    
+
+    const onSwitchDark = async () => {
+        const resp = await setAppTheme(config?.theme === AppTheme.Light ? AppTheme.Dark : AppTheme.Light)
+        
+        console.log('resp', resp)
+    }
 
     return (
         <div>
@@ -61,8 +67,8 @@ const SettingPage = () => {
                             <Cell title="黑夜模式" icon={<StarO />} 
                                 rightIcon={<Switch
                                     size={24}
-                                    // defaultChecked={userProfile?.darkTheme}
-                                    // onChange={onSwitchDark}
+                                    defaultChecked={config?.theme === AppTheme.Dark}
+                                    onChange={onSwitchDark}
                                 />}
                             />
                             <Link to="/about">

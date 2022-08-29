@@ -3,6 +3,8 @@ import { AppConfig } from '@/types/appConfig'
 import { nanoid } from 'nanoid'
 import { sha } from '@/utils/common'
 import { CountInfoResp, LoginErrorResp, LoginResp, RequireLoginResp } from '@/types/http'
+import { AppTheme } from '@/types/app'
+import { queryClient } from '../components/QueryClientProvider'
 
 export const requireLogin = async () => {
     return sendPost<RequireLoginResp>('/requireLogin')
@@ -37,6 +39,12 @@ export const fetchLoginFail = async () => {
 /** 获取数量配置信息 */
 export const fetchCountInfo = async () => {
     return sendGet<CountInfoResp>('/getCountInfo')
+}
+
+/** 设置主题颜色 */
+export const setAppTheme = async (theme: AppTheme) => {
+    await sendPut('/theme/' + theme)
+    queryClient.fetchQuery('appConfig')
 }
 
 /** 请求修改密码 */

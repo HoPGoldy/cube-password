@@ -1,13 +1,14 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { response } from '../utils'
-import { getAppStorage, getCertificateCollection, getGroupCollection } from '../lib/loki'
+import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { AppConfig } from '@/types/appConfig'
 import { DEFAULT_COLOR } from '@/constants'
 import { setAlias } from '../lib/routeAlias'
 import { CountInfoResp } from '@/types/http'
 import { aes } from '@/utils/common'
 import { serializeCertificate } from '@/utils/changePwd'
+import { AppTheme } from '@/types/app'
 
 const globalRouter = new Router<any, AppKoaContext>()
 
@@ -26,6 +27,20 @@ globalRouter.get(setAlias('/global', '获取全局配置'), async ctx => {
     }
 
     response(ctx, { code: 200, data: respData })
+})
+
+/**
+ * 修改亮暗主题
+ */
+globalRouter.put(setAlias('/theme/:themeValue', '设置主题'), async ctx => {
+    const { themeValue } = ctx.params
+    if (themeValue !== AppTheme.Dark && themeValue !== AppTheme.Light) {
+        response(ctx, { code: 400, msg: '主题参数错误' })
+    }
+
+    updateAppStorage({ theme: themeValue as AppTheme })
+    response(ctx, { code: 200 })
+    saveLoki()
 })
 
 /**
