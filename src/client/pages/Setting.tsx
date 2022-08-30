@@ -4,7 +4,6 @@ import { Contact, Close, LikeO, StarO, ArrowLeft } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { Link, useNavigate } from 'react-router-dom'
-import Header from '../components/Header'
 import { Statistic } from '../components/Statistic'
 import { setToken } from '../services/base'
 import { useQuery } from 'react-query'
@@ -44,10 +43,6 @@ const SettingPage = () => {
     return (
         <div>
             <PageContent>
-                <Header className='font-bold md:font-normal'>
-                    应用设置
-                </Header>
-
                 <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 2xl:w-1/3 mt-4'>
                     <Space direction="vertical" gap={16} className='w-full'>
                         <Card round>

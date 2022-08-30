@@ -91,7 +91,7 @@ const AddGroup = () => {
                 </Header>
 
                 <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 2xl:w-1/3 mt-4'>
-                    <Form form={form} className='rounded-lg py-4 px-6 bg-white dark:bg-slate-800 dark:text-slate-200'>
+                    <Form form={form} className='rounded-lg py-4 px-6 bg-white dark:bg-slate-700 dark:text-slate-200'>
                         <Form.Item
                             name="name"
                             label="分组名称"
@@ -124,7 +124,7 @@ const AddGroup = () => {
                         </Button>
                     </div>
 
-                    <div className='w-full text-center text-gray-500 dark:text-gray-200 mt-6 select-none text-sm'>
+                    <div className='w-full text-center text-gray-500 dark:text-gray-400 mt-6 cursor-default text-sm'>
                         分组密码非必填<br />
                         填写后仅用于查看分组，凭证依旧使用主密码进行加密
                     </div>

@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react'
 import { ArrowLeft, OrdersO, Success } from '@react-vant/icons'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from 'react-router-dom'
-import Header from '../components/Header'
 import { readAllNotice, useNoticeList } from '../services/log'
 import { Button } from '../components/Button'
 import { ActionSheet, Popup, Sticky, Dialog } from 'react-vant'
@@ -142,10 +141,6 @@ const SecurityMonitor = () => {
     return (
         <div>
             <PageContent>
-                <Header className='font-bold md:font-normal'>
-                    安全管理
-                </Header>
-
                 <div className='w-full overflow-hidden cursor-default'>
                     <div className={
                         'mx-4 mt-4 p-4 rounded-lg text-white flex flex-nowarp items-center justify-between transition '
