@@ -33,7 +33,7 @@ export const RequestLogDialog: FC<Props> = (props) => {
             onCancel={onClose}
             onClose={onClose}
         >
-            <div className='p-4'>
+            <div className='p-4 dark:text-gray-300'>
                 <header className='flex flex-row flex-nowrap justify-between items-center mb-4 pb-4 border-b'>
                     <div>
                         <div className='text-lg font-bold'>{details?.name}</div>
@@ -43,7 +43,7 @@ export const RequestLogDialog: FC<Props> = (props) => {
                         </div>
                     </div>
                     <div className={
-                        'text-white py-1 px-2 rounded ' + 
+                        'text-white dark:text-gray-300 py-1 px-2 rounded ' + 
                         METHOD_BG_COLOR[details?.method || '']
                     }>
                         {details?.method}
@@ -69,13 +69,13 @@ export const RequestLogDialog: FC<Props> = (props) => {
                 </div>
                 <div className='mb-1'>
                     <div>请求 params：</div>
-                    <code className='bg-slate-200 rounded p-2 mt-1 overflow-auto block'>
+                    <code className='bg-slate-200 dark:bg-slate-600 rounded p-2 my-2 overflow-auto block'>
                         {details?.requestParams}
                     </code>
                 </div>
                 <div className='mb-1'>
                     <div>请求 body：</div>
-                    <code className='bg-slate-200 rounded p-2 mt-1 overflow-auto block'>
+                    <code className='bg-slate-200 dark:bg-slate-600 rounded p-2 my-2 overflow-auto block'>
                         {details?.requestBody}
                     </code>
                 </div>

@@ -115,8 +115,8 @@ const SecurityMonitor = () => {
     const renderSecurityRule = (item: SecurityRule) => {
         return (
             <div className='mb-4' key={item.name}>
-                <div className='font-bold mb-1'>{item.name}</div>
-                <div className='text-gray-600'>{item.content}</div>
+                <div className='font-bold mb-1 dark:text-gray-400'>{item.name}</div>
+                <div className='text-gray-600 dark:text-gray-200'>{item.content}</div>
             </div>
         )
     }
@@ -124,7 +124,7 @@ const SecurityMonitor = () => {
     const renderNoticeList = () => {
         if (!noticeResp || noticeResp.entries.length <= 0) {
             return (
-                <div className='text-center m-4 text-slate-500'>
+                <div className='text-center m-4 text-slate-500 dark:text-slate-300'>
                     暂无未读通知，可通过 “历史通知” 查看所有已读通知
                 </div>
             )

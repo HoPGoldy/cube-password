@@ -29,8 +29,8 @@ export const SecurityNotice: FC<Props> = (props) => {
     }
 
     return (
-        <div key={detail.id} className={'bg-white cursor-pointer rounded-lg m-4 hover:ring transition ' + color.ring + ' ' + (detail.isRead ? 'opacity-50' : '')} onClick={onClick}>
-            <div className={'flex flex-nowrap justify-between text-white px-4 py-2 rounded-tl-lg rounded-tr-lg ' + color.bg}>
+        <div key={detail.id} className={'bg-white dark:bg-slate-700 dark:text-gray-200 cursor-pointer rounded-lg m-4 hover:ring transition ' + color.ring + ' ' + (detail.isRead ? 'opacity-50' : '')} onClick={onClick}>
+            <div className={'flex flex-nowrap justify-between text-white text px-4 py-2 rounded-tl-lg rounded-tr-lg ' + color.bg}>
                 <span className='font-bold'>{detail.title}</span>
                 <span>{detail.date}</span>
             </div>

@@ -1,12 +1,10 @@
 import React, { useContext, useEffect } from 'react'
 import { Card, Cell, Space, Switch } from 'react-vant'
-import { Contact, Close, GemO, LikeO, StarO } from '@react-vant/icons'
+import { Contact, Close, LikeO, StarO, ArrowLeft } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
-import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
-import { AppConfigContext } from '../components/AppConfigProvider'
+import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import router from '@/server/router'
 import { Statistic } from '../components/Statistic'
 import { setToken } from '../services/base'
 import { useQuery } from 'react-query'
@@ -14,8 +12,7 @@ import { fetchCountInfo, requireChangePwd, setAppTheme } from '../services/user'
 import { AppTheme } from '@/types/app'
 
 const SettingPage = () => {
-    const { setUserProfile } = useContext(UserContext)
-    const config = useContext(AppConfigContext)
+    const { userProfile, setUserProfile } = useContext(UserContext)
     const navigate = useNavigate()
     // 数量统计接口
     const { data: countInfo } = useQuery('/getCountInfo', fetchCountInfo)
@@ -35,10 +32,13 @@ const SettingPage = () => {
         fetch()
     }, [])
 
-    const onSwitchDark = async () => {
-        const resp = await setAppTheme(config?.theme === AppTheme.Light ? AppTheme.Dark : AppTheme.Light)
-        
-        console.log('resp', resp)
+    const onSwitchDark = () => {
+        const newTheme = userProfile?.theme === AppTheme.Light ? AppTheme.Dark : AppTheme.Light
+        setAppTheme(newTheme)
+        setUserProfile?.(old => {
+            if (!old) return old
+            return { ...old, theme: newTheme }
+        })
     }
 
     return (
@@ -60,14 +60,11 @@ const SettingPage = () => {
                         </Card>
 
                         <Card round>
-                            <Link to="/securityEntry">
-                                <Cell title="安全管理" icon={<GemO />} isLink />
-                            </Link>
                             <Cell title="修改密码" icon={<Contact />} isLink />
                             <Cell title="黑夜模式" icon={<StarO />} 
                                 rightIcon={<Switch
                                     size={24}
-                                    defaultChecked={config?.theme === AppTheme.Dark}
+                                    defaultChecked={userProfile?.theme === AppTheme.Dark}
                                     onChange={onSwitchDark}
                                 />}
                             />
@@ -84,7 +81,10 @@ const SettingPage = () => {
             </PageContent>
 
             <PageAction>
-                <ActionButton onClick={() => navigate(-1)}>返回</ActionButton>
+                <ActionIcon onClick={() => navigate(-1)}>
+                    <ArrowLeft fontSize={24} />
+                </ActionIcon>
+                <ActionButton onClick={() => navigate('/securityEntry')}>安全管理</ActionButton>
             </PageAction>
         </div>
     )

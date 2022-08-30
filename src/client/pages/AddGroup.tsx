@@ -33,7 +33,7 @@ const Field: FC<FieldProps> = (props) => {
 
     const colorClass = error
         ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-        : 'border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+        : 'border-slate-300 dark:border-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
 
     return (
         <div className='flex flex-col md:flex-row md:items-center'>
@@ -44,7 +44,7 @@ const Field: FC<FieldProps> = (props) => {
                     value={value}
                     onChange={e => onChange && onChange(e.target.value)}
                     placeholder={props.placeholder}
-                    className={'block px-3 py-2 min-h-[42px] my-2 w-full bg-slate-100 hover:bg-white transition ' +
+                    className={'block px-3 py-2 min-h-[42px] my-2 w-full bg-slate-100 dark:bg-slate-600 hover:bg-white hover:dark:bg-slate-500 transition ' +
                         'border border-solid rounded-md shadow-sm placeholder-slate-400 ' +
                         'focus:outline-none focus:bg-white ' + colorClass}
                 />
@@ -91,7 +91,7 @@ const AddGroup = () => {
                 </Header>
 
                 <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 2xl:w-1/3 mt-4'>
-                    <Form form={form} className='rounded-lg py-4 px-6 bg-white'>
+                    <Form form={form} className='rounded-lg py-4 px-6 bg-white dark:bg-slate-800 dark:text-slate-200'>
                         <Form.Item
                             name="name"
                             label="分组名称"
@@ -124,7 +124,7 @@ const AddGroup = () => {
                         </Button>
                     </div>
 
-                    <div className='w-full text-center text-gray-500 mt-6 select-none text-sm'>
+                    <div className='w-full text-center text-gray-500 dark:text-gray-200 mt-6 select-none text-sm'>
                         分组密码非必填<br />
                         填写后仅用于查看分组，凭证依旧使用主密码进行加密
                     </div>

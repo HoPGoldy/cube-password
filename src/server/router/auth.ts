@@ -52,7 +52,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         return
     }
 
-    const { passwordSha, defaultGroupId } = await getAppStorage()
+    const { passwordSha, defaultGroupId, theme } = await getAppStorage()
     if (!passwordSha) {
         response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
         return
@@ -80,6 +80,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         token,
         groups,
         defaultGroupId,
+        theme,
         hasNotice: unReadNoticeCount >= 1,
         ...noticeInfo
     }

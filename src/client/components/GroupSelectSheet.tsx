@@ -34,7 +34,7 @@ export const GroupSelectSheet: FC = () => {
         return (
             <div
                 key={item.id}
-                className='p-4 select-none flex flex-row items-center active:bg-slate-200 transition'
+                className='p-4 select-none flex flex-row items-center active:bg-slate-200 dark:active:bg-slate-600 transition'
                 onClick={() => onSelectGroup(item)}
             >
                 {item.id === selectedGroup
@@ -49,7 +49,10 @@ export const GroupSelectSheet: FC = () => {
     const renderNewGroupBtn = () => {
         return (
             <Link to="/addGroup">
-                <div className='p-4 select-none flex flex-row items-center text-gray-400 active:bg-slate-200 transition'>
+                <div className='
+                    p-4 select-none flex flex-row items-center text-gray-400 dark:text-gray-200 active:bg-slate-200 
+                    transition
+                '>
                     <Plus className='shrink-0' fontSize={24} />
                     <div className='ml-2 grow text-ellipsis whitespace-nowrap overflow-hidden'>新建分组</div>
                 </div>
@@ -59,7 +62,7 @@ export const GroupSelectSheet: FC = () => {
 
     return (<>
         <ActionSheet
-            title={<div className='pt-1 bg-gray-50'>分组选择</div>}
+            title={<div className='pt-1 bg-gray-50 dark:bg-gray-700'>分组选择</div>}
             closeable={false}
             visible={groupSelectVisivle}
             onCancel={() => setGroupSelectVisivle(false)}

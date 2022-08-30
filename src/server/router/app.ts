@@ -17,14 +17,10 @@ const globalRouter = new Router<any, AppKoaContext>()
  * 该接口不需要鉴权
  */
 globalRouter.get(setAlias('/global', '获取全局配置'), async ctx => {
-    const appStorage = await getAppStorage()
     const randIndex = Math.floor(Math.random() * (DEFAULT_COLOR.length))
     const buttonColor = DEFAULT_COLOR[randIndex]
 
-    const respData: AppConfig = {
-        theme: appStorage.theme,
-        buttonColor
-    }
+    const respData: AppConfig = { buttonColor }
 
     response(ctx, { code: 200, data: respData })
 })

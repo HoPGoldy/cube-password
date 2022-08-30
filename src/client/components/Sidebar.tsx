@@ -80,7 +80,10 @@ export const Sidebar: FC = () => {
     }
 
     return (
-        <section className='py-4 pl-4 bg-slate-700 h-screen overflow-y-auto text-white'>
+        <section className='
+            py-4 pl-4 transition h-screen overflow-y-auto 
+            bg-slate-700 dark:bg-slate-900 text-white dark:text-gray-200
+        '>
             <header className='text-center font-bold text-lg h-[44px] leading-[44px]'>
                 密码本
             </header>

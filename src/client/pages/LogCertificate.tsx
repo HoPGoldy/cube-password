@@ -70,13 +70,16 @@ const LogCertificate = () => {
 
         return (
             <div
-                className='bg-slate-50 rounded-lg mb-4 p-3 active:scale-95 active:ring ring-slate-400 transition'
+                className='
+                    bg-slate-50 rounded-lg mb-4 p-3 active:scale-95 active:ring ring-slate-400 transition 
+                    dark:ring-slate-200 dark:bg-slate-700
+                '
                 key={item.id}
                 onClick={() => setDialogDetail(item)}
             >
                 <div className='flex justify-between items-baseline mb-2 font-bold'>
                     <span>{title}</span>
-                    <span className='text-slate-500 flex items-center'>
+                    <span className='text-slate-500 dark:text-gray-300 flex items-center'>
                         {item.groupName}
                         {item.groupUnencrypted && <span className='ml-2 flex items-center bg-slate-500 text-white px-1 rounded text-sm'>
                             <Lock className='mr-1' /> 分组加密中
@@ -85,18 +88,18 @@ const LogCertificate = () => {
                 </div>
                 <div className='flex justify-between mb-1'>
                     <span>来源</span>
-                    <span className='text-slate-500'>{item.location}</span>
+                    <span className='text-slate-500 dark:text-gray-200'>{item.location}</span>
                 </div>
                 <div className='flex justify-between'>
                     <span>查看时间</span>
-                    <span className='text-slate-500'>{item.date}</span>
+                    <span className='text-slate-500 dark:text-gray-200'>{item.date}</span>
                 </div>
             </div>
         )
     }
 
     const renderContent = () => {
-        if (!logList || isPreviousData) return <div className='p-4 text-center'>加载中</div>
+        if (!logList || isPreviousData) return <div className='p-4 text-center text-gray-300'>加载中</div>
 
         return (
             <Table dataSource={logList.entries} columns={tableCol} renderMobile={renderMobileTableRow} />

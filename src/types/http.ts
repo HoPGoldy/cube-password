@@ -1,4 +1,4 @@
-import { HttpRequestLog, SecurityNoticeType } from './app'
+import { AppTheme, HttpRequestLog, SecurityNoticeType } from './app'
 
 export interface RequireLoginResp {
     salt: string
@@ -79,6 +79,10 @@ export type LoginResp = {
      * 是否有未读通知
      */
     hasNotice: boolean
+    /**
+     * 应用主题
+     */
+    theme: AppTheme
 } & NoticeInfoResp
 
 export interface NoticeInfoResp {

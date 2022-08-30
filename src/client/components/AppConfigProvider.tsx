@@ -16,7 +16,9 @@ export const AppConfigProvider: FC = (props) => {
     return (
         <AppConfigContext.Provider value={appConfig}>
             {isLoadingConfig 
-                ? <Loading className="my-24" size="36px" vertical>加载中...</Loading>
+                ? (<Loading className="my-24 dark:!text-gray-200" size="36px" vertical>
+                    <span className='dark:text-gray-200'>加载中...</span>
+                </Loading>)
                 : props.children
             }
         </AppConfigContext.Provider>

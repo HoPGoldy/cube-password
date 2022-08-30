@@ -88,13 +88,13 @@ const CertificateList = () => {
                 key={item.label}
                 className='
                     flex flex-col justify-center items-center p-4 select-none 
-                    hover:bg-slate-300 transition rounded-lg cursor-pointer
+                    hover:bg-slate-300 hover:dark:bg-slate-600 transition rounded-lg cursor-pointer
                     active:scale-90 min-w-[88px]
                 '
                 onClick={item.onClick}
             >
                 {item.icon}
-                <span className='text-gray-600 text-sm'>
+                <span className='text-gray-600 dark:text-gray-200 text-sm'>
                     {item.label}
                 </span>
             </div>
@@ -107,9 +107,9 @@ const CertificateList = () => {
             <div
                 key={item.id}
                 className={
-                    'mx-2 mb-4 pr-4 select-none bg-white relative rounded-lg py-2 px-4 ' +
+                    'mx-2 mb-4 pr-4 select-none bg-white dark:bg-slate-700 dark:text-gray-200 relative rounded-lg py-2 px-4 ' +
                     'w-col-1 lg:w-col-2 xl:w-col-3 cursor-pointer group ' +
-                    'ring-slate-500 active:bg-slate-200 transition ' +
+                    'ring-slate-500 dark:ring-slate-600 active:bg-slate-200 transition ' +
                     (selectedItem[item.id] ? 'ring' : 'hover:ring')
                 }
                 onClick={() => {
@@ -118,13 +118,13 @@ const CertificateList = () => {
                 }}
             >
                 <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
-                <div className='text-gray-600'>{item.updateTime}</div>
+                <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
                 {/* 编辑模式下右侧的小方块 */}
                 {showConfigArea && (
                     <div className={
                         'absolute h-4 w-4 right-4 top-[38%] text-white ' +
-                        'ring rounded transition group-hover:ring-slate-500 ' +
-                        (selectedItem[item.id] ? 'bg-slate-500 ring-slate-500' : 'ring-slate-300')
+                        'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
+                        (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
                     }></div>
                 )}
             </div>
@@ -147,12 +147,12 @@ const CertificateList = () => {
         if (!groupUnlocked) return <GroupLogin ref={groupUnlockRef} />
 
         if (!certificateList || certificateListLoading) return (
-            <div className='flex justify-center items-center text-gray-400 w-full mt-16 select-none'>
+            <div className='flex justify-center items-center text-gray-400 dark:text-gray-300 w-full mt-16 select-none'>
                 <Loading className='mr-2' /> 加载中，请稍后...
             </div>
         )
         if (certificateList.length === 0) return (
-            <div className='flex justify-center items-center text-gray-400 w-full mt-16 select-none'>
+            <div className='flex justify-center items-center text-gray-400 dark:text-gray-300 w-full mt-16 select-none'>
                 暂无密码
             </div>
         )
@@ -220,11 +220,9 @@ const CertificateList = () => {
             <Dialog {...getNewGroupSelectProps()} />
 
             <PageAction>
-                <Link to="/setting">
-                    <ActionIcon>
-                        <SettingO fontSize={24} />
-                    </ActionIcon>
-                </Link>
+                <ActionIcon href='/setting'>
+                    <SettingO fontSize={24} />
+                </ActionIcon>
                 <GroupSelectSheet />
                 <ActionButton onClick={onClickMainBtn}>
                     {groupUnlocked ? '新建密码' : '解 锁'}

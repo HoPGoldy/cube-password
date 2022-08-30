@@ -12,7 +12,7 @@ interface Props {
 export const Statistic: FC<Props> = (props) => {
     return (
         <div>
-            <div className="text-gray-500 text-base">{props.label}</div>
+            <div className="text-gray-500 dark:text-gray-300 text-base">{props.label}</div>
             <div className="text-3xl font-bold">{props.value}</div>
         </div>
     )

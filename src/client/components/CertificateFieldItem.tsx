@@ -17,12 +17,12 @@ interface Props {
 
 const fieldClass = `
 block grow px-3 py-2 w-full transition 
-border border-slate-300 rounded-md shadow-sm placeholder-slate-400 
+border border-slate-300 dark:border-slate-500 dark:text-gray-200 rounded-md shadow-sm placeholder-slate-400 
 focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500
 `
 
 const enableClass = `
-bg-slate-100 hover:bg-white
+bg-slate-100 dark:bg-slate-700 hover:bg-white dark:hover:bg-slate-600 dark:text-gray-200
 `
 
 interface IconButtonProps {
@@ -87,7 +87,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
                 value={value?.label}
                 disabled={disabled}
                 onChange={e => onLabelChange(e.target.value)}
-                className='mb-2 w-full disabled:bg-white'
+                className='mb-2 w-full disabled:bg-white dark:disabled:bg-slate-600 dark:bg-slate-600 dark:text-gray-200'
             />
             <div className='flex items-start'>
                 {isPassword ?
@@ -96,13 +96,13 @@ const CertificateFieldItem: FC<Props> = (props) => {
                         value={value?.value}
                         disabled={disabled}
                         onChange={e => onValueChange(e.target.value)}
-                        className={'min-h-[42px] ' + fieldClass + (disabled ? 'disabled:bg-white' : enableClass)}
+                        className={'min-h-[42px] ' + fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
                     /> :
                     <Textarea
                         value={value?.value}
                         onChange={e => onValueChange(e.target.value)}
                         disabled={disabled}
-                        className={fieldClass + (disabled ? 'disabled:bg-white' : enableClass)}
+                        className={fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
                     />
                 }
 

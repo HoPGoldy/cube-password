@@ -2,8 +2,14 @@
 @import './sidebar.css';
 
 body {
-    @apply bg-slate-200;
+    @apply bg-slate-200 dark:bg-slate-800 transition;
     font-size: 16px;
+}
+
+body, .rv-cell, .rv-card {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
 }
 
 /* 关闭 password 自带的显示隐藏功能 */
@@ -32,4 +38,16 @@ input[type="password"]::-ms-reveal{
     --rv-padding-xl: 2rem !important;
 
     --rv-cell-vertical-padding: var(--rv-padding-xs) !important; */
+}
+
+:root[data-theme="dark"] {
+    --rv-white: #334155;
+    --rv-black: #e5e7eb;
+    --rv-blue: #8589ff;
+    --rv-gray-1: #0F172A;
+    --rv-gray-2: #3C4A60;
+    /* cell 分割线的颜色 */
+    --rv-gray-3: #6D7A8F;
+    --rv-gray-7: var(--rv-black);
+    --rv-gray-8: var(--rv-black);
 }

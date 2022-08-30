@@ -23,7 +23,7 @@ const Pagination: FC<Props> = (props) => {
     }
 
     return (
-        <div className={'flex items-center justify-between cursor-default ' + className}>
+        <div className={'flex items-center justify-between cursor-default dark:text-gray-200 ' + className}>
             <span className='md:mr-2 order-3 md:order-1'>共计 {total} 条</span>
             <Button className='order-2' onClick={() => onPageChange(-1)}>上一页</Button>
             <span className='mx-2 order-4'>{pageIndex} / {maxPage}</span>

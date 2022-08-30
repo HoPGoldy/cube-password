@@ -14,11 +14,11 @@ function App() {
     return (
         <QueryProvider>
             <ConfigProvider themeVars={themeVars}>
-                <AppConfigProvider>
-                    <UserProvider>
+                <UserProvider>
+                    <AppConfigProvider>
                         <Routes />
-                    </UserProvider>
-                </AppConfigProvider>
+                    </AppConfigProvider>
+                </UserProvider>
             </ConfigProvider>
         </QueryProvider>
     )

@@ -35,7 +35,7 @@ const About: FC = () => {
                     </Space>
                 </div>
 
-                <div className="text-center absolute w-full bottom-0 text-mainColor mb-0 md:mb-4">
+                <div className="text-center absolute w-full bottom-0 text-mainColor mb-0 md:mb-4 dark:text-gray-200">
                     Powered by 💗 Yuzizi
                 </div>
             </PageContent>

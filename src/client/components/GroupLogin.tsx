@@ -34,14 +34,14 @@ const GroupLogin: ForwardRefRenderFunction<GroupUnlockRef> = (_, ref) => {
 
     return (
         <div className='w-full md:w-2/5 mt-16 mx-auto flex flex-col justify-center items-center'>
-            <Lock fontSize={98} className='text-slate-400' />
-            <span className='inline-block mt-4 mb-6 text-slate-500'>该分组已加密</span>
+            <Lock fontSize={98} className='text-slate-400 dark:text-slate-200' />
+            <span className='inline-block mt-4 mb-6 text-slate-500 dark:text-slate-200'>该分组已加密</span>
             <div className='w-[80%] md:w-full flex items-center'>
                 <input
                     type='password'
                     className='
-                        block grow px-3 py-2 w-full transition 
-                        border border-slate-300 rounded-md shadow-sm placeholder-slate-400 
+                        block grow px-3 py-2 w-full transition dark:bg-slate-700 dark:text-gray-200
+                        border border-slate-300 dark:border-slate-500 rounded-md shadow-sm placeholder-slate-400 
                         focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500
                     '
                     value={password}

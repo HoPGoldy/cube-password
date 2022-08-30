@@ -1,12 +1,17 @@
+import { AppTheme } from '@/types/app'
 import { MyJwtPayload } from '@/types/global'
 import { CertificateGroupDetail, CertificateListItem, NoticeInfoResp } from '@/types/http'
-import React, { Dispatch, FC, SetStateAction, useContext, useMemo, useState } from 'react'
+import React, { Dispatch, FC, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
 import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
 
 export interface UserProfile {
     token: string
     password: string
     defaultGroupId: number
+    /**
+     * 应用主题
+     */
+    theme: AppTheme
 }
 
 interface Context {
@@ -66,6 +71,20 @@ export const UserProvider: FC = (props) => {
         const resp = await getGroupList()
         setGroupList(resp)
     }
+
+    useEffect(() => {
+        // 还没有请求到，先从本地应用主题缓存
+        if (!userProfile) {
+            const themeCache = localStorage.getItem('kmp-theme')
+            if (!themeCache) return
+            document.documentElement.setAttribute('data-theme', themeCache)
+            return
+        }
+
+        const theme = userProfile?.theme === AppTheme.Dark ? 'dark' : 'light'
+        document.documentElement.setAttribute('data-theme', theme)
+        localStorage.setItem('kmp-theme', theme)
+    }, [userProfile?.theme])
 
     const value = {
         userProfile, setUserProfile,

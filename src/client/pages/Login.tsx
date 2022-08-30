@@ -51,9 +51,9 @@ const Register = () => {
         })
 
         if (!loginResp) return
-        const { token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel } = loginResp
+        const { token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel, theme } = loginResp
 
-        setUserProfile({ password, token, defaultGroupId })
+        setUserProfile({ password, token, defaultGroupId, theme })
         setNoticeInfo({ unReadNoticeCount, unReadNoticeTopLevel})
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
@@ -65,28 +65,29 @@ const Register = () => {
         if (!logFailInfo || !logFailInfo.loginFailure || logFailInfo.loginFailure.length <= 0) return null
 
         return (
-            <div className='text-red-500 mt-3'>
-                {logFailInfo.loginFailure.map(item => <div key={item}>登录失败于 {item}</div>)}
+            <div className='text-red-500 dark:text-red-400 mt-3'>
+                {logFailInfo.loginFailure.map((item, index) => <div key={index}>登录失败于 {item}</div>)}
                 <div className='mt-2'>{getLoginErrorTip(logFailInfo)}</div>
             </div>
         )
     }
 
     return (
-        <div className="h-screen w-screen bg-background flex flex-col justify-center items-center">
+        <div className="h-screen w-screen bg-background flex flex-col justify-center items-center dark:text-gray-100">
             <header className="w-screen text-center min-h-[236px]">
                 <div className="text-5xl font-bold text-mainColor">密码本</div>
                 <div className="mt-4 text-xl text-mainColor">管理任何需要加密的内容</div>
                 {renderLoginError()}
             </header>
             {!logFailInfo?.appLock && (
-                <div className='md:w-1/3 flex items-center'>
+                <div className='md:w-1/3 flex flex-col md:flex-row items-center'>
                     <input
                         ref={passwordInputRef}
                         className='
-                            block grow mr-2 px-3 py-2 w-full transition 
+                            block grow md:mr-2 px-3 py-2 w-full transition 
                             border border-slate-300 rounded-md shadow-sm placeholder-slate-400 
-                            focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500
+                            focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 
+                            dark:border-slate-500 dark:bg-slate-700 dark:hover:bg-slate-800
                         '
                         type='password'
                         autoFocus
@@ -97,11 +98,13 @@ const Register = () => {
                             if (e.key === 'Enter') onSubmit()
                         }}
                     />
-                    <Button
-                        className='shrink-0'
-                        color={config?.buttonColor}
-                        onClick={onSubmit}
-                    >登 录</Button>
+                    <div className='shrink-0 w-full md:w-auto mt-4 md:mt-0'>
+                        <Button
+                            block
+                            color={config?.buttonColor}
+                            onClick={onSubmit}
+                        >登 录</Button>
+                    </div>
                 </div>
             )}
         </div>

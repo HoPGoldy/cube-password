@@ -146,7 +146,7 @@ const CertificateDetail: FC<Props> = (props) => {
         )
 
         return (<>
-            <Form form={form} className='rounded-lg bg-white transition-h pt-4' onValuesChange={onFormChange}>
+            <Form form={form} className='rounded-lg bg-white dark:bg-slate-600 transition-h pt-4' onValuesChange={onFormChange}>
                 <Form.List name="fields">
                     {(fields, { add, remove }) => (<>
                         <div className='flex flex-row flex-wrap'>
@@ -169,7 +169,7 @@ const CertificateDetail: FC<Props> = (props) => {
                         {!disabled && <div className='mx-4 mt-4 pb-4'>
                             <Button
                                 plain
-                                className='!border-slate-300'
+                                className='!border-slate-300 dark:!border-slate-500'
                                 block
                                 icon={<Plus />}
                                 onClick={() => add({ label: '字段' + newFieldIndex.current++, value: '' })}
@@ -182,15 +182,15 @@ const CertificateDetail: FC<Props> = (props) => {
             </Form>
 
             <div className='flex flex-row justify-between gap-4'>
-                <Button
-                    className='!mt-4 grow'
-                    onClick={onConfirmClose}
-                >返回</Button>
-
                 {disabled && <Button
                     className='!mt-4 grow'
                     onClick={() => setDisabled(old => !old)}
                 >编辑</Button>}
+
+                <Button
+                    className='!mt-4 grow'
+                    onClick={onConfirmClose}
+                >返回</Button>
 
                 {showUpdateBtn && <Button
                     className='!mt-4 grow'
@@ -211,7 +211,7 @@ const CertificateDetail: FC<Props> = (props) => {
             visible={visible}
             onClose={onConfirmClose}
         >
-            <div className='relative bg-slate-200 p-4 rounded-lg'>
+            <div className='relative bg-slate-200 dark:bg-slate-700 p-4 rounded-lg'>
                 <input
                     type="text"
                     value={title}
@@ -219,10 +219,11 @@ const CertificateDetail: FC<Props> = (props) => {
                     disabled={disabled}
                     onChange={onTitleChange}
                     placeholder="请输入密码名"
-                    className='font-bold text-xl bg-inherit mb-4'
+                    className='font-bold dark:text-slate-200 text-xl bg-inherit mb-4'
                 />
                 {!disabled && <div className='
-                    hidden md:flex absolute cursor-default top-5 right-5 items-center text-gray-500
+                    hidden md:flex absolute cursor-default top-5 right-5 items-center 
+                    text-gray-500 dark:text-gray-200
                 '>
                     <Question className='mr-2' /> 标题名和字段名均可修改
                 </div>}
