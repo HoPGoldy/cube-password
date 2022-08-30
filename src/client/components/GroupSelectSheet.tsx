@@ -62,7 +62,7 @@ export const GroupSelectSheet: FC = () => {
 
     return (<>
         <ActionSheet
-            title={<div className='pt-1 bg-gray-50 dark:bg-gray-700'>分组选择</div>}
+            title={<div className='pt-2 font-bold'>分组选择</div>}
             closeable={false}
             visible={groupSelectVisivle}
             onCancel={() => setGroupSelectVisivle(false)}
