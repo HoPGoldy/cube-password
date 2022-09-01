@@ -30,7 +30,6 @@ export const getRandomRoutePrefix = function () {
 }
 
 export const randomEntry: Middleware = async (ctx, next) => {
-    console.log('随机前缀', getRandomRoutePrefix())
     const prefixMatched = ctx.path.startsWith(getRandomRoutePrefix())
     if (prefixMatched) {
         await next()

@@ -1,8 +1,9 @@
 import qs from 'qs'
-import { history, routePrefix } from '../route'
+import { history } from '../route'
 import { AppResponse } from '@/types/global'
 import { Notify } from 'react-vant'
 import { useQuery } from 'react-query'
+import { routePrefix } from '../constans'
 
 /**
  * 后端地址

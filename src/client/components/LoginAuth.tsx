@@ -1,5 +1,6 @@
 import React, { FC, useContext } from 'react'
 import { Navigate } from 'react-router-dom'
+import { routePrefix } from '../constans'
 import { UserContext } from './UserProvider'
 
 export const LoginAuth: FC = ({ children }) => {
@@ -7,7 +8,7 @@ export const LoginAuth: FC = ({ children }) => {
 
     if (!userProfile) {
         return (
-            <Navigate to="/login" replace />
+            <Navigate to={routePrefix + '/login'} replace />
         )
     }
 

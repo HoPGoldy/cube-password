@@ -1,17 +1,10 @@
 import React, { ComponentType, FC, lazy, Suspense, useLayoutEffect, useState } from 'react'
-import { Router, useRoutes } from 'react-router-dom'
+import { Router, useRoutes, useNavigate as useRouterNavigate, NavigateFunction, Link as RouterLink, LinkProps } from 'react-router-dom'
 import { createBrowserHistory } from 'history'
 import Loading from './components/Loading'
 import { LoginAuth } from './components/LoginAuth'
 import { AppContainer } from './components/AppContainer'
-
-/**
- * 随机路由前缀
- *
- * 注意这里取了路由里的第一段 path，因为生产环境里会给应用路径加上一个随机前缀路径
- * 这里不加的话就会导致访问不到对应的后端
- */
-export const routePrefix = process.env.NODE_ENV === 'development' ? '' : `/${location.pathname.split('/')[1]}`
+import { routePrefix } from './constans'
 
 const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
     const Comp = lazy(compLoader)
@@ -75,5 +68,25 @@ export const BrowserRouter: FC = (props) => {
             navigationType={state.action}
             navigator={history}
         />
+    )
+}
+
+export const useNavigate = (): NavigateFunction => {
+    const nav = useRouterNavigate()
+
+    return (arg1, ...args) => {
+        const realArg1 = typeof arg1 === 'string' ? routePrefix + arg1 : arg1
+        return (nav as any)(realArg1, ...args)
+    }
+}
+
+export const Link: FC<LinkProps> = (props) => {
+    const { to, ...restProps } = props
+    const realTo = routePrefix + to
+
+    return (
+        <RouterLink to={realTo} {...restProps}>
+            {props.children}
+        </RouterLink>
     )
 }
