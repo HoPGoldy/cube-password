@@ -1,7 +1,7 @@
 import { CertificateGroupDetail } from '@/types/http'
 import { CouponO, Coupon, DebitPay, Plus } from '@react-vant/icons'
 import React, { FC, useContext, useState } from 'react'
-import { Link } from '../route'
+import { Link } from '../Route'
 import { ActionSheet } from 'react-vant'
 import { ActionIcon } from './PageWithAction'
 import { hasGroupLogin, useJwtPayload, UserContext } from './UserProvider'

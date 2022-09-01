@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { useNavigate } from '../route'
+import { useNavigate } from '../Route'
 import { Card, Space, Cell } from 'react-vant'
 import Header from '../components/Header'
 import { PageContent, PageAction, ActionButton } from '../components/PageWithAction'

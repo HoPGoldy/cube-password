@@ -1,6 +1,6 @@
 import { STATUS_CODE } from '@/config'
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import { useNavigate } from '../route'
+import { useNavigate } from '../Route'
 import { Notify } from 'react-vant'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { Button } from '../components/Button'

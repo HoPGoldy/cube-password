@@ -2,7 +2,7 @@ import { Search } from '@react-vant/icons'
 import { DebouncedFunc } from 'lodash'
 import debounce from 'lodash/debounce'
 import React, { FC, MouseEventHandler, useContext, useEffect, useRef, useState } from 'react'
-import { Link } from '../route'
+import { Link } from '../Route'
 import { Card, Field, FieldInstance, Loading } from 'react-vant'
 import { AppConfigContext } from './AppConfigProvider'
 

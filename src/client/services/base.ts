@@ -1,5 +1,5 @@
 import qs from 'qs'
-import { history } from '../route'
+import { history } from '../Route'
 import { AppResponse } from '@/types/global'
 import { Notify } from 'react-vant'
 import { useQuery } from 'react-query'

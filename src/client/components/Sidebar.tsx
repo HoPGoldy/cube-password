@@ -1,7 +1,7 @@
 import { CertificateGroupDetail } from '@/types/http'
 import React, { FC, useContext, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useNavigate } from '../route'
+import { useNavigate } from '../Route'
 import { Plus, Gem, Coupon, Lock, Setting } from '@react-vant/icons'
 import { UserContext } from './UserProvider'
 

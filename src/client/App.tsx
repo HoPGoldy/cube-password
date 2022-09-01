@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes } from './route'
+import { Routes } from './Route'
 import { AppConfigProvider } from './components/AppConfigProvider'
 import { UserProvider } from './components/UserProvider'
 import { QueryProvider } from './components/QueryClientProvider'
