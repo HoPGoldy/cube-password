@@ -5,6 +5,14 @@ import Loading from './components/Loading'
 import { LoginAuth } from './components/LoginAuth'
 import { AppContainer } from './components/AppContainer'
 
+/**
+ * 随机路由前缀
+ *
+ * 注意这里取了路由里的第一段 path，因为生产环境里会给应用路径加上一个随机前缀路径
+ * 这里不加的话就会导致访问不到对应的后端
+ */
+export const routePrefix = process.env.NODE_ENV === 'development' ? '' : `/${location.pathname.split('/')[1]}`
+
 const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
     const Comp = lazy(compLoader)
     return (
@@ -17,17 +25,17 @@ const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) =>
 export const Routes: FC = () => {
     const routes = useRoutes([
         {
-            path: '/',
+            path: routePrefix + '/',
             children: [
-                { path: '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
-                { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
-                { path: '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
-                { path: '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
-                { path: '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
-                { path: '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
-                { path: '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
-                { path: '/setting', element: lazyLoad(() => import('./pages/Setting')) },
-                { path: '/about', element: lazyLoad(() => import('./pages/About')) }
+                { path: routePrefix + '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
+                { path: routePrefix + '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
+                { path: routePrefix + '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
+                { path: routePrefix + '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
+                { path: routePrefix + '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
+                { path: routePrefix + '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
+                { path: routePrefix + '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
+                { path: routePrefix + '/setting', element: lazyLoad(() => import('./pages/Setting')) },
+                { path: routePrefix + '/about', element: lazyLoad(() => import('./pages/About')) }
             ],
             element: (
                 <LoginAuth>
@@ -36,7 +44,7 @@ export const Routes: FC = () => {
             )
         },
         {
-            path: '/login',
+            path: routePrefix + '/login',
             element: lazyLoad(() => import('./pages/Login'))
         }
     ])

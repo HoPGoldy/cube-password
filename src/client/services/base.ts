@@ -1,11 +1,13 @@
 import qs from 'qs'
-import { history } from '../route'
+import { history, routePrefix } from '../route'
 import { AppResponse } from '@/types/global'
 import { Notify } from 'react-vant'
 import { useQuery } from 'react-query'
 
-// 后端地址
-const baseURL = '/api'
+/**
+ * 后端地址
+ */
+const baseURL = routePrefix + '/api'
 
 let token = localStorage.getItem('token')
 
@@ -35,7 +37,7 @@ const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}):
     const resp = await fetch(baseURL + pureUrl, init)
 
     if (resp.status === 401 && history.location.pathname !== '/login') {
-        history.push('/login', { replace: true })
+        history.push(routePrefix + '/login', { replace: true })
     }
 
     const data: AppResponse<T> = await resp.json()

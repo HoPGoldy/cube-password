@@ -2,6 +2,7 @@ import { Middleware } from 'koa'
 import send from 'koa-send'
 import path from 'path'
 import { getAppStorage } from './loki'
+import { getRandomRoutePrefix } from './randomEntry'
 
 export const serveStatic: Middleware = async (ctx, next) => {
     await next()
@@ -10,7 +11,8 @@ export const serveStatic: Middleware = async (ctx, next) => {
     // 请求已经被处理了
     if (ctx.body != null || ctx.status !== 404) return
 
-    let sendPath = ctx.path
+    let sendPath = ctx.path.replace(getRandomRoutePrefix(), '')
+    console.log('sendPath', sendPath)
     // 如果获取的是入口页的话，就根据是否注册过返回对应的页面
     if (sendPath.endsWith('/index.html')) {
         const { passwordSalt, passwordSha } = await getAppStorage()
