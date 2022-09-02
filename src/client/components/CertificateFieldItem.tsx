@@ -1,11 +1,12 @@
 import React, { FC, useState } from 'react'
 import { CertificateField } from '@/types/app'
-import { Cross, Eye, GiftO, ClosedEye, Description } from '@react-vant/icons'
+import { Cross, Eye, GiftO, ClosedEye } from '@react-vant/icons'
 import Textarea from './Textarea'
 import { IconBaseProps } from '@react-vant/icons/es/IconBase'
 import copy from 'copy-to-clipboard'
 import { createPwd } from '@/utils/createPassword'
 import { Notify } from 'react-vant'
+import { getRandName } from '../services/certificate'
 
 interface Props {
     showDelete?: boolean
@@ -16,7 +17,7 @@ interface Props {
 }
 
 const fieldClass = `
-block grow px-3 py-2 w-full transition 
+block px-3 py-2 w-full transition 
 border border-slate-300 dark:border-slate-500 dark:text-gray-200 rounded-md shadow-sm placeholder-slate-400 
 focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500
 `
@@ -35,7 +36,10 @@ const CertificateFieldItem: FC<Props> = (props) => {
     const { disabled, value, onChange, showDelete = true, onDelete } = props
     const [hiddenPassword, setHiddenPassword] = useState(true)
 
-    const isPassword = !!['密码', 'password'].find(text => value?.label.includes(text))
+    // 是否为密码输入框
+    const isPassword = !!['密码', 'password', 'pwd'].find(text => value?.label.includes(text))
+    // 是否为用户名输入框
+    const isUsername = !!['用户名', '名称', 'name'].find(text => value?.label.includes(text))
 
     const onLabelChange = (val: string) => {
         const newValue = { ...value, label: val }
@@ -54,9 +58,26 @@ const CertificateFieldItem: FC<Props> = (props) => {
         Notify.show({ type: 'success', message: '新密码已复制' })
     }
 
-    const onCopy = () => {
+    const onCreateUsername = async () => {
+        const resp = await getRandName()
+        onValueChange(resp)
+        copy(resp)
+        Notify.show({ type: 'success', message: '新名称已复制' })
+    }
+
+    const onFieldClick = () => {
+        // 编辑模式下点击文本框不会复制
+        if (!disabled) return
+
         if (!value || !value.value) {
             Notify.show({ type: 'warning', message: '内容为空无法复制' })
+            return
+        }
+
+        const isLink = value.value.startsWith('http://') || value.value.startsWith('https://') || value.value.startsWith('www.') 
+
+        if (isLink) {
+            window.open(value.value, '__blank')
             return
         }
         copy(value.value)
@@ -90,30 +111,32 @@ const CertificateFieldItem: FC<Props> = (props) => {
                 className='mb-2 w-full disabled:bg-white dark:disabled:bg-slate-600 dark:bg-slate-600 dark:text-gray-200'
             />
             <div className='flex items-start'>
-                {isPassword ?
-                    <input
-                        type={hiddenPassword ? 'password' : 'text'}
-                        value={value?.value}
-                        disabled={disabled}
-                        onChange={e => onValueChange(e.target.value)}
-                        className={'min-h-[42px] ' + fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
-                    /> :
-                    <Textarea
-                        value={value?.value}
-                        onChange={e => onValueChange(e.target.value)}
-                        disabled={disabled}
-                        className={fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
-                    />
-                }
+                <div onClick={onFieldClick} className='w-full grow ring-slate-300 active:ring rounded-lg transition'>
+                    {isPassword ?
+                        <input
+                            type={hiddenPassword ? 'password' : 'text'}
+                            value={value?.value}
+                            disabled={disabled}
+                            onChange={e => onValueChange(e.target.value)}
+                            className={'min-h-[42px] ' + fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
+                        /> :
+                        <Textarea
+                            value={value?.value}
+                            onChange={e => onValueChange(e.target.value)}
+                            disabled={disabled}
+                            className={fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
+                        />
+                    }
+                </div>
 
                 {isPassword && (hiddenPassword ?
                     renderIconButton({ Icon: Eye, className: 'bg-purple-400 ring-purple-500', onClick: () => setHiddenPassword(false) }) :
                     renderIconButton({ Icon: ClosedEye, className: 'bg-purple-400 ring-purple-500', onClick: () => setHiddenPassword(true) })
                 )}
 
-                {disabled && renderIconButton({ Icon: Description, className: 'bg-green-400 ring-green-500', onClick: onCopy })}
-
                 {!disabled && isPassword && renderIconButton({ Icon: GiftO, className: 'bg-sky-400 ring-sky-500', onClick: onCreatePassword })}
+
+                {!disabled && isUsername && renderIconButton({ Icon: GiftO, className: 'bg-sky-400 ring-sky-500', onClick: onCreateUsername })}
 
                 {!disabled && showDelete && renderIconButton({ Icon: Cross, className: 'bg-red-400 ring-red-500', onClick: onDelete })}
             </div>

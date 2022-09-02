@@ -8,6 +8,7 @@ import { CertificateDetail } from '@/types/app'
 import { CertificateDetailResp, CertificateMoveReqBody } from '@/types/http'
 import { DATE_FORMATTER } from '@/config'
 import { setAlias } from '../lib/routeAlias'
+import { Random } from 'mockjs'
 
 const certificateRouter = new Router<unknown, AppKoaContext>()
 
@@ -28,6 +29,14 @@ certificateRouter.get(setAlias('/certificate/:certificateId', '查询凭证详�
         updateTime: dayjs(certificate.updateTime).format(DATE_FORMATTER),
         createTime: dayjs(certificate.meta.created).format(DATE_FORMATTER)
     }
+    response(ctx, { code: 200, data })
+})
+
+/**
+ * 获取一个随机英文名
+ */
+certificateRouter.get(setAlias('/randName', '获取随机英文名'), async ctx => {
+    const data = Random.name(true).replaceAll(' ', '')
     response(ctx, { code: 200, data })
 })
 

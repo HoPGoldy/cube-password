@@ -10,6 +10,32 @@ import { useCertificateDetail, useUpdateCertificate } from '../services/certific
 import { aes, aesDecrypt } from '@/utils/common'
 import copy from 'copy-to-clipboard'
 
+
+interface UseTip {
+    name: string
+    content: string
+}
+
+const useTips: UseTip[] = [
+    {
+        name: '修改名称',
+        content: '在编辑模式下，标题名和字段名均可修改。'
+    },
+    {
+        name: '密码生成',
+        content: '当字段名中包含 “密码”、“password”、“pwd” 时，将会显示密码生成按钮，点击后会生成 24 位的强密码并复制到剪切板。'
+    },
+    {
+        name: '用户名',
+        content: '当字段名中包含 “用户名”、“name” 时，将会显示用户名生成按钮，点击后会生成首字母大写的英文名并复制到剪切板。'
+    },
+    {
+        name: '复制与跳转',
+        content: '在查看凭证时，直接点击字段内容将会直接复制，如果内容以 http https 开头，将会直接跳转到对应网址。'
+    }
+]
+
+
 interface Props {
     groupId: number
     certificateId: number | undefined
@@ -48,6 +74,8 @@ const CertificateDetail: FC<Props> = (props) => {
         Notify.show({ type: 'success', message: `${certificateId ? '更新' : '添加'}成功` })
         onClose(true)
     })
+    // 操作帮助是否显示
+    const [useTipVisible, setUseTipVisible] = useState(false)
 
     // 初始化窗口
     useEffect(() => {
@@ -163,6 +191,15 @@ const CertificateDetail: FC<Props> = (props) => {
 
     const showUpdateBtn = needShowUpdateButton()
 
+    const renderUseTip = (item: UseTip) => {
+        return (
+            <div className='mb-4' key={item.name}>
+                <div className='font-bold mb-1 dark:text-gray-400'>{item.name}</div>
+                <div className='text-gray-600 dark:text-gray-200'>{item.content}</div>
+            </div>
+        )
+    }
+
     const renderContent = () => {
         if (loading) return (
             <div className='flex justify-center items-center'>
@@ -251,15 +288,25 @@ const CertificateDetail: FC<Props> = (props) => {
                     placeholder="请输入密码名"
                     className='font-bold dark:text-slate-200 text-xl bg-inherit mb-4'
                 />
-                {!disabled && <div className='
-                    hidden md:flex absolute cursor-default top-5 right-5 items-center 
+                <div className='
+                    absolute top-5 right-5 cursor-pointer
                     text-gray-500 dark:text-gray-200
                 '>
-                    <Question className='mr-2' /> 标题名和字段名均可修改
-                </div>}
+                    <Question fontSize={24} onClick={() => setUseTipVisible(true)} /> 
+                </div>
 
                 {renderContent()}
             </div>
+            <Popup
+                round
+                className='w-[90%] md:w-1/2'
+                visible={useTipVisible}
+                onClose={() => setUseTipVisible(false)}
+            >
+                <div className='p-4' onClick={() => setUseTipVisible(false)}>
+                    {useTips.map(renderUseTip)}
+                </div>
+            </Popup>
         </Popup>
     )
 }

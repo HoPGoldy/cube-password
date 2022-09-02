@@ -6,6 +6,13 @@ import { queryClient } from '../components/QueryClientProvider'
 import { sendGet, sendPost, sendPut } from './base'
 
 /**
+ * 获取随机英文名
+ */
+export const getRandName = async () => {
+    return await sendGet<string>('/randName')
+}
+
+/**
  * 获取凭证详情
  */
 export const getCertificate = async (id: number | undefined) => {
