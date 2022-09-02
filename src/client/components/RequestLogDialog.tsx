@@ -21,6 +21,8 @@ interface Props {
     onClose: () => void
 }
 
+const codeAreaClass = 'bg-slate-200 dark:bg-slate-600 rounded p-2 my-2 overflow-auto block'
+
 export const RequestLogDialog: FC<Props> = (props) => {
     const { details, onClose } = props
 
@@ -52,32 +54,27 @@ export const RequestLogDialog: FC<Props> = (props) => {
                 
                 <div className='mb-1'>
                     <span>请求接口：</span>
-                    <span className='float-right text-slate-500'>{details?.url}</span>
+                    <code className={codeAreaClass}>{details?.url}</code>
                 </div>
                 <div className='mb-1'>
                     <span>请求 ip：</span>
-                    <span className='float-right text-slate-500'>{details?.ipType}</span>
-                    <span className='float-right text-slate-500'>{details?.ip}</span>
+                    <code className={codeAreaClass}>{details?.ipType} {details?.ip}</code>
                 </div>
                 <div className='mb-1'>
                     <span>ip 所在地：</span>
-                    <span className='float-right text-slate-500'>{details?.location}</span>
+                    <code className={codeAreaClass}>{details?.location}</code>
                 </div>
                 <div className='mb-1'>
                     <span>请求时间：</span>
-                    <span className='float-right text-slate-500'>{details?.date}</span>
+                    <code className={codeAreaClass}>{details?.date}</code>
                 </div>
                 <div className='mb-1'>
                     <div>请求 params：</div>
-                    <code className='bg-slate-200 dark:bg-slate-600 rounded p-2 my-2 overflow-auto block'>
-                        {details?.requestParams}
-                    </code>
+                    <code className={codeAreaClass}>{details?.requestParams}</code>
                 </div>
                 <div className='mb-1'>
                     <div>请求 body：</div>
-                    <code className='bg-slate-200 dark:bg-slate-600 rounded p-2 my-2 overflow-auto block'>
-                        {details?.requestBody}
-                    </code>
+                    <code className={codeAreaClass}>{details?.requestBody}</code>
                 </div>
             </div>
         </Dialog>

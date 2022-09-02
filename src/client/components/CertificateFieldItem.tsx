@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useState, useMemo } from 'react'
 import { CertificateField } from '@/types/app'
 import { Cross, Eye, GiftO, ClosedEye } from '@react-vant/icons'
 import Textarea from './Textarea'
@@ -36,10 +36,16 @@ const CertificateFieldItem: FC<Props> = (props) => {
     const { disabled, value, onChange, showDelete = true, onDelete } = props
     const [hiddenPassword, setHiddenPassword] = useState(true)
 
-    // 是否为密码输入框
-    const isPassword = !!['密码', 'password', 'pwd'].find(text => value?.label.includes(text))
-    // 是否为用户名输入框
-    const isUsername = !!['用户名', '名称', 'name'].find(text => value?.label.includes(text))
+    const [isPassword, isUsername, isLink] = useMemo(() => {
+        return [
+            // 是否为密码输入框
+            !!['密码', 'password', 'pwd'].find(text => value?.label.includes(text)),
+            // 是否为用户名输入框
+            !!['用户名', '名称', 'name'].find(text => value?.label.includes(text)),
+            // 是否为链接
+            value?.value.startsWith('http://') || value?.value.startsWith('https://') || value?.value.startsWith('www.')
+        ]
+    }, [value?.value])
 
     const onLabelChange = (val: string) => {
         const newValue = { ...value, label: val }
@@ -73,8 +79,6 @@ const CertificateFieldItem: FC<Props> = (props) => {
             Notify.show({ type: 'warning', message: '内容为空无法复制' })
             return
         }
-
-        const isLink = value.value.startsWith('http://') || value.value.startsWith('https://') || value.value.startsWith('www.') 
 
         if (isLink) {
             window.open(value.value, '__blank')
@@ -124,7 +128,11 @@ const CertificateFieldItem: FC<Props> = (props) => {
                             value={value?.value}
                             onChange={e => onValueChange(e.target.value)}
                             disabled={disabled}
-                            className={fieldClass + (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass)}
+                            className={
+                                fieldClass +
+                                (disabled ? 'disabled:bg-white dark:disabled:bg-slate-600' : enableClass) +
+                                ((isLink && disabled) ? ' cursor-pointer text-sky-500' : '')
+                            }
                         />
                     }
                 </div>
