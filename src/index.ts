@@ -5,8 +5,9 @@ import logger from 'koa-logger'
 import bodyParser from 'koa-body'
 import { serveStatic } from './server/lib/static'
 import { getRandomRoutePrefix, randomEntry } from './server/lib/randomEntry'
+import { getServePort } from './utils/common'
 
-const START_PORT = process.env.PORT || 3600
+const START_PORT = getServePort()
 
 const app = new Koa()
 

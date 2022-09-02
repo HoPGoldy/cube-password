@@ -28,13 +28,13 @@ globalRouter.get(setAlias('/global', '获取全局配置'), async ctx => {
 /**
  * 修改亮暗主题
  */
-globalRouter.put(setAlias('/theme/:themeValue', '设置主题'), async ctx => {
+globalRouter.put(setAlias('/theme/:themeValue', '设置黑夜模式', 'PUT'), async ctx => {
     const { themeValue } = ctx.params
     if (themeValue !== AppTheme.Dark && themeValue !== AppTheme.Light) {
         response(ctx, { code: 400, msg: '主题参数错误' })
     }
 
-    updateAppStorage({ theme: themeValue as AppTheme })
+    await updateAppStorage({ theme: themeValue as AppTheme })
     response(ctx, { code: 200 })
     saveLoki()
 })

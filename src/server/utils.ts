@@ -88,7 +88,7 @@ export function getRequestRoute (ctx: AppKoaContext) {
 
     const route = Object.entries(params).reduce((prevUrl, param) => {
         const [ key, value ] = param
-        return prevUrl.replace(value as string, `:${key}`)
+        return prevUrl.replace('/' + value as string, `/:${key}`)
     }, pureUrl)
 
     return route

@@ -162,7 +162,7 @@ groupRouter.delete(setAlias('/group/:groupId', '删除分组', 'DELETE'), async 
 /**
  * 分组解锁
  */
-groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), async ctx => {
+groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), checkIsGroupUnlockSuccess, async ctx => {
     const { code } = ctx.request.body
     if (!code || typeof code !== 'string') {
         response(ctx, { code: 401, msg: '无效的分组密码凭证' })
@@ -204,7 +204,7 @@ groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), asy
 /**
  * 请求分组解锁
  */
-groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密授权', 'POST'), checkIsGroupUnlockSuccess, async ctx => {
+groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密授权', 'POST'), async ctx => {
     const collection = await getGroupCollection()
     const groupId = Number(ctx.params.groupId)
     const groupItem = collection.get(groupId)

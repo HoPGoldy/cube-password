@@ -3,6 +3,7 @@ import { SecurityNoticeType } from '@/types/app'
 import { AppKoaContext } from '@/types/global'
 import dayjs from 'dayjs'
 import { Next } from 'koa'
+import { createLog } from '../router/logger'
 import { getNoticeContentPrefix, response } from '../utils'
 import { getGroupCollection, insertSecurityNotice } from './loki'
 
@@ -147,40 +148,23 @@ export const checkIsLoginSuccess: SecurityChecker = async (ctx, next) => {
  */
 export const checkIsGroupUnlockSuccess: SecurityChecker = async (ctx, next) => {
     await next()
-
     if ((ctx.body as any)?.code === 200) return
 
     const collection = await getGroupCollection()
     const groupId = Number(ctx.params.groupId)
     const item = collection.get(groupId)
 
-    let content = getNoticeContentPrefix(ctx.log)
-    if (!item) content += `尝试解锁一个不存在的分组(分组 id: ${groupId})`
-    else content += '进行了一次失败的登录，请确认是否为本人操作'
-    content += '<br/>正常使用不应该会产生此请求，请检查是否有攻击者尝试爆破分组密码'
+    const log = await createLog(ctx)
+    let content = getNoticeContentPrefix(log)
+    if (!item) {
+        content += `尝试解锁一个不存在的分组(分组 id: ${groupId})。`
+        content += '正常使用不应该会产生此请求，请检查是否有攻击者尝试爆破分组密码'
+    }
+    else content += '进行了一次失败的解锁，请确认是否为本人操作'
 
     insertSecurityNotice(
         SecurityNoticeType.Warning,
         '分组解锁失败',
         content
-    )
-}
-
-/**
- * 检查中间件 - 是否请求了非法的路径
- */
-export const checkQueryNotExist: SecurityChecker = async (ctx, next) => {
-    await next()
-
-    if (ctx.status !== 404 && (ctx.body as any)?.code !== 404) return
-
-    insertSecurityNotice(
-        SecurityNoticeType.Warning,
-        '访问不存在的路径',
-        `
-            ${getNoticeContentPrefix(ctx.log)}访问了一次不存在的路径：
-            <code>${ctx.url}</code>
-            正常使用不应该会产生此类请求，请检查是否有攻击者尝试爆破路径
-        `
     )
 }

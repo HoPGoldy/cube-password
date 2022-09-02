@@ -46,6 +46,10 @@ const securityRules: SecurityRule[] = [
         name: '分组解密审查',
         content: '当分组密码错误或者尝试解锁一个不存在的分组时，应用将会记录并通过安全通知提醒用户。'
     },
+    {
+        name: '404 请求警告',
+        content: '当有客户端请求了不存在的网址路由时发出警告，如果自己没有不小心输错网址的话，则可以判定为有人在尝试爆破可用路由。'
+    },
 ]
 
 const headerConfig = {
