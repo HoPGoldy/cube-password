@@ -258,6 +258,7 @@ loggerRouter.post(setAlias('/notice/:noticeId/read', '设置通知是否已读',
 
     const data: NoticeInfoResp = await getNoticeInfo()
     response(ctx, { code: 200, data })
+    saveLoki('log')
 })
 
 /**
