@@ -228,7 +228,7 @@ loggerRouter.get(setAlias('/notices', '查询通知数据'), async ctx => {
         total: queryChain.count(),
         topLevel,
         totalScanReq: logCollection.count(),
-        initTime: dayjs(initTime).diff(dayjs(), 'day')
+        initTime: dayjs().diff(dayjs(initTime), 'day')
     }
 
     response(ctx, { code: 200, data })
