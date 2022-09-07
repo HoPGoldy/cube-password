@@ -8,10 +8,11 @@ interface FieldProps {
   error?: boolean
   errorMessage?: string
   onChange?: (value: string) => void
+  labelClass?: string
 }
 
 export const Field: FC<FieldProps> = (props) => {
-    const { type = 'text', label, value, onChange, error, errorMessage } = props
+    const { type = 'text', label, value, onChange, error, errorMessage, labelClass = '' } = props
 
     const colorClass = error
         ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
@@ -19,7 +20,7 @@ export const Field: FC<FieldProps> = (props) => {
 
     return (
         <div className='flex flex-col md:flex-row md:items-center'>
-            <span className='mr-4'>{label}</span>
+            <span className={'mr-4 md:text-right ' + labelClass}>{label}</span>
             <div className='grow'>
                 <input
                     type={type}

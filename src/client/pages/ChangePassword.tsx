@@ -84,15 +84,17 @@ const ChangePassword = () => {
                             name="oldPwd"
                             label="原主密码"
                             rules={[{ required: true, message: '请输入原主密码' }]}
+                            labelClass='w-28'
                             customField
                         >
-                            <Field />
+                            <Field type='password' />
                         </Form.Item>
                         <Form.Item
                             name="newPwd"
                             label="新主密码"
                             customField
                             rules={[{ required: true, validator: validatePassword }]}
+                            labelClass='w-28'
                         >
                             <Field type='password' />
                         </Form.Item>
@@ -102,6 +104,7 @@ const ChangePassword = () => {
                             customField
                             label="重复新主密码"
                             rules={[{ required: false, validator: validateRepeatPassword }]}
+                            labelClass='w-28'
                         >
                             <Field type='password' />
                         </Form.Item>

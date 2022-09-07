@@ -6,7 +6,7 @@ import { certificateRouter } from './certificate'
 import { loggerRouter, middlewareLogger } from './logger'
 import { AppKoaContext } from '@/types/global'
 import { middlewareJwt, middlewareJwtCatcher } from '../lib/auth'
-import { checkIsSleepTime, loginLockMiddleware } from '../lib/security'
+import { checkIsSleepTime, lockManager } from '../lib/security'
 import { getRandomRoutePrefix } from '../lib/randomEntry'
 
 const routes = [globalRouter, loginRouter, certificateRouter, groupRouter, loggerRouter]
@@ -19,7 +19,7 @@ const apiRouter = new Router<unknown, AppKoaContext>({
 })
 
 apiRouter
-    .use(loginLockMiddleware)
+    .use(lockManager.loginLockMiddleware)
     .use(checkIsSleepTime)
     .use(middlewareLogger)
     .use(middlewareJwtCatcher)

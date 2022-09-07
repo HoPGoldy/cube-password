@@ -67,6 +67,13 @@ const createLoginLock = (props: LoginLockProps) => {
         }, 1000 * 60 * 60 * 24)
     }
 
+    const clearRecord = () => {
+        loginDisabled = false
+        clearTimeout(unlockTimer)
+        unlockTimer = undefined
+        loginFailRecords.length = 0
+    }
+
     /**
      * 获取当前登录失败情况
      */
@@ -104,11 +111,11 @@ const createLoginLock = (props: LoginLockProps) => {
         }
     }
 
-    return { recordLoginFail, loginLockMiddleware, getLockDetail }
+    return { recordLoginFail, loginLockMiddleware, getLockDetail, clearRecord }
 }
 
-const { recordLoginFail, loginLockMiddleware, getLockDetail } = createLoginLock({ excludePath: ['/global', '/logInfo']})
-export { recordLoginFail, loginLockMiddleware, getLockDetail }
+const lockManager = createLoginLock({ excludePath: ['/global', '/logInfo']})
+export { lockManager }
 
 type SecurityChecker = (ctx: AppKoaContext, next: Next) => Promise<unknown>
 
