@@ -3,7 +3,7 @@ import { Card, Cell, Space, Switch } from 'react-vant'
 import { Contact, Close, LikeO, StarO, ArrowLeft } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
-import { Link, useNavigate } from '../Route'
+import { useNavigate } from '../Route'
 import { Statistic } from '../components/Statistic'
 import { setToken } from '../services/base'
 import { useQuery } from 'react-query'
@@ -46,9 +46,7 @@ const SettingPage = () => {
                         </Card>
 
                         <Card round>
-                            <Link to="/ChangePassword">
-                                <Cell title="修改密码" icon={<Contact />} isLink />
-                            </Link>
+                            <Cell title="修改密码" icon={<Contact />} isLink onClick={() => navigate('/ChangePassword')} />
                             <Cell title="黑夜模式" icon={<StarO />} 
                                 rightIcon={<Switch
                                     size={24}
@@ -56,9 +54,7 @@ const SettingPage = () => {
                                     onChange={onSwitchDark}
                                 />}
                             />
-                            <Link to="/about">
-                                <Cell title="关于" icon={<LikeO />} isLink />
-                            </Link>
+                            <Cell title="关于" icon={<LikeO />} isLink onClick={() => navigate('/about')} />
                         </Card>
 
                         <Card round>

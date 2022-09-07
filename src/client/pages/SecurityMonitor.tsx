@@ -160,7 +160,10 @@ const SecurityMonitor = () => {
                                 </div>
                                 <div>
                                     <span>
-                                        {isLoading ? '加载中' : `已运行 ${noticeResp?.initTime} 天，检查请求 ${noticeResp?.totalScanReq} 次`}
+                                        {isLoading ? '加载中' : (
+                                            (`已运行 ${noticeResp?.initTime} 天，检查请求 ${noticeResp?.totalScanReq} 次`) +
+                                            ((noticeResp?.total || 0) > 0 ? `，剩余 ${noticeResp?.total} 条未读` : '')
+                                        )}
                                     </span>
                                 </div>
                             </div>

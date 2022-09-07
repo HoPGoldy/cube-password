@@ -1,7 +1,7 @@
 import { SecurityNoticeType } from '@/types/app'
 import { SecurityNoticeResp } from '@/types/http'
 import React, { FC, useContext } from 'react'
-import { Notify } from 'react-vant'
+// import { Notify } from 'react-vant'
 import { toggleNoticeRead } from '../services/log'
 import { UserContext } from './UserProvider'
 
@@ -25,7 +25,7 @@ export const SecurityNotice: FC<Props> = (props) => {
         const data = await toggleNoticeRead(detail.id, !detail.isRead)
         setNoticeInfo(data)
         onChange?.({ ...detail, isRead: !detail.isRead })
-        Notify.show({ type: 'success', message: '通知设置为' + (detail.isRead ? '未读' : '已读') })
+        // Notify.show({ type: 'success', message: '通知设置为' + (detail.isRead ? '未读' : '已读') })
     }
 
     return (
