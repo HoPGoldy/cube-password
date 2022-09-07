@@ -23,7 +23,6 @@ export const createRouteAlias = () => {
 
         const config = aliasConfigs.find(item => {
             if (item.method !== method) return false
-            console.log('out', route, item.route)
             return route.endsWith(item.route)
         })
 

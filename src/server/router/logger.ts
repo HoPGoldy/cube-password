@@ -40,7 +40,7 @@ export const createLog = async (ctx: AppKoaContext) => {
 const middlewareLogger = async (ctx: AppKoaContext, next: Next) => {
     await next()
     // 不记录查看日志的请求
-    if (ctx.url.startsWith('/api/logs')) return
+    if (ctx.url.includes('/api/logs')) return
 
     const log = await createLog(ctx)
     ctx.log = log
