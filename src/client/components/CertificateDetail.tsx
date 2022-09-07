@@ -7,7 +7,7 @@ import CertificateFieldItem from './CertificateFieldItem'
 import { CertificateField } from '@/types/app'
 import { UserContext } from './UserProvider'
 import { useCertificateDetail, useUpdateCertificate } from '../services/certificate'
-import { aes, aesDecrypt } from '@/utils/common'
+import { aes, aesDecrypt } from '@/utils/crypto'
 import copy from 'copy-to-clipboard'
 
 
@@ -114,7 +114,7 @@ const CertificateDetail: FC<Props> = (props) => {
 
             setTitle(resp.name)
             try {
-                const content = JSON.parse(aesDecrypt(resp.content, userProfile.password))
+                const content = JSON.parse(aesDecrypt(resp.content, userProfile.pwdKey, userProfile.pwdIv))
                 form.setFieldValue('fields', content)
             }
             catch (e) {
@@ -163,7 +163,7 @@ const CertificateDetail: FC<Props> = (props) => {
         mutate({
             id: certificateId,
             name: title,
-            content: aes(JSON.stringify(fields), userProfile.password),
+            content: aes(JSON.stringify(fields), userProfile.pwdKey, userProfile.pwdIv),
             groupId
         })
     }

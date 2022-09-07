@@ -6,13 +6,15 @@ import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, 
 import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
 import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
-import { sha } from '@/utils/common'
+import { sha } from '@/utils/crypto'
 import dayjs from 'dayjs'
-import { createChallengeCode, createToken, popChallengeCode } from '../lib/auth'
+import { createToken, createChallengeManager } from '../lib/auth'
 import { setAlias } from '../lib/routeAlias'
 import { checkIsGroupUnlockSuccess } from '../lib/security'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
+
+const challengeManager = createChallengeManager()
 
 /**
  * 获取分组列表
@@ -177,7 +179,7 @@ groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), che
         return
     }
 
-    const challengeCode = popChallengeCode('groupid' + groupId)
+    const challengeCode = challengeManager.pop(groupId)
     if (!challengeCode) {
         response(ctx, { code: 200, msg: '挑战码错误' })
         return
@@ -218,7 +220,7 @@ groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密�
         return
     }
 
-    const challenge = createChallengeCode('groupid' + groupId)
+    const challenge = challengeManager.create(groupId)
     response(ctx, { code: 200, data: { salt: passwordSalt, challenge } })
 })
 

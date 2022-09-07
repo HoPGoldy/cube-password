@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext } from 'react'
 import { Card, Cell, Space, Switch } from 'react-vant'
 import { Contact, Close, LikeO, StarO, ArrowLeft } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
@@ -7,7 +7,7 @@ import { Link, useNavigate } from '../Route'
 import { Statistic } from '../components/Statistic'
 import { setToken } from '../services/base'
 import { useQuery } from 'react-query'
-import { fetchCountInfo, requireChangePwd, setAppTheme } from '../services/user'
+import { fetchCountInfo, setAppTheme } from '../services/user'
 import { AppTheme } from '@/types/app'
 
 const SettingPage = () => {
@@ -21,15 +21,6 @@ const SettingPage = () => {
         setToken(null)
         navigate('/login', { replace: true })
     }
-
-    useEffect(() => {
-        const fetch = async () => {
-            const resp = await requireChangePwd()
-            console.log('resp', resp)
-        }
-    
-        fetch()
-    }, [])
 
     const onSwitchDark = () => {
         const newTheme = userProfile?.theme === AppTheme.Light ? AppTheme.Dark : AppTheme.Light
@@ -55,7 +46,9 @@ const SettingPage = () => {
                         </Card>
 
                         <Card round>
-                            <Cell title="修改密码" icon={<Contact />} isLink />
+                            <Link to="/ChangePassword">
+                                <Cell title="修改密码" icon={<Contact />} isLink />
+                            </Link>
                             <Cell title="黑夜模式" icon={<StarO />} 
                                 rightIcon={<Switch
                                     size={24}

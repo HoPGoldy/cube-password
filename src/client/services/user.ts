@@ -1,7 +1,7 @@
 import { sendGet, sendPost, sendPut } from './base'
 import { AppConfig } from '@/types/appConfig'
 import { nanoid } from 'nanoid'
-import { sha } from '@/utils/common'
+import { sha } from '@/utils/crypto'
 import { CountInfoResp, LoginErrorResp, LoginResp, RequireLoginResp } from '@/types/http'
 import { AppTheme } from '@/types/app'
 
@@ -51,8 +51,6 @@ export const requireChangePwd = async () => {
 }
 
 /** 修改密码 */
-// export const changePwd = async (password: string, salt: string, content: string) => {
-//     return sendPut<string>('/changePwd', {
-//         code: sha(sha(salt + password) + challenge)
-//     })
-// }
+export const changePwd = async (data: string) => {
+    return sendPut<string>('/changePwd', { data })
+}

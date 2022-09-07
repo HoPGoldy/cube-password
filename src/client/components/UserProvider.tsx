@@ -5,8 +5,25 @@ import React, { Dispatch, FC, SetStateAction, useContext, useEffect, useMemo, us
 import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
 
 export interface UserProfile {
+    /**
+     * jwt 令牌
+     */
     token: string
-    password: string
+    /**
+     * 主密码盐值
+     */
+    pwdSalt: string
+    /**
+     * 主密码 aes key
+     */
+    pwdKey: CryptoJS.lib.WordArray
+    /**
+     * 主密码 aes 初始向量
+     */
+    pwdIv: CryptoJS.lib.WordArray
+    /**
+     * 默认展示的分组
+     */
     defaultGroupId: number
     /**
      * 应用主题
@@ -65,7 +82,7 @@ export const UserProvider: FC = (props) => {
         data: certificateList,
         refetch: refetchCertificateList,
         isLoading: certificateListLoading
-    } = useGroupCertificates(selectedGroup)
+    } = useGroupCertificates(selectedGroup, !!userProfile)
 
     const refetchGroupList = async () => {
         const resp = await getGroupList()

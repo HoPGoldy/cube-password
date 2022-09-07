@@ -39,6 +39,7 @@ const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}):
 
     if (resp.status === 401 && history.location.pathname !== '/login') {
         history.push(routePrefix + '/login', { replace: true })
+        setToken(null)
     }
 
     const data: AppResponse<T> = await resp.json()

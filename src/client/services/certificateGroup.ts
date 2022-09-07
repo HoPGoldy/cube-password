@@ -3,7 +3,7 @@ import { CertificateGroup } from '@/types/app'
 import { AddGroupResp, CertificateGroupDetail, CertificateListItem, RequireLoginResp } from '@/types/http'
 import { sendGet, sendPost, sendPut, sendDelete } from './base'
 import { Notify } from 'react-vant'
-import { sha } from '@/utils/common'
+import { sha } from '@/utils/crypto'
 
 export const requireLogin = async (groupId: number) => {
     return sendPost<RequireLoginResp>(`/group/requireUnlock/${groupId}`)
@@ -34,9 +34,10 @@ export const getGroupCertificates = async (groupId: number) => {
     return sendGet<CertificateListItem[]>(`/group/${groupId}/certificates`)
 }
 
-export const useGroupCertificates = (groupId: number) => {
+export const useGroupCertificates = (groupId: number, isLogin: boolean) => {
+    console.log('isLogin', groupId, isLogin)
     return useQuery(['group', groupId, 'certificates'], () => getGroupCertificates(groupId), {
-        enabled: !!groupId,
+        enabled: !!groupId && isLogin,
     })
 }
 

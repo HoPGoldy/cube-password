@@ -28,7 +28,8 @@ export const Routes: FC = () => {
                 { path: routePrefix + '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
                 { path: routePrefix + '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
                 { path: routePrefix + '/setting', element: lazyLoad(() => import('./pages/Setting')) },
-                { path: routePrefix + '/about', element: lazyLoad(() => import('./pages/About')) }
+                { path: routePrefix + '/about', element: lazyLoad(() => import('./pages/About')) },
+                { path: routePrefix + '/ChangePassword', element: lazyLoad(() => import('./pages/ChangePassword')) },
             ],
             element: (
                 <LoginAuth>

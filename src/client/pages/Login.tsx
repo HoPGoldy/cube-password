@@ -9,6 +9,7 @@ import { setToken } from '../services/base'
 import { fetchLoginFail, login, requireLogin } from '../services/user'
 import { useQuery } from 'react-query'
 import { LoginErrorResp } from '@/types/http'
+import { getAesMeta } from '@/utils/crypto'
 
 const getLoginErrorTip = (config: LoginErrorResp) => {
     if (config.appFullLock) return '应用已锁死，请联系维护者重启服务'
@@ -53,11 +54,12 @@ const Register = () => {
         if (!loginResp) return
         const { token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel, theme } = loginResp
 
-        setUserProfile({ password, token, defaultGroupId, theme })
+        setToken(loginResp.token)
+        const { key, iv } = getAesMeta(password)
+        setUserProfile({ pwdKey: key, pwdIv: iv, pwdSalt: salt, token, defaultGroupId, theme })
         setNoticeInfo({ unReadNoticeCount, unReadNoticeTopLevel})
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
-        setToken(loginResp.token)
         navigate('/group', { replace: true })
     }
 
@@ -80,7 +82,7 @@ const Register = () => {
                 {renderLoginError()}
             </header>
             {!logFailInfo?.appLock && (
-                <div className='md:w-1/3 flex flex-col md:flex-row items-center'>
+                <div className='w-[70%] md:w-1/3 flex flex-col md:flex-row items-center'>
                     <input
                         ref={passwordInputRef}
                         className='

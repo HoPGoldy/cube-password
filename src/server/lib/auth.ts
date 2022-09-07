@@ -70,29 +70,36 @@ export const createToken = async (payload: Record<string, any> = {}) => {
 }
 
 /**
- * 由于这个应用是给单个用户使用的，所以全局只会保存一个挑战码
+ * 实例化挑战码管理器
+ * @param timeout 挑战码过期时间
  */
-const challengeCodes: Record<string, string> = {}
+export const createChallengeManager = (timeout: number = 1000 * 60) => {
+    const challengeCodes: Record<string | number, string | undefined> = {}
 
-/**
- * 弹出暂存的挑战码
- * 弹出后需要调用 createChallengeCode 才能使用新的挑战码
- */
-export const popChallengeCode = (key: string) => {
-    const existCode = challengeCodes[key]
-    delete challengeCodes[key]
-    return existCode
-}
-
-/**
- * 生成新的挑战码
- * 会在指定实际后清空
- */
-export const createChallengeCode = (key: string) => {
-    const newCode = nanoid()
-    challengeCodes[key] = newCode
-    setTimeout(() => {
+    /**
+     * 弹出暂存的挑战码
+     * 弹出后需要调用 create 才能使用新的挑战码
+     */
+    const pop = (key: string | number = 'default') => {
+        const code = challengeCodes[key]
         delete challengeCodes[key]
-    }, 1000 * 60)
-    return challengeCodes[key]
+        return code
+    }
+
+    /**
+     * 生成新的挑战码
+     * 会在指定时间后清空
+     */
+    const create = (key: string | number = 'default') => {
+        const newCode = nanoid()
+        challengeCodes[key] = newCode
+
+        setTimeout(() => {
+            delete challengeCodes[key]
+        }, timeout)
+
+        return newCode
+    }
+
+    return { pop, create }
 }

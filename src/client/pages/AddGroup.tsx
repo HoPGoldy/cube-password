@@ -1,7 +1,7 @@
 import { CertificateGroup } from '@/types/app'
-import { sha } from '@/utils/common'
+import { sha } from '@/utils/crypto'
 import { nanoid } from 'nanoid'
-import React, { useContext, FC } from 'react'
+import React, { useContext } from 'react'
 import { Form, Notify } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { ArrowLeft } from '@react-vant/icons'
@@ -11,47 +11,12 @@ import { addGroup } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from '../Route'
 import Header from '../components/Header'
+import { Field } from '../components/Field'
 
 interface GroupForm {
     name: string
     password?: string
     passwordConfirm?: string
-}
-
-interface FieldProps {
-    type?: 'text' | 'password'
-    value?: string
-    label?: string
-    placeholder?: string
-    error?: boolean
-    errorMessage?: string
-    onChange?: (value: string) => void
-}
-
-const Field: FC<FieldProps> = (props) => {
-    const { type = 'text', label, value, onChange, error, errorMessage } = props
-
-    const colorClass = error
-        ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-        : 'border-slate-300 dark:border-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
-
-    return (
-        <div className='flex flex-col md:flex-row md:items-center'>
-            <span className='mr-4'>{label}</span>
-            <div className='grow'>
-                <input
-                    type={type}
-                    value={value}
-                    onChange={e => onChange && onChange(e.target.value)}
-                    placeholder={props.placeholder}
-                    className={'block px-3 py-2 min-h-[42px] my-2 w-full bg-slate-100 dark:bg-slate-600 hover:bg-white hover:dark:bg-slate-500 transition ' +
-                        'border border-solid rounded-md shadow-sm placeholder-slate-400 ' +
-                        'focus:outline-none focus:bg-white ' + colorClass}
-                />
-                {error && <div className='text-red-500 text-sm'>{errorMessage}</div>}
-            </div>
-        </div>
-    )
 }
 
 const AddGroup = () => {

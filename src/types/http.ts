@@ -206,3 +206,8 @@ export interface CountInfoResp {
     group: number
     certificate: number
 }
+
+export interface ChangePasswordData {
+    oldPwd: string
+    newPwd: string
+}
