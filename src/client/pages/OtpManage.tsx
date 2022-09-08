@@ -1,5 +1,5 @@
 import { aes, getAesMeta, sha } from '@/utils/crypto'
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { Form, Notify } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { ArrowLeft } from '@react-vant/icons'
@@ -9,7 +9,7 @@ import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from '../Route'
 import Header from '../components/Header'
 import { Field } from '../components/Field'
-import { changePwd, fetchOtpInfo, requireChangePwd } from '../services/user'
+import { changePwd, fetchOtpInfo, registerOtp, requireChangePwd } from '../services/user'
 import { validateAesMeta } from '@/utils/crypto'
 import { ChangePasswordData } from '@/types/http'
 import { setToken } from '../services/base'
@@ -25,8 +25,9 @@ const ChangePassword = () => {
     const { setUserProfile, userProfile } = useContext(UserContext)
     const config = useContext(AppConfigContext)
     const [form] = Form.useForm<ChangePwdForm>()
+    const [initCode, setInitCode] = useState('')
     const navigate = useNavigate()
-    const { data: otpInfo, isLoading: isLoadingOtpInfo } = useQuery('fetchOtpInfo', fetchOtpInfo, {
+    const { data: otpInfo, isLoading: isLoadingOtpInfo, refetch: refetchOtpInfo } = useQuery('fetchOtpInfo', fetchOtpInfo, {
         refetchOnMount: false,
         refetchOnReconnect: false,
         refetchOnWindowFocus: false,
@@ -34,48 +35,12 @@ const ChangePassword = () => {
     console.log('otpInfo', otpInfo)
 
     const onSubmit = async () => {
-        if (!userProfile) {
-            Notify.show({ type: 'danger', message: '用户信息解析错误，请重新登录' })
+        if (!initCode || initCode.length !== 6) {
+            Notify.show({ type: 'warning', message: '请输入正确的验证码' })
             return
         }
-
-        const { oldPwd, newPwd } = await form.validateFields()
-        if (!validateAesMeta(oldPwd, userProfile.pwdKey, userProfile.pwdIv)) {
-            Notify.show({ type: 'warning', message: '旧密码不正确' })
-            return
-        }
-
-        if (validateAesMeta(newPwd, userProfile.pwdKey, userProfile.pwdIv)) {
-            Notify.show({ type: 'warning', message: '新密码不得与旧密码重复' })
-            return
-        }
-
-        // 获取修改密码挑战码
-        const challengeCode = await requireChangePwd()
-
-        const postKey = sha(userProfile.pwdSalt + oldPwd) + challengeCode + userProfile.token
-        const { key, iv } = getAesMeta(postKey)
-
-        const postData: ChangePasswordData = { oldPwd, newPwd }
-        const encryptedData = aes(JSON.stringify(postData), key, iv)
-        console.log(postKey + postKey)
-
-        await changePwd(encryptedData)
-
-        Notify.show({ type: 'success', message: '密码更新成功' })
-        setUserProfile(undefined)
-        setToken(null)
-        navigate('/login', { replace: true })
-    }
-
-    const validatePassword = async (_: any, value: string) => {
-        if (value && value.length >= 6) return
-        throw new Error('请输入至少六位密码!')
-    }
-
-    const validateRepeatPassword = async (_: any, value: string) => {
-        if (value === form.getFieldValue('newPwd')) return
-        throw new Error('两次输入密码不一致!')
+        await registerOtp(initCode)
+        refetchOtpInfo()
     }
 
     const renderContent = () => {
@@ -86,23 +51,53 @@ const ChangePassword = () => {
         }
 
         if (!otpInfo.registered) {
-            return (
+            return (<>
                 <div className='w-full flex justify-center flex-col md:flex-row rounded-lg py-4 px-6 bg-white dark:bg-slate-700 dark:text-slate-200'>
-                    <img className='' src={otpInfo?.qrCode} />
+                    <img src={otpInfo?.qrCode} />
                     <div>
-                        <div className='mt-4 cursor-default'>
+                        <div className='mt-4 cursor-default leading-7'>
                             请使用谷歌身份验证器扫描二维码，扫描完成后将会以
-                            <code>keep-my-passord(main password)</code>
-                            显示
+                            <code className='bg-slate-200 dark:bg-slate-600 rounded p-1 overflow-auto mx-2'>keep-my-passord(main password)</code>
+                            显示。
                         </div>
-                        <div className='mt-4 cursor-default'>
-                            没有身份验证器？点此安装
+                        <div className='my-2 cursor-default text-slate-500'>
+                            没有身份验证器？
+                            <a className='text-sky-500' href='https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2' target='__blank'>点此安装</a>
                         </div>
-                        <Field placeholder="请输入身份验证器提供的 6 位验证码" />
+                        <Field
+                            placeholder="请输入身份验证器提供的 6 位验证码"
+                            onChange={setInitCode}
+                            value={initCode}
+                            onKeyUp={e => {
+                                if (e.key === 'Enter') onSubmit()
+                            }}
+                        />
                     </div>
                 </div>
-            )
+
+                <div className='hidden md:block mt-6'>
+                    <Button block onClick={onSubmit} color={config?.buttonColor}>
+                    绑定
+                    </Button>
+                </div>
+
+                <div className='w-full text-center text-gray-500 dark:text-gray-400 mt-6 cursor-default text-sm'>
+                    绑定后将会在重要操作时请求身份验证器提供的验证码，以保证您的账户安全。
+                </div>
+            </>)
         }
+
+        return (
+            <div className='w-full flex justify-center items-center flex-col md:flex-row rounded-lg py-4 px-6 bg-white dark:bg-slate-700 dark:text-slate-200'>
+                <div className='text-7xl'>🎉</div>
+                <div className='md:block mt-6'>
+                    <div>绑定成功</div>
+                    <Button block onClick={onSubmit}>
+                        解除绑定
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -114,47 +109,6 @@ const ChangePassword = () => {
 
                 <div className='px-4 lg:px-auto lg:mx-auto w-full lg:w-3/4 xl:w-1/2 mt-4'>
                     {renderContent()}
-                    {/* <Form form={form} >
-                        <Form.Item
-                            name="oldPwd"
-                            label="原主密码"
-                            rules={[{ required: true, message: '请输入原主密码' }]}
-                            labelClass='w-28'
-                            customField
-                        >
-                            <Field type='password' />
-                        </Form.Item>
-                        <Form.Item
-                            name="newPwd"
-                            label="新主密码"
-                            customField
-                            rules={[{ required: true, validator: validatePassword }]}
-                            labelClass='w-28'
-                        >
-                            <Field type='password' />
-                        </Form.Item>
-                        <Form.Item
-                            name="passwordConfirm"
-                            validateTrigger="onChange"
-                            customField
-                            label="重复新主密码"
-                            rules={[{ required: false, validator: validateRepeatPassword }]}
-                            labelClass='w-28'
-                        >
-                            <Field type='password' />
-                        </Form.Item>
-                    </Form> */}
-
-                    <div className='hidden md:block mt-6'>
-                        <Button block onClick={onSubmit} color={config?.buttonColor}>
-                            提交
-                        </Button>
-                    </div>
-
-                    <div className='w-full text-center text-gray-500 dark:text-gray-400 mt-6 cursor-default text-sm'>
-                        请确保新的分组密码已牢记<br />
-                        更新后所有的凭证都将使用新密码重新加密
-                    </div>
                 </div>
             </PageContent>
 

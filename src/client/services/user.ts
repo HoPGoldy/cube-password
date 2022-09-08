@@ -59,3 +59,8 @@ export const changePwd = async (data: string) => {
 export const fetchOtpInfo = async () => {
     return sendPost<RegisterOTPInfo>('/registerOTP')
 }
+
+/** 绑定谷歌令牌 */
+export const registerOtp = async (code: string) => {
+    return sendPut('/registerOTP', { code})
+}
