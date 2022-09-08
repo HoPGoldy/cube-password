@@ -20,7 +20,7 @@ export const Field: FC<FieldProps> = (props) => {
 
     return (
         <div className='flex flex-col md:flex-row md:items-center'>
-            <span className={'mr-4 md:text-right ' + labelClass}>{label}</span>
+            {label && <span className={'mr-4 md:text-right ' + labelClass}>{label}</span>}
             <div className='grow'>
                 <input
                     type={type}

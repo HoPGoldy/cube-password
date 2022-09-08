@@ -73,6 +73,11 @@ export interface AppStorage {
      */
     commonIp?: string
     /**
+     * 谷歌一次性验证码密钥
+     * 有值则代表已绑定
+     */
+    totpSecret?: string
+    /**
      * 默认展示的分组 id
      */
     defaultGroupId: number

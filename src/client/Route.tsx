@@ -27,9 +27,10 @@ export const Routes: FC = () => {
                 { path: routePrefix + '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
                 { path: routePrefix + '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
                 { path: routePrefix + '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
-                { path: routePrefix + '/setting', element: lazyLoad(() => import('./pages/Setting')) },
-                { path: routePrefix + '/about', element: lazyLoad(() => import('./pages/About')) },
+                { path: routePrefix + '/Setting', element: lazyLoad(() => import('./pages/Setting')) },
+                { path: routePrefix + '/About', element: lazyLoad(() => import('./pages/About')) },
                 { path: routePrefix + '/ChangePassword', element: lazyLoad(() => import('./pages/ChangePassword')) },
+                { path: routePrefix + '/OtpManage', element: lazyLoad(() => import('./pages/OtpManage')) },
             ],
             element: (
                 <LoginAuth>

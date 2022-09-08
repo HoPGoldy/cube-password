@@ -8,13 +8,13 @@ import { DATE_FORMATTER, STATUS_CODE } from '@/config'
 import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
 import { sha } from '@/utils/crypto'
 import dayjs from 'dayjs'
-import { createToken, createChallengeManager } from '../lib/auth'
+import { createToken, createOTP } from '../lib/auth'
 import { setAlias } from '../lib/routeAlias'
 import { checkIsGroupUnlockSuccess } from '../lib/security'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
-const challengeManager = createChallengeManager()
+const challengeManager = createOTP()
 
 /**
  * 获取分组列表

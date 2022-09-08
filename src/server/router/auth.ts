@@ -2,21 +2,23 @@ import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
 import { getNoticeContentPrefix, response } from '../utils'
 import { getAppStorage, getCertificateCollection, getSecurityNoticeCollection, insertSecurityNotice, saveLoki, updateAppStorage } from '../lib/loki'
-import { createChallengeManager, createToken } from '../lib/auth'
+import { createOTP, createToken } from '../lib/auth'
 import Joi from 'joi'
 import { aes, aesDecrypt, getAesMeta, sha } from '@/utils/crypto'
 import { STATUS_CODE } from '@/config'
 import { getCertificateGroupList } from './certificateGroup'
-import { ChangePasswordData, LoginErrorResp, LoginResp } from '@/types/http'
+import { ChangePasswordData, LoginErrorResp, LoginResp, RegisterOTPInfo } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
 import { lockManager } from '../lib/security'
 import { SecurityNoticeType } from '@/types/app'
 import { createLog, getNoticeInfo } from './logger'
 import { nanoid } from 'nanoid'
+import { authenticator } from 'otplib'
+import QRCode from 'qrcode'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
-const challengeManager = createChallengeManager()
+const challengeManager = createOTP()
 
 // 请求登录
 loginRouter.post(setAlias('/requireLogin', '请求登录授权', 'POST'), async ctx => {
@@ -209,6 +211,89 @@ loginRouter.put(setAlias('/changePwd', '修改密码', 'PUT'), async ctx => {
         console.error(e)
         response(ctx, { code: 500, msg: '修改密码失败' })
     }
+})
+
+// 五分钟超时
+const optSecretManager = createOTP(1000 * 60 * 5)
+
+/**
+ * 初始化 OTP 令牌
+ * 如果已经绑定过了就不再提供二维码信息
+ */
+loginRouter.post(setAlias('/registerOTP', '生成谷歌令牌', 'POST'), async ctx => {
+    const { totpSecret } = await getAppStorage()
+    if (totpSecret) {
+        const data: RegisterOTPInfo = { registered: true }
+        response(ctx, { code: 200, data })
+        return
+    }
+
+    const secret = authenticator.generateSecret()
+    optSecretManager.create('default', secret)
+
+    const qrcodeUrl = await QRCode.toDataURL(authenticator.keyuri('main password', 'keep-my-password', secret))
+    const data: RegisterOTPInfo = { registered: false, qrCode: qrcodeUrl }
+    response(ctx, { code: 200, data })
+})
+
+/**
+ * 绑定 otp 令牌
+ */
+loginRouter.put(setAlias('/registerOTP', '绑定谷歌令牌', 'PUT'), async ctx => {
+    const { totpSecret } = await getAppStorage()
+    if (totpSecret) {
+        response(ctx, { code: 400, msg: '已绑定令牌' })
+        return
+    }
+
+    const { code } = ctx.request.body
+    if (!code || typeof code !== 'string') {
+        response(ctx, { code: 400, msg: '参数错误' })
+        return
+    }
+
+    const secret = optSecretManager.pop('default')
+    if (!secret) {
+        response(ctx, { code: 400, msg: '令牌已失效，请重新绑定' })
+        return
+    }
+
+    const codeConfirmed = authenticator.check(code, secret)
+    if (!codeConfirmed) {
+        response(ctx, { code: 400, msg: '验证码错误，请重新绑定' })
+        return
+    }
+
+    await updateAppStorage({ totpSecret: secret })
+    response(ctx, { code: 200 })
+    saveLoki()
+})
+
+/**
+ * 解绑 otp 令牌
+ */
+loginRouter.post(setAlias('/removeOTP', '解绑谷歌令牌', 'POST'), async ctx => {
+    const { totpSecret } = await getAppStorage()
+    if (!totpSecret) {
+        response(ctx, { code: 400, msg: '未绑定令牌' })
+        return
+    }
+
+    const { code } = ctx.request.body
+    if (!code || typeof code !== 'string') {
+        response(ctx, { code: 400, msg: '参数错误' })
+        return
+    }
+
+    const codeConfirmed = authenticator.check(code, totpSecret)
+    if (!codeConfirmed) {
+        response(ctx, { code: 400, msg: '验证码已过期，请重新输入' })
+        return
+    }
+
+    await updateAppStorage({ totpSecret: undefined })
+    response(ctx, { code: 200 })
+    saveLoki()
 })
 
 export { loginRouter }

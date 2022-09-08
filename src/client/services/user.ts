@@ -2,7 +2,7 @@ import { sendGet, sendPost, sendPut } from './base'
 import { AppConfig } from '@/types/appConfig'
 import { nanoid } from 'nanoid'
 import { sha } from '@/utils/crypto'
-import { CountInfoResp, LoginErrorResp, LoginResp, RequireLoginResp } from '@/types/http'
+import { CountInfoResp, LoginErrorResp, LoginResp, RegisterOTPInfo, RequireLoginResp } from '@/types/http'
 import { AppTheme } from '@/types/app'
 
 export const requireLogin = async () => {
@@ -53,4 +53,9 @@ export const requireChangePwd = async () => {
 /** 修改密码 */
 export const changePwd = async (data: string) => {
     return sendPut<string>('/changePwd', { data })
+}
+
+/** 获取谷歌令牌绑定信息 */
+export const fetchOtpInfo = async () => {
+    return sendPost<RegisterOTPInfo>('/registerOTP')
 }

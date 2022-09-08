@@ -220,7 +220,7 @@ const CertificateList = () => {
             <Dialog {...getNewGroupSelectProps()} />
 
             <PageAction>
-                <ActionIcon href='/setting'>
+                <ActionIcon href='/Setting'>
                     <SettingO fontSize={24} />
                 </ActionIcon>
                 <GroupSelectSheet />

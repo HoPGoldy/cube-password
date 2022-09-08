@@ -70,10 +70,10 @@ export const createToken = async (payload: Record<string, any> = {}) => {
 }
 
 /**
- * 实例化挑战码管理器
- * @param timeout 挑战码过期时间
+ * 一次性令牌管理器
+ * @param timeout 令牌过期时间
  */
-export const createChallengeManager = (timeout: number = 1000 * 60) => {
+export const createOTP = (timeout: number = 1000 * 60) => {
     const challengeCodes: Record<string | number, string | undefined> = {}
 
     /**
@@ -90,8 +90,8 @@ export const createChallengeManager = (timeout: number = 1000 * 60) => {
      * 生成新的挑战码
      * 会在指定时间后清空
      */
-    const create = (key: string | number = 'default') => {
-        const newCode = nanoid()
+    const create = (key: string | number = 'default', value?: string) => {
+        const newCode = value || nanoid()
         challengeCodes[key] = newCode
 
         setTimeout(() => {
