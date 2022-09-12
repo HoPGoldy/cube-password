@@ -43,7 +43,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
             // 是否为用户名输入框
             !!['用户名', '名称', 'name'].find(text => value?.label.includes(text)),
             // 是否为链接
-            value?.value.startsWith('http://') || value?.value.startsWith('https://') || value?.value.startsWith('www.')
+            value?.value.startsWith('http://') || value?.value.startsWith('https://')
         ]
     }, [value?.value])
 
@@ -80,10 +80,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
             return
         }
 
-        if (isLink) {
-            window.open(value.value, '__blank')
-            return
-        }
+        if (isLink) window.open(value.value, '__blank')
         copy(value.value)
         Notify.show({ type: 'success', message: '已复制' + value.label })
     }
