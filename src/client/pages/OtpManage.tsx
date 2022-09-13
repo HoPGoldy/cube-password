@@ -56,9 +56,9 @@ const ChangePassword = () => {
         registerOtp(initCode)
             .then(() => {
                 Notify.show({ type: 'success', message: '绑定成功' })
-                refetchOtpInfo()
             })
             .finally(() => {
+                refetchOtpInfo()
                 setSubmiting(false)
                 setInitCode('')
                 setRemoveCode('')
@@ -75,9 +75,9 @@ const ChangePassword = () => {
         removeOtp(removeCode)
             .then(() => {
                 Notify.show({ type: 'success', message: '解绑成功' })
-                refetchOtpInfo()
             })
             .finally(() => {
+                refetchOtpInfo()
                 setSubmiting(false)
                 setInitCode('')
                 setRemoveCode('')

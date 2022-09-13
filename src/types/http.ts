@@ -210,6 +210,11 @@ export interface CountInfoResp {
 export interface ChangePasswordData {
     oldPwd: string
     newPwd: string
+    /**
+     * 动态验证码
+     * 如果绑定了令牌的话这个就会有值
+     */
+    code?: string
 }
 
 export interface RegisterOTPInfo {

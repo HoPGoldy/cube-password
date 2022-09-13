@@ -157,7 +157,7 @@ loginRouter.put(setAlias('/changePwd', '修改密码', 'PUT'), async ctx => {
         return
     }
 
-    const { passwordSha } = await getAppStorage()
+    const { passwordSha, totpSecret } = await getAppStorage()
     const challengeCode = challengeManager.pop('changePwd')
     if (!passwordSha || !challengeCode) {
         response(ctx, { code: 400, msg: '参数错误' })
@@ -179,7 +179,21 @@ loginRouter.put(setAlias('/changePwd', '修改密码', 'PUT'), async ctx => {
         return
     }
 
-    const { oldPwd, newPwd } = JSON.parse(changeData) as ChangePasswordData
+    const { oldPwd, newPwd, code } = JSON.parse(changeData) as ChangePasswordData
+    // 如果绑定了令牌，就需要进行验证
+    if (totpSecret) {
+        if (!code) {
+            response(ctx, { code: 400, msg: '请填写动态验证码' })
+            return
+        }
+
+        const codeConfirmed = authenticator.check(code, totpSecret)
+        if (!codeConfirmed) {
+            response(ctx, { code: 400, msg: '验证码已过期' })
+            return
+        }
+    }
+
     const oldMeta = getAesMeta(oldPwd)
     const newMeta = getAesMeta(newPwd)
 
