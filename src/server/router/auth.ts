@@ -15,6 +15,7 @@ import { createLog, getNoticeInfo } from './logger'
 import { nanoid } from 'nanoid'
 import { authenticator } from 'otplib'
 import QRCode from 'qrcode'
+import { formatLocation } from '@/utils/common'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -33,15 +34,20 @@ loginRouter.post(setAlias('/requireLogin', '请求登录授权', 'POST'), async 
     response(ctx, { code: 200, data: { salt: passwordSalt, challenge } })
 })
 
+const loginSchema = Joi.object<{ a: string, b?: string }>({
+    a: Joi.string().required(),
+    b: Joi.string()
+})
+
 // 登录接口
 loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
-    const { code } = ctx.request.body
+    const { value, error } = loginSchema.validate(ctx.request.body)
 
-    if (!code || typeof code !== 'string') {
+    if (!value || error) {
         response(ctx, { code: 401, msg: '无效的主密码凭证' })
-        lockManager.recordLoginFail()
         return
     }
+    const { a: password, b: code } = value
 
     const log = await createLog(ctx)
 
@@ -57,13 +63,49 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         return
     }
 
-    const { passwordSha, defaultGroupId, theme } = await getAppStorage()
+    const { passwordSha, defaultGroupId, theme, commonLocation, totpSecret } = await getAppStorage()
     if (!passwordSha) {
         response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
         return
     }
 
-    if (sha(passwordSha + challengeCode) !== code) {
+    // 本次登录地点和常用登录地不同
+    if (commonLocation && commonLocation !== log.location) {
+    // if (true) {
+        // 没有绑定动态验证码
+        if (!totpSecret) {
+            const beforeLocation = formatLocation(commonLocation)
+
+            insertSecurityNotice(
+                SecurityNoticeType.Warning,
+                '异地登录',
+                `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，请检查是否为本人操作。`
+            )
+            return
+        }
+        // 绑定了动态验证码
+        else {
+            if (!code) {
+                response(ctx, { code: STATUS_CODE.NEED_CODE, msg: '非常用地区登录，请输入动态验证码' })
+                return
+            }
+
+            const isValid = authenticator.verify({ token: code, secret: totpSecret })
+            if (!isValid) {
+                response(ctx, { code: 400, msg: '动态验证码错误' })
+                return
+            }
+
+            const beforeLocation = formatLocation(commonLocation)
+            insertSecurityNotice(
+                SecurityNoticeType.Info,
+                '异地登录',
+                `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，已进行动态验证码认证。`
+            )
+        }
+    }
+
+    if (sha(passwordSha + challengeCode) !== password) {
         response(ctx, { code: 401, msg: '密码错误，请检查主密码是否正确' })
         insertSecurityNotice(
             SecurityNoticeType.Warning,
@@ -90,7 +132,9 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         ...noticeInfo
     }
 
+    await updateAppStorage({ commonLocation: log.location })
     response(ctx, { code: 200, data })
+    saveLoki()
     lockManager.clearRecord()
 })
 

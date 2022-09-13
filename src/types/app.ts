@@ -69,9 +69,9 @@ export interface AppStorage {
      */
     theme: AppTheme
     /**
-     * 上次登录所用 ip
+     * 上次登录所在地
      */
-    commonIp?: string
+    commonLocation?: string
     /**
      * 谷歌一次性验证码密钥
      * 有值则代表已绑定

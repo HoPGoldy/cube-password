@@ -10,10 +10,11 @@ export const requireLogin = async () => {
 }
 
 /** 登录 */
-export const login = async (password: string, salt: string, challenge: string) => {
-    return sendPost<LoginResp>('/login', {
-        code: sha(sha(salt + password) + challenge)
-    })
+export const login = async (password: string, salt: string, challenge: string, code?: string) => {
+    const data: { a: string, b?: string } = { a: sha(sha(salt + password) + challenge) }
+    if (code) data.b = code
+
+    return sendPost<LoginResp>('/login', data)
 }
 
 /** 注册 */

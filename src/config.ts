@@ -18,6 +18,10 @@ export const STATUS_CODE = {
      */
     GROUP_PASSWORD_ERROR: 40104,
     /**
+     * 需要提供动态验证码
+     */
+    NEED_CODE: 40105,
+    /**
      * 因为关联了其他资源所以无法删除
      */
     CANT_DELETE: 40601

@@ -4,6 +4,7 @@ import { AppResponse } from '@/types/global'
 import { Notify } from 'react-vant'
 import { useQuery } from 'react-query'
 import { routePrefix } from '../constans'
+import { STATUS_CODE } from '@/config'
 
 /**
  * 后端地址
@@ -44,7 +45,12 @@ const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}):
 
     const data: AppResponse<T> = await resp.json()
     if (data.code !== 200) {
-        Notify.show({ type: 'danger', message: data.msg || '未知错误' })
+        if (data.code === STATUS_CODE.NEED_CODE) {
+            Notify.show({ type: 'warning', message: data.msg || '未知错误' })
+        }
+        else {
+            Notify.show({ type: 'danger', message: data.msg || '未知错误' })
+        }
         throw data
     }
 

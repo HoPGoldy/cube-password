@@ -18,11 +18,21 @@ const getLoginErrorTip = (config: LoginErrorResp) => {
     return `还剩 ${retryChance} 次重试机会`
 }
 
+const fieldClassName = 'block grow px-3 py-2 w-full transition ' +
+    'border border-slate-300 rounded-md shadow-sm placeholder-slate-400 ' +
+    'focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 ' +
+    'dark:border-slate-500 dark:bg-slate-700 dark:hover:bg-slate-800 '
+
 const Register = () => {
     const { setUserProfile, setGroupList, setSelectedGroup, setNoticeInfo } = useContext(UserContext)
     const passwordInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
+    // 动态密码
     const [password, setPassword] = useState('')
+    // 动态验证码
+    const [code, setCode] = useState('')
+    // 是否显示动态验证码输入框
+    const [codeVisible, setCodeVisible] = useState(false)
     const config = useContext(AppConfigContext)
     const { data: logFailInfo, refetch } = useQuery('loginFailInfo', fetchLoginFail, {
         retry: false
@@ -44,10 +54,14 @@ const Register = () => {
 
         if (!resp) return
         const { salt, challenge } = resp
-        const loginResp = await login(password, salt, challenge).catch(error => {
-            Notify.show({ type: 'danger', message: error.msg || '登录失败' })
-            passwordInputRef.current?.focus()
-            setPassword('')
+        const loginResp = await login(password, salt, challenge, code).catch(error => {
+            if (error.code === STATUS_CODE.NEED_CODE) {
+                setCodeVisible(true)
+            }
+            else {
+                passwordInputRef.current?.focus()
+                setPassword('')
+            }
             refetch()
         })
 
@@ -82,15 +96,10 @@ const Register = () => {
                 {renderLoginError()}
             </header>
             {!logFailInfo?.appLock && (
-                <div className='w-[70%] md:w-1/3 flex flex-col md:flex-row items-center'>
+                <div className='w-[70%] md:w-[40%] lg:w-[30%] xl:w-[20%] flex flex-col items-center'>
                     <input
                         ref={passwordInputRef}
-                        className='
-                            block grow md:mr-2 px-3 py-2 w-full transition 
-                            border border-slate-300 rounded-md shadow-sm placeholder-slate-400 
-                            focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 
-                            dark:border-slate-500 dark:bg-slate-700 dark:hover:bg-slate-800
-                        '
+                        className={fieldClassName}
                         type='password'
                         autoFocus
                         placeholder="请输入主密码"
@@ -100,7 +109,18 @@ const Register = () => {
                             if (e.key === 'Enter') onSubmit()
                         }}
                     />
-                    <div className='shrink-0 w-full md:w-auto mt-4 md:mt-0'>
+                    {codeVisible && <input
+                        type='password'
+                        placeholder="请输入动态验证码"
+                        className={fieldClassName + 'mt-2'}
+                        value={code}
+                        onInput={e => setCode((e.target as any).value)}
+                        onKeyUp={e => {
+                            if (e.key === 'Enter') onSubmit()
+                        }}
+                    />}
+                    
+                    <div className='shrink-0 w-full mt-2'>
                         <Button
                             block
                             color={config?.buttonColor}

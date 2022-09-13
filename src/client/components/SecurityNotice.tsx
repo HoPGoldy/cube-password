@@ -13,7 +13,7 @@ interface Props {
 export const noticeConfig = {
     [SecurityNoticeType.Danger]: { ring: 'ring-red-500', bg: 'bg-red-500' },
     [SecurityNoticeType.Warning]: { ring: 'ring-orange-500', bg: 'bg-orange-500' },
-    [SecurityNoticeType.Info]: { ring: 'ring-sky-500', bg: 'bg-skyg-500' },
+    [SecurityNoticeType.Info]: { ring: 'ring-sky-500', bg: 'bg-sky-500' },
 }
 
 export const SecurityNotice: FC<Props> = (props) => {
