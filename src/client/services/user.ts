@@ -55,12 +55,17 @@ export const changePwd = async (data: string) => {
     return sendPut<string>('/changePwd', { data })
 }
 
-/** 获取谷歌令牌绑定信息 */
+/** 获取动态验证码绑定信息 */
 export const fetchOtpInfo = async () => {
     return sendPost<RegisterOTPInfo>('/registerOTP')
 }
 
-/** 绑定谷歌令牌 */
+/** 绑定动态验证码 */
 export const registerOtp = async (code: string) => {
-    return sendPut('/registerOTP', { code})
+    return sendPut('/registerOTP', { code })
+}
+
+/** 解绑动态验证码 */
+export const removeOtp = async (code: string) => {
+    return sendPost('/removeOTP', { code })
 }

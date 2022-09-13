@@ -5,7 +5,7 @@ export const Button: FC<ButtonProps> = (props) => {
     const { className, ...otherProps } = props
 
     return (
-        <RvButton className={'hover:opacity-75 transition ' + className} {...otherProps}>
+        <RvButton className={'hover:opacity-75 transition !rounded-lg ' + className} {...otherProps}>
             {props.children}
         </RvButton>
     )

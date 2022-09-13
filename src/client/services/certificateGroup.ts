@@ -35,7 +35,6 @@ export const getGroupCertificates = async (groupId: number) => {
 }
 
 export const useGroupCertificates = (groupId: number, isLogin: boolean) => {
-    console.log('isLogin', groupId, isLogin)
     return useQuery(['group', groupId, 'certificates'], () => getGroupCertificates(groupId), {
         enabled: !!groupId && isLogin,
     })
