@@ -139,7 +139,7 @@ export const insertSecurityNotice = async (
  */
 export const getGroupCollection = createCollectionAccessor<CertificateGroup>({
     collectionName: 'group',
-    initData: [{ name: '我的密码' }]
+    initData: [{ name: '我的密码', order: 0 }]
 })
 
 /**

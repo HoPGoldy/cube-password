@@ -14,8 +14,8 @@ export const serveStatic: Middleware = async (ctx, next) => {
     let sendPath = ctx.path.replace(getRandomRoutePrefix(), '')
     // 如果获取的是入口页的话，就根据是否注册过返回对应的页面
     if (sendPath.endsWith('/index.html')) {
-        const { passwordSalt, passwordSha } = await getAppStorage()
-        sendPath = (passwordSalt && passwordSha) ? 'index.html' : 'register.html'
+        const { passwordSalt, passwordHash } = await getAppStorage()
+        sendPath = (passwordSalt && passwordHash) ? 'index.html' : 'register.html'
     }
 
     try {

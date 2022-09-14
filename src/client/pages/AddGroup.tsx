@@ -31,7 +31,8 @@ const AddGroup = () => {
 
         const postData: CertificateGroup = {
             name: values.name,
-            passwordSha: values.password ? sha(salt + values.password) : undefined,
+            order: 0,
+            passwordHash: values.password ? sha(salt + values.password) : undefined,
             passwordSalt: values.password ? salt : undefined
         }
 

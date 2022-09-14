@@ -3,7 +3,7 @@ import { Lock } from '@react-vant/icons'
 import { Button } from './Button'
 import { AppConfigContext } from './AppConfigProvider'
 import { setToken } from '../services/base'
-import { login, requireLogin } from '../services/certificateGroup'
+import { unlockGroup, requireOperate } from '../services/certificateGroup'
 import { UserContext } from './UserProvider'
 
 export interface GroupUnlockRef {
@@ -17,10 +17,10 @@ const GroupLogin: ForwardRefRenderFunction<GroupUnlockRef> = (_, ref) => {
     const { setUserProfile, selectedGroup, refetchCertificateList } = useContext(UserContext)
 
     const onUnlock = async () => {
-        const resp = await requireLogin(selectedGroup)
+        const resp = await requireOperate(selectedGroup)
         const { salt, challenge } = resp
 
-        const loginResp = await login(selectedGroup, password, salt, challenge).catch(() => {
+        const loginResp = await unlockGroup(selectedGroup, password, salt, challenge).catch(() => {
             passwordInputRef.current?.focus()
             setPassword('')
         })

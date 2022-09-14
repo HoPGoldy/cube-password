@@ -2,7 +2,8 @@ import { AppTheme } from '@/types/app'
 import { MyJwtPayload } from '@/types/global'
 import { CertificateGroupDetail, CertificateListItem, NoticeInfoResp } from '@/types/http'
 import React, { Dispatch, FC, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
-import { getGroupList, useGroupCertificates } from '../services/certificateGroup'
+import { useQuery } from 'react-query'
+import { getGroupCertificates, getGroupList } from '../services/certificateGroup'
 
 export interface UserProfile {
     /**
@@ -82,8 +83,9 @@ export const UserProvider: FC = (props) => {
         data: certificateList,
         refetch: refetchCertificateList,
         isLoading: certificateListLoading
-    } = useGroupCertificates(selectedGroup, !!userProfile)
-
+    } = useQuery(['group', selectedGroup, 'certificates'], () => getGroupCertificates(selectedGroup), {
+        enabled: !!selectedGroup && !!userProfile,
+    })
     const refetchGroupList = async () => {
         const resp = await getGroupList()
         setGroupList(resp)

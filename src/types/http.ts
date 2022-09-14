@@ -228,3 +228,8 @@ export interface RegisterOTPInfo {
      */
     qrCode?: string
 }
+
+export interface GroupAddPasswordData {
+    hash: string,
+    salt: string
+}

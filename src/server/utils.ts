@@ -52,7 +52,7 @@ export const hasGroupLogin = async (ctx: AppKoaContext, groupId?: number, sendRe
     }
 
     // 没有密码就等同于已经解密了
-    const hasPassword = item.passwordSalt && item.passwordSha
+    const hasPassword = item.passwordSalt && item.passwordHash
     if (!hasPassword) return true
 
     const { user } = ctx.state || {}

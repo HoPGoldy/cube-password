@@ -5,7 +5,7 @@ import Joi from 'joi'
 import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
-import { AddGroupResp, CertificateGroupDetail, CertificateListItem } from '@/types/http'
+import { AddGroupResp, CertificateListItem, GroupAddPasswordData } from '@/types/http'
 import { sha } from '@/utils/crypto'
 import dayjs from 'dayjs'
 import { createToken, createOTP } from '../lib/auth'
@@ -21,14 +21,12 @@ const challengeManager = createOTP()
  */
 export const getCertificateGroupList = async () => {
     const collection = await getGroupCollection()
-    return collection.data.map<CertificateGroupDetail>(item => {
-        const newItem: CertificateGroupDetail = {
-            id: (item as unknown as LokiObj).$loki,
+    return collection.chain().simplesort('order').data().map(item => {
+        return {
+            id: item.$loki,
             name: item.name,
-            requireLogin: !!(item.passwordSalt && item.passwordSha)
+            requireLogin: !!(item.passwordSalt && item.passwordHash)
         }
-
-        return newItem
     })
 }
 
@@ -68,9 +66,9 @@ groupRouter.get(setAlias('/group/:groupId/certificates', '查询分组下属凭�
 
 const addGroupSchema = Joi.object<CertificateGroup>({
     name: Joi.string().required(),
-    passwordSha: Joi.string().empty(),
+    passwordHash: Joi.string().empty(),
     passwordSalt: Joi.string().empty(),
-}).with('passwordSha', 'passwordSalt')
+}).with('passwordHash', 'passwordSalt')
 
 /**
  * 新增分组
@@ -96,16 +94,14 @@ groupRouter.post(setAlias('/addGroup', '新增分组', 'POST'), async ctx => {
     saveLoki()
 })
 
-const updateGroupSchema = Joi.object<Partial<CertificateGroup>>({
-    name: Joi.string(),
-    passwordSha: Joi.string(),
-    passwordSalt: Joi.string(),
-}).with('passwordSha', 'passwordSalt')
+const updateGroupSchema = Joi.object<{ name: string }>({
+    name: Joi.string().required()
+})
 
 /**
- * 更新分组信息
+ * 更新分组名
  */
-groupRouter.put(setAlias('/group/:groupId', '更新分组配置', 'PUT'), async ctx => {
+groupRouter.put(setAlias('/updateGroupName/:groupId', '更新分组名称', 'PUT'), async ctx => {
     const groupId = +ctx.params.groupId
     if (!await hasGroupLogin(ctx, groupId)) return
 
@@ -119,7 +115,51 @@ groupRouter.put(setAlias('/group/:groupId', '更新分组配置', 'PUT'), async 
         return
     }
 
-    collection.update({ ...item, ...body })
+    collection.update({ ...item, name: body.name })
+    response(ctx, { code: 200 })
+    saveLoki()
+})
+
+const updateGroupSortSchema = Joi.object<{ groupIds: number[] }>({
+    groupIds: Joi.array().items(Joi.number()).required()
+})
+
+/**
+ * 更新分组排序
+ */
+groupRouter.put(setAlias('/updateGroupSort', '更新分组排序', 'PUT'), async ctx => {
+    const body = validate(ctx, updateGroupSortSchema)
+    if (!body) return
+
+    const groupOrders = body.groupIds.reduce((prev, cur, index) => {
+        prev[cur] = index
+        return prev
+    }, {} as Record<number, number>)
+
+    const collection = await getGroupCollection()
+    const items = collection.chain().data()
+    const newItems = items.map(item => {
+        const newOrder = groupOrders[item.$loki]
+        return { ...item, order: newOrder || 0 }
+    })
+
+    collection.update(newItems)
+    response(ctx, { code: 200 })
+    saveLoki()
+})
+
+const setDefaultGroupSchema = Joi.object<{ groupId: number }>({
+    groupId: Joi.number().required()
+})
+
+/**
+ * 设置默认分组
+ */
+groupRouter.put(setAlias('/setDefaultGroup', '设置默认分组', 'PUT'), async ctx => {
+    const body = validate(ctx, setDefaultGroupSchema)
+    if (!body) return
+
+    await updateAppStorage({ defaultGroupId: body.groupId })
     response(ctx, { code: 200 })
     saveLoki()
 })
@@ -185,13 +225,13 @@ groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), che
         return
     }
 
-    const { passwordSha } = collection.get(groupId)
-    if (!passwordSha) {
+    const { passwordHash } = collection.get(groupId)
+    if (!passwordHash) {
         response(ctx, { code: 200, msg: '分组不需要密码' })
         return
     }
 
-    if (sha(passwordSha + challengeCode) !== code) {
+    if (sha(passwordHash + challengeCode) !== code) {
         response(ctx, { code: STATUS_CODE.GROUP_PASSWORD_ERROR, msg: '密码错误，请检查分组密码是否正确' })
         return
     }
@@ -203,10 +243,44 @@ groupRouter.post(setAlias('/group/unlock/:groupId', '分组解密', 'POST'), che
     response(ctx, { code: 200, data: { token } })
 })
 
+const addGroupPasswordSchema = Joi.object<GroupAddPasswordData>({
+    hash: Joi.string().required(),
+    salt: Joi.string().required(),
+})
+
 /**
- * 请求分组解锁
+ * 分组设置密码
  */
-groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密授权', 'POST'), async ctx => {
+groupRouter.post(setAlias('/group/addPassword/:groupId', '分组设置密码', 'POST'), async ctx => {
+    const body = validate(ctx, addGroupPasswordSchema)
+    if (!body) return
+
+    const collection = await getGroupCollection()
+    const groupId = Number(ctx.params.groupId)
+    const item = collection.get(groupId)
+    if (!item) {
+        response(ctx, { code: 404, msg: '分组不存在' })
+        return
+    }
+
+    const { passwordHash } = collection.get(groupId)
+    if (passwordHash) {
+        response(ctx, { code: 400, msg: '分组已加密，请先移除密码' })
+        return
+    }
+
+    item.passwordHash = body.hash
+    item.passwordSalt = body.salt
+
+    collection.update(item)
+    response(ctx, { code: 200 })
+    saveLoki()
+})
+
+/**
+ * 请求分组挑战码
+ */
+groupRouter.post(setAlias('/group/requireOperate/:groupId', '请求分组挑战码', 'POST'), async ctx => {
     const collection = await getGroupCollection()
     const groupId = Number(ctx.params.groupId)
     const groupItem = collection.get(groupId)
@@ -214,8 +288,8 @@ groupRouter.post(setAlias('/group/requireUnlock/:groupId', '请求分组解密�
         response(ctx, { code: 404, msg: '分组不存在' })
         return
     }
-    const { passwordSha, passwordSalt } = groupItem
-    if (!passwordSha || !passwordSalt) {
+    const { passwordHash, passwordSalt } = groupItem
+    if (!passwordHash || !passwordSalt) {
         response(ctx, { code: 200, msg: '分组不需要密码' })
         return
     }

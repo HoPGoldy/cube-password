@@ -7,9 +7,13 @@ export interface CertificateGroup {
      */
     name: string
     /**
+     * 分组排序顺序
+     */
+    order: number
+    /**
      * 分组密码 sha512 摘要
      */
-    passwordSha?: string
+    passwordHash?: string
     /**
      * 分组密码盐值
      */
@@ -59,7 +63,7 @@ export interface AppStorage {
     /**
      * 主密码 sha512 摘要
      */
-    passwordSha?: string
+    passwordHash?: string
     /**
      * 主密码盐值
      */

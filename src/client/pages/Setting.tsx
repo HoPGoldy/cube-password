@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { Card, Cell, Space, Switch } from 'react-vant'
-import { Contact, Close, LikeO, StarO, ArrowLeft, Certificate } from '@react-vant/icons'
+import { Contact, Close, LikeO, StarO, ArrowLeft, Certificate, SendGiftO } from '@react-vant/icons'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from '../Route'
@@ -48,6 +48,7 @@ const SettingPage = () => {
                         <Card round>
                             <Cell title="修改密码" icon={<Contact />} isLink onClick={() => navigate('/ChangePassword')} />
                             <Cell title="动态验证码" icon={<Certificate />} isLink onClick={() => navigate('/OtpManage')} />
+                            <Cell title="分组管理" icon={<SendGiftO />} isLink onClick={() => navigate('/GroupManage')} />
                             <Cell title="黑夜模式" icon={<StarO />} 
                                 rightIcon={<Switch
                                     size={24}

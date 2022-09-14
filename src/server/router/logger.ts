@@ -157,14 +157,14 @@ loggerRouter.get('/logs/certificates', async ctx => {
         log.groupName = group.name
 
         // 分组加密了且没解锁，就返回，否则添加凭证名称
-        if (group.passwordSalt && group.passwordSha) {
+        if (group.passwordSalt && group.passwordHash) {
             const isGroupUnlock = await hasGroupLogin(ctx, group.$loki)
             if (!isGroupUnlock) {
                 log.groupUnencrypted = true
                 continue
             }
         }
-        
+
         log.certificateName = certificate.name
     }
 

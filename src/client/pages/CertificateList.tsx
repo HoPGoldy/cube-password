@@ -10,7 +10,7 @@ import Header from '../components/Header'
 import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'
 import { useEditor } from './CertificateList.hook'
-import { updateGroup } from '../services/certificateGroup'
+import { updateGroupName } from '../services/certificateGroup'
 import GroupLogin, { GroupUnlockRef } from '../components/GroupLogin'
 import { noticeConfig } from '../components/SecurityNotice'
 import { GroupSelectSheet } from '../components/GroupSelectSheet'
@@ -77,7 +77,7 @@ const CertificateList = () => {
             return    
         }
 
-        await updateGroup(selectedGroup, { name: groupTitle })
+        await updateGroupName(selectedGroup, groupTitle)
         refetchGroupList()
     }
 

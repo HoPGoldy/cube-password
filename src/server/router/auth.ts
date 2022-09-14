@@ -63,8 +63,8 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         return
     }
 
-    const { passwordSha, defaultGroupId, theme, commonLocation, totpSecret } = await getAppStorage()
-    if (!passwordSha) {
+    const { passwordHash, defaultGroupId, theme, commonLocation, totpSecret } = await getAppStorage()
+    if (!passwordHash) {
         response(ctx, { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' })
         return
     }
@@ -104,7 +104,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         }
     }
 
-    if (sha(passwordSha + challengeCode) !== password) {
+    if (sha(passwordHash + challengeCode) !== password) {
         response(ctx, { code: 401, msg: '密码错误，请检查主密码是否正确' })
         insertSecurityNotice(
             SecurityNoticeType.Warning,
@@ -150,15 +150,15 @@ loginRouter.post(setAlias('/register', '应用初始化', 'POST'), async ctx => 
     }
     const { code, salt } = value
 
-    const { passwordSalt, passwordSha } = await getAppStorage()
-    if (passwordSalt && passwordSha) {
+    const { passwordSalt, passwordHash } = await getAppStorage()
+    if (passwordSalt && passwordHash) {
         response(ctx, { code: STATUS_CODE.ALREADY_REGISTER, msg: '已经注册' })
         return
     }
 
     await updateAppStorage({
         passwordSalt: salt,
-        passwordSha: code,
+        passwordHash: code,
         initTime: Date.now()
     })
     response(ctx, { code: 200 })
@@ -200,9 +200,9 @@ loginRouter.put(setAlias('/changePwd', '修改密码', 'PUT'), async ctx => {
         return
     }
 
-    const { passwordSha, totpSecret } = await getAppStorage()
+    const { passwordHash, totpSecret } = await getAppStorage()
     const challengeCode = challengeManager.pop('changePwd')
-    if (!passwordSha || !challengeCode) {
+    if (!passwordHash || !challengeCode) {
         response(ctx, { code: 400, msg: '参数错误' })
         return
     }
@@ -213,7 +213,7 @@ loginRouter.put(setAlias('/changePwd', '修改密码', 'PUT'), async ctx => {
         return
     }
     const token = tokenStr.replace('Bearer ', '')
-    const postKey = passwordSha + challengeCode + token
+    const postKey = passwordHash + challengeCode + token
     const { key, iv } = getAesMeta(postKey)
     const changeData = aesDecrypt(data, key, iv)
 
@@ -258,7 +258,7 @@ loginRouter.put(setAlias('/changePwd', '修改密码', 'PUT'), async ctx => {
 
         // 把主密码信息更新上去
         const passwordSalt = nanoid()
-        await updateAppStorage({ passwordSha: sha(passwordSalt + newPwd), passwordSalt })
+        await updateAppStorage({ passwordHash: sha(passwordSalt + newPwd), passwordSalt })
 
         response(ctx, { code: 200 })
         saveLoki()
