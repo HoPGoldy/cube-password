@@ -21,6 +21,15 @@ export const formatLocation = (location?: string) => {
 }
 
 /**
+ * 判断两个位置字符串是否为同一区域
+ * 由于最后一位是网络提供商（例如电信、移动），所以需要剔除
+ */
+export const isSameLocation = (location1?: string, location2?: string) => {
+    if (!location1 || !location2) return false
+    return location1.split('|').slice(0, 3).join('|') === location2.split('|').slice(0, 3).join('|')
+}
+
+/**
  * 获取服务开放端口
  */
 export const getServePort = () => {

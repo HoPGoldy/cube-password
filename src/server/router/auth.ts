@@ -15,7 +15,7 @@ import { createLog, getNoticeInfo } from './logger'
 import { nanoid } from 'nanoid'
 import { authenticator } from 'otplib'
 import QRCode from 'qrcode'
-import { formatLocation } from '@/utils/common'
+import { formatLocation, isSameLocation } from '@/utils/common'
 
 const loginRouter = new Router<any, AppKoaContext>()
 
@@ -70,7 +70,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
     }
 
     // 本次登录地点和常用登录地不同
-    if (commonLocation && commonLocation !== log.location) {
+    if (commonLocation && !isSameLocation(commonLocation, log.location)) {
     // if (true) {
         // 没有绑定动态验证码
         if (!totpSecret) {
@@ -81,7 +81,6 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
                 '异地登录',
                 `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，请检查是否为本人操作。`
             )
-            return
         }
         // 绑定了动态验证码
         else {
@@ -100,7 +99,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
             insertSecurityNotice(
                 SecurityNoticeType.Info,
                 '异地登录',
-                `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，已进行动态验证码认证。`
+                `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，已完成动态验证码认证。请检查是否为本人操作。`
             )
         }
     }

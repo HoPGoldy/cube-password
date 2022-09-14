@@ -25,12 +25,15 @@ const fieldClassName = 'block grow px-3 py-2 w-full transition ' +
 
 const Register = () => {
     const { setUserProfile, setGroupList, setSelectedGroup, setNoticeInfo } = useContext(UserContext)
-    const passwordInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
-    // 动态密码
+    // 密码
     const [password, setPassword] = useState('')
+    // 密码输入框
+    const passwordInputRef = useRef<HTMLInputElement>(null)
     // 动态验证码
     const [code, setCode] = useState('')
+    // 验证码输入框
+    const codeInputRef = useRef<HTMLInputElement>(null)
     // 是否显示动态验证码输入框
     const [codeVisible, setCodeVisible] = useState(false)
     const config = useContext(AppConfigContext)
@@ -57,10 +60,12 @@ const Register = () => {
         const loginResp = await login(password, salt, challenge, code).catch(error => {
             if (error.code === STATUS_CODE.NEED_CODE) {
                 setCodeVisible(true)
+                codeInputRef.current?.focus()
             }
             else {
                 passwordInputRef.current?.focus()
                 setPassword('')
+                setCode('')
             }
             refetch()
         })
@@ -110,6 +115,7 @@ const Register = () => {
                         }}
                     />
                     {codeVisible && <input
+                        ref={codeInputRef}
                         type='password'
                         placeholder="请输入动态验证码"
                         className={fieldClassName + 'mt-2'}
