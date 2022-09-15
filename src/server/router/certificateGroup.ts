@@ -273,14 +273,17 @@ groupRouter.post(setAlias('/group/addPassword/:groupId', '分组设置密码', '
     item.passwordSalt = body.salt
 
     collection.update(item)
-    response(ctx, { code: 200 })
+
+    const newList = await getCertificateGroupList()
+
+    response(ctx, { code: 200, data: newList })
     saveLoki()
 })
 
 /**
- * 请求分组挑战码
+ * 请求分组操作挑战码
  */
-groupRouter.post(setAlias('/group/requireOperate/:groupId', '请求分组挑战码', 'POST'), async ctx => {
+groupRouter.post(setAlias('/group/requireOperate/:groupId', '请求分组操作', 'POST'), async ctx => {
     const collection = await getGroupCollection()
     const groupId = Number(ctx.params.groupId)
     const groupItem = collection.get(groupId)

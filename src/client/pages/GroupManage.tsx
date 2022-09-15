@@ -1,25 +1,97 @@
-import { CertificateGroup } from '@/types/app'
-import { sha } from '@/utils/crypto'
-import { nanoid } from 'nanoid'
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { ReactSortable } from "react-sortablejs"
-import { Form, Notify } from 'react-vant'
+import { Form, Notify, Popup } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
-import { setDefaultGroup, updateGroupSort } from '../services/certificateGroup'
+import { groupAddPassword, setDefaultGroup, updateGroupSort } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from '../Route'
 import Header from '../components/Header'
 import { CertificateGroupDetail } from '@/types/http'
+import { Field } from '../components/Field'
+import { useQuery } from 'react-query'
+import { fetchOtpInfo } from '../services/user'
+
+interface AddPasswordForm {
+    password: string
+    passwordConfirm: string
+}
+
+interface RemovePasswordForm {
+    password: string
+    code?: string
+}
 
 const GroupManage = () => {
     const { setGroupList, groupList, refetchGroupList, userProfile, setUserProfile } = useContext(UserContext)
     const config = useContext(AppConfigContext)
     const navigate = useNavigate()
+    // 添加密码的 form 实例
+    const [addPasswordForm] = Form.useForm<AddPasswordForm>()
+    // 正在弹窗的添加密码详情
+    const [addPasswordDetail, setAddPasswordDetail] = useState<CertificateGroupDetail | undefined>()
+    // 移除密码的 form 实例
+    const [removePasswordForm] = Form.useForm<RemovePasswordForm>()
+    // 正在弹窗的移除密码详情
+    const [removePasswordDetail, setRemovePasswordDetail] = useState<CertificateGroupDetail | undefined>()
+    // 是否提交中
+    const [submitting, setSubmitting] = useState(false)
+    // 加载当前令牌信息
+    const { data: otpInfo } = useQuery('fetchOtpInfo', fetchOtpInfo, {
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+    })
 
     /**
-     * 保存分组排序
+     * 回调 - 添加密码
+     */
+    const onSetPassword = async () => {
+        if (!addPasswordDetail) {
+            Notify.show({ type: 'warning', message: '添加失败，请刷新页面后再试' })
+            return
+        }
+        const values = await addPasswordForm.validateFields()
+        setSubmitting(true)
+        const resp = await groupAddPassword(addPasswordDetail.id, values.password)
+
+        Notify.show({ type: 'success', message: '分组密码添加成功' })
+        setGroupList(resp)
+        setSubmitting(false)
+        onAddPasswordClose()
+    }
+
+    const onAddPasswordClose = () => {
+        setAddPasswordDetail(undefined)
+        addPasswordForm.setFieldsValue({ password: '', passwordConfirm: '' })
+    }
+
+    /**
+     * 回调 - 移除密码
+     */
+     const onRemovePassword = async () => {
+        if (!removePasswordDetail) {
+            Notify.show({ type: 'warning', message: '移除失败，请刷新页面后再试' })
+            return
+        }
+        const values = await removePasswordForm.validateFields()
+        setSubmitting(true)
+        const resp = await groupAddPassword(removePasswordDetail.id, values.password)
+
+        Notify.show({ type: 'success', message: '分组密码添加成功' })
+        setGroupList(resp)
+        setSubmitting(false)
+        onAddPasswordClose()
+    }
+
+    const onRemovePasswordClose = () => {
+        setRemovePasswordDetail(undefined)
+        removePasswordForm.setFieldsValue({ password: '', code: '' })
+    }
+
+    /**
+     * 回调 - 保存分组排序
      */
     const onSave = async () => {
         const orders = groupList.map((group) => group.id)
@@ -30,6 +102,9 @@ const GroupManage = () => {
         navigate(-1)
     }
 
+    /**
+     * 回调 - 设置默认分组
+     */
     const onSetToDefault = async (item: CertificateGroupDetail) => {
         await setDefaultGroup(item.id)
 
@@ -38,6 +113,11 @@ const GroupManage = () => {
             return { ...old, defaultGroupId: item.id }
         })
         Notify.show({ type: 'success', message: `${item.name}已设置为默认分组` })
+    }
+
+    const validatePassword = async (_: any, value: string) => {
+        if (value === addPasswordForm.getFieldValue('password')) return
+        throw new Error('两次输入密码不一致!')
     }
 
     const renderGroupItem = (item: CertificateGroupDetail) => {
@@ -58,11 +138,11 @@ const GroupManage = () => {
                     {
                         item.requireLogin
                         ? <span
-                            // onClick={() => onSetToDefault(item)}
+                            onClick={() => setRemovePasswordDetail(item)}
                             className='py-1 px-2 cursor-pointer text-red-500 hover:bg-red-500 hover:text-white transition rounded-lg'
                         >移除密码</span>
                         : <span 
-                            // onClick={() => onSetToDefault(item)}
+                            onClick={() => setAddPasswordDetail(item)}
                             className='py-1 px-2 cursor-pointer text-green-500 hover:bg-green-500 hover:text-white transition rounded-lg'
                         >添加密码</span> 
                     }
@@ -97,6 +177,91 @@ const GroupManage = () => {
                     </div>
                 </div>
             </PageContent>
+
+            <Popup
+                round
+                className='w-[90%] md:w-1/2'
+                visible={!!addPasswordDetail}
+                onClose={onAddPasswordClose}
+            >
+                <div className='p-6'>
+                    <div className='flex items-center flex-col'>
+                        <Form form={addPasswordForm} className='rounded-lg w-full mb-4 bg-white dark:bg-slate-700 dark:text-slate-200'>
+                            <Form.Item
+                                name="password"
+                                label="分组密码"
+                                customField
+                                rules={[{ required: true, message: '请填写分组密码' }]}
+                            >
+                                <Field type='password' />
+                            </Form.Item>
+                            <Form.Item
+                                name="passwordConfirm"
+                                validateTrigger="onChange"
+                                customField
+                                label="重复密码"
+                                rules={[{ required: true, validator: validatePassword }]}
+                            >
+                                <Field type='password' />
+                            </Form.Item>
+                        </Form>
+                        <Button
+                            block
+                            className='shrink-0 !ml-2'
+                            onClick={onSetPassword}
+                            color={config?.buttonColor}
+                            loading={submitting}
+                        >
+                            确 定
+                        </Button>
+                    </div>
+                </div>
+            </Popup>
+
+            <Popup
+                round
+                className='w-[90%] md:w-1/2'
+                visible={!!removePasswordDetail}
+                onClose={onRemovePasswordClose}
+            >
+                <div className='p-6'>
+                    <div className='flex items-center flex-col'>
+                        <Form form={removePasswordForm} className='rounded-lg w-full mb-4 bg-white dark:bg-slate-700 dark:text-slate-200'>
+                            <Form.Item
+                                name="password"
+                                label="主密码"
+                                customField
+                                rules={[{ required: true, message: '请填写主密码' }]}
+                                labelClass='w-28'
+                            >
+                                <Field type='password' />
+                            </Form.Item>
+                            {
+                                otpInfo?.registered &&
+                                <Form.Item
+                                    name="code"
+                                    customField
+                                    label="动态验证码"
+                                    rules={[{ required: true, message: '请填写动态验证码' }]}
+                                    labelClass='w-28'
+                                >
+                                    <Field />
+                                </Form.Item>
+                            }
+                            
+                        </Form>
+                        <Button
+                            block
+                            className='shrink-0 !ml-2'
+                            onClick={onRemovePassword}
+                            color={config?.buttonColor}
+                            loading={submitting}
+                        >
+                            确 定
+                        </Button>
+                    </div>
+                </div>
+            </Popup>
 
             <PageAction>
                 <ActionButton onClick={onSave}>保存并返回</ActionButton>

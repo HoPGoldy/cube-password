@@ -75,5 +75,5 @@ export const setDefaultGroup = async (groupId: number) => {
 export const groupAddPassword = async (groupId: number, password: string) => {
     const salt = nanoid(128)
     const data: GroupAddPasswordData = { hash: sha(salt + password), salt }
-    return sendPost(`/group/addPassword/${groupId}`, data)
+    return sendPost<CertificateGroupDetail[]>(`/group/addPassword/${groupId}`, data)
 }
