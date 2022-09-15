@@ -77,3 +77,10 @@ export const groupAddPassword = async (groupId: number, password: string) => {
     const data: GroupAddPasswordData = { hash: sha(salt + password), salt }
     return sendPost<CertificateGroupDetail[]>(`/group/addPassword/${groupId}`, data)
 }
+
+/**
+ * 分组移除密码
+ */
+export const groupRemovePassword = async (groupId: number, hash: string, code?: string) => {
+    return sendPost<CertificateGroupDetail[]>(`/group/removePassword/${groupId}`, { hash, code })
+}

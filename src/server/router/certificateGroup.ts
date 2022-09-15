@@ -5,12 +5,13 @@ import Joi from 'joi'
 import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
-import { AddGroupResp, CertificateListItem, GroupAddPasswordData } from '@/types/http'
+import { AddGroupResp, CertificateListItem, GroupAddPasswordData, GroupRemovePasswordData } from '@/types/http'
 import { sha } from '@/utils/crypto'
 import dayjs from 'dayjs'
 import { createToken, createOTP } from '../lib/auth'
 import { setAlias } from '../lib/routeAlias'
 import { checkIsGroupUnlockSuccess } from '../lib/security'
+import { authenticator } from 'otplib'
 
 const groupRouter = new Router<unknown, AppKoaContext>()
 
@@ -66,6 +67,7 @@ groupRouter.get(setAlias('/group/:groupId/certificates', '查询分组下属凭�
 
 const addGroupSchema = Joi.object<CertificateGroup>({
     name: Joi.string().required(),
+    order: Joi.number().required(),
     passwordHash: Joi.string().empty(),
     passwordSalt: Joi.string().empty(),
 }).with('passwordHash', 'passwordSalt')
@@ -299,6 +301,69 @@ groupRouter.post(setAlias('/group/requireOperate/:groupId', '请求分组操作'
 
     const challenge = challengeManager.create(groupId)
     response(ctx, { code: 200, data: { salt: passwordSalt, challenge } })
+})
+
+const removeGroupPasswordSchema = Joi.object<GroupRemovePasswordData>({
+    hash: Joi.string().required(),
+    code: Joi.string().allow(''),
+})
+
+/**
+ * 分组移除
+ */
+groupRouter.post(setAlias('/group/removePassword/:groupId', '分组移除密码', 'POST'), async ctx => {
+    const body = validate(ctx, removeGroupPasswordSchema)
+    if (!body) return
+
+    const collection = await getGroupCollection()
+    const groupId = +ctx.params.groupId
+    const group = collection.get(groupId)
+    if (!group) {
+        response(ctx, { code: 404, msg: '分组不存在' })
+        return
+    }
+
+    const challengeCode = challengeManager.pop(groupId)
+    if (!challengeCode) {
+        response(ctx, { code: 400, msg: '挑战码错误' })
+        return
+    }
+
+    const { passwordHash } = collection.get(groupId)
+    if (!passwordHash) {
+        response(ctx, { code: 400, msg: '分组没有密码' })
+        return
+    }
+
+    if (sha(passwordHash + challengeCode) !== body.hash) {
+        response(ctx, { code: STATUS_CODE.GROUP_PASSWORD_ERROR, msg: '密码错误，请检查分组密码是否正确' })
+        return
+    }
+
+    const { totpSecret } = await getAppStorage()
+    if (totpSecret) {
+        if (!body.code) {
+            response(ctx, { code: 400, msg: '请填写动态验证码' })
+            return
+        }
+
+        const isValid = authenticator.verify({ token: body.code, secret: totpSecret })
+        if (!isValid) {
+            response(ctx, { code: 400, msg: '动态验证码错误' })
+            return
+        }
+    }
+
+    const newGroup = { ...group }
+    delete newGroup.passwordHash
+    delete newGroup.passwordSalt
+
+    collection.update(newGroup)
+
+    const newList = await getCertificateGroupList()
+
+    response(ctx, { code: 200, data: newList })
+    saveLoki()
 })
 
 export { groupRouter }

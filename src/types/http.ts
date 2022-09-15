@@ -229,7 +229,31 @@ export interface RegisterOTPInfo {
     qrCode?: string
 }
 
+/**
+ * 前端发送给后端的分组添加密码数据
+ */
 export interface GroupAddPasswordData {
-    hash: string,
+    /**
+     * 密码的 hash 值
+     */
+    hash: string
+    /**
+     * 密码盐值
+     */
     salt: string
+}
+
+/**
+ * 前端发送给后端的分组密码移除数据
+ */
+export interface GroupRemovePasswordData {
+    /**
+     * 分组密码 hash
+     */
+    hash: string
+    /**
+     * 动态验证码
+     * 绑定了令牌的话这个就会有值
+     */
+    code?: string
 }

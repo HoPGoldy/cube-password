@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react'
-import { ReactSortable } from "react-sortablejs"
+import { ReactSortable } from 'react-sortablejs'
 import { Form, Notify, Popup } from 'react-vant'
 import { Button } from '@/client/components/Button'
 import { UserContext } from '../components/UserProvider'
 import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
-import { groupAddPassword, setDefaultGroup, updateGroupSort } from '../services/certificateGroup'
+import { groupAddPassword, groupRemovePassword, requireOperate, setDefaultGroup, updateGroupSort } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
 import { useNavigate } from '../Route'
 import Header from '../components/Header'
@@ -12,6 +12,7 @@ import { CertificateGroupDetail } from '@/types/http'
 import { Field } from '../components/Field'
 import { useQuery } from 'react-query'
 import { fetchOtpInfo } from '../services/user'
+import { sha } from '@/utils/crypto'
 
 interface AddPasswordForm {
     password: string
@@ -54,11 +55,14 @@ const GroupManage = () => {
         }
         const values = await addPasswordForm.validateFields()
         setSubmitting(true)
-        const resp = await groupAddPassword(addPasswordDetail.id, values.password)
+
+        const resp = await groupAddPassword(
+            addPasswordDetail.id,
+            values.password
+        ).finally(() => setSubmitting(false))
 
         Notify.show({ type: 'success', message: '分组密码添加成功' })
         setGroupList(resp)
-        setSubmitting(false)
         onAddPasswordClose()
     }
 
@@ -70,19 +74,26 @@ const GroupManage = () => {
     /**
      * 回调 - 移除密码
      */
-     const onRemovePassword = async () => {
+    const onRemovePassword = async () => {
         if (!removePasswordDetail) {
             Notify.show({ type: 'warning', message: '移除失败，请刷新页面后再试' })
             return
         }
+
         const values = await removePasswordForm.validateFields()
         setSubmitting(true)
-        const resp = await groupAddPassword(removePasswordDetail.id, values.password)
 
-        Notify.show({ type: 'success', message: '分组密码添加成功' })
+        const { salt, challenge } = await requireOperate(removePasswordDetail.id)
+
+        const resp = await groupRemovePassword(
+            removePasswordDetail.id,
+            sha(sha(salt + values.password) + challenge),
+            values.code
+        ).finally(() => setSubmitting(false))
+
+        Notify.show({ type: 'success', message: '分组密码移除成功' })
         setGroupList(resp)
-        setSubmitting(false)
-        onAddPasswordClose()
+        onRemovePasswordClose()
     }
 
     const onRemovePasswordClose = () => {
@@ -137,14 +148,14 @@ const GroupManage = () => {
                     }
                     {
                         item.requireLogin
-                        ? <span
-                            onClick={() => setRemovePasswordDetail(item)}
-                            className='py-1 px-2 cursor-pointer text-red-500 hover:bg-red-500 hover:text-white transition rounded-lg'
-                        >移除密码</span>
-                        : <span 
-                            onClick={() => setAddPasswordDetail(item)}
-                            className='py-1 px-2 cursor-pointer text-green-500 hover:bg-green-500 hover:text-white transition rounded-lg'
-                        >添加密码</span> 
+                            ? <span
+                                onClick={() => setRemovePasswordDetail(item)}
+                                className='py-1 px-2 cursor-pointer text-red-500 hover:bg-red-500 hover:text-white transition rounded-lg'
+                            >移除密码</span>
+                            : <span 
+                                onClick={() => setAddPasswordDetail(item)}
+                                className='py-1 px-2 cursor-pointer text-green-500 hover:bg-green-500 hover:text-white transition rounded-lg'
+                            >添加密码</span>
                     }
                 </div>
             </div>
@@ -180,7 +191,7 @@ const GroupManage = () => {
 
             <Popup
                 round
-                className='w-[90%] md:w-1/2'
+                className='w-[90%] md:w-1/2 lg:w-1/3'
                 visible={!!addPasswordDetail}
                 onClose={onAddPasswordClose}
             >
@@ -220,7 +231,7 @@ const GroupManage = () => {
 
             <Popup
                 round
-                className='w-[90%] md:w-1/2'
+                className='w-[90%] md:w-1/2 lg:w-1/3'
                 visible={!!removePasswordDetail}
                 onClose={onRemovePasswordClose}
             >
@@ -229,9 +240,9 @@ const GroupManage = () => {
                         <Form form={removePasswordForm} className='rounded-lg w-full mb-4 bg-white dark:bg-slate-700 dark:text-slate-200'>
                             <Form.Item
                                 name="password"
-                                label="主密码"
+                                label="分组密码"
                                 customField
-                                rules={[{ required: true, message: '请填写主密码' }]}
+                                rules={[{ required: true, message: '请填写分组密码' }]}
                                 labelClass='w-28'
                             >
                                 <Field type='password' />
