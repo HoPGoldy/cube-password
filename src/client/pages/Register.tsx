@@ -48,7 +48,7 @@ const Register = () => {
     const onSubmit = async () => {
         await register(password)
         Notify.show({ type: 'success', message: '初始化完成' })
-        location.pathname = ''
+        location.reload()
     }
 
     return (
