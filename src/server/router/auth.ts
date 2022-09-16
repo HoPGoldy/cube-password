@@ -9,7 +9,7 @@ import { STATUS_CODE } from '@/config'
 import { getCertificateGroupList } from './certificateGroup'
 import { ChangePasswordData, LoginErrorResp, LoginResp, RegisterOTPInfo } from '@/types/http'
 import { setAlias } from '../lib/routeAlias'
-import { lockManager } from '../lib/security'
+import { getReplayAttackSecret, lockManager } from '../lib/security'
 import { SecurityNoticeType } from '@/types/app'
 import { createLog, getNoticeInfo } from './logger'
 import { nanoid } from 'nanoid'
@@ -54,10 +54,11 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
     const challengeCode = challengeManager.pop()
     if (!challengeCode) {
         response(ctx, { code: 401, msg: '挑战码错误' })
+        const prefix = await getNoticeContentPrefix(ctx)
         insertSecurityNotice(
             SecurityNoticeType.Danger,
             '未授权状态下进行登录操作',
-            `${getNoticeContentPrefix(log)}发起了一次非法登录，正常使用不会导致该情况发生，判断为攻击操作。`
+            `${prefix}发起了一次非法登录，正常使用不会导致该情况发生，判断为攻击操作。`
         )
         lockManager.recordLoginFail()
         return
@@ -75,11 +76,11 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         // 没有绑定动态验证码
         if (!totpSecret) {
             const beforeLocation = formatLocation(commonLocation)
-
+            const prefix = await getNoticeContentPrefix(ctx)
             insertSecurityNotice(
                 SecurityNoticeType.Warning,
                 '异地登录',
-                `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，请检查是否为本人操作。`
+                `${prefix}进行了一次异地登录，上次登录地为${beforeLocation}，请检查是否为本人操作。`
             )
         }
         // 绑定了动态验证码
@@ -96,20 +97,22 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
             }
 
             const beforeLocation = formatLocation(commonLocation)
+            const prefix = await getNoticeContentPrefix(ctx)
             insertSecurityNotice(
                 SecurityNoticeType.Info,
                 '异地登录',
-                `${getNoticeContentPrefix(log)}进行了一次异地登录，上次登录地为${beforeLocation}，已完成动态验证码认证。请检查是否为本人操作。`
+                `${prefix}进行了一次异地登录，上次登录地为${beforeLocation}，已完成动态验证码认证。请检查是否为本人操作。`
             )
         }
     }
 
     if (sha(passwordHash + challengeCode) !== password) {
         response(ctx, { code: 401, msg: '密码错误，请检查主密码是否正确' })
+        const prefix = await getNoticeContentPrefix(ctx)
         insertSecurityNotice(
             SecurityNoticeType.Warning,
             '登录失败',
-            `${getNoticeContentPrefix(log)}使用了错误的密码登录，请确保是本人操作。`
+            `${prefix}使用了错误的密码登录，请确保是本人操作。`
         )
         lockManager.recordLoginFail()
         return
@@ -121,6 +124,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
     const noticeCollection = await getSecurityNoticeCollection()
     const unReadNoticeCount = await noticeCollection.chain().find({ isRead: false }).count()
     const noticeInfo =  await getNoticeInfo()
+    const replayAttackSecret = await getReplayAttackSecret()
 
     const data: LoginResp = {
         token,
@@ -128,6 +132,7 @@ loginRouter.post(setAlias('/login', '登录应用', 'POST'), async ctx => {
         defaultGroupId,
         theme,
         hasNotice: unReadNoticeCount >= 1,
+        replayAttackSecret,
         ...noticeInfo
     }
 

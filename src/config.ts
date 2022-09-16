@@ -24,10 +24,21 @@ export const STATUS_CODE = {
     /**
      * 因为关联了其他资源所以无法删除
      */
-    CANT_DELETE: 40601
+    CANT_DELETE: 40601,
+    /**
+     * 未提供防重放攻击 header
+     */
+    REPLAY_ATTACK: 40602,
 }
 
 /**
  * 统一的日期格式化
  */
 export const DATE_FORMATTER = 'YYYY-MM-DD HH:mm:ss'
+
+/**
+ * 可以公开请求的接口
+ */
+export const OPEN_API = [
+    '/api/global', '/api/logInfo', '/api/requireLogin', '/api/login', '/api/register'
+]

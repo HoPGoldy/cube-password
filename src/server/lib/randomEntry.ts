@@ -4,7 +4,6 @@ import { AppKoaContext } from '@/types/global'
 import { ensureFileSync, readFileSync, writeFileSync } from 'fs-extra'
 import { DefaultState, Middleware } from 'koa'
 import { nanoid } from 'nanoid'
-import { createLog } from '../router/logger'
 import { getNoticeContentPrefix } from '../utils'
 import { insertSecurityNotice } from './loki'
 
@@ -48,13 +47,12 @@ export const randomEntry: Middleware<DefaultState, AppKoaContext> = async (ctx, 
         console.error(e)
         ctx.body = 'not found'
         ctx.status = 404
-        const log = await createLog(ctx)
+        const prefix = await getNoticeContentPrefix(ctx)
+
         insertSecurityNotice(
             SecurityNoticeType.Warning,
             '访问不存在的路径',
-            `
-                ${getNoticeContentPrefix(log)}访问了一次不存在的路径：${ctx.url}。正常使用不应该会产生此类请求，请确认是否曾经输入了错误的访问网址
-            `
+            `${prefix}访问了一次不存在的路径：${ctx.url}。正常使用不应该会产生此类请求，请确认是否曾经输入了错误的访问网址`
         )
     }
 }

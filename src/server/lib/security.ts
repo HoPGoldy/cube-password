@@ -1,11 +1,11 @@
-import { DATE_FORMATTER } from '@/config'
+import { DATE_FORMATTER, STATUS_CODE } from '@/config'
 import { SecurityNoticeType } from '@/types/app'
 import { AppKoaContext } from '@/types/global'
+import { getReplayAttackData, validateReplayAttackData } from '@/utils/crypto'
 import dayjs from 'dayjs'
 import { Next } from 'koa'
-import { createLog } from '../router/logger'
-import { getNoticeContentPrefix, response } from '../utils'
-import { getGroupCollection, insertSecurityNotice } from './loki'
+import { createFileReader, getNoticeContentPrefix, response } from '../utils'
+import { getGroupCollection, getReplayAttackNonceCollection, insertSecurityNotice } from './loki'
 
 export interface LoginRecordDetail {
     /**
@@ -129,10 +129,11 @@ export const checkIsSleepTime: SecurityChecker = async (ctx, next) => {
     // 六点之后就不算睡觉时段了
     if (requestHour >= 6) return
 
+    const prefix = await getNoticeContentPrefix(ctx)
     insertSecurityNotice(
         SecurityNoticeType.Info,
         '来自睡觉时段的登录',
-        `${getNoticeContentPrefix(ctx.log)}进行了一次登录，请确认是否为本人操作`,
+        `${prefix}进行了一次登录，请确认是否为本人操作`,
     )
 }
 
@@ -143,10 +144,11 @@ export const checkIsLoginSuccess: SecurityChecker = async (ctx, next) => {
     await next()
 
     if ((ctx.body as any)?.code === 200) return
+    const prefix = await getNoticeContentPrefix(ctx)
     insertSecurityNotice(
         SecurityNoticeType.Warning,
         '登录失败',
-        `${getNoticeContentPrefix(ctx.log)}进行了一次失败的登录，请确认是否为本人操作`,
+        `${prefix}进行了一次失败的登录，请确认是否为本人操作`,
     )
 }
 
@@ -161,8 +163,7 @@ export const checkIsGroupUnlockSuccess: SecurityChecker = async (ctx, next) => {
     const groupId = Number(ctx.params.groupId)
     const item = collection.get(groupId)
 
-    const log = await createLog(ctx)
-    let content = getNoticeContentPrefix(log)
+    let content = await getNoticeContentPrefix(ctx)
     if (!item) {
         content += `尝试解锁一个不存在的分组(分组 id: ${groupId})。`
         content += '正常使用不应该会产生此请求，请检查是否有攻击者尝试爆破分组密码'
@@ -174,4 +175,49 @@ export const checkIsGroupUnlockSuccess: SecurityChecker = async (ctx, next) => {
         '分组解锁失败',
         content
     )
+}
+
+/**
+ * 获取防重放密钥
+ */
+export const getReplayAttackSecret = createFileReader({ fileName: 'replayAttackSecret' })
+
+/**
+ * 创建检查中间件 - 防重放攻击
+ */
+export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
+    const checkReplayAttack: SecurityChecker = async (ctx, next) => {
+        const isAccessPath = !!options.excludePath.find(path => ctx.url.endsWith(path))
+        // 允许 excludePath 接口正常访问
+        if (isAccessPath) return await next()
+
+        try {
+            const replayAttackData = getReplayAttackData(ctx)
+            if (!replayAttackData) {
+                throw new Error('伪造请求攻击，已被拦截，原因为未提供防重放攻击 header，请及时修改服务地址。')
+            }
+
+            const replayAttackSecret = await getReplayAttackSecret()
+            const nonceCollection = await getReplayAttackNonceCollection()
+            // 如果有重复的随机码
+            if (nonceCollection.findOne({ value: { '$eq': replayAttackData.nonce }})) {
+                throw new Error('伪造请求攻击，已被拦截，原因为重复的 nonce，请及时修改服务地址。')
+            }
+
+            const isValidate = validateReplayAttackData(replayAttackData, replayAttackSecret)
+            if (!isValidate) {
+                throw new Error('伪造请求攻击，已被拦截，原因为请求签名异常，请及时修改服务地址。')
+            }
+
+            await next()
+        }
+        catch (e) {
+            console.error(e)
+            const prefix = await getNoticeContentPrefix(ctx)
+            insertSecurityNotice(SecurityNoticeType.Danger, '伪造请求', prefix + '发起了一次' + e.message)
+            response(ctx, { code: STATUS_CODE.REPLAY_ATTACK, msg: '请求异常，请稍后再试' })
+        }
+    }
+
+    return checkReplayAttack
 }

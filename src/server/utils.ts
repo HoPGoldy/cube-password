@@ -1,10 +1,14 @@
-import { STATUS_CODE } from '@/config'
-import { HttpRequestLog } from '@/types/app'
+import { STATUS_CODE, STORAGE_PATH } from '@/config'
 import { AppKoaContext, AppResponse } from '@/types/global'
 import { formatLocation } from '@/utils/common'
+import { ensureFile } from 'fs-extra'
+import { readFile, writeFile } from 'fs/promises'
 import Joi from 'joi'
 import { Context } from 'koa'
+import { nanoid } from 'nanoid'
+import path from 'path'
 import { getGroupCollection } from './lib/loki'
+import { queryIp } from './lib/queryIp'
 
 const initialResponse: AppResponse = {
     code: 200,
@@ -97,12 +101,39 @@ export function getRequestRoute (ctx: AppKoaContext) {
 /**
  * 生成安全通知的通用前缀
  */
-export const getNoticeContentPrefix = (log?: HttpRequestLog) => {
-    if (!log) {
-        console.log('安全中间件找不到 log 数据')
-        return '未知 ip '
-    }
+export const getNoticeContentPrefix = async (ctx: AppKoaContext) => {
+    const ip = ctx.log ? ctx.log.ip : getIp(ctx)
+    const location = ctx.log ? ctx.log.location : await queryIp(ip)
 
-    const { location, ip = '未知 ip' } = log
     return `来自 ${formatLocation(location)} 的 ip 地址（${ip}）`
+}
+
+interface CreateFileReaderProps {
+    fileName: string
+    getInitData?: () => Promise<string>
+}
+
+/**
+ * 创建本地文件内容读取器
+ */
+export const createFileReader = (props: CreateFileReaderProps) => {
+    const { fileName, getInitData = async () => nanoid() } = props
+    let cache: string
+
+    return async () => {
+        // 使用缓存
+        if (cache) return cache
+
+        // 读取本地文件
+        const filePath = path.join(STORAGE_PATH, fileName)
+        await ensureFile(filePath)
+        const content = await readFile(filePath)
+        const contentStr = content.toString()
+        if (contentStr.length > 0) return cache = contentStr
+
+        // 没有内容，填充一下
+        const initData = await getInitData()
+        await writeFile(filePath, initData)
+        return cache = initData
+    }
 }

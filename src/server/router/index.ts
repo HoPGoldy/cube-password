@@ -6,13 +6,12 @@ import { certificateRouter } from './certificate'
 import { loggerRouter, middlewareLogger } from './logger'
 import { AppKoaContext } from '@/types/global'
 import { middlewareJwt, middlewareJwtCatcher } from '../lib/auth'
-import { checkIsSleepTime, lockManager } from '../lib/security'
+import { checkIsSleepTime, createCheckReplayAttack, lockManager } from '../lib/security'
 import { getRandomRoutePrefix } from '../lib/randomEntry'
+import { OPEN_API } from '@/config'
 
 const routes = [globalRouter, loginRouter, certificateRouter, groupRouter, loggerRouter]
-const publicPath = [
-    '/api/global', '/api/logInfo', '/api/requireLogin', '/api/login', '/api/register'
-].map(path => getRandomRoutePrefix() + path)
+const publicPath = OPEN_API.map(path => getRandomRoutePrefix() + path)
 
 const apiRouter = new Router<unknown, AppKoaContext>({
     prefix: getRandomRoutePrefix()
@@ -20,6 +19,7 @@ const apiRouter = new Router<unknown, AppKoaContext>({
 
 apiRouter
     .use(lockManager.loginLockMiddleware)
+    .use(createCheckReplayAttack({ excludePath: publicPath }))
     .use(checkIsSleepTime)
     .use(middlewareLogger)
     .use(middlewareJwtCatcher)

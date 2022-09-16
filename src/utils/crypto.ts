@@ -1,4 +1,6 @@
+import { AppKoaContext } from '@/types/global'
 import CryptoJS from 'crypto-js'
+import { nanoid } from 'nanoid'
 
 const { SHA256, SHA512, AES, MD5, enc, mode, pad } = CryptoJS
 
@@ -50,4 +52,62 @@ export const aesDecrypt = (str: string, key: CryptoJS.lib.WordArray, iv: CryptoJ
     const decrypt = AES.decrypt(srcs, key, { iv, mode: mode.CBC, padding: pad.Pkcs7 })
     const decryptedStr = decrypt.toString(enc.Utf8)
     return decryptedStr.toString()
+}
+
+/**
+ * 生成防重放攻击 header
+ *
+ * @param url 请求地址
+ * @param body 请求 body
+ * @param secretKey 签名私钥
+ */
+export const createReplayAttackHeader = (url: string, bodyData: string, secretKey: string) => {
+    // console.log('bodyData', bodyData)
+    const timestamp = Date.now()
+    const nonce = nanoid(128)
+    const sign = sha(`${url}${bodyData}${nonce}${timestamp}${secretKey}`)
+    return {
+        'X-kmp-temestamp': timestamp,
+        'X-kmp-nonce': nonce,
+        'X-kmp-signature': sign,
+    }
+}
+
+interface ReplayAttackData {
+    url: string
+    body: Record<string, any>
+    timestamp: number
+    nonce: string
+    signature: string
+}
+
+/**
+ * 从请求中获取防重放攻击数据
+ */
+export const getReplayAttackData = (ctx: AppKoaContext): ReplayAttackData | undefined => {
+    const data = {
+        url: ctx.url,
+        body: ctx.request.body,
+        timestamp: Number(ctx.get('X-kmp-temestamp')),
+        nonce: ctx.get('X-kmp-nonce'),
+        signature: ctx.get('X-kmp-signature')
+    }
+
+    if (!data.timestamp || !data.nonce || !data.signature) return undefined
+    return data
+}
+
+/**
+ * 验证防重放攻击 header
+ */
+export const validateReplayAttackData= (data: ReplayAttackData, secretKey: string) => {
+    const { timestamp, url, body, nonce, signature } = data
+    // console.log('bodyData', JSON.stringify(body))
+
+    const serverTimestamp = Date.now()
+    // 服务器时间和客户端时间相差 1 分钟以上，认为是无效请求
+    if (serverTimestamp - timestamp > 1000 * 60) return false
+
+    const newSign = sha(`${url}${JSON.stringify(body)}${nonce}${timestamp}${secretKey}`)
+    return newSign === signature
 }

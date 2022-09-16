@@ -122,6 +122,20 @@ export const getSecurityNoticeCollection = createCollectionAccessor<SecurityNoti
 })
 
 /**
+ * 获取防重放攻击的 nonce 集合
+ */
+export const getReplayAttackNonceCollection = createCollectionAccessor<{ value: string }>({
+    lokiName: 'log',
+    collectionName: 'replayAttackNonce',
+    initOption: {
+        indices: ['value'],
+        // 只保存一分钟的数据
+        ttl: 1000 * 60,
+        ttlInterval: 1000 * 60
+    }
+})
+
+/**
  * 发布一条新的安全通知
  */
 export const insertSecurityNotice = async (

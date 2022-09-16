@@ -83,6 +83,10 @@ export type LoginResp = {
      * 应用主题
      */
     theme: AppTheme
+    /**
+     * 防重放攻击的签名密钥
+     */
+    replayAttackSecret: string
 } & NoticeInfoResp
 
 export interface NoticeInfoResp {

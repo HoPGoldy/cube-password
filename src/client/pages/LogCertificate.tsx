@@ -133,13 +133,13 @@ const LogCertificate = () => {
                             setQueryFilter({ ...queryFilter, pageIndex, pageSize })
                         }}
                     />
-
-                    <RequestLogDialog
-                        details={dialogDetail}
-                        onClose={() => setDialogDetail(undefined)}
-                    />
                 </div>
             </PageContent>
+
+            <RequestLogDialog
+                details={dialogDetail}
+                onClose={() => setDialogDetail(undefined)}
+            />
 
             <PageAction>
                 <ActionButton onClick={() => navigate(-1)}>返回</ActionButton>
