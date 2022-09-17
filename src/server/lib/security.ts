@@ -188,7 +188,7 @@ export const getReplayAttackSecret = createFileReader({ fileName: 'replayAttackS
  */
 export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
     const checkReplayAttack: SecurityChecker = async (ctx, next) => {
-        // 请求的路径不是应用的服务路径，直接跳过（因为其他路径没有服务），不然会误报
+        // 请求的路径不是应用的服务路径，直接跳过（因为其他路径没有服务器），不然会误报
         const prefixMatched = ctx.path.startsWith(getRandomRoutePrefix())
         if (!prefixMatched) return await next()
 
@@ -199,19 +199,19 @@ export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
         try {
             const replayAttackData = getReplayAttackData(ctx)
             if (!replayAttackData) {
-                throw new Error('伪造请求攻击，已被拦截，原因为未提供防重放攻击 header，请及时修改服务地址。')
+                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为未提供防重放攻击 header，请及时修改服务地址。`)
             }
 
             const replayAttackSecret = await getReplayAttackSecret()
             const nonceCollection = await getReplayAttackNonceCollection()
             // 如果有重复的随机码
             if (nonceCollection.findOne({ value: { '$eq': replayAttackData.nonce }})) {
-                throw new Error('伪造请求攻击，已被拦截，原因为重复的 nonce，请及时修改服务地址。')
+                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为重复的 nonce，请及时修改服务地址。`)
             }
 
             const isValidate = validateReplayAttackData(replayAttackData, replayAttackSecret)
             if (!isValidate) {
-                throw new Error('伪造请求攻击，已被拦截，原因为请求签名异常，请及时修改服务地址。')
+                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为请求签名异常，请及时修改服务地址。`)
             }
 
             await next()

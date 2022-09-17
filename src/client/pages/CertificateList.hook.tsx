@@ -111,7 +111,7 @@ export const useEditor = () => {
 
     const onDeleteGroup = async () => {
         Dialog.confirm({
-            message: '确定要删除本分组？删除后将无法恢复',
+            message: <div className='dark:text-slate-200'>确定要删除本分组？删除后将无法恢复</div>,
             confirmButtonText: '删除',
             confirmButtonColor: '#ef4444',
             onConfirm: async () => {
@@ -129,7 +129,7 @@ export const useEditor = () => {
         }
 
         await Dialog.confirm({
-            message: `确定要删除这 ${ids.length} 个凭证？删除后将无法恢复`,
+            message: <div className='dark:text-slate-200'>确定要删除这 {ids.length} 个凭证？删除后将无法恢复</div>,
             confirmButtonText: '删除',
             confirmButtonColor: '#ef4444',
             closeOnClickOverlay: true,

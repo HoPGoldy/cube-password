@@ -96,8 +96,8 @@ const SecurityMonitor = () => {
 
     const onReadAll = async () => {
         await Dialog.confirm({
-            title: '清除未读通知',
-            message: '确认要清除么？忽略红色通知可能会导致密码泄露。',
+            title: <div className='dark:text-slate-200'>清除未读通知</div>,
+            message: <div className='dark:text-slate-200'>确认要清除么？忽略红色通知可能会导致密码泄露。</div>,
             confirmButtonText: '清除'
         })
         const data = await readAllNotice()

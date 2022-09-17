@@ -122,8 +122,8 @@ const CertificateDetail: FC<Props> = (props) => {
     // 复制完整凭证内容
     const onCopyTotal = async () => {
         await Dialog.confirm({
-            title: '确定要复制完整凭证？',
-            message: '所有加密信息都将以明文展示，请确保索要凭证的人值得信赖。'
+            title: <div className='dark:text-slate-200'>确定要复制完整凭证？</div>,
+            message: <div className='dark:text-slate-200'>所有加密信息都将以明文展示，请确保索要凭证的人值得信赖。</div>
         })
 
         let content = title + '\n\n'
@@ -165,7 +165,7 @@ const CertificateDetail: FC<Props> = (props) => {
     const onConfirmClose = async () => {
         if (contentChange) {
             await Dialog.confirm({
-                message: '确定要关闭吗？未保存的内容都将丢失',
+                message: <div className='dark:text-slate-200'>确定要关闭吗？未保存的内容都将丢失</div>,
                 confirmButtonText: '关闭',
                 confirmButtonColor: '#ef4444'
             })
@@ -195,7 +195,7 @@ const CertificateDetail: FC<Props> = (props) => {
 
     const renderContent = () => {
         if (loading) return (
-            <div className='flex justify-center items-center'>
+            <div className='flex justify-center items-center dark:text-slate-200'>
                 解密中...
             </div>
         )
