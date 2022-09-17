@@ -73,6 +73,8 @@ const Register = () => {
         if (!loginResp) return
         const { replayAttackSecret, token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel, theme } = loginResp
 
+        // 请求发起那边访问不到 context，所以需要保存到 sessionStorage 里
+        sessionStorage.setItem('replayAttackSecret', replayAttackSecret)
         setToken(token)
         const { key, iv } = getAesMeta(password)
         setUserProfile({ pwdKey: key, pwdIv: iv, pwdSalt: salt, token, defaultGroupId, theme })
@@ -80,8 +82,6 @@ const Register = () => {
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)
         navigate('/group', { replace: true })
-        // 请求发起那边访问不到 context，所以需要保存到 sessionStorage 里
-        sessionStorage.setItem('replayAttackSecret', replayAttackSecret)
     }
 
     const renderLoginError = () => {

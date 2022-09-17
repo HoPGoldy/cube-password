@@ -26,8 +26,7 @@ export const middlewareJwtCatcher = async (ctx: Context, next: Next) => {
 
 export const verifyToken = async (token: string) => {
     return new Promise((resolve, reject) => {
-        jwt.verify(token, async (header, callback) => {
-            console.log('header', header)
+        jwt.verify(token, async (_, callback) => {
             const secret = await getJwtSecretKey()
             callback(null, secret)
         }, (err, decoded) => {

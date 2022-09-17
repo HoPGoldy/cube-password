@@ -65,8 +65,6 @@ const CertificateDetail: FC<Props> = (props) => {
     const [title, setTitle] = useState('')
     // 新建字段时的累加字段名索引
     const newFieldIndex = useRef(1)
-    // 标题输入框
-    const titleInputRef = useRef<HTMLInputElement>(null)
     // 获取凭证详情
     const { refetch } = useCertificateDetail(certificateId)
     // 提交凭证
@@ -95,11 +93,6 @@ const CertificateDetail: FC<Props> = (props) => {
             if (!certificateId) {
                 setTitle('新密码')
                 form.setFieldValue('fields', DEFAULT_FIELDS)
-                setTimeout(() => {
-                    // 默认选中输入框内容
-                    titleInputRef.current?.select()
-                    titleInputRef.current?.focus()
-                }, 500)
                 setLoading(false)
                 setDisabled(false)
                 return
@@ -280,7 +273,6 @@ const CertificateDetail: FC<Props> = (props) => {
         >
             <div className='relative bg-slate-200 dark:bg-slate-700 p-4 rounded-lg'>
                 <input
-                    ref={titleInputRef}
                     type="text"
                     value={title}
                     disabled={disabled}

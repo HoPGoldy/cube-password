@@ -58,7 +58,6 @@ const ChangePassword = () => {
 
         const postData: ChangePasswordData = { oldPwd, newPwd, code }
         const encryptedData = aes(JSON.stringify(postData), key, iv)
-        console.log(postKey + postKey)
 
         await changePwd(encryptedData)
 
