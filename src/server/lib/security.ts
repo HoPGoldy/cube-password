@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { Next } from 'koa'
 import { createFileReader, getNoticeContentPrefix, response } from '../utils'
 import { getGroupCollection, getReplayAttackNonceCollection, insertSecurityNotice } from './loki'
+import { getRandomRoutePrefix } from './randomEntry'
 
 export interface LoginRecordDetail {
     /**
@@ -187,6 +188,10 @@ export const getReplayAttackSecret = createFileReader({ fileName: 'replayAttackS
  */
 export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
     const checkReplayAttack: SecurityChecker = async (ctx, next) => {
+        // 请求的路径不是应用的服务路径，直接跳过（因为其他路径没有服务），不然会误报
+        const prefixMatched = ctx.path.startsWith(getRandomRoutePrefix())
+        if (!prefixMatched) return await next()
+
         const isAccessPath = !!options.excludePath.find(path => ctx.url.endsWith(path))
         // 允许 excludePath 接口正常访问
         if (isAccessPath) return await next()
