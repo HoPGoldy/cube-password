@@ -1,10 +1,7 @@
-import { STORAGE_PATH } from '@/config'
 import { SecurityNoticeType } from '@/types/app'
 import { AppKoaContext } from '@/types/global'
-import { ensureFileSync, readFileSync, writeFileSync } from 'fs-extra'
 import { DefaultState, Middleware } from 'koa'
-import { nanoid } from 'nanoid'
-import { getNoticeContentPrefix } from '../utils'
+import { createFileReader, getNoticeContentPrefix } from '../utils'
 import { insertSecurityNotice } from './loki'
 
 let routePrefixCache: string
@@ -12,7 +9,12 @@ let routePrefixCache: string
 /**
  * 获取随机路由前缀
  */
-export const getRandomRoutePrefix = function () {
+export const getLocalRandomRoutePrefix = createFileReader({ fileName: 'randomRoutePrefix' })
+
+/**
+ * 获取随机路由前缀
+ */
+export const getRandomRoutePrefix = async () => {
     // 使用缓存
     if (routePrefixCache !== undefined) return routePrefixCache
 
@@ -21,20 +23,13 @@ export const getRandomRoutePrefix = function () {
         return routePrefixCache = ''
     }
 
-    // 读一下本地密钥
-    const filePath = STORAGE_PATH + '/randomRoutePrefix'
-    ensureFileSync(filePath)
-    const routePrefix = readFileSync(filePath)
-    if (routePrefix.toString().length > 0) return routePrefixCache = routePrefix.toString()
-
-    // 没有密钥，新建一个
-    const newRoutePrefix = '/' + nanoid()
-    writeFileSync(filePath, newRoutePrefix)
-    return routePrefixCache = newRoutePrefix
+    const localRoutePrefix = await getLocalRandomRoutePrefix()
+    return routePrefixCache = localRoutePrefix
 }
 
 export const randomEntry: Middleware<DefaultState, AppKoaContext> = async (ctx, next) => {
-    const prefixMatched = ctx.path.startsWith(getRandomRoutePrefix())
+    const routePrefix = await getRandomRoutePrefix()
+    const prefixMatched = ctx.path.startsWith(routePrefix)
     if (prefixMatched) {
         await next()
         return

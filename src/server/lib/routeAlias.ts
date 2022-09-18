@@ -34,5 +34,9 @@ export const createRouteAlias = () => {
     return { setAlias, getAlias }
 }
 
+export type SetAliasFunc = ReturnType<typeof createRouteAlias>['setAlias']
+
+export type GetAliasFunc = ReturnType<typeof createRouteAlias>['getAlias']
+
 const { setAlias, getAlias } = createRouteAlias()
 export { setAlias, getAlias } 

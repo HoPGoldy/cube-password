@@ -1,38 +1,15 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { getRequestRoute, hasGroupLogin, response, validate } from '../utils'
+import { createLog, hasGroupLogin, response, validate } from '../utils'
 import Joi from 'joi'
 import dayjs from 'dayjs'
 import { getAppStorage, getCertificateCollection, getGroupCollection, getLogCollection, getSecurityNoticeCollection, saveLoki } from '../lib/loki'
 import { CertificateQueryLog, HttpRequestLog, SecurityNoticeType } from '@/types/app'
 import { LogListResp, LogSearchFilter, NoticeInfoResp, NoticeListResp, NoticeSearchFilter, PageSearchFilter, SecurityNoticeResp } from '@/types/http'
 import { Next } from 'koa'
-import { queryIp } from '../lib/queryIp'
-import { getIp } from '../utils'
 import { getAlias } from '../lib/routeAlias'
 import { DATE_FORMATTER } from '@/config'
 import { setAlias } from '../lib/routeAlias'
-
-/**
- * 从 ctx 生成日志对象
- */
-export const createLog = async (ctx: AppKoaContext) => {
-    const logDetail: HttpRequestLog = {
-        ip: getIp(ctx),
-        method: ctx.method,
-        url: ctx.url,
-        route: getRequestRoute(ctx),
-        responseHttpStatus: ctx.status,
-        responseStatus: (ctx.body as any)?.code,
-        date: dayjs().valueOf(),
-        requestParams: ctx.params,
-        requestBody: ctx.request.body
-    }
-
-    logDetail.location = await queryIp(logDetail.ip)
-
-    return logDetail
-}
 
 /**
  * 日记记录中间件
@@ -287,5 +264,7 @@ export const getNoticeInfo = async () => {
 
     return { unReadNoticeTopLevel, unReadNoticeCount }
 }
+
+export type GetNoticeInfoFunc = typeof getNoticeInfo
 
 export { loggerRouter, middlewareLogger }

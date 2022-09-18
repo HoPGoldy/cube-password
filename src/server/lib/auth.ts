@@ -83,3 +83,5 @@ export const createOTP = (timeout: number = 1000 * 60) => {
 
     return { pop, create }
 }
+
+export type CreateOtpFunc = typeof createOTP

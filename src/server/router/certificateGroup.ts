@@ -5,7 +5,7 @@ import Joi from 'joi'
 import { getAppStorage, getCertificateCollection, getGroupCollection, saveLoki, updateAppStorage } from '../lib/loki'
 import { CertificateGroup } from '@/types/app'
 import { DATE_FORMATTER, STATUS_CODE } from '@/config'
-import { AddGroupResp, CertificateListItem, GroupAddPasswordData, GroupRemovePasswordData } from '@/types/http'
+import { AddGroupResp, CertificateListItem, CountInfoResp, GroupAddPasswordData, GroupRemovePasswordData } from '@/types/http'
 import { sha } from '@/utils/crypto'
 import dayjs from 'dayjs'
 import { createToken, createOTP } from '../lib/auth'
@@ -49,6 +49,22 @@ const getCertificateList = async (groupId: number): Promise<CertificateListItem[
         }
     })
 }
+
+
+/**
+ * 获取当前分组和凭证数量
+ */
+groupRouter.get(setAlias('/getCountInfo', '获取分组及凭证数量'), async ctx => {
+    const groupCollection = await getGroupCollection()
+    const certificateCollection = await getCertificateCollection()
+
+    const data: CountInfoResp = {
+        group: groupCollection.count(),
+        certificate: certificateCollection.count()
+    }
+
+    response(ctx, { code: 200, data })
+})
 
 /**
  * 查询分组详情

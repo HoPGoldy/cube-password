@@ -148,6 +148,8 @@ export const insertSecurityNotice = async (
     saveLoki('log')
 }
 
+export type InsertSecurityNoticeFunc = typeof insertSecurityNotice
+
 /**
  * 获取分组集合
  */

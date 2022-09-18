@@ -33,8 +33,7 @@ interface LoginLockProps {
  * 同一天内最多失败三次，超过三次后锁定
  * 连续失败锁定两天后锁死应用后台，拒绝所有请求
  */
-const createLoginLock = (props: LoginLockProps) => {
-    const { excludePath = [] } = props
+export const createLoginLock = () => {
     // 系统是被被锁定
     let loginDisabled = false
     // 解除锁定的计时器
@@ -93,27 +92,35 @@ const createLoginLock = (props: LoginLockProps) => {
         }
     }
 
-    /**
-     * 登录锁定中间件
-     * 用于在锁定时拦截所有中间件
-     */
-    const loginLockMiddleware = async (ctx: AppKoaContext, next: Next) => {
-        const isAccessPath = !!excludePath.find(path => ctx.url.endsWith(path))
-        // 允许 excludePath 接口正常访问
-        if (isAccessPath) return await next()
+    const createCheckLoginDisable = (props: LoginLockProps) => {
+        const { excludePath = [] } = props
 
-        try {
-            if (loginDisabled) throw new Error('登录失败次数过多，请求被拒绝')
-            await next()
-        }
-        catch (e)  {
-            console.error(e)
-            response(ctx, { code: 403, msg: '登录失败次数过多，请稍后再试' })
+        /**
+         * 登录锁定中间件
+         * 用于在锁定时拦截所有中间件
+         */
+        return async (ctx: AppKoaContext, next: Next) => {
+            const isAccessPath = !!excludePath.find(path => ctx.url.endsWith(path))
+            // 允许 excludePath 接口正常访问
+            if (isAccessPath) return await next()
+
+            try {
+                if (loginDisabled) throw new Error('登录失败次数过多，请求被拒绝')
+                await next()
+            }
+            catch (e)  {
+                console.error(e)
+                response(ctx, { code: 403, msg: '登录失败次数过多，请稍后再试' })
+            }
         }
     }
 
-    return { recordLoginFail, loginLockMiddleware, getLockDetail, clearRecord }
+    
+
+    return { recordLoginFail, createCheckLoginDisable, getLockDetail, clearRecord }
 }
+
+export type LoginLocker = ReturnType<typeof createLoginLock>
 
 const lockManager = createLoginLock({ excludePath: ['/global', '/logInfo']})
 export { lockManager }
@@ -188,8 +195,9 @@ export const getReplayAttackSecret = createFileReader({ fileName: 'replayAttackS
  */
 export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
     const checkReplayAttack: SecurityChecker = async (ctx, next) => {
+        const routePrefix  = await getRandomRoutePrefix()
         // 请求的路径不是应用的服务路径，直接跳过（因为其他路径没有服务器），不然会误报
-        const prefixMatched = ctx.path.startsWith(getRandomRoutePrefix())
+        const prefixMatched = ctx.path.startsWith(routePrefix)
         if (!prefixMatched) return await next()
 
         const isAccessPath = !!options.excludePath.find(path => ctx.url.endsWith(path))

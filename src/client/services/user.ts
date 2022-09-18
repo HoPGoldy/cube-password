@@ -58,7 +58,7 @@ export const changePwd = async (data: string) => {
 
 /** 获取动态验证码绑定信息 */
 export const fetchOtpInfo = async () => {
-    return sendPost<RegisterOTPInfo>('/registerOTP')
+    return sendPost<RegisterOTPInfo>('/getOtpInfo')
 }
 
 /** 绑定动态验证码 */

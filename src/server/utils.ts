@@ -1,6 +1,8 @@
 import { STATUS_CODE, STORAGE_PATH } from '@/config'
+import { HttpRequestLog } from '@/types/app'
 import { AppKoaContext, AppResponse } from '@/types/global'
 import { formatLocation } from '@/utils/common'
+import dayjs from 'dayjs'
 import { ensureFile } from 'fs-extra'
 import { readFile, writeFile } from 'fs/promises'
 import Joi from 'joi'
@@ -136,4 +138,25 @@ export const createFileReader = (props: CreateFileReaderProps) => {
         await writeFile(filePath, initData)
         return cache = initData
     }
+}
+
+/**
+ * 从 ctx 生成日志对象
+ */
+export const createLog = async (ctx: AppKoaContext) => {
+    const logDetail: HttpRequestLog = {
+        ip: getIp(ctx),
+        method: ctx.method,
+        url: ctx.url,
+        route: getRequestRoute(ctx),
+        responseHttpStatus: ctx.status,
+        responseStatus: (ctx.body as any)?.code,
+        date: dayjs().valueOf(),
+        requestParams: ctx.params,
+        requestBody: ctx.request.body
+    }
+
+    logDetail.location = await queryIp(logDetail.ip)
+
+    return logDetail
 }

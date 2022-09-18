@@ -10,21 +10,22 @@ import { checkIsSleepTime, createCheckReplayAttack, lockManager } from '../lib/s
 import { getRandomRoutePrefix } from '../lib/randomEntry'
 import { OPEN_API } from '@/config'
 
-const routes = [globalRouter, loginRouter, certificateRouter, groupRouter, loggerRouter]
-const publicPath = OPEN_API.map(path => getRandomRoutePrefix() + path)
+export const createApiRouter = async () => {
+    const routePrefix = await getRandomRoutePrefix()
+    const routes = [globalRouter, loginRouter, certificateRouter, groupRouter, loggerRouter]
+    const publicPath = OPEN_API.map(path => routePrefix + path)
 
-const apiRouter = new Router<unknown, AppKoaContext>({
-    prefix: getRandomRoutePrefix()
-})
+    const apiRouter = new Router<unknown, AppKoaContext>({ prefix: routePrefix})
 
-apiRouter
-    .use(lockManager.loginLockMiddleware)
-    .use(createCheckReplayAttack({ excludePath: publicPath }))
-    .use(checkIsSleepTime)
-    .use(middlewareLogger)
-    .use(middlewareJwtCatcher)
-    .use(middlewareJwt.unless({ path: publicPath }))
+    apiRouter
+        .use(lockManager.loginLockMiddleware)
+        .use(createCheckReplayAttack({ excludePath: publicPath }))
+        .use(checkIsSleepTime)
+        .use(middlewareLogger)
+        .use(middlewareJwtCatcher)
+        .use(middlewareJwt.unless({ path: publicPath }))
 
-routes.forEach(route => apiRouter.use('/api', route.routes(), route.allowedMethods()))
+    routes.forEach(route => apiRouter.use('/api', route.routes(), route.allowedMethods()))
 
-export default apiRouter
+    return apiRouter
+}
