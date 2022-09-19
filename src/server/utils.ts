@@ -1,6 +1,6 @@
 import { STATUS_CODE, STORAGE_PATH } from '@/config'
 import { HttpRequestLog } from '@/types/app'
-import { AppKoaContext, AppResponse } from '@/types/global'
+import { AppKoaContext, AppResponse, MyJwtPayload } from '@/types/global'
 import { formatLocation } from '@/utils/common'
 import dayjs from 'dayjs'
 import { ensureFile } from 'fs-extra'
@@ -69,6 +69,30 @@ export const hasGroupLogin = async (ctx: AppKoaContext, groupId?: number, sendRe
 
     return true
 }
+
+/**
+ * 判断指定分组是否解密过
+ * @return 已解密则返回 undefined，未解密则返回未解密 resp
+ */
+export const getGroupLockStatus = async (groupId: number, jwtPayload: MyJwtPayload): Promise<AppResponse | undefined> => {
+    if (!groupId) return groupNotLoginResp
+
+    const collection = await getGroupCollection()
+    const item = collection.get(groupId)
+    if (!item) return groupNotLoginResp
+
+    // 没有密码就等同于已经解密了
+    const hasPassword = item.passwordSalt && item.passwordHash
+    if (!hasPassword) return undefined
+
+    if (!jwtPayload || !jwtPayload.groups || !jwtPayload.groups.includes(groupId)) {
+        return groupNotLoginResp
+    }
+
+    return undefined
+}
+
+export type GetGroupLockStatusFunc = typeof getGroupLockStatus
 
 /**
  * 获得请求发送方的 ip
