@@ -27,10 +27,16 @@ export const response = (ctx: Context, { code, msg, data }: AppResponse = initia
 }
 
 /**
- * 验证 body 参数
+ * 验证请求参数
+ *
+ * @param ctx koa上下文
+ * @param schema joi验证对象
+ * @param validateQuery 是否验证 query，为否则验证 body
+ *
+ * @returns 验证通过则返回验证后的值，否则返回 undefined
  */
-export const validate = <T>(ctx: Context, schema: Joi.ObjectSchema<T>) => {
-    const { error, value } = schema.validate(ctx.request.body)
+export const validate = <T>(ctx: Context, schema: Joi.ObjectSchema<T>, validateQuery = false) => {
+    const { error, value } = schema.validate(validateQuery ? ctx.request.query : ctx.request.body)
     if (!value || error) {
         response(ctx, { code: 400, msg: '数据结构不正确' })
         return

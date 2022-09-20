@@ -22,7 +22,7 @@ export const createRouter = (props: Props) => {
     })
 
     router.get('/logs', async ctx => {
-        const body = validate(ctx, logQuerySchema)
+        const body = validate(ctx, logQuerySchema, true)
         if (!body) return
 
         const resp = await service.getLogList(body)
@@ -35,7 +35,7 @@ export const createRouter = (props: Props) => {
     })
 
     router.get('/logs/certificates', async ctx => {
-        const body = validate(ctx, certificateLogQuerySchema)
+        const body = validate(ctx, certificateLogQuerySchema, true)
         if (!body) return
 
         const resp = await service.getCertificateLogList(body, ctx.state?.user)
@@ -49,9 +49,9 @@ export const createRouter = (props: Props) => {
     })
 
     router.get(setAlias('/notices', '查询通知数据'), async ctx => {
-        const body = validate(ctx, securityNoticeQuerySchema)
+        const body = validate(ctx, securityNoticeQuerySchema, true)
         if (!body) return
-        
+
         const resp = await service.getNoticesList(body)
         response(ctx, resp)
     })

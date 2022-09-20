@@ -48,14 +48,13 @@ export const createService = (props: Props) => {
         const { pageIndex, pageSize, routes } = query
     
         const logCollection = await getLogCollection()
-        let queryChain = logCollection.chain()
-    
+
+        const filterObj: LokiQuery<HttpRequestLog> = {}
         if (routes) {
-            queryChain = queryChain.find({
-                route: { '$containsAny': routes.split(',') }
-            })
+            filterObj.route = { '$containsAny': routes.split(',') }
         }
-    
+
+        const queryChain = logCollection.chain().find(filterObj)
         const targetLogs = queryChain
             .simplesort('date', { desc: true })
             .offset((pageIndex - 1) * pageSize)
@@ -156,8 +155,10 @@ export const createService = (props: Props) => {
         const { pageIndex, pageSize, isRead } = query
         const noticeCollection = await getNoticeCollection()
 
-        let queryChain = noticeCollection.chain()
-        if (isRead !== undefined) queryChain = queryChain.find({ isRead })
+        const filterObj: LokiQuery<SecurityNotice> = {}
+        if (isRead !== undefined) filterObj.isRead = isRead
+
+        const queryChain = noticeCollection.chain().find(filterObj)
 
         // 获取最严重的通知等级
         const topLevel = queryChain.mapReduce(
