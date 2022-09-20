@@ -130,6 +130,9 @@ type SecurityChecker = (ctx: AppKoaContext, next: Next) => Promise<unknown>
 export const checkIsSleepTime: SecurityChecker = async (ctx, next) => {
     await next()
 
+    // 只记录登录行为
+    if (!ctx.path.endsWith('/api/login')) return
+
     const requestHour = dayjs().hour()
     // 六点之后就不算睡觉时段了
     if (requestHour >= 6) return
