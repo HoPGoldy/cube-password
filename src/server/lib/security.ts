@@ -122,9 +122,6 @@ export const createLoginLock = () => {
 
 export type LoginLocker = ReturnType<typeof createLoginLock>
 
-const lockManager = createLoginLock({ excludePath: ['/global', '/logInfo']})
-export { lockManager }
-
 type SecurityChecker = (ctx: AppKoaContext, next: Next) => Promise<unknown>
 
 /**

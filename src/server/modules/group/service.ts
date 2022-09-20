@@ -13,8 +13,8 @@ import { InsertSecurityNoticeFunc } from '@/server/lib/loki'
 interface Props {
     createOTP: CreateOtpFunc
     saveData: () => Promise<void>
-    groupCollection: Collection<CertificateGroup>
-    certificateCollection: Collection<CertificateDetail>
+    getGroupCollection: () => Promise<Collection<CertificateGroup>>
+    getCertificateCollection: () => Promise<Collection<CertificateDetail>>
     getAppStorage: () => Promise<AppStorage>
     updateAppStorage: (data: Partial<AppStorage>) => Promise<void>
     createToken: (payload: Record<string, any>) => Promise<string>
@@ -24,7 +24,7 @@ interface Props {
 export const createService = (props: Props) => {
     const {
         createOTP, getAppStorage, updateAppStorage, saveData,
-        createToken, groupCollection, certificateCollection, insertSecurityNotice
+        createToken, getGroupCollection, getCertificateCollection, insertSecurityNotice
     } = props
 
     const challengeManager = createOTP()
@@ -33,7 +33,8 @@ export const createService = (props: Props) => {
      * 获取分组列表
      */
     const getCertificateGroupList = async () => {
-        return groupCollection.chain().simplesort('order').data().map(item => {
+        const collection = await getGroupCollection()
+        return collection.chain().simplesort('order').data().map(item => {
             return {
                 id: item.$loki,
                 name: item.name,
@@ -46,7 +47,8 @@ export const createService = (props: Props) => {
      * 获取指定分组下的凭证列表
      */
     const getCertificateList = async (groupId: number): Promise<CertificateListItem[]> => {
-        return certificateCollection.find({ groupId }).map(item => {
+        const collection = await getCertificateCollection()
+        return collection.find({ groupId }).map(item => {
             return {
                 id: item.$loki,
                 name: item.name,
@@ -56,6 +58,9 @@ export const createService = (props: Props) => {
     }
 
     const getCountInfo = async () => {
+        const groupCollection = await getGroupCollection()
+        const certificateCollection = await getCertificateCollection()
+
         const data: CountInfoResp = {
             group: groupCollection.count(),
             certificate: certificateCollection.count()
@@ -65,6 +70,8 @@ export const createService = (props: Props) => {
     }
 
     const addGroup = async (detail: CertificateGroup) => {
+        const groupCollection = await getGroupCollection()
+
         const result = groupCollection.insert(detail)
         if (!result) {
             return { code: 500, msg: '新增分组失败' }
@@ -88,6 +95,7 @@ export const createService = (props: Props) => {
      */
     const getGroupLockStatus = async (groupId: number, jwtPayload: MyJwtPayload): Promise<AppResponse | undefined> => {
         if (!groupId) return groupNotLoginResp
+        const groupCollection = await getGroupCollection()
 
         const item = groupCollection.get(groupId)
         if (!item) return groupNotLoginResp
@@ -110,6 +118,7 @@ export const createService = (props: Props) => {
         const lockResp = await getGroupLockStatus(groupId, payload)
         if (lockResp) return lockResp
 
+        const groupCollection = await getGroupCollection()
         const item = groupCollection.get(groupId)
         if (!item) {
             return { code: 500, msg: '分组不存在' }
@@ -129,6 +138,7 @@ export const createService = (props: Props) => {
             return prev
         }, {} as Record<number, number>)
 
+        const groupCollection = await getGroupCollection()
         const items = groupCollection.chain().data()
         const newItems = items.map(item => {
             const newOrder = groupOrders[item.$loki]
@@ -155,6 +165,9 @@ export const createService = (props: Props) => {
     const deleteGroup = async (groupId: number, payload: MyJwtPayload) => {
         const lockResp = await getGroupLockStatus(groupId, payload)
         if (lockResp) return lockResp
+
+        const groupCollection = await getGroupCollection()
+        const certificateCollection = await getCertificateCollection()
 
         const includesCertificate = certificateCollection.find({ groupId })
         if (includesCertificate.length) {
@@ -183,6 +196,8 @@ export const createService = (props: Props) => {
     }
 
     const unlockGroup = async (groupId: number, codeHash: string, payload: MyJwtPayload) => {
+        const groupCollection = await getGroupCollection()
+
         const item = groupCollection.get(groupId)
         if (!item) {
             return { code: 404, msg: '分组不存在' }
@@ -212,6 +227,8 @@ export const createService = (props: Props) => {
      * 分组设置密码
      */
     const groupAddPassword = async (groupId: number, data: GroupAddPasswordData) => {
+        const groupCollection = await getGroupCollection()
+
         const item = groupCollection.get(+groupId)
         if (!item) {
             return { code: 404, msg: '分组不存在' }
@@ -238,6 +255,8 @@ export const createService = (props: Props) => {
      * 在分组解锁、或者执行重要操作时需要请求
      */
     const requireOperate = async (groupId: number) => {
+        const groupCollection = await getGroupCollection()
+
         const item = groupCollection.get(+groupId)
         if (!item) {
             return { code: 404, msg: '分组不存在' }
@@ -255,6 +274,8 @@ export const createService = (props: Props) => {
      * 分组移除密码
      */
     const removeGroupPassword = async (groupId: number, data: GroupRemovePasswordData) => {
+        const groupCollection = await getGroupCollection()
+
         const group = groupCollection.get(+groupId)
         if (!group) {
             return { code: 404, msg: '分组不存在' }
@@ -305,6 +326,7 @@ export const createService = (props: Props) => {
         await next()
         if ((ctx.body as any)?.code === 200) return
 
+        const groupCollection = await getGroupCollection()
         const groupId = +ctx.params.groupId
         const item = groupCollection.get(groupId)
 
@@ -326,3 +348,5 @@ export const createService = (props: Props) => {
 }
 
 export type GroupService = ReturnType<typeof createService>
+
+export type GetGroupLockStatusFunc = (groupId: number, jwtPayload: MyJwtPayload) => Promise<AppResponse | undefined>

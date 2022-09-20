@@ -1,5 +1,5 @@
 import Koa from 'koa'
-import { createApiRouter } from '@/server/router'
+import { createApiRouter } from './apiRouter'
 import historyApiFallback from 'koa2-connect-history-api-fallback'
 import logger from 'koa-logger'
 import bodyParser from 'koa-body'

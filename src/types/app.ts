@@ -204,3 +204,8 @@ export interface SecurityNotice {
      */
     isRead: boolean
 }
+
+export interface NoticeInfo {
+    unReadNoticeTopLevel: SecurityNoticeType;
+    unReadNoticeCount: number;
+}

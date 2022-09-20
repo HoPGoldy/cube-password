@@ -1,4 +1,4 @@
-import { AppStorage, CertificateDetail, SecurityNoticeType } from '@/types/app'
+import { AppStorage, CertificateDetail, NoticeInfo, SecurityNoticeType } from '@/types/app'
 import { CreateOtpFunc } from '@/server/lib/auth'
 import { AppKoaContext, AppResponse } from '@/types/global'
 import { createLog, getNoticeContentPrefix } from '@/server/utils'
@@ -9,7 +9,6 @@ import { aes, aesDecrypt, getAesMeta, sha } from '@/utils/crypto'
 import { LoginLocker } from '@/server/lib/security'
 import { InsertSecurityNoticeFunc } from '@/server/lib/loki'
 import { authenticator } from 'otplib'
-import { GetNoticeInfoFunc } from '@/server/router/logger'
 import { nanoid } from 'nanoid'
 
 interface Props {
@@ -23,7 +22,7 @@ interface Props {
     getReplayAttackSecret: () => Promise<string>
     getCertificateGroupList: () => Promise<CertificateGroupDetail[]>
     getUnreadNoticeCount: () => Promise<number>
-    getNoticeInfo: GetNoticeInfoFunc
+    getNoticeInfo: () => Promise<NoticeInfo>
     getAllCertificate: () => Promise<CertificateDetail[]>
     updateCertificate: (certificates: CertificateDetail[]) => Promise<void>
 }

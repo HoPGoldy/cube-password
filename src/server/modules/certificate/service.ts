@@ -1,24 +1,25 @@
 import { CertificateDetail } from '@/types/app'
 import { MyJwtPayload } from '@/types/global'
-import { GetGroupLockStatusFunc } from '@/server/utils'
 import { DATE_FORMATTER } from '@/config'
 import { CertificateDetailResp } from '@/types/http'
 import dayjs from 'dayjs'
+import { GetGroupLockStatusFunc } from '../group/service'
 
 interface Props {
     saveData: () => Promise<void>
-    certificateCollection: Collection<CertificateDetail>
+    getCertificateCollection: () => Promise<Collection<CertificateDetail>>
     getGroupLockStatus: GetGroupLockStatusFunc
 }
 
 export const createService = (props: Props) => {
-    const { saveData, certificateCollection, getGroupLockStatus } = props
+    const { saveData, getCertificateCollection, getGroupLockStatus } = props
 
     /**
      * 查询凭证详情数据
      */
     const getCertificateDetail = async (certificateId: number, payload: MyJwtPayload) => {
-        const certificate = certificateCollection.get(certificateId)
+        const collection = await getCertificateCollection()
+        const certificate = collection.get(certificateId)
         // 找不到凭证也返回分组未解密，防止攻击者猜到哪些 id 上有信息
         const lockResp = await getGroupLockStatus(certificate?.groupId, payload)
         if (lockResp) return lockResp
@@ -36,14 +37,16 @@ export const createService = (props: Props) => {
      * 删除凭证
      */
     const deleteCertificate = async (certificateIds: number[], payload: MyJwtPayload) => {
+        const collection = await getCertificateCollection()
+
         // 先保证要删除的凭证分组都解锁了
         for (const certificateId of certificateIds) {
-            const certificate = certificateCollection.get(certificateId)
+            const certificate = collection.get(certificateId)
             const lockResp = await getGroupLockStatus(certificate?.groupId, payload)
             if (lockResp) return lockResp
         }
 
-        certificateIds.forEach(id => certificateCollection.remove(id))
+        certificateIds.forEach(id => collection.remove(id))
         saveData()
         return { code: 200 }
     }
@@ -56,16 +59,18 @@ export const createService = (props: Props) => {
      * @param payload 用户登录 jwt 载荷
      */
     const moveCertificate = async (certificateIds: number[], newGroupId: number, payload: MyJwtPayload) => {
+        const collection = await getCertificateCollection()
+
         // 先保证要移动的凭证分组都解锁了
         for (const certificateId of certificateIds) {
-            const certificate = certificateCollection.get(certificateId)
+            const certificate = collection.get(certificateId)
             const lockResp = await getGroupLockStatus(certificate?.groupId, payload)
             if (lockResp) return lockResp
         }
 
         certificateIds.forEach(id => {
-            const item = certificateCollection.get(+id)
-            if (item) certificateCollection.update({ ...item, groupId: newGroupId })
+            const item = collection.get(+id)
+            if (item) collection.update({ ...item, groupId: newGroupId })
         })
 
         saveData()
@@ -79,7 +84,8 @@ export const createService = (props: Props) => {
         const lockResp = await getGroupLockStatus(detail.groupId, payload)
         if (lockResp) return lockResp
 
-        const result = certificateCollection.insertOne({
+        const collection = await getCertificateCollection()
+        const result = collection.insertOne({
             ...detail,
             updateTime: new Date().valueOf()
         })
@@ -95,11 +101,13 @@ export const createService = (props: Props) => {
      * 修改凭证数据
      */
     const updateCertificate = async (id: number, detail: Partial<CertificateDetail>, payload: MyJwtPayload) => {
-        const item = certificateCollection.get(+id)
+        const collection = await getCertificateCollection()
+
+        const item = collection.get(+id)
         const lockResp = await getGroupLockStatus(item?.groupId, payload)
         if (lockResp) return lockResp
 
-        if (item) certificateCollection.update({ ...item, ...detail })
+        if (item) collection.update({ ...item, ...detail })
         saveData()
         return { code: 200 }
     }

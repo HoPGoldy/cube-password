@@ -1,19 +1,20 @@
-import { AppStorage, CertificateDetail, CertificateGroup, CertificateQueryLog, HttpRequestLog, SecurityNotice, SecurityNoticeType } from '@/types/app'
+import { AppStorage, CertificateDetail, CertificateGroup, CertificateQueryLog, HttpRequestLog, NoticeInfo, SecurityNotice, SecurityNoticeType } from '@/types/app'
 import { AppKoaContext, MyJwtPayload } from '@/types/global'
-import { createLog, GetGroupLockStatusFunc } from '@/server/utils'
+import { createLog } from '@/server/utils'
 import { DATE_FORMATTER } from '@/config'
 import { LogListResp, LogSearchFilter, NoticeListResp, NoticeSearchFilter, PageSearchFilter, SecurityNoticeResp } from '@/types/http'
 import { Next } from 'koa'
 import { GetAliasFunc } from '@/server/lib/routeAlias'
 import dayjs from 'dayjs'
+import { GetGroupLockStatusFunc } from '../group/service'
 
 interface Props {
     saveData: () => Promise<void>
     getAppStorage: () => Promise<AppStorage>
-    logCollection: Collection<HttpRequestLog>
-    noticeCollection: Collection<SecurityNotice>
-    groupCollection: Collection<CertificateGroup>
-    certificateCollection: Collection<CertificateDetail>
+    getLogCollection: () => Promise<Collection<HttpRequestLog>>
+    getNoticeCollection: () => Promise<Collection<SecurityNotice>>
+    getGroupCollection: () => Promise<Collection<CertificateGroup>>
+    getCertificateCollection: () => Promise<Collection<CertificateDetail>>
     getAlias: GetAliasFunc
     getGroupLockStatus: GetGroupLockStatusFunc
 }
@@ -21,7 +22,7 @@ interface Props {
 export const createService = (props: Props) => {
     const {
         getAppStorage, saveData,
-        logCollection, groupCollection, certificateCollection, noticeCollection,
+        getLogCollection, getNoticeCollection, getGroupCollection, getCertificateCollection,
         getAlias, getGroupLockStatus
     } = props
 
@@ -35,6 +36,8 @@ export const createService = (props: Props) => {
 
         const log = await createLog(ctx)
         ctx.log = log
+
+        const logCollection = await getLogCollection()
         logCollection.insertOne(log)
     }
 
@@ -44,6 +47,7 @@ export const createService = (props: Props) => {
     const getLogList = async (query: LogSearchFilter) => {
         const { pageIndex, pageSize, routes } = query
     
+        const logCollection = await getLogCollection()
         let queryChain = logCollection.chain()
     
         if (routes) {
@@ -82,6 +86,10 @@ export const createService = (props: Props) => {
      */
     const getCertificateLogList = async (query: PageSearchFilter, payload: MyJwtPayload) => {
         const { pageIndex, pageSize } = query
+
+        const logCollection = await getLogCollection()
+        const groupCollection = await getGroupCollection()
+        const certificateCollection = await getCertificateCollection()
 
         const queryChain = logCollection.chain().find({
             route: {'$contains': 'certificate/:certificateId' }
@@ -146,6 +154,7 @@ export const createService = (props: Props) => {
      */
     const getNoticesList = async (query: NoticeSearchFilter) => {
         const { pageIndex, pageSize, isRead } = query
+        const noticeCollection = await getNoticeCollection()
 
         let queryChain = noticeCollection.chain()
         if (isRead !== undefined) queryChain = queryChain.find({ isRead })
@@ -174,6 +183,7 @@ export const createService = (props: Props) => {
             })
 
         const { initTime } = await getAppStorage()
+        const logCollection = await getLogCollection()
 
         const data: NoticeListResp = {
             entries: targetLogs,
@@ -189,7 +199,8 @@ export const createService = (props: Props) => {
     /**
      * 获取当前未读通知条数和最高等级
      */
-    const getNoticeInfo = async () => {
+    const getNoticeInfo = async (): Promise<NoticeInfo> => {
+        const noticeCollection = await getNoticeCollection()
         const queryChain = noticeCollection.chain().find({ isRead: false })
     
         const unReadNoticeTopLevel = queryChain.mapReduce(
@@ -205,6 +216,7 @@ export const createService = (props: Props) => {
      * 设置通知的已读 / 未读状态
      */
     const setNoticeStatuc = async (noticeId: number, isRead: boolean) => {
+        const noticeCollection = await getNoticeCollection()
         const item = noticeCollection.get(noticeId)
         if (!item) {
             return { code: 500, msg: '通知不存在' }
@@ -221,6 +233,7 @@ export const createService = (props: Props) => {
      * 已读所有未读通知
      */
     const readAll = async () => {
+        const noticeCollection = await getNoticeCollection()
         noticeCollection.findAndUpdate({ isRead: false }, old => {
             old.isRead = true
         })
@@ -230,7 +243,7 @@ export const createService = (props: Props) => {
         return { code: 200, data }
     }
 
-    return { middlewareLogger, getLogList, getCertificateLogList, getNoticesList, setNoticeStatuc, readAll }
+    return { middlewareLogger, getLogList, getCertificateLogList, getNoticesList, setNoticeStatuc, readAll, getNoticeInfo }
 }
 
 export type LoggerService = ReturnType<typeof createService>
