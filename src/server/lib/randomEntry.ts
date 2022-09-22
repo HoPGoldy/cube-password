@@ -24,7 +24,7 @@ export const getRandomRoutePrefix = async () => {
     }
 
     const localRoutePrefix = await getLocalRandomRoutePrefix()
-    return routePrefixCache = localRoutePrefix
+    return routePrefixCache = '/' + localRoutePrefix
 }
 
 export const randomEntry: Middleware<DefaultState, AppKoaContext> = async (ctx, next) => {
