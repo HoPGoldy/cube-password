@@ -9,7 +9,7 @@ import dayjs from 'dayjs'
 import { GetGroupLockStatusFunc } from '../group/service'
 
 interface Props {
-    saveData: () => Promise<void>
+    saveData: (storageName?: string) => Promise<void>
     getAppStorage: () => Promise<AppStorage>
     getLogCollection: () => Promise<Collection<HttpRequestLog>>
     getNoticeCollection: () => Promise<Collection<SecurityNotice>>
@@ -226,7 +226,7 @@ export const createService = (props: Props) => {
         noticeCollection.update({ ...item, isRead })
 
         const data = await getNoticeInfo()
-        saveData()
+        saveData('log')
         return { code: 200, data }
     }
 
@@ -240,7 +240,7 @@ export const createService = (props: Props) => {
         })
     
         const data = await getNoticeInfo()
-        saveData()
+        saveData('log')
         return { code: 200, data }
     }
 
