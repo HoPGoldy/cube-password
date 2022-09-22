@@ -127,7 +127,8 @@ const GroupManage = () => {
     }
 
     const validatePassword = async (_: any, value: string) => {
-        if (value === addPasswordForm.getFieldValue('password')) return
+        const pwd = addPasswordForm.getFieldValue('password')
+        if (!pwd || value === pwd) return
         throw new Error('两次输入密码不一致!')
     }
 

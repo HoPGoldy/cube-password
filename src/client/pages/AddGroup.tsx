@@ -45,7 +45,8 @@ const AddGroup = () => {
     }
 
     const validatePassword = async (_: any, value: string) => {
-        if (value === form.getFieldValue('password')) return
+        const pwd = form.getFieldValue('password')
+        if (!pwd || value === pwd) return
         throw new Error('两次输入密码不一致!')
     }
 
