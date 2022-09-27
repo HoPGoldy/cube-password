@@ -103,7 +103,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
     }
 
     return (
-        <div className={'px-4 pb-4 relative w-full lg:w-[50%] 2xl:w-[50%]'}>
+        <div className={'px-4 pb-4 relative w-full'}>
             <input
                 type="text"
                 value={value?.label}

@@ -207,19 +207,19 @@ export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
         try {
             const replayAttackData = getReplayAttackData(ctx)
             if (!replayAttackData) {
-                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为未提供防重放攻击 header，请及时修改服务地址。`)
+                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为未提供防重放攻击 header。`)
             }
 
             const replayAttackSecret = await getReplayAttackSecret()
             const nonceCollection = await getReplayAttackNonceCollection()
             // 如果有重复的随机码
             if (nonceCollection.findOne({ value: { '$eq': replayAttackData.nonce }})) {
-                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为重复的 nonce，请及时修改服务地址。`)
+                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为重复的 nonce。`)
             }
 
             const isValidate = validateReplayAttackData(replayAttackData, replayAttackSecret)
             if (!isValidate) {
-                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为请求签名异常，请及时修改服务地址。`)
+                throw new Error(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为请求签名异常。`)
             }
 
             await next()
@@ -227,7 +227,7 @@ export const createCheckReplayAttack = (options: { excludePath: string[] }) => {
         catch (e) {
             console.error(e)
             const prefix = await getNoticeContentPrefix(ctx)
-            insertSecurityNotice(SecurityNoticeType.Danger, '伪造请求', prefix + '发起了一次' + e.message)
+            insertSecurityNotice(SecurityNoticeType.Info, '伪造请求', prefix + '发起了一次' + e.message)
             response(ctx, { code: STATUS_CODE.REPLAY_ATTACK, msg: '请求异常，请稍后再试' })
         }
     }

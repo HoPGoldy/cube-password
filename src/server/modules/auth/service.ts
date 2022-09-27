@@ -60,7 +60,7 @@ export const createService = (props: Props) => {
             insertSecurityNotice(
                 SecurityNoticeType.Danger,
                 '未授权状态下进行登录操作',
-                `${prefix}发起了一次非法登录，正常使用不会导致该情况发生，判断为攻击操作。`
+                `${prefix}发起了一次非法登录，已被拦截。请求 query为：${ctx.request.query.toString()}，请求 body 为：${ctx.request.body.toString()}。`
             )
             loginLocker.recordLoginFail()
             return { code: 401, msg: '挑战码错误' }

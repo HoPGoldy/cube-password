@@ -46,8 +46,7 @@ interface Props {
 const DEFAULT_FIELDS: CertificateField[] = [
     { label: '网址', value: '' },
     { label: '用户名', value: '' },
-    { label: '密码', value: '' },
-    { label: '备注', value: '' }
+    { label: '密码', value: '' }
 ]
 
 const CertificateDetail: FC<Props> = (props) => {
@@ -267,7 +266,7 @@ const CertificateDetail: FC<Props> = (props) => {
     return (
         <Popup
             round
-            className='w-[90%] md:w-[70vw] xl:w-[70vw] 2xl:w-[60vw]'
+            className='w-[90%] md:w-[60vw] xl:w-[40vw] 2xl:w-[30vw]'
             visible={visible}
             onClose={onConfirmClose}
         >
