@@ -48,7 +48,11 @@ const Register = () => {
     const onSubmit = async () => {
         await register(password)
         Notify.show({ type: 'success', message: '初始化完成' })
-        location.reload()
+
+        // 开发模式下页面没有经过后台代理，所以需要手动跳转到登录页
+        if (process.env.NODE_ENV === 'development') location.pathname = '/'
+        // 生产环境下注册页和登录页的路由时一样的，并且有随机前缀，所以直接刷新页面就行
+        else location.reload()
     }
 
     return (

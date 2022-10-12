@@ -45,7 +45,7 @@ const CertificateFieldItem: FC<Props> = (props) => {
             // 是否为链接
             value?.value.startsWith('http://') || value?.value.startsWith('https://')
         ]
-    }, [value?.value])
+    }, [value?.label, value?.value])
 
     const onLabelChange = (val: string) => {
         const newValue = { ...value, label: val }

@@ -17,7 +17,7 @@ export const middlewareJwtCatcher = async (ctx: Context, next: Next) => {
         await next()
     } catch (err) {
         if (err instanceof HttpError && err.status === 401) {
-            response(ctx, { code: 401, msg: '鉴权失败' })
+            response(ctx, { code: 401, msg: '登录已失效，请重新登录' })
         } else {
             throw err
         }
@@ -46,7 +46,7 @@ export const middlewareJwt = jwtKoa({ secret: getJwtSecretKey })
  */
 export const createToken = async (payload: Record<string, any> = {}) => {
     const secret = await getJwtSecretKey()
-    return jwt.sign(payload, secret, { expiresIn: 1000 * 60 * 30 })
+    return jwt.sign(payload, secret, { expiresIn: '30m' })
 }
 
 /**
