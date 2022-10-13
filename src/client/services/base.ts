@@ -11,16 +11,20 @@ import { createReplayAttackHeader } from '@/utils/crypto'
  */
 const baseURL = routePrefix + '/api'
 
-let token = localStorage.getItem('token')
+/**
+ * 请求所用的 token 值
+ */
+let token: string | null = null
+
+/**
+ * 获取当前正在使用的登录 token
+ */
+export const getToken = () => token
 
 /**
  * 设置请求中携带的用户 token
  */
-export const setToken = (newToken: string | null) => {
-    token = newToken
-    if (!newToken) localStorage.removeItem('token')
-    else localStorage.setItem('token', newToken)
-}
+export const setToken = (newToken: string | null) => token = newToken
 
 /**
  * 基础请求器
@@ -49,7 +53,6 @@ const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}, 
     const resp = await fetch(fullUrl, init)
 
     if (resp.status === 401 && history.location.pathname !== '/login') {
-        history.push(routePrefix + '/login', { replace: true })
         setToken(null)
     }
 

@@ -5,22 +5,17 @@ import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { useNavigate } from '../Route'
 import { Statistic } from '../components/Statistic'
-import { setToken } from '../services/base'
 import { useQuery } from 'react-query'
 import { fetchCountInfo, setAppTheme } from '../services/user'
 import { AppTheme } from '@/types/app'
+import { useLogout } from '../components/LoginAuth'
 
 const SettingPage = () => {
     const { userProfile, setUserProfile } = useContext(UserContext)
+    const onLogout = useLogout()
     const navigate = useNavigate()
     // 数量统计接口
     const { data: countInfo } = useQuery('/getCountInfo', fetchCountInfo)
-
-    const onLogout = () => {
-        setUserProfile(undefined)
-        setToken(null)
-        navigate('/login', { replace: true })
-    }
 
     const onSwitchDark = () => {
         const newTheme = userProfile?.theme === AppTheme.Light ? AppTheme.Dark : AppTheme.Light
