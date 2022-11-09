@@ -1,52 +1,41 @@
-# react-koa-template
+## keep-my-password
 
-基于 Node / TypeScript 的全栈项目模板，前端使用 react，后端使用 koa。包含如下功能：
+一个简单扁平的桌面 / 移动端密码管理器。基于 react / koa2 / typescript / vant。
 
-**项目**
+## 特性
 
-- 使用 typescript
-- 使用 yarn 管理依赖
-- 一键启动、打包前后端
-- 路径别名: `@ => src/`
-- 添加 eslint 检查
-- 包含使用了 HTTP 接口的 TODO 示例
-- 包含登录鉴权的示例
+- 🚫 无广告、无收费、不托管，自己的数据自己掌握
+- 🔀 自动生成随机用户名、强密码
+- 🔒 凭证数据加密存放
+- 🗂 分组管理 / 分组加密
+- 📝 操作记录：记录每一次请求、登录、凭证查看操作
+- 🏹 安全模块：内置一组安全策略，会分析请求，并在发现异常时进行提醒
+- 🛒 内置 TOTP 二次认证，支持 google 身份认证器等令牌工具
+- 🌙 黑夜模式
 
-**前端**
+## 部署
 
-- 使用 vite 构建项目
-- 添加 react、react-router-dom
-- 添加 react-vant 组件库
-- 添加 tailwindcss
-- 已配置路由懒加载
-- 基于 fetch 的 HTTP 请求封装
-
-**后端**
-
-- 使用 koa 构建项目
-- 添加 router、logger、bodyParser、static 中间件
-- 前端 history 模式适配
-- 添加 [joi](https://joi.dev/) 进行参数校验
-- 添加 koa-jwt 和 jsonwebtoken 进行登录鉴权
-
-## 使用方法
-
-需求：`node 16+`、`yarn`
+*请确保已安装了 node 16+*
 
 ```bash
 # 安装依赖
-yarn
-
-# 启动开发环境
-yarn dev
-
+yarn install
 # 打包项目
 yarn build
-
-# 运行打包后的项目
+# 启动项目
 yarn start
 ```
 
-开发环境中，前端默认开放在端口 `3500` 后端开放在端口 `3600`，前端接口通过代理将请求转发到后端。
+服务将默认开启在端口 3700 上，可以通过 `yarn start --port=3701` 修改端口。
 
-运行打包后的代码将会默认开放在端口 `3700`，前端静态页面由后端 koa 服务托管。
+## 数据迁移
+
+所有数据均保存在应用目录下的 `.storage` 文件夹里，所以直接将其打包然后复制到其他地方即可。
+
+## 贡献
+
+本项目系本人自用开发，如果你觉得有些功能不够完善，欢迎 PR / issue。
+
+## 许可
+
+本项目源码基于 GPL v3 许可开源，[点此](https://github.com/HoPGoldy/keep-my-password/blob/master/LICENSE) 查看更多信息。
