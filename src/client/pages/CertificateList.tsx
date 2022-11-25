@@ -1,6 +1,6 @@
 import React, { useContext, useState, ReactElement, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/client/components/Button'
-import { Dialog, Loading } from 'react-vant'
+import { Dialog, Loading, Notify } from 'react-vant'
 import { SettingO, MoreO } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
@@ -14,6 +14,9 @@ import { updateGroupName } from '../services/certificateGroup'
 import GroupLogin, { GroupUnlockRef } from '../components/GroupLogin'
 import { noticeConfig } from '../components/SecurityNotice'
 import { GroupSelectSheet } from '../components/GroupSelectSheet'
+import { queryClient } from '../components/QueryClientProvider'
+import { ReactSortable } from 'react-sortablejs'
+import { updateCertificateSort } from '../services/certificate'
 
 interface ConfigButtonProps {
     onClick: () => void
@@ -41,6 +44,8 @@ const CertificateList = () => {
     } = useEditor()
     // 分组标题
     const [groupTitle, setGroupTitle] = useState('')
+    // 是否调整了排序
+    const [sortChanged, setSortChanged] = useState(false)
     // 是否完成登录了
     const groupUnlocked = useMemo(() => {
         const groupInfo = groupList.find(item => item.id === selectedGroup)
@@ -81,6 +86,23 @@ const CertificateList = () => {
         refetchGroupList()
     }
 
+    const changeCertificateList = (certificateList: CertificateListItem[]) => {
+        queryClient.setQueryData(['group', selectedGroup, 'certificates'], certificateList)
+        setSortChanged(true)
+    }
+
+    const onSaveSort = async () => {
+        if (!certificateList) {
+            Notify.show({ type: 'danger', message: '获取凭证列表失败，请刷新后重试' })
+            return
+        }
+
+        await updateCertificateSort(certificateList.map(item => item.id))
+        setSortChanged(false)
+        Notify.show({ type: 'success', message: '排序已保存' })
+        refetchCertificateList()
+    }
+
     // 渲染操作按钮
     const renderConfigButton = (item: ConfigButtonProps) => {
         return (
@@ -104,29 +126,30 @@ const CertificateList = () => {
     // 渲染凭证列表项
     const renderCertificateItem = (item: CertificateListItem) => {
         return (
-            <div
-                key={item.id}
-                className={
-                    'mx-2 mb-4 pr-4 select-none bg-white dark:bg-slate-700 dark:text-gray-200 relative rounded-lg py-2 px-4 ' +
-                    'w-col-1 lg:w-col-2 xl:w-col-3 cursor-pointer group ' +
-                    'ring-slate-500 dark:ring-slate-600 active:bg-slate-200 transition ' +
-                    (selectedItem[item.id] ? 'ring' : 'hover:ring')
-                }
-                onClick={() => {
-                    if (showConfigArea) setSelectedItem(old => ({ ...old, [item.id]: !old[item.id]}))
-                    else onAddCertificate(item.id)
-                }}
-            >
-                <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
-                <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
-                {/* 编辑模式下右侧的小方块 */}
-                {showConfigArea && (
-                    <div className={
-                        'absolute h-4 w-4 right-4 top-[38%] text-white ' +
-                        'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
-                        (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
-                    }></div>
-                )}
+            <div key={item.id} className="mx-2 mb-4 w-col-1 lg:w-col-2 xl:w-col-3">
+                <div
+                    className={
+                        'select-none bg-white dark:bg-slate-700 dark:text-gray-200 relative rounded-lg py-2 px-4 ' +
+                        'cursor-pointer group ' +
+                        'ring-slate-500 dark:ring-slate-600 active:bg-slate-200 transition ' +
+                        (selectedItem[item.id] ? 'ring' : 'hover:ring')
+                    }
+                    onClick={() => {
+                        if (showConfigArea) setSelectedItem(old => ({ ...old, [item.id]: !old[item.id]}))
+                        else onAddCertificate(item.id)
+                    }}
+                >
+                    <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
+                    <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
+                    {/* 编辑模式下右侧的小方块 */}
+                    {showConfigArea && (
+                        <div className={
+                            'absolute h-4 w-4 right-4 top-[38%] text-white ' +
+                            'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
+                            (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
+                        }></div>
+                    )}
+                </div>
             </div>
         )
     }
@@ -157,9 +180,14 @@ const CertificateList = () => {
             </div>
         )
         return (
-            <div className='mt-4 mx-2 flex flex-wrap justify-start'>
+            <ReactSortable
+                animation={100}
+                list={certificateList}
+                setList={changeCertificateList}
+                className='mt-4 mx-2 flex flex-wrap justify-start'
+            >
                 {certificateList.map(renderCertificateItem)}
-            </div>
+            </ReactSortable>
         )
     }
 

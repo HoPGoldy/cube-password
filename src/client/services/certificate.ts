@@ -85,3 +85,10 @@ export const useMoveCertificate = (groupId: number) => {
         }
     })
 }
+
+/**
+ * 更新凭证排序
+ */
+export const updateCertificateSort = async (groupIds: number[]) => {
+    return sendPut('/updateCertificateSort', { groupIds })
+}

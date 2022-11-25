@@ -48,7 +48,7 @@ export const createService = (props: Props) => {
      */
     const getCertificateList = async (groupId: number): Promise<CertificateListItem[]> => {
         const collection = await getCertificateCollection()
-        return collection.find({ groupId }).map(item => {
+        return collection.chain().find({ groupId }).simplesort('order').data().map(item => {
             return {
                 id: item.$loki,
                 name: item.name,

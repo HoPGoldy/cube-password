@@ -34,6 +34,31 @@ export const createService = (props: Props) => {
     }
 
     /**
+     * 更新排序
+     */
+    const updateSort = async (newSortIds: number[]) => {
+        const itemOrders = newSortIds.reduce((prev, cur, index) => {
+            prev[cur] = index
+            return prev
+        }, {} as Record<number, number>)
+
+        const certificateCollection = await getCertificateCollection()
+        const items = certificateCollection
+            .chain()
+            .find({ $loki: { $containsAny: newSortIds }})
+            .data()
+
+        const newItems = items.map(item => {
+            const newOrder = itemOrders[item.$loki]
+            return { ...item, order: newOrder || 0 }
+        })
+
+        certificateCollection.update(newItems)
+        saveData()
+        return { code: 200 }
+    }
+
+    /**
      * 删除凭证
      */
     const deleteCertificate = async (certificateIds: number[], payload: MyJwtPayload) => {
@@ -112,7 +137,7 @@ export const createService = (props: Props) => {
         return { code: 200 }
     }
 
-    return { getCertificateDetail, deleteCertificate, moveCertificate, addCertificate, updateCertificate }
+    return { getCertificateDetail, deleteCertificate, moveCertificate, addCertificate, updateCertificate, updateSort }
 }
 
 export type CertificateService = ReturnType<typeof createService>

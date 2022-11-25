@@ -70,6 +70,18 @@ export const createRouter = (props: Props) => {
         response(ctx, resp)
     })
 
+    const updateCertificateSortSchema = Joi.object<{ groupIds: number[] }>({
+        groupIds: Joi.array().items(Joi.number()).required()
+    })
+
+    router.put(setAlias('/updateCertificateSort', '更新分组排序', 'PUT'), async ctx => {
+        const body = validate(ctx, updateCertificateSortSchema)
+        if (!body) return
+    
+        const resp = await service.updateSort(body.groupIds)
+        response(ctx, resp)
+    })
+
     const updateCertificateSchema = Joi.object<Partial<CertificateDetail>>({
         name: Joi.string(),
         groupId: Joi.number(),

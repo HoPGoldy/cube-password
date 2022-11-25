@@ -43,6 +43,11 @@ export interface CertificateDetail {
      */
     name: string
     /**
+     * 该凭证在所属分组中的排序
+     * 值越小，排序越靠前
+     */
+    order: number
+    /**
      * 凭证所属分组 id
      */
     groupId: number
