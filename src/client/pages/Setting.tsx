@@ -44,6 +44,7 @@ const SettingPage = () => {
                             <Cell title="修改密码" icon={<Contact />} isLink onClick={() => navigate('/ChangePassword')} />
                             <Cell title="动态验证码" icon={<Certificate />} isLink onClick={() => navigate('/OtpManage')} />
                             <Cell title="分组管理" icon={<SendGiftO />} isLink onClick={() => navigate('/GroupManage')} />
+                            <Cell title="新密码生成" icon={<SendGiftO />} isLink onClick={() => navigate('/CreatePwdSetting')} />
                             <Cell title="黑夜模式" icon={<StarO />} 
                                 rightIcon={<Switch
                                     size={24}

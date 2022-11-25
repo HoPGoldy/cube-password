@@ -71,13 +71,16 @@ const Register = () => {
         })
 
         if (!loginResp) return
-        const { replayAttackSecret, token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel, theme } = loginResp
+        const {
+            replayAttackSecret, token, defaultGroupId, groups, unReadNoticeCount, unReadNoticeTopLevel, theme,
+            createPwdAlphabet, createPwdLength
+        } = loginResp
 
         // 请求发起那边访问不到 context，所以需要保存到 sessionStorage 里
         sessionStorage.setItem('replayAttackSecret', replayAttackSecret)
         setToken(token)
         const { key, iv } = getAesMeta(password)
-        setUserProfile({ pwdKey: key, pwdIv: iv, pwdSalt: salt, token, defaultGroupId, theme })
+        setUserProfile({ pwdKey: key, pwdIv: iv, pwdSalt: salt, token, defaultGroupId, theme, createPwdAlphabet, createPwdLength })
         setNoticeInfo({ unReadNoticeCount, unReadNoticeTopLevel})
         setGroupList(groups)
         setSelectedGroup(defaultGroupId)

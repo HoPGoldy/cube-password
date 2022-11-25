@@ -10,6 +10,7 @@ import { LoginLocker } from '@/server/lib/security'
 import { InsertSecurityNoticeFunc } from '@/server/lib/loki'
 import { authenticator } from 'otplib'
 import { nanoid } from 'nanoid'
+import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/constants'
 
 interface Props {
     createOTP: CreateOtpFunc
@@ -66,7 +67,11 @@ export const createService = (props: Props) => {
             return { code: 401, msg: '挑战码错误' }
         }
 
-        const { passwordHash, defaultGroupId, theme, commonLocation, totpSecret } = await getAppStorage()
+        const {
+            passwordHash, defaultGroupId, theme, commonLocation, totpSecret,
+            createPwdAlphabet = DEFAULT_PASSWORD_ALPHABET, createPwdLength = DEFAULT_PASSWORD_LENGTH
+        } = await getAppStorage()
+
         if (!passwordHash) {
             return { code: STATUS_CODE.NOT_REGISTER, msg: '请先注册' }
         }
@@ -129,6 +134,8 @@ export const createService = (props: Props) => {
             theme,
             hasNotice: unReadNoticeCount >= 1,
             replayAttackSecret,
+            createPwdAlphabet,
+            createPwdLength,
             ...noticeInfo
         }
 

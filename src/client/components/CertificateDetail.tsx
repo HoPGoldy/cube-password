@@ -1,4 +1,4 @@
-import React, { FC, useContext, useEffect, useRef, useState } from 'react'
+import React, { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Form, Popup, Dialog, Notify } from 'react-vant'
 import { Question, Plus } from '@react-vant/icons'
 import { Button } from '@/client/components/Button'
@@ -9,7 +9,8 @@ import { UserContext } from './UserProvider'
 import { useCertificateDetail, useUpdateCertificate } from '../services/certificate'
 import { aes, aesDecrypt } from '@/utils/crypto'
 import copy from 'copy-to-clipboard'
-
+import { customAlphabet } from 'nanoid'
+import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/constants'
 
 interface UseTip {
     name: string
@@ -23,7 +24,7 @@ const useTips: UseTip[] = [
     },
     {
         name: '密码生成',
-        content: '当字段名中包含 “密码”、“password”、“pwd” 时，将会显示密码生成按钮，点击后会生成 24 位的强密码并复制到剪切板。'
+        content: '当字段名中包含 “密码”、“password”、“pwd” 时，将会显示密码生成按钮，点击后会生成 18 位的强密码并复制到剪切板。'
     },
     {
         name: '用户名',
@@ -117,6 +118,16 @@ const CertificateDetail: FC<Props> = (props) => {
 
         init()
     }, [visible])
+
+    const createPwd = useMemo(() => {
+        const {
+            createPwdAlphabet = DEFAULT_PASSWORD_ALPHABET,
+            createPwdLength = DEFAULT_PASSWORD_LENGTH
+        } = userProfile || {}
+        const fun = customAlphabet(createPwdAlphabet, createPwdLength)
+        console.log('更新 createPwd', fun)
+        return fun
+    }, [userProfile?.createPwdAlphabet, userProfile?.createPwdLength])
 
     // 复制完整凭证内容
     const onCopyTotal = async () => {
@@ -215,6 +226,7 @@ const CertificateDetail: FC<Props> = (props) => {
                                         <CertificateFieldItem
                                             showDelete={fields.length > 1}
                                             onDelete={() => remove(idx)}
+                                            createPwd={createPwd}
                                         />
                                     </Form.Item>
                                 )

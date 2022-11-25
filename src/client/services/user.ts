@@ -70,3 +70,8 @@ export const registerOtp = async (code: string) => {
 export const removeOtp = async (code: string) => {
     return sendPost('/removeOTP', { code })
 }
+
+/** 设置新密码生成规则 */
+export const setCreatePwdSetting = async (pwdAlphabet: string, pwdLength: number) => {
+    return sendPut('/createPwdSetting', { pwdAlphabet, pwdLength })
+}

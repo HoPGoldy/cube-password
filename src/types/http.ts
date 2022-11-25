@@ -87,6 +87,14 @@ export type LoginResp = {
      * 防重放攻击的签名密钥
      */
     replayAttackSecret: string
+    /**
+     * 密码生成字符集
+     */
+    createPwdAlphabet: string
+    /**
+     * 密码生成长度
+     */
+    createPwdLength: number
 } & NoticeInfoResp
 
 export interface NoticeInfoResp {
@@ -260,4 +268,18 @@ export interface GroupRemovePasswordData {
      * 绑定了令牌的话这个就会有值
      */
     code?: string
+}
+
+/**
+ * 新密码生成配置项
+ */
+export interface CreatePwdSettingData {
+    /**
+     * 字符集
+     */
+    pwdAlphabet: string
+    /**
+     * 密码长度
+     */
+    pwdLength: number
 }

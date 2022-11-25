@@ -30,6 +30,14 @@ export interface UserProfile {
      * 应用主题
      */
     theme: AppTheme
+    /**
+     * 密码生成字符集
+     */
+    createPwdAlphabet: string
+    /**
+     * 密码生成长度
+     */
+    createPwdLength: number
 }
 
 interface Context {

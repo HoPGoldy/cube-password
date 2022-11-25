@@ -1,9 +1,11 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { response } from '@/server/utils'
+import { response, validate } from '@/server/utils'
 import { SetAliasFunc } from '@/server/lib/routeAlias'
 import { AppTheme } from '@/types/app'
 import { GlobalService } from './service'
+import Joi from 'joi'
+import { CreatePwdSettingData } from '@/types/http'
 
 interface Props {
     service: GlobalService
@@ -32,6 +34,22 @@ export const createRouter = (props: Props) => {
         }
 
         await service.setTheme(themeValue as AppTheme)
+        response(ctx, { code: 200 })
+    })
+
+    const createPwdSettingSchema = Joi.object<CreatePwdSettingData>({
+        pwdAlphabet: Joi.string().allow('').required(),
+        pwdLength: Joi.number().required(),
+    })
+
+    /**
+     * 设置密码生成规则
+     */
+    router.put(setAlias('/createPwdSetting', '设置新密码生成参数', 'PUT'), async ctx => {
+        const body = validate(ctx, createPwdSettingSchema)
+        if (!body) return
+
+        await service.setCreatePwdSetting(body.pwdAlphabet, body.pwdLength)
         response(ctx, { code: 200 })
     })
 

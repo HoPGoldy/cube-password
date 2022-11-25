@@ -4,7 +4,6 @@ import { Cross, Eye, GiftO, ClosedEye } from '@react-vant/icons'
 import Textarea from './Textarea'
 import { IconBaseProps } from '@react-vant/icons/es/IconBase'
 import copy from 'copy-to-clipboard'
-import { createPwd } from '@/utils/createPassword'
 import { Notify } from 'react-vant'
 import { getRandName } from '../services/certificate'
 
@@ -13,6 +12,7 @@ interface Props {
     value?: CertificateField
     disabled?: boolean
     onChange?: (value: CertificateField) => void
+    createPwd: (size?: number | undefined) => string
     onDelete?: () => void
 }
 
@@ -33,7 +33,7 @@ interface IconButtonProps {
 }
 
 const CertificateFieldItem: FC<Props> = (props) => {
-    const { disabled, value, onChange, showDelete = true, onDelete } = props
+    const { disabled, value, onChange, showDelete = true, onDelete, createPwd } = props
     const [hiddenPassword, setHiddenPassword] = useState(true)
 
     const [isPassword, isUsername, isLink] = useMemo(() => {
@@ -58,7 +58,9 @@ const CertificateFieldItem: FC<Props> = (props) => {
     }
 
     const onCreatePassword = () => {
+        console.log(123321, createPwd)
         const newPassword = createPwd()
+        console.log('卡死', createPwd)
         onValueChange(newPassword)
         copy(newPassword)
         Notify.show({ type: 'success', message: '新密码已复制' })

@@ -13,7 +13,7 @@ interface FieldProps {
 }
 
 export const Field: FC<FieldProps> = (props) => {
-    const { type = 'text', label, value, onChange, error, errorMessage, labelClass = '', onKeyUp } = props
+    const { type = 'text', label, value, onChange, error, errorMessage, labelClass = '', onKeyUp, placeholder } = props
 
     const colorClass = error
         ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
@@ -27,7 +27,7 @@ export const Field: FC<FieldProps> = (props) => {
                     type={type}
                     value={value}
                     onChange={e => onChange && onChange(e.target.value)}
-                    placeholder={props.placeholder}
+                    placeholder={placeholder}
                     onKeyUp={onKeyUp}
                     className={'block px-3 py-2 min-h-[42px] my-2 w-full bg-slate-100 dark:text-gray-200 dark:bg-slate-600 hover:bg-white hover:dark:bg-slate-500 transition ' +
                       'border border-solid rounded-md shadow-sm placeholder-slate-400 ' +

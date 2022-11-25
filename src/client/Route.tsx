@@ -32,6 +32,7 @@ export const Routes: FC = () => {
                 { path: routePrefix + '/ChangePassword', element: lazyLoad(() => import('./pages/ChangePassword')) },
                 { path: routePrefix + '/OtpManage', element: lazyLoad(() => import('./pages/OtpManage')) },
                 { path: routePrefix + '/GroupManage', element: lazyLoad(() => import('./pages/GroupManage')) },
+                { path: routePrefix + '/CreatePwdSetting', element: lazyLoad(() => import('./pages/CreatePwdSetting')) },
             ],
             element: (
                 <LoginAuth>

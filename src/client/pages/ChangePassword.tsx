@@ -26,7 +26,8 @@ const ChangePassword = () => {
     const { setUserProfile, userProfile } = useContext(UserContext)
     const config = useContext(AppConfigContext)
     const [form] = Form.useForm<ChangePwdForm>()
-    const navigate = useNavigate()// 加载当前令牌信息
+    const navigate = useNavigate()
+    // 加载当前令牌信息
     const { data: otpInfo, isLoading: isLoadingOtpInfo } = useQuery('fetchOtpInfo', fetchOtpInfo, {
         refetchOnMount: false,
         refetchOnReconnect: false,

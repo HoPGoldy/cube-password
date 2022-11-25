@@ -89,6 +89,16 @@ export interface AppStorage {
      * 初始化时间
      */
     initTime: number
+    /**
+     * 密码生成字符集
+     * 没有就用默认值
+     */
+    createPwdAlphabet?: string
+    /**
+     * 密码生成长度
+     * 没有就用默认值
+     */
+    createPwdLength?: number
 }
 
 /**

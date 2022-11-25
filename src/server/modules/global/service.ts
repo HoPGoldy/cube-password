@@ -1,5 +1,6 @@
 import { AppConfig } from '@/types/appConfig'
 import { AppStorage, AppTheme } from '@/types/app'
+import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/constants'
 
 interface Props {
     mainColor: string[]
@@ -28,7 +29,22 @@ export const createService = (props: Props) => {
         saveStorage()
     }
 
-    return { getAppConfig, setTheme }
+    /**
+     * 设置新密码的生成参数
+     * 置空以设置为默认
+     *
+     * @param alphabet 密码生成的字符集
+     * @param length 密码生成的长度
+     */
+    const setCreatePwdSetting = async (alphabet: string, length: number) => {
+        await updateAppStorage({
+            createPwdAlphabet: alphabet || DEFAULT_PASSWORD_ALPHABET,
+            createPwdLength: length || DEFAULT_PASSWORD_LENGTH
+        })
+        saveStorage()
+    }
+
+    return { getAppConfig, setTheme, setCreatePwdSetting }
 }
 
 export type GlobalService = ReturnType<typeof createService>
