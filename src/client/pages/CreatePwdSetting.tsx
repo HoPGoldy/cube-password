@@ -98,7 +98,7 @@ const CreatePwdSetting = () => {
                         </Button>
                     </div>
 
-                    <div className='mt-2'>
+                    <div className='mt-4 md:mt-2'>
                         <Button block onClick={onReset}>
                             重置
                         </Button>
