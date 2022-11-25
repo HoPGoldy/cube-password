@@ -124,9 +124,7 @@ const CertificateDetail: FC<Props> = (props) => {
             createPwdAlphabet = DEFAULT_PASSWORD_ALPHABET,
             createPwdLength = DEFAULT_PASSWORD_LENGTH
         } = userProfile || {}
-        const fun = customAlphabet(createPwdAlphabet, createPwdLength)
-        console.log('更新 createPwd', fun)
-        return fun
+        return customAlphabet(createPwdAlphabet, createPwdLength)
     }, [userProfile?.createPwdAlphabet, userProfile?.createPwdLength])
 
     // 复制完整凭证内容

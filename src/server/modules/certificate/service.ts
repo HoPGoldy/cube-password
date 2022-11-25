@@ -43,10 +43,7 @@ export const createService = (props: Props) => {
         }, {} as Record<number, number>)
 
         const certificateCollection = await getCertificateCollection()
-        const items = certificateCollection
-            .chain()
-            .find({ $loki: { $containsAny: newSortIds }})
-            .data()
+        const items = certificateCollection.find({ '$loki': { $in: newSortIds }})
 
         const newItems = items.map(item => {
             const newOrder = itemOrders[item.$loki]

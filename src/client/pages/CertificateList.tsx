@@ -1,7 +1,7 @@
 import React, { useContext, useState, ReactElement, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/client/components/Button'
 import { Dialog, Loading, Notify } from 'react-vant'
-import { SettingO, MoreO } from '@react-vant/icons'
+import { SettingO, MoreO, Plus, Success } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
@@ -64,11 +64,6 @@ const CertificateList = () => {
         setDetailVisible(false)
     }
 
-    const onClickMainBtn = () => {
-        if (groupUnlocked) onAddCertificate(undefined)
-        else groupUnlockRef.current?.unlock()
-    }
-
     useEffect(() => {
         const groupInfo = groupList.find(item => item.id === selectedGroup)
         setGroupTitle(groupInfo?.name || '未命名分组')
@@ -86,9 +81,19 @@ const CertificateList = () => {
         refetchGroupList()
     }
 
-    const changeCertificateList = (certificateList: CertificateListItem[]) => {
-        queryClient.setQueryData(['group', selectedGroup, 'certificates'], certificateList)
-        setSortChanged(true)
+    // 排序变更
+    const changeCertificateSort = (certificateList: CertificateListItem[]) => {
+        queryClient.setQueryData(['group', selectedGroup, 'certificates'], (oldList: CertificateListItem[] | undefined) => {
+            if (!oldList) return certificateList
+
+            // 是否有数据变更，因为拖动排序组件在刚获取到数据时也会触发一次本方法
+            // 所以需要把不必要的更新剪掉
+            const noChange = oldList.map(item => item.id).join(',') === certificateList.map(item => item.id).join(',')
+            if (noChange) return oldList
+
+            setSortChanged(true)
+            return certificateList
+        })
     }
 
     const onSaveSort = async () => {
@@ -183,11 +188,31 @@ const CertificateList = () => {
             <ReactSortable
                 animation={100}
                 list={certificateList}
-                setList={changeCertificateList}
+                setList={changeCertificateSort}
                 className='mt-4 mx-2 flex flex-wrap justify-start'
             >
                 {certificateList.map(renderCertificateItem)}
             </ReactSortable>
+        )
+    }
+
+    const renderConfirmBtn = () => {
+        if (!groupUnlocked) return (
+            <ActionButton onClick={() => groupUnlockRef.current?.unlock()}>
+                解 锁
+            </ActionButton>
+        )
+
+        if (sortChanged) return (
+            <ActionButton onClick={onSaveSort}>
+                保存排序
+            </ActionButton>
+        )
+
+        return (
+            <ActionButton onClick={() => onAddCertificate(undefined)}>
+                新建密码
+            </ActionButton>
         )
     }
 
@@ -218,9 +243,10 @@ const CertificateList = () => {
                             <Button
                                 className='!hidden md:!block !mx-2'
                                 color={config?.buttonColor}
-                                onClick={() => onAddCertificate(undefined)}
+                                icon={sortChanged ? <Success fontSize={12} /> : <Plus fontSize={12} />}
+                                onClick={sortChanged ? onSaveSort : () => onAddCertificate(undefined)}
                             >
-                                + 新建密码
+                                {sortChanged ? '保存排序' : '新建密码'}
                             </Button>
                         </div>
                     )}
@@ -252,9 +278,7 @@ const CertificateList = () => {
                     <SettingO fontSize={24} />
                 </ActionIcon>
                 <GroupSelectSheet />
-                <ActionButton onClick={onClickMainBtn}>
-                    {groupUnlocked ? '新建密码' : '解 锁'}
-                </ActionButton>
+                {renderConfirmBtn()}
             </PageAction>
         </div>
     )
