@@ -60,6 +60,7 @@ const CertificateList = () => {
 
     // 添加新的凭证
     const onAddCertificate = async (certificateId: number | undefined) => {
+        clearSearch()
         setDetailVisible(true)
         setShowCertificateId(certificateId)
     }
@@ -213,21 +214,21 @@ const CertificateList = () => {
         )
     }
 
-    const renderSearchBtn = () => {
-        // 如果已经在搜索了就显示收起按钮
-        // 收起按钮什么都不做，点击后输入框失去焦点自己就收起来了
-        if (searchVisible) return (
-            <ActionIcon>
-                <ArrowDown fontSize={24} />
-            </ActionIcon>
-        )
+    // 清空搜索项
+    // 需要主动触发，不能在输入框失去焦点时触发，因为搜索时可能会有查看凭证或者滚动的操作
+    // 这时候失去焦点会导致搜索项被清空，会影响搜索体验 
+    const clearSearch = () => {
+        setSearchVisible(false)
+        setKeyword('')
+    }
 
+    const renderSearchBtn = () => {
         return (
             <ActionIcon onClick={() => {
                 setSearchVisible(!searchVisible)
                 !searchVisible && mobileSearchInputRef.current?.focus()
             }}>
-                <Search fontSize={24} />
+                {searchVisible ? <ArrowDown fontSize={24} /> : <Search fontSize={24} />}
             </ActionIcon>
         )
     }
@@ -284,8 +285,7 @@ const CertificateList = () => {
                                 fontSize={24}
                                 className='cursor-pointer mx-2 hover:opacity-75'
                                 onClick={() => {
-                                    setKeyword('')
-                                    setSearchVisible(false)
+                                    clearSearch()
                                     onSwitchConfigArea()
                                 }}
                             />
@@ -319,7 +319,6 @@ const CertificateList = () => {
                         ref={mobileSearchInputRef}
                         value={keyword}
                         onChange={e => setKeyword(e.target.value)}
-                        onBlur={() => setSearchVisible(false)}
                         placeholder="搜索"
                         className={'px-3 text-base min-h-[38px] w-full bg-white dark:text-gray-200 dark:bg-slate-600 ' +
                         'border border-solid rounded-md shadow-sm placeholder-slate-400 '}
@@ -349,7 +348,9 @@ const CertificateList = () => {
                     <SettingO fontSize={24} />
                 </ActionIcon>
                 {renderSearchBtn()}
-                <GroupSelectSheet />
+                <div onClick={clearSearch}>
+                    <GroupSelectSheet />
+                </div>
                 {renderConfirmBtn()}
             </PageAction>
         </div>
