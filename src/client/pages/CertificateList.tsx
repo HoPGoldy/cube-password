@@ -1,7 +1,7 @@
 import React, { useContext, useState, ReactElement, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/client/components/Button'
 import { Dialog, Loading, Notify } from 'react-vant'
-import { SettingO, MoreO, Plus, Success } from '@react-vant/icons'
+import { SettingO, MoreO, Plus, Success, Search } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
@@ -46,6 +46,12 @@ const CertificateList = () => {
     const [groupTitle, setGroupTitle] = useState('')
     // 是否调整了排序
     const [sortChanged, setSortChanged] = useState(false)
+    // 移动端搜索框引用
+    const mobileSearchInputRef = useRef<HTMLInputElement>(null)
+    // 移动端搜索框是否显示
+    const [searchVisible, setSearchVisible] = useState(false)
+    // 搜索关键字
+    const [keyword, setKeyword] = useState('')
     // 是否完成登录了
     const groupUnlocked = useMemo(() => {
         const groupInfo = groupList.find(item => item.id === selectedGroup)
@@ -80,6 +86,16 @@ const CertificateList = () => {
         await updateGroupName(selectedGroup, groupTitle)
         refetchGroupList()
     }
+
+    // 经过搜索关键字筛选的列表项
+    // 显示在页面上的是这个
+    const searchedCertificateList = useMemo(() => {
+        if (!certificateList) return []
+        if (!keyword) return certificateList
+
+        const lowerKeyword = keyword.toLowerCase()
+        return certificateList.filter(item => item.name.toLowerCase().includes(lowerKeyword))
+    }, [certificateList, keyword])
 
     // 排序变更
     const changeCertificateSort = (certificateList: CertificateListItem[]) => {
@@ -188,11 +204,11 @@ const CertificateList = () => {
             <ReactSortable
                 animation={100}
                 handle=".sort-handle"
-                list={certificateList}
+                list={searchedCertificateList}
                 setList={changeCertificateSort}
                 className='mt-4 mx-2 flex flex-wrap justify-start'
             >
-                {certificateList.map(renderCertificateItem)}
+                {searchedCertificateList.map(renderCertificateItem)}
             </ReactSortable>
         )
     }
@@ -236,10 +252,23 @@ const CertificateList = () => {
                     </div>
                     {groupUnlocked && (
                         <div className='shrink-0 items-center flex flex-nowrap'>
+                            <input
+                                value={keyword}
+                                onChange={e => setKeyword(e.target.value)}
+                                placeholder="搜索"
+                                className={'hidden md:block px-3 text-base min-h-[38px] mx-2 bg-white dark:text-gray-200 dark:bg-slate-600 ' +
+                                'md:w-[100px] lg:w-[200px] focus:md:w-[200px] focus:lg:w-[350px] ' +
+                                'border border-solid rounded-md shadow-sm placeholder-slate-400 transition ' +
+                                'hover:bg-slate-100 hover:dark:bg-slate-500 focus:outline-none focus:bg-slate-100 transition-w '}
+                            />
                             <MoreO
                                 fontSize={24}
                                 className='cursor-pointer mx-2 hover:opacity-75'
-                                onClick={onSwitchConfigArea}
+                                onClick={() => {
+                                    setKeyword('')
+                                    setSearchVisible(false)
+                                    onSwitchConfigArea()
+                                }}
                             />
                             <Button
                                 className='!hidden md:!block !mx-2'
@@ -259,6 +288,23 @@ const CertificateList = () => {
                         (showConfigArea ? 'mt-4 h-[90px]' : 'h-0')
                     }>
                     {configButtons.map(renderConfigButton)}
+                </div>
+
+                {/* 移动端下的搜索框，桌面端时不显示 */}
+                <div
+                    className={
+                        'md:hidden block transition-h overflow-hidden px-4 w-full ' +
+                        (searchVisible ? 'mt-4 h-[38px]' : 'h-0')
+                    }>
+                    <input
+                        ref={mobileSearchInputRef}
+                        value={keyword}
+                        onChange={e => setKeyword(e.target.value)}
+                        onBlur={() => setSearchVisible(false)}
+                        placeholder="搜索"
+                        className={'px-3 text-base min-h-[38px] w-full bg-white dark:text-gray-200 dark:bg-slate-600 ' +
+                        'border border-solid rounded-md shadow-sm placeholder-slate-400 '}
+                    />
                 </div>
 
                 {renderNoticeInfo()}
@@ -282,6 +328,12 @@ const CertificateList = () => {
             <PageAction>
                 <ActionIcon href='/Setting'>
                     <SettingO fontSize={24} />
+                </ActionIcon>
+                <ActionIcon onClick={() => {
+                    setSearchVisible(!searchVisible)
+                    !searchVisible && mobileSearchInputRef.current?.focus()
+                }}>
+                    <Search fontSize={24} />
                 </ActionIcon>
                 <GroupSelectSheet />
                 {renderConfirmBtn()}
