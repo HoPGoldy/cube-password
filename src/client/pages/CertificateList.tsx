@@ -149,7 +149,7 @@ const CertificateList = () => {
                     {/* 编辑模式下右侧的小方块 */}
                     {showConfigArea && (
                         <div className={
-                            'absolute h-4 w-4 right-4 top-[38%] text-white ' +
+                            'sort-handle absolute h-4 w-4 right-4 top-[38%] text-white ' +
                             'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
                             (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
                         }></div>
@@ -187,6 +187,7 @@ const CertificateList = () => {
         return (
             <ReactSortable
                 animation={100}
+                handle=".sort-handle"
                 list={certificateList}
                 setList={changeCertificateSort}
                 className='mt-4 mx-2 flex flex-wrap justify-start'
@@ -262,6 +263,11 @@ const CertificateList = () => {
 
                 {renderNoticeInfo()}
                 {renderCertificateList()}
+
+                {showConfigArea &&
+                <div className='w-full text-center text-gray-500 dark:text-gray-400 cursor-default mb-4 text-sm'>
+                    拖动右侧小方块可以进行排序
+                </div>}
             </PageContent>
 
             <CertificateDetail
