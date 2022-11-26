@@ -6,6 +6,7 @@ import { IconBaseProps } from '@react-vant/icons/es/IconBase'
 import copy from 'copy-to-clipboard'
 import { Notify } from 'react-vant'
 import { getRandName } from '../services/certificate'
+import { openNewTab } from '@/utils/common'
 
 interface Props {
     showDelete?: boolean
@@ -82,7 +83,10 @@ const CertificateFieldItem: FC<Props> = (props) => {
             return
         }
 
-        if (isLink) window.open(value.value, '__blank')
+        if (isLink) {
+            openNewTab(value.value)
+            return
+        }
         copy(value.value)
         Notify.show({ type: 'success', message: '已复制' + value.label })
     }
