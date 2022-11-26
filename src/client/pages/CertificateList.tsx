@@ -1,7 +1,7 @@
 import React, { useContext, useState, ReactElement, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/client/components/Button'
 import { Dialog, Loading, Notify } from 'react-vant'
-import { SettingO, MoreO, Plus, Success, Search } from '@react-vant/icons'
+import { SettingO, MoreO, Plus, Success, Search, ArrowDown } from '@react-vant/icons'
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
@@ -213,6 +213,25 @@ const CertificateList = () => {
         )
     }
 
+    const renderSearchBtn = () => {
+        // 如果已经在搜索了就显示收起按钮
+        // 收起按钮什么都不做，点击后输入框失去焦点自己就收起来了
+        if (searchVisible) return (
+            <ActionIcon>
+                <ArrowDown fontSize={24} />
+            </ActionIcon>
+        )
+
+        return (
+            <ActionIcon onClick={() => {
+                setSearchVisible(!searchVisible)
+                !searchVisible && mobileSearchInputRef.current?.focus()
+            }}>
+                <Search fontSize={24} />
+            </ActionIcon>
+        )
+    }
+
     const renderConfirmBtn = () => {
         if (!groupUnlocked) return (
             <ActionButton onClick={() => groupUnlockRef.current?.unlock()}>
@@ -329,12 +348,7 @@ const CertificateList = () => {
                 <ActionIcon href='/Setting'>
                     <SettingO fontSize={24} />
                 </ActionIcon>
-                <ActionIcon onClick={() => {
-                    setSearchVisible(!searchVisible)
-                    !searchVisible && mobileSearchInputRef.current?.focus()
-                }}>
-                    <Search fontSize={24} />
-                </ActionIcon>
+                {renderSearchBtn()}
                 <GroupSelectSheet />
                 {renderConfirmBtn()}
             </PageAction>
