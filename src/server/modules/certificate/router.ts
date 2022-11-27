@@ -59,6 +59,7 @@ export const createRouter = (props: Props) => {
     const addCertificateSchema = Joi.object<CertificateDetail>({
         name: Joi.string().required(),
         groupId: Joi.number().required(),
+        markColor: Joi.string().allow(''),
         content: Joi.string().required()
     })
 
@@ -85,6 +86,7 @@ export const createRouter = (props: Props) => {
     const updateCertificateSchema = Joi.object<Partial<CertificateDetail>>({
         name: Joi.string(),
         groupId: Joi.number(),
+        markColor: Joi.string().allow(''),
         content: Joi.string()
     })
 

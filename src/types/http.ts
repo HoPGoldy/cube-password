@@ -24,6 +24,10 @@ export interface CertificateListItem {
      * 最近更新时间
      */
     updateTime: string
+    /**
+     * 标记颜色
+     */
+    markColor?: string
 }
 
 /**
@@ -31,6 +35,7 @@ export interface CertificateListItem {
  */
 export interface CertificateDetailResp<T = string> {
     name: string
+    markColor: string
     content: T
     createTime: string
     updateTime: string

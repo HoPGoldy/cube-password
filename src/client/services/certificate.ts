@@ -28,6 +28,7 @@ export const useCertificateDetail = (id: number | undefined) => {
 interface PostData {
     id?: number
     name: string
+    markColor?: string
     groupId: number
     content: string
 }

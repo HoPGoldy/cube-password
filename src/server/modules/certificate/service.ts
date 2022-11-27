@@ -27,6 +27,7 @@ export const createService = (props: Props) => {
         const data: CertificateDetailResp = {
             name: certificate.name,
             content: certificate.content,
+            markColor: certificate.markColor || '',
             updateTime: dayjs(certificate.updateTime).format(DATE_FORMATTER),
             createTime: dayjs(certificate.meta.created).format(DATE_FORMATTER)
         }

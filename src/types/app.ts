@@ -46,7 +46,11 @@ export interface CertificateDetail {
      * 该凭证在所属分组中的排序
      * 值越小，排序越靠前
      */
-    order: number
+    order?: number
+    /**
+     * 圆点标记的颜色，默认为空（不显示原点标记）
+     */
+    markColor?: string
     /**
      * 凭证所属分组 id
      */

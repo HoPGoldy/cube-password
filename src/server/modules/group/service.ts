@@ -52,6 +52,7 @@ export const createService = (props: Props) => {
             return {
                 id: item.$loki,
                 name: item.name,
+                markColor: item.markColor || '',
                 updateTime: dayjs(item.updateTime).format(DATE_FORMATTER)
             }
         })

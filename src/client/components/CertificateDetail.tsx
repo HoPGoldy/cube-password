@@ -1,6 +1,6 @@
 import React, { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Form, Popup, Dialog, Notify } from 'react-vant'
-import { Question, Plus } from '@react-vant/icons'
+import { Question, Plus, Like } from '@react-vant/icons'
 import { Button } from '@/client/components/Button'
 import { AppConfigContext } from './AppConfigProvider'
 import CertificateFieldItem from './CertificateFieldItem'
@@ -36,6 +36,7 @@ const useTips: UseTip[] = [
     }
 ]
 
+const MARK_COLORS: string[] = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899']
 
 interface Props {
     groupId: number
@@ -67,6 +68,10 @@ const CertificateDetail: FC<Props> = (props) => {
     const newFieldIndex = useRef(1)
     // 获取凭证详情
     const { refetch } = useCertificateDetail(certificateId)
+    // 标记颜色
+    const [markColor, setMarkColor] = useState('')
+    // 是否显示颜色选择框
+    const [colorPickerVisible, setColorPickerVisible] = useState(false)
     // 提交凭证
     const { mutate, isLoading: submiting } = useUpdateCertificate(() => {
         Notify.show({ type: 'success', message: `${certificateId ? '更新' : '添加'}成功` })
@@ -90,9 +95,10 @@ const CertificateDetail: FC<Props> = (props) => {
 
         const init = async () => {
             setLoading(true)
+            setMarkColor('')
             if (!certificateId) {
-                setTitle('新密码')
                 form.setFieldValue('fields', DEFAULT_FIELDS)
+                setTitle('新密码')
                 setLoading(false)
                 setDisabled(false)
                 return
@@ -106,6 +112,7 @@ const CertificateDetail: FC<Props> = (props) => {
             }
 
             setTitle(resp.name)
+            setMarkColor(resp.markColor)
             try {
                 const content = JSON.parse(aesDecrypt(resp.content, userProfile.pwdKey, userProfile.pwdIv))
                 form.setFieldValue('fields', content)
@@ -164,6 +171,7 @@ const CertificateDetail: FC<Props> = (props) => {
         mutate({
             id: certificateId,
             name: title,
+            markColor,
             content: aes(JSON.stringify(fields), userProfile.pwdKey, userProfile.pwdIv),
             groupId
         })
@@ -198,6 +206,26 @@ const CertificateDetail: FC<Props> = (props) => {
                 <div className='font-bold mb-1 dark:text-gray-400'>{item.name}</div>
                 <div className='text-gray-600 dark:text-gray-200'>{item.content}</div>
             </div>
+        )
+    }
+
+    const renderMarkColor = (color: string) => {
+        return (
+            <div
+                key={color}
+                className={
+                    'w-6 h-6 rounded-full cursor-pointer m-4 hover:ring-2 hover:ring-gray-300 ' +
+                    'active:ring-slate-700 dark:active:ring-slate-300 transition ' +
+                    (markColor === color ? 'ring-2 ring-slate-700 dark:ring-slate-300 ' : '') +
+                    (color === '' ? 'remove-mark-color' : '')
+                }
+                style={{ backgroundColor: color }}
+                onClick={() => {
+                    setMarkColor(color)
+                    setColorPickerVisible(false)
+                    setContentChange(true)
+                }}
+            />
         )
     }
 
@@ -295,6 +323,15 @@ const CertificateDetail: FC<Props> = (props) => {
                 '>
                     <Question fontSize={24} onClick={() => setUseTipVisible(true)} /> 
                 </div>
+                <div className='
+                    absolute top-5 right-14 cursor-pointer
+                    text-gray-500 dark:text-gray-200
+                '>
+                    <Like fontSize={24} color={markColor} onClick={() => {
+                        if (disabled) Notify.show({ type: 'warning', message: '请先启用编辑' })
+                        else setColorPickerVisible(true)
+                    }} />
+                </div>
 
                 {renderContent()}
             </div>
@@ -306,6 +343,17 @@ const CertificateDetail: FC<Props> = (props) => {
             >
                 <div className='p-4' onClick={() => setUseTipVisible(false)}>
                     {useTips.map(renderUseTip)}
+                </div>
+            </Popup>
+            <Popup
+                round
+                className='w-[90%] md:w-1/2'
+                visible={colorPickerVisible}
+                onClose={() => setColorPickerVisible(false)}
+            >
+                <div className='p-4 flex flex-row flex-wrap justify-center'>
+                    {MARK_COLORS.map(renderMarkColor)}
+                    {renderMarkColor('')}
                 </div>
             </Popup>
         </Popup>

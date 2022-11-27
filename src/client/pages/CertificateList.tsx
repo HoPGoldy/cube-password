@@ -145,6 +145,27 @@ const CertificateList = () => {
         )
     }
 
+    // 渲染凭证列表项右侧的标记
+    const renderRightMark = (item: CertificateListItem) => {
+        // 编辑模式下右侧的小方块
+        if (showConfigArea) return (
+            <div className={
+                'sort-handle absolute h-4 w-4 right-4 top-[38%] text-white ' +
+                'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
+                (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
+            }></div>
+        )
+
+        if (item.markColor) return (
+            <div
+                className='absolute h-4 w-4 right-4 top-[38%] rounded-full'
+                style={{ backgroundColor: item.markColor }}
+            ></div>
+        )
+
+        return null
+    }
+
     // 渲染凭证列表项
     const renderCertificateItem = (item: CertificateListItem) => {
         return (
@@ -163,14 +184,7 @@ const CertificateList = () => {
                 >
                     <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
                     <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
-                    {/* 编辑模式下右侧的小方块 */}
-                    {showConfigArea && (
-                        <div className={
-                            'sort-handle absolute h-4 w-4 right-4 top-[38%] text-white ' +
-                            'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
-                            (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
-                        }></div>
-                    )}
+                    {renderRightMark(item)}
                 </div>
             </div>
         )
@@ -278,7 +292,7 @@ const CertificateList = () => {
                                 placeholder="搜索"
                                 className={'hidden md:block px-3 text-base min-h-[38px] mx-2 bg-white dark:text-gray-200 dark:bg-slate-600 ' +
                                 'md:w-[100px] lg:w-[200px] focus:md:w-[200px] focus:lg:w-[350px] ' +
-                                'border border-solid rounded-md shadow-sm placeholder-slate-400 transition ' +
+                                'border border-solid dark:border-slate-700 rounded-md shadow-sm placeholder-slate-400 transition ' +
                                 'hover:bg-slate-100 hover:dark:bg-slate-500 focus:outline-none focus:bg-slate-100 transition-w '}
                             />
                             <MoreO
