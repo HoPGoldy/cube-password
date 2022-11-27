@@ -2,12 +2,28 @@
 
 一个简单扁平的桌面 / 移动端密码管理器。基于 react / koa2 / typescript / vant。
 
+本项目是一个单纯的全栈 web 应用，只负责文本类型的隐私信息加密、存放、管理功能。不包含浏览器插件等周边拓展，因此无法提供自动密码填充等相关功能。
+
+<details>
+    <summary style="cursor:pointer">查看桌面端截图</summary>
+    <a href="https://imgse.com/i/zUYCp4">
+        <img src="https://s1.ax1x.com/2022/11/27/zUYCp4.png" title="预览"/>
+    </a>
+</details>
+
+<details>
+    <summary style="cursor:pointer">查看移动端截图</summary>
+    <div style="display: flex;">
+        <img src="https://s1.ax1x.com/2022/11/27/zUYphF.png" width="200" title="图片上传"/>
+    </div>
+</details>
+
 ## 特性
 
-- 🚫 无广告、无收费、不托管，自己的数据自己掌握
-- 🔀 自动生成随机用户名、强密码
-- 🔒 凭证数据加密存放
-- 🗂 分组管理 / 分组加密
+- 🚫 无广告、无收费、完全开源，自己的数据自己掌握
+- 🔀 自动生成随机用户名、自定义强密码
+- 🔒 凭证内容加密存放、支持搜索、排序、颜色标记功能
+- 🗂 支持额外加密的分组
 - 📝 操作记录：记录每一次请求、登录、凭证查看操作
 - 🏹 安全模块：内置一组安全策略，会分析请求，并在发现异常时进行提醒
 - 🛒 内置 TOTP 二次认证，支持 google 身份认证器等令牌工具

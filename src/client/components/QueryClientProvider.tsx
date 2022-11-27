@@ -8,7 +8,6 @@ export const QueryProvider: FC = (props) => {
     return (
         <QueryClientProvider client={queryClient}>
             {props.children}
-            <ReactQueryDevtools initialIsOpen={false} position='bottom-right' />
         </QueryClientProvider>
     )
 }
