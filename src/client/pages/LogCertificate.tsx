@@ -1,7 +1,7 @@
 import React, { ReactNode, useContext, useState } from 'react'
 import { Lock } from '@react-vant/icons'
 import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
-import { useNavigate } from '../Route'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { useCertificateLogList } from '../services/log'
 import { LogSearchFilter } from '@/types/http'

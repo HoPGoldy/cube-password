@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react'
 import { ActionButton, PageAction, PageContent } from '../components/PageWithAction'
-import { useNavigate } from '../Route'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { useLogList } from '../services/log'
 import { LogSearchFilter } from '@/types/http'

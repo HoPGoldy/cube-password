@@ -5,7 +5,7 @@ import { SettingO, MoreO, Plus, Success, Search, ArrowDown } from '@react-vant/i
 import { hasGroupLogin, useJwtPayload, UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { AppConfigContext } from '../components/AppConfigProvider'
-import { Link } from '../Route'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import { CertificateListItem } from '@/types/http'
 import CertificateDetail from '../components/CertificateDetail'

@@ -9,7 +9,7 @@ import { UserContext } from '../components/UserProvider'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
 import { addGroup } from '../services/certificateGroup'
 import { AppConfigContext } from '../components/AppConfigProvider'
-import { useNavigate } from '../Route'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { Field } from '../components/Field'
 

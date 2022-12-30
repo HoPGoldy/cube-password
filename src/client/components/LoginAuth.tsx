@@ -1,6 +1,5 @@
 import React, { FC, useContext, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import { routePrefix } from '../constans'
 import { UserContext } from './UserProvider'
 import { getToken, setToken } from '../services/base'
 
@@ -32,7 +31,7 @@ export const LoginAuth: FC = ({ children }) => {
 
     if (!userProfile) {
         return (
-            <Navigate to={routePrefix + '/login'} replace />
+            <Navigate to="/login" replace />
         )
     }
 

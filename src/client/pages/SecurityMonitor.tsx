@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'
 import { ArrowLeft, OrdersO, Success } from '@react-vant/icons'
 import { ActionButton, ActionIcon, PageAction, PageContent } from '../components/PageWithAction'
-import { useNavigate } from '../Route'
+import { useNavigate } from 'react-router-dom'
 import { readAllNotice, useNoticeList } from '../services/log'
 import { Button } from '../components/Button'
 import { ActionSheet, Popup, Sticky, Dialog } from 'react-vant'

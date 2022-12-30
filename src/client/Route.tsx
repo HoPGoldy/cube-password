@@ -1,5 +1,5 @@
 import React, { ComponentType, FC, lazy, Suspense, useLayoutEffect, useState } from 'react'
-import { Router, useRoutes, useNavigate as useRouterNavigate, NavigateFunction, Link as RouterLink, LinkProps } from 'react-router-dom'
+import { Router, useRoutes } from 'react-router-dom'
 import { createBrowserHistory } from 'history'
 import Loading from './components/Loading'
 import { LoginAuth } from './components/LoginAuth'
@@ -18,21 +18,21 @@ const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) =>
 export const Routes: FC = () => {
     const routes = useRoutes([
         {
-            path: routePrefix + '/',
+            path: '/',
             children: [
-                { path: routePrefix + '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
-                { path: routePrefix + '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
-                { path: routePrefix + '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
-                { path: routePrefix + '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
-                { path: routePrefix + '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
-                { path: routePrefix + '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
-                { path: routePrefix + '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
-                { path: routePrefix + '/Setting', element: lazyLoad(() => import('./pages/Setting')) },
-                { path: routePrefix + '/About', element: lazyLoad(() => import('./pages/About')) },
-                { path: routePrefix + '/ChangePassword', element: lazyLoad(() => import('./pages/ChangePassword')) },
-                { path: routePrefix + '/OtpManage', element: lazyLoad(() => import('./pages/OtpManage')) },
-                { path: routePrefix + '/GroupManage', element: lazyLoad(() => import('./pages/GroupManage')) },
-                { path: routePrefix + '/CreatePwdSetting', element: lazyLoad(() => import('./pages/CreatePwdSetting')) },
+                { path: '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
+                { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
+                { path: '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
+                { path: '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
+                { path: '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
+                { path: '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
+                { path: '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
+                { path: '/Setting', element: lazyLoad(() => import('./pages/Setting')) },
+                { path: '/About', element: lazyLoad(() => import('./pages/About')) },
+                { path: '/ChangePassword', element: lazyLoad(() => import('./pages/ChangePassword')) },
+                { path: '/OtpManage', element: lazyLoad(() => import('./pages/OtpManage')) },
+                { path: '/GroupManage', element: lazyLoad(() => import('./pages/GroupManage')) },
+                { path: '/CreatePwdSetting', element: lazyLoad(() => import('./pages/CreatePwdSetting')) },
             ],
             element: (
                 <LoginAuth>
@@ -41,7 +41,7 @@ export const Routes: FC = () => {
             )
         },
         {
-            path: routePrefix + '/login',
+            path: '/login',
             element: lazyLoad(() => import('./pages/Login'))
         }
     ])
@@ -71,26 +71,7 @@ export const BrowserRouter: FC = (props) => {
             location={state.location}
             navigationType={state.action}
             navigator={history}
+            basename={routePrefix}
         />
-    )
-}
-
-export const useNavigate = (): NavigateFunction => {
-    const nav = useRouterNavigate()
-
-    return (arg1, ...args) => {
-        const realArg1 = typeof arg1 === 'string' ? routePrefix + arg1 : arg1
-        return (nav as any)(realArg1, ...args)
-    }
-}
-
-export const Link: FC<LinkProps> = (props) => {
-    const { to, ...restProps } = props
-    const realTo = routePrefix + to
-
-    return (
-        <RouterLink to={realTo} {...restProps}>
-            {props.children}
-        </RouterLink>
     )
 }
