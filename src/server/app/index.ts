@@ -1,30 +1,38 @@
 import Koa from 'koa'
-import { createApiRouter } from './apiRouter'
+import { buildRouter } from './buildRouter'
 import historyApiFallback from 'koa2-connect-history-api-fallback'
 import logger from 'koa-logger'
 import bodyParser from 'koa-body'
-import { serveStatic } from '@/server/lib/static'
-import { getRandomRoutePrefix, randomEntry } from '@/server/lib/randomEntry'
+import { getStoragePath, setBaseStoragePath, setConfigPath } from '../lib/fileAccessor'
+import { ensureDir } from 'fs-extra'
+import { upgradeDatabase } from '../lib/databaseUpgrader'
+import { fontentServe } from '../lib/fontentServe'
 
 interface Props {
-  serverPort: number
+  servePort: number
+  storagePath: string
+  configPath: string
+  fontentPath: string
 }
 
 export const runApp = async (props: Props) => {
-    const { serverPort } = props
-    const app = new Koa()
+    const { servePort } = props
+    setConfigPath(props.configPath)
+    setBaseStoragePath(props.storagePath)
 
-    const apiRouter = await createApiRouter()
-    const routePrefix = await getRandomRoutePrefix()
+    await ensureDir(getStoragePath())
+    await upgradeDatabase(getStoragePath('cube-password.db'))
+
+    const app = new Koa()
+    const apiRouter = await buildRouter()
 
     app.use(logger())
-        .use(randomEntry)
         .use(bodyParser({ multipart: true }))
-        .use(serveStatic)
+        .use(historyApiFallback({ whiteList: ['/api'] }))
+        .use(fontentServe(props.fontentPath))
         .use(apiRouter.routes())
         .use(apiRouter.allowedMethods())
-        .use(historyApiFallback({ whiteList: ['/api'] }))
-        .listen(serverPort, () => {
-            console.log(`server is running at http://localhost:${serverPort}${routePrefix}/`)
+        .listen(servePort, () => {
+            console.log(`server is running at http://localhost:${servePort}/`)
         })
 }

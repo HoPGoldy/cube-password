@@ -2,12 +2,14 @@ import { Context, Next, HttpError } from 'koa'
 import jwt from 'jsonwebtoken'
 import jwtKoa from 'koa-jwt'
 import { nanoid } from 'nanoid'
-import { createFileReader, response } from '../utils'
+import { response } from '../utils'
+import { AppKoaContext, MyJwtPayload } from '@/types/global'
+import { createAccessor } from './fileAccessor'
 
 /**
  * 获取 jwt 密钥
  */
-export const getJwtSecretKey = createFileReader({ fileName: 'jwtSecret' })
+export const jwtSecretFile = createAccessor({ fileName: 'jwtSecret' })
 
 /**
  * 鉴权失败时完善响应提示信息
@@ -24,10 +26,26 @@ export const middlewareJwtCatcher = async (ctx: Context, next: Next) => {
     }
 }
 
+/**
+ * 通过 ctx 获取用户登录的 jwt 载荷
+ * 
+ * @param ctx 要获取信息的上下文
+ * @param block 获取不到时是否添加响应
+ */
+export const getJwtPayload = (ctx: AppKoaContext, block = true) => {
+    const userPayload = ctx.state?.user
+    if (!userPayload?.userId && block) {
+        response(ctx, { code: 400, msg: '未知用户，请重新登录' })
+        return
+    }
+
+    return userPayload as MyJwtPayload
+}
+
 export const verifyToken = async (token: string) => {
     return new Promise((resolve, reject) => {
         jwt.verify(token, async (_, callback) => {
-            const secret = await getJwtSecretKey()
+            const secret = await jwtSecretFile.read()
             callback(null, secret)
         }, (err, decoded) => {
             if (err) return reject(err)
@@ -39,14 +57,20 @@ export const verifyToken = async (token: string) => {
 /**
  * JWT 鉴权中间件
  */
-export const middlewareJwt = jwtKoa({ secret: getJwtSecretKey })
+export const middlewareJwt = jwtKoa({
+    secret: jwtSecretFile.read,
+    getToken: ctx => {
+        if (ctx.header.authorization) return ctx.header.authorization.replace('Bearer ', '')
+        return ctx.cookies.get('cube-password-token') || null
+    },
+})
 
 /**
  * 生成新的 jwt token
  */
 export const createToken = async (payload: Record<string, any> = {}) => {
-    const secret = await getJwtSecretKey()
-    return jwt.sign(payload, secret, { expiresIn: '30m' })
+    const secret = await jwtSecretFile.read()
+    return jwt.sign(payload, secret, { expiresIn: '30d' })
 }
 
 /**

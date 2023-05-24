@@ -1,117 +1,64 @@
-import qs from 'qs'
-import { history } from '../Route'
 import { AppResponse } from '@/types/global'
-import { Notify } from 'react-vant'
-import { routePrefix } from '../constans'
+import { store } from '@/client/store'
+import { logout } from '@/client/store/user'
+import { message } from '../utils/message'
+import { createReplayAttackHeaders } from '@/utils/crypto'
+import axios from 'axios'
+import type { AxiosRequestConfig } from 'axios'
+import { QueryClient } from 'react-query'
 import { STATUS_CODE } from '@/config'
-import { createReplayAttackHeader } from '@/utils/crypto'
 
 /**
- * 后端地址
+ * 是否为标准后端数据结构
  */
-const baseURL = routePrefix + '/api'
+const isAppResponse = (data: unknown): data is AppResponse<unknown> => {
+    return typeof data === 'object' && data !== null && 'code' in data
+}
 
-/**
- * 请求所用的 token 值
- */
-let token: string | null = null
+export const axiosInstance = axios.create({ baseURL: '/api/' })
 
-/**
- * 获取当前正在使用的登录 token
- */
-export const getToken = () => token
+axiosInstance.interceptors.request.use(config => {
+    const state = store.getState()
+    const { token, replayAttackSecret } = state.user
 
-/**
- * 设置请求中携带的用户 token
- */
-export const setToken = (newToken: string | null) => token = newToken
-
-/**
- * 基础请求器
- *
- * @param url 请求 url
- * @param requestInit 请求初始化配置
- */
-const fetcher = async <T = unknown>(url: string, requestInit: RequestInit = {}, body?: Record<string, any>): Promise<T> => {
-    const bodyData = body ? JSON.stringify(body) : ''
-    const init = {
-        ...requestInit,
-        headers: { 'Content-Type': 'application/json', ...requestInit.headers }
-    }
-    if (bodyData) init.body = bodyData
-    if (token) (init.headers as any).Authorization = `Bearer ${token}`
-
-    const pureUrl = url.startsWith('/') ? url : ('/' + url)
-    const fullUrl = baseURL + pureUrl
-
-    const replayAttackSecret = sessionStorage.getItem('replayAttackSecret')
+    // 附加 jwt header
+    if (token) config.headers.Authorization = `Bearer ${token}`
+    // 附加防重放攻击 header
     if (replayAttackSecret) {
-        const fixReplayAttackHeaders = createReplayAttackHeader(fullUrl, bodyData || '{}', replayAttackSecret)
-        init.headers = { ...init.headers, ...fixReplayAttackHeaders }
+        const raHeaders = createReplayAttackHeaders(`${config.baseURL}${config.url}`, replayAttackSecret)
+        Object.assign(config.headers, raHeaders)
     }
 
-    const resp = await fetch(fullUrl, init)
+    return config
+})
 
-    if (resp.status === 401 && history.location.pathname !== '/login') {
-        setToken(null)
+axiosInstance.interceptors.response.use(resp => {
+    if (!isAppResponse(resp.data)) return resp
+    const { code, msg } = resp.data
+
+    if (code === 401) {
+        store.dispatch(logout())
+    }
+    else if (code === STATUS_CODE.BAN) {
+        store.dispatch(logout())
+        message('error', msg || '您已被封禁')
+    }
+    else if (code !== 200) {
+        const type = code === 401 ? 'warning' : 'error'
+        message(type, msg || '未知错误')
     }
 
-    const data: AppResponse<T> = await resp.json()
-    if (data.code !== 200) {
-        if (data.code === STATUS_CODE.NEED_CODE) {
-            Notify.show({ type: 'warning', message: data.msg || '未知错误' })
-        }
-        else {
-            Notify.show({ type: 'danger', message: data.msg || '未知错误' })
-        }
-        throw data
-    }
+    return resp
+})
 
-    return data.data as T
+export const requestGet = async <T = any>(url: string, config?: AxiosRequestConfig) => {
+    const resp = await axiosInstance.get<AppResponse<T>>(url, config)
+    return resp.data
 }
 
-/**
- * 使用 GET 发起请求
- *
- * @param url 请求路由
- * @param query 请求的参数，会拼接到 url 后面
- */
-export const sendGet = async function <T>(url: string, query = {}) {
-    const requestUrl = url + qs.stringify(query, { addQueryPrefix: true, arrayFormat: 'comma' })
-    const config: RequestInit = { method: 'GET' }
-
-    return fetcher<T>(requestUrl, config)
+export const requestPost = async <T = any, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>) => {
+    const resp = await axiosInstance.post<AppResponse<T>>(url, data, config)
+    return resp.data
 }
 
-/**
- * 使用 POST 发起请求
- *
- * @param url 请求路由
- * @param body 请求参数，会放在 body 里
- */
-export const sendPost = async function <T>(url: string, body = {}) {
-    const config: RequestInit = { method: 'POST'}
-    return fetcher<T>(url, config, body)
-}
-
-/**
- * 使用 PUT 发起请求
- *
- * @param url 请求路由
- * @param body 请求参数，会放在 body 里
- */
-export const sendPut = async function <T>(url: string, body = {}) {
-    const config: RequestInit = { method: 'PUT' }
-    return fetcher<T>(url, config, body)
-}
-
-/**
- * 使用 DELETE 发起请求
- *
- * @param url 请求路由
- * @param body 请求参数，会放在 body 里
- */
-export const sendDelete = async function <T>(url: string, body = {}) {
-    const config: RequestInit = { method: 'DELETE' }
-    return fetcher<T>(url, config, body)
-}
+export const queryClient = new QueryClient()

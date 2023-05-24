@@ -1,6 +1,6 @@
-import { getServePort } from './utils/common'
-import { runApp } from './server/app'
+import { actionRun } from './cli/run'
 
-runApp({
-    serverPort: getServePort()
+actionRun({
+    storage: process.cwd(),
+    port: process.env.NODE_ENV === 'development' ? '3600' : '3700'
 })

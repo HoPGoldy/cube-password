@@ -1,23 +1,25 @@
 import { Context } from 'koa'
-import { HttpRequestLog } from './app'
 
 /**
  * 后端接口返回的数据格式
  */
-export type AppResponse<T = unknown> = {
+export type AppResponse<T = any> = {
     code?: number
     msg?: string
     data?: T
 }
 
 export interface MyJwtPayload {
-    groups?: number[]
+    userId: number
+    isAdmin: boolean
     lat: number
     exp: number
 }
 
 export type AppKoaContext = Context & {
     request: { body: Record<string, unknown> }
+    /**
+     * 用于存储 jwt 解析后的数据
+     */
     state?: { user: MyJwtPayload }
-    log?: HttpRequestLog
 }

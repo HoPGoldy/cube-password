@@ -61,21 +61,20 @@ export const aesDecrypt = (str: string, key: CryptoJS.lib.WordArray, iv: CryptoJ
  * @param body 请求 body
  * @param secretKey 签名私钥
  */
-export const createReplayAttackHeader = (url: string, bodyData: string, secretKey: string) => {
-    // console.log('bodyData', bodyData)
+export const createReplayAttackHeaders = (url: string, secretKey: string) => {
     const timestamp = Date.now()
-    const nonce = nanoid(128)
-    const sign = sha(`${url}${bodyData}${nonce}${timestamp}${secretKey}`)
+    const nonce = nanoid()
+    const sign = sha(`${url}${nonce}${timestamp}${secretKey}`)
+
     return {
-        'X-kmp-temestamp': timestamp,
-        'X-kmp-nonce': nonce,
-        'X-kmp-signature': sign,
+        'X-cubnote-temestamp': timestamp.toString(),
+        'X-cubnote-nonce': nonce,
+        'X-cubnote-signature': sign
     }
 }
 
 interface ReplayAttackData {
     url: string
-    body: Record<string, any>
     timestamp: number
     nonce: string
     signature: string
@@ -87,10 +86,9 @@ interface ReplayAttackData {
 export const getReplayAttackData = (ctx: AppKoaContext): ReplayAttackData | undefined => {
     const data = {
         url: ctx.url,
-        body: ctx.request.body,
-        timestamp: Number(ctx.get('X-kmp-temestamp')),
-        nonce: ctx.get('X-kmp-nonce'),
-        signature: ctx.get('X-kmp-signature')
+        timestamp: Number(ctx.get('X-cubnote-temestamp')),
+        nonce: ctx.get('X-cubnote-nonce'),
+        signature: ctx.get('X-cubnote-signature')
     }
 
     if (!data.timestamp || !data.nonce || !data.signature) return undefined
@@ -100,14 +98,13 @@ export const getReplayAttackData = (ctx: AppKoaContext): ReplayAttackData | unde
 /**
  * 验证防重放攻击 header
  */
-export const validateReplayAttackData= (data: ReplayAttackData, secretKey: string) => {
-    const { timestamp, url, body, nonce, signature } = data
-    // console.log('bodyData', JSON.stringify(body))
+export const validateReplayAttackData = (data: ReplayAttackData, secretKey: string) => {
+    const { timestamp, url, nonce, signature } = data
 
     const serverTimestamp = Date.now()
     // 服务器时间和客户端时间相差 1 分钟以上，认为是无效请求
     if (serverTimestamp - timestamp > 1000 * 60) return false
 
-    const newSign = sha(`${url}${JSON.stringify(body)}${nonce}${timestamp}${secretKey}`)
+    const newSign = sha(`${url}${nonce}${timestamp}${secretKey}`)
     return newSign === signature
 }

@@ -1,10 +1,13 @@
-import React, { ComponentType, FC, lazy, Suspense, useLayoutEffect, useState } from 'react'
-import { Router, useRoutes } from 'react-router-dom'
-import { createBrowserHistory } from 'history'
-import Loading from './components/Loading'
-import { LoginAuth } from './components/LoginAuth'
-import { AppContainer } from './components/AppContainer'
-import { routePrefix } from './constans'
+import React, { ComponentType, lazy, Suspense } from 'react'
+import { createHashRouter, Outlet } from 'react-router-dom'
+import Loading from './layouts/loading'
+import { LoginAuth } from './layouts/loginAuth'
+import { AppContainer } from './layouts/appContainer'
+import Search from './pages/search'
+import Entry from './pages/jumpToDefaultDataEntry'
+import { AppConfigProvider } from './layouts/appConfigProvider'
+import DiaryEdit from './pages/diaryEdit'
+import MonthList from './pages/monthList'
 
 const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
     const Comp = lazy(compLoader)
@@ -15,63 +18,48 @@ const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) =>
     )
 }
 
-export const Routes: FC = () => {
-    const routes = useRoutes([
-        {
-            path: '/',
-            children: [
-                { path: '/group', element: lazyLoad(() => import('./pages/CertificateList')) },
-                { path: '/addGroup', element: lazyLoad(() => import('./pages/AddGroup')) },
-                { path: '/securityEntry', element: lazyLoad(() => import('./pages/SecurityMonitor')) },
-                { path: '/LogRequest', element: lazyLoad(() => import('./pages/LogRequest')) },
-                { path: '/LogLogin', element: lazyLoad(() => import('./pages/LogLogin')) },
-                { path: '/LogCertificate', element: lazyLoad(() => import('./pages/LogCertificate')) },
-                { path: '/NoticeList', element: lazyLoad(() => import('./pages/NoticeList')) },
-                { path: '/Setting', element: lazyLoad(() => import('./pages/Setting')) },
-                { path: '/About', element: lazyLoad(() => import('./pages/About')) },
-                { path: '/ChangePassword', element: lazyLoad(() => import('./pages/ChangePassword')) },
-                { path: '/OtpManage', element: lazyLoad(() => import('./pages/OtpManage')) },
-                { path: '/GroupManage', element: lazyLoad(() => import('./pages/GroupManage')) },
-                { path: '/CreatePwdSetting', element: lazyLoad(() => import('./pages/CreatePwdSetting')) },
-            ],
-            element: (
-                <LoginAuth>
-                    <AppContainer />
-                </LoginAuth>
-            )
-        },
-        {
-            path: '/login',
-            element: lazyLoad(() => import('./pages/Login'))
-        }
-    ])
-
-    return routes
-}
-
-/**
- * 暴露实例，用于组件外导航
- */
-export const history = createBrowserHistory({ window })
-
-/**
- * 暴露了 history 实例的路由组件
- */
-export const BrowserRouter: FC = (props) => {
-    const [state, setState] = useState({
-        action: history.action,
-        location: history.location
-    })
-
-    useLayoutEffect(() => history.listen(setState), [history])
-
-    return (
-        <Router
-            {...props}
-            location={state.location}
-            navigationType={state.action}
-            navigator={history}
-            basename={routePrefix}
-        />
-    )
-}
+export const routes = createHashRouter([
+    {
+        path: '/',
+        children: [
+            {
+                path: '/',
+                children: [
+                    { index: true, element: <Entry /> },
+                    // 日记列表
+                    { path: '/month/:month', element: <MonthList /> },
+                    // 日记详情编辑
+                    { path: '/diary/:date', element: <DiaryEdit /> },
+                    // 日记搜索
+                    { path: '/search', element: <Search /> },
+                    // 导入
+                    { path: '/importDiary', element: lazyLoad(() => import('./pages/importDiary')) },
+                    // 导出
+                    { path: '/exportDiary', element: lazyLoad(() => import('./pages/exportDiary')) },
+                    // 修改密码
+                    { path: '/changePassword', element: lazyLoad(() => import('./pages/changePassword/mobile')) },
+                    // 邀请管理
+                    { path: 'userInvite', element: lazyLoad(() => import('./pages/userInvite')) },
+                    // 关于应用
+                    { path: '/about', element: lazyLoad(() => import('./pages/about')) },
+                ],
+                element: (
+                    <LoginAuth>
+                        <AppContainer />
+                    </LoginAuth>
+                )
+            },
+            // 登录
+            { path: '/login', element: lazyLoad(() => import('./pages/login')) },
+            // 注册
+            { path: '/register/:inviteCode', element: lazyLoad(() => import('./pages/register')) },
+            // 初始化管理员
+            { path: '/init', element: lazyLoad(() => import('./pages/createAdmin')) },
+        ],
+        element: (
+            <AppConfigProvider>
+                <Outlet />
+            </AppConfigProvider>
+        )
+    }
+])

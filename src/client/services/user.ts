@@ -1,77 +1,57 @@
-import { sendGet, sendPost, sendPut } from './base'
-import { AppConfig } from '@/types/appConfig'
-import { nanoid } from 'nanoid'
-import { sha } from '@/utils/crypto'
-import { CountInfoResp, LoginErrorResp, LoginResp, RegisterOTPInfo, RequireLoginResp } from '@/types/http'
-import { AppTheme } from '@/types/app'
+import { requestGet, requestPost } from './base'
+import { AppTheme, ChangePasswordReqData, LoginReqData, LoginResp, RegisterReqData } from '@/types/user'
+import { useQuery, useMutation } from 'react-query'
 
-export const requireLogin = async () => {
-    return sendPost<RequireLoginResp>('/requireLogin')
-}
-
-/** 登录 */
-export const login = async (password: string, salt: string, challenge: string, code?: string) => {
-    const data: { a: string, b?: string } = { a: sha(sha(salt + password) + challenge) }
-    if (code) data.b = code
-
-    return sendPost<LoginResp>('/login', data)
-}
-
-/** 注册 */
-export const register = async (password: string) => {
-    const salt = nanoid(128)
-    return sendPost<{ token: string }>('/register', {
-        code: sha(salt + password),
-        salt
+/** 查询用户信息 */
+export const useQueryUserInfo = (enabled: boolean) => {
+    return useQuery('userInfo', () => {
+        return requestGet<LoginResp>('user/getInfo')
+    }, {
+        enabled,
+        // 不能缓存获取用户信息，不然用户重新登录后会使用缓存的用户信息（即错误的显示了上个用户的信息）
+        cacheTime: 0
     })
 }
 
-/** 获取应用全局配置 */
-export const fetchAppConfig = async () => {
-    return sendGet<AppConfig>('/global')
+/** 登录 */
+export const useLogin = () => {
+    return useMutation((data: LoginReqData) => {
+        return requestPost<LoginResp>('user/login', data)
+    })
 }
 
-/** 获取登录失败情况 */
-export const fetchLoginFail = async () => {
-    return sendGet<LoginErrorResp>('/logInfo')
+/** 创建管理员账号 */
+export const useCreateAdmin = () => {
+    return useMutation((data: LoginReqData) => {
+        return requestPost('user/createAdmin', data)
+    })
 }
 
-/** 获取数量配置信息 */
-export const fetchCountInfo = async () => {
-    return sendGet<CountInfoResp>('/getCountInfo')
+/** 注册用户 */
+export const useRegister = () => {
+    return useMutation((data: RegisterReqData) => {
+        return requestPost('user/register', data)
+    })
 }
 
-/** 设置主题颜色 */
-export const setAppTheme = async (theme: AppTheme) => {
-    return sendPut('/theme/' + theme)
-}
 
-/** 请求修改密码 */
-export const requireChangePwd = async () => {
-    return sendGet<string>('/requireChangePwd')
+/** 统计文章 */
+export const useQueryDiaryCount = () => {
+    return useQuery('userStatistic', () => {
+        return requestGet('user/statistic')
+    })
 }
 
 /** 修改密码 */
-export const changePwd = async (data: string) => {
-    return sendPut<string>('/changePwd', { data })
+export const useChangePassword = () => {
+    return useMutation((data: ChangePasswordReqData) => {
+        return requestPost('user/changePwd', data)
+    })
 }
 
-/** 获取动态验证码绑定信息 */
-export const fetchOtpInfo = async () => {
-    return sendPost<RegisterOTPInfo>('/getOtpInfo')
-}
-
-/** 绑定动态验证码 */
-export const registerOtp = async (code: string) => {
-    return sendPut('/registerOTP', { code })
-}
-
-/** 解绑动态验证码 */
-export const removeOtp = async (code: string) => {
-    return sendPost('/removeOTP', { code })
-}
-
-/** 设置新密码生成规则 */
-export const setCreatePwdSetting = async (pwdAlphabet: string, pwdLength: number) => {
-    return sendPut('/createPwdSetting', { pwdAlphabet, pwdLength })
+/** 设置主题色 */
+export const useSetTheme = () => {
+    return useMutation((theme: AppTheme) => {
+        return requestPost('user/setTheme', { theme })
+    })
 }

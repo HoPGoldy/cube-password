@@ -1,50 +1,36 @@
-import { AppConfig } from '@/types/appConfig'
-import { AppStorage, AppTheme } from '@/types/app'
-import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/constants'
+import { DatabaseAccessor } from '@/server/lib/sqlite'
+import { AppConfig, AppConfigResp, ColorConfig } from '@/types/appConfig'
 
 interface Props {
-    mainColor: string[]
-    saveStorage: () => Promise<void>
-    updateAppStorage: (data: Partial<AppStorage>) => Promise<void>
+    getConfig: () => AppConfig
+    db: DatabaseAccessor
 }
 
-export const createService = (props: Props) => {
-    const { mainColor, updateAppStorage, saveStorage } = props
+const getColors = (color: string | ColorConfig): ColorConfig => {
+    if (typeof color === 'string') return { buttonColor: color, primaryColor: color }
+    return color
+}
+
+export const createGlobalService = (props: Props) => {
+    const { getConfig, db } = props
 
     /**
      * 获取当前应用全局配置
      */
-    const getAppConfig = (): AppConfig => {
-        const randIndex = Math.floor(Math.random() * (mainColor.length))
-        const buttonColor = mainColor[randIndex]
+    const getAppConfig = async (): Promise<AppConfigResp> => {
+        const { DEFAULT_COLOR, APP_NAME, LOGIN_SUBTITLE } = getConfig()
+        const randIndex = Math.floor(Math.random() * (DEFAULT_COLOR.length))
+        const colors = getColors(DEFAULT_COLOR[randIndex])
 
-        return { buttonColor }
+        const { ['count(*)']: userCount } = await db.user().count().first() || {}
+        const needInit = +userCount <= 0
+
+        const data: AppConfigResp = { appName: APP_NAME, loginSubtitle: LOGIN_SUBTITLE, ...colors }
+        if (needInit) data.needInit = true
+        return data
     }
 
-    /**
-     * 设置应用主题色
-     */
-    const setTheme = async (theme: AppTheme) => {
-        await updateAppStorage({ theme })
-        saveStorage()
-    }
-
-    /**
-     * 设置新密码的生成参数
-     * 置空以设置为默认
-     *
-     * @param alphabet 密码生成的字符集
-     * @param length 密码生成的长度
-     */
-    const setCreatePwdSetting = async (alphabet: string, length: number) => {
-        await updateAppStorage({
-            createPwdAlphabet: alphabet || DEFAULT_PASSWORD_ALPHABET,
-            createPwdLength: length || DEFAULT_PASSWORD_LENGTH
-        })
-        saveStorage()
-    }
-
-    return { getAppConfig, setTheme, setCreatePwdSetting }
+    return { getAppConfig }
 }
 
-export type GlobalService = ReturnType<typeof createService>
+export type GlobalService = ReturnType<typeof createGlobalService>
