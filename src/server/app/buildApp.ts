@@ -8,7 +8,7 @@ import { createBanLock } from '../lib/banLocker'
 import { createUserService } from '@/server/modules/user/service'
 import { createUserManageService } from '@/server/modules/userManage/service'
 
-import { createToken } from '@/server/lib/auth'
+import { createOTP, createToken } from '@/server/lib/auth'
 import { secretFile } from '@/server/lib/replayAttackDefense'
 import { createDiaryService } from '../modules/diary/service'
 
@@ -20,6 +20,9 @@ import { createDiaryService } from '../modules/diary/service'
  */
 export const buildApp = async () => {
     const db = createDb({ dbPath: getStoragePath('cube-password.db') })
+
+    // 挑战码十秒内过期
+    const otpManager = createOTP(1000 * 10)
 
     const diaryService = createDiaryService({ db })
 

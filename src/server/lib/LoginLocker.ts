@@ -1,7 +1,9 @@
 import { AppKoaContext } from '@/types/global'
 import dayjs from 'dayjs'
 import { Next } from 'koa'
-import { getIp, response } from '../utils'
+import { response } from '../utils'
+import { LoginFailRecord } from '@/types/security'
+import { queryIp } from './queryIp'
 
 export interface LoginRecordDetail {
     /**
@@ -31,41 +33,35 @@ export const createLoginLock = (props: LoginLockOptions) => {
     /**
      * 指定 ip 的失败登录日期记录
      */
-    const loginFailRecords: Map<string, number[]> = new Map()
+    let loginFailRecords: LoginFailRecord[] = []
 
     /**
      * 增加登录失败记录
      */
-    const recordLoginFail = (ip: string) => {
-        if (!loginFailRecords.has(ip)) {
-            loginFailRecords.set(ip, [])
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const records = loginFailRecords.get(ip)!
-        records.push(new Date().valueOf())
+    const recordLoginFail = async (ip: string) => {
+        const location = await queryIp(ip)
+        loginFailRecords.push({ date: Date.now(), ip, location })
 
         // 把一天前的记录清除掉
-        const todayFail = records.filter(date => {
-            return dayjs(date).isSame(dayjs(), 'day')
+        loginFailRecords = loginFailRecords.filter(item => {
+            return dayjs(item.date).isSame(dayjs(), 'day')
         })
-        loginFailRecords.set(ip, todayFail)
 
-        return getLockDetail(ip)
+        return getLockDetail()
     }
 
     /**
-     * 请求登录失败记录
+     * 清空登录失败记录
      */
-    const clearRecord = (ip: string) => {
-        loginFailRecords.delete(ip)
+    const clearRecord = () => {
+        loginFailRecords = []
     }
 
     /**
-     * 获取指定 ip 登录失败情况
+     * 获取登录失败情况
      */
-    const getLockDetail = (ip: string): number[] => {
-        return loginFailRecords.get(ip) || []
+    const getLockDetail = (): LoginFailRecord[] => {
+        return loginFailRecords || []
     }
 
     /**
@@ -77,9 +73,8 @@ export const createLoginLock = (props: LoginLockOptions) => {
         // 允许 excludePath 接口正常访问
         if (isAccessPath) return await next()
 
-        const ip = getIp(ctx) || 'anonymous'
         try {
-            if (getLockDetail(ip).length >= 3) throw new Error('登录失败次数过多')
+            if (getLockDetail().length >= 3) throw new Error('登录失败次数过多')
             await next()
         }
         catch (e)  {

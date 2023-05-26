@@ -17,6 +17,18 @@ export const STATUS_CODE = {
      * 未提供防重放攻击 header
      */
     REPLAY_ATTACK: 40602,
+    /**
+     * 分组未验证密码
+     */
+    GROUP_NOT_VERIFY_PASSWORD: 40103,
+    /**
+     * 分组密码错误
+     */
+    GROUP_PASSWORD_ERROR: 40104,
+    /**
+     * 需要提供动态验证码
+     */
+    NEED_CODE: 40105,
 }
 
 /**
@@ -61,3 +73,13 @@ export const TABLE_NAME = {
     /** 用户邀请表 */
     USER_INVITE: 'userInvites'
 } as const
+
+/**
+ * 密码生成的默认字符集
+ */
+export const DEFAULT_PASSWORD_ALPHABET = '-=_+[]{}();/:",.<>?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+/**
+ * 密码生成的默认长度
+ */
+export const DEFAULT_PASSWORD_LENGTH = 18

@@ -26,8 +26,11 @@ export const createDb = (props: Props) => {
             t.string('passwordSalt').notNullable()
             t.timestamp('initTime').notNullable()
             t.string('theme').notNullable()
-            t.boolean('isAdmin').notNullable()
-            t.boolean('isBanned')
+            t.integer('defaultGroupId')
+            t.string('commonLocation')
+            t.string('totpSecret')
+            t.string('createPwdAlphabet')
+            t.string('createPwdLength')
         })
     })
 

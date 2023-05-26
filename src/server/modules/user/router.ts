@@ -16,16 +16,16 @@ export const createUserRouter = (props: Props) => {
     const router = new Router<any, AppKoaContext>({ prefix: '/user' })
 
     const loginSchema = Joi.object<LoginReqData>({
-        username: Joi.string().required(),
-        password: Joi.string().required()
+        a: Joi.string().required(),
+        b: Joi.string().required()
     })
 
     router.post('/login', async ctx => {
         const body = validate(ctx, loginSchema)
         if (!body) return
-        const { username, password } = body
+        const { a, b } = body
 
-        const resp = await service.login(username, password, getIp(ctx) || 'anonymous')
+        const resp = await service.login(a, getIp(ctx) || 'anonymous', b)
         response(ctx, resp)
     })
 
@@ -38,25 +38,15 @@ export const createUserRouter = (props: Props) => {
     })
 
     const registerSchema = Joi.object<RegisterReqData>({
-        username: Joi.string().required(),
-        passwordHash: Joi.string().required(),
-        inviteCode: Joi.string().required()
-    })
-
-    router.post('/register', async ctx => {
-        const body = validate(ctx, registerSchema)
-        if (!body) return
-
-        const resp = await service.register(body)
-        response(ctx, resp)
+        code: Joi.string().required(),
+        salt: Joi.string().required()
     })
 
     router.post('/createAdmin', async ctx => {
-        const body = validate(ctx, loginSchema)
+        const body = validate(ctx, registerSchema)
         if (!body) return
-        const { username, password } = body
 
-        const resp = await service.createAdmin(username, password)
+        const resp = await service.createAdmin(body)
         response(ctx, resp)
     })
 

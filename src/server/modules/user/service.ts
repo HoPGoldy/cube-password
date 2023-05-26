@@ -1,125 +1,138 @@
 import { AppTheme, UserStorage, LoginSuccessResp, RegisterReqData } from '@/types/user'
 import { AppResponse } from '@/types/global'
-import { STATUS_CODE } from '@/config'
+import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH, STATUS_CODE } from '@/config'
 import { sha } from '@/utils/crypto'
 import { LoginLocker } from '@/server/lib/LoginLocker'
 import { nanoid } from 'nanoid'
 import { DatabaseAccessor } from '@/server/lib/sqlite'
-import { UserInviteService } from '../userManage/service'
+import { SecurityService } from '../security/service'
+import { SecurityNoticeType } from '@/types/security'
+import { queryIp } from '@/server/lib/queryIp'
+import { formatLocation, isSameLocation } from '@/server/utils'
+import { authenticator } from 'otplib'
 
 interface Props {
     loginLocker: LoginLocker
     createToken: (payload: Record<string, any>) => Promise<string>
     getReplayAttackSecret: () => Promise<string>
+    getChallengeCode: () => string
+    insertSecurityNotice: SecurityService['insertSecurityNotice']
     db: DatabaseAccessor
-    finishUserInvite: UserInviteService['userRegister']
 }
 
 export const createUserService = (props: Props) => {
     const {
         loginLocker, createToken,
-        finishUserInvite,
         getReplayAttackSecret,
+        getChallengeCode,
+        insertSecurityNotice,
         db,
     } = props
 
-    const loginFail = (ip: string, msg = '账号或密码错误') => {
-        const lockInfo = loginLocker.recordLoginFail(ip)
+    const loginFail = async (ip: string, msg = '账号或密码错误') => {
+        const lockInfo = await loginLocker.recordLoginFail(ip)
         const retryNumber = 3 - lockInfo.length
         const message = retryNumber > 0 ? `将在 ${retryNumber} 次后锁定登录` : '账号已被锁定'
+
+        const location = await queryIp(ip)
+        insertSecurityNotice(
+            SecurityNoticeType.Warning,
+            '异地登录',
+            `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`
+        )
+
         return { code: 401, msg: `${msg}，${message}` }
     }
 
     /**
-     * 直接获取用户信息
+     * 登录
      */
-    const getUserInfo = async (userId: number, ip: string): Promise<AppResponse> => {
-        const userStorage = await db.user().select().where({ id: userId }).first()
-        if (!userStorage) return loginFail(ip, '用户不存在')
+    const login = async (password: string, ip: string, code?: string): Promise<AppResponse> => {
+        const userStorage = await db.user().select().first()
+        if (!userStorage) return loginFail(ip)
 
-        const { username, theme, initTime, isAdmin } = userStorage
+        const challengeCode = getChallengeCode()
+        if (!challengeCode) {
+            insertSecurityNotice(
+                SecurityNoticeType.Danger,
+                '未授权状态下进行登录操作',
+                '发起了一次非法登录，已被拦截。'
+            )
+            loginLocker.recordLoginFail(ip)
+            return { code: 401, msg: '挑战码错误' }
+        }
+
+        const {
+            passwordHash, defaultGroupId, initTime, theme, commonLocation, totpSecret,
+            createPwdAlphabet = DEFAULT_PASSWORD_ALPHABET,
+            createPwdLength = DEFAULT_PASSWORD_LENGTH
+        } = userStorage
+        const currentLocation = await queryIp(ip)
+
+        // 本次登录地点和常用登录地不同
+        if (commonLocation && !isSameLocation(commonLocation, currentLocation)) {
+            // 没有绑定动态验证码
+            if (!totpSecret) {
+                const beforeLocation = formatLocation(commonLocation)
+                insertSecurityNotice(
+                    SecurityNoticeType.Warning,
+                    '异地登录',
+                    `${ip}（${formatLocation(currentLocation)}）进行了一次异地登录，上次登录地为${beforeLocation}，请检查是否为本人操作。`
+                )
+            }
+            // 绑定了动态验证码
+            else {
+                if (!code) {
+                    return { code: STATUS_CODE.NEED_CODE, msg: '非常用地区登录，请输入动态验证码' }
+                }
+
+                const isValid = authenticator.verify({ token: code, secret: totpSecret })
+                if (!isValid) {
+                    return { code: 400, msg: '动态验证码错误' }
+                }
+            }
+        }
+
+        if (password !== sha(passwordHash + challengeCode)) return loginFail(ip)
 
         // 用户每次重新进入页面都会刷新 token
-        const token = await createToken({ userId, isAdmin })
+        const token = await createToken({ userId: userStorage.id })
         const replayAttackSecret = await getReplayAttackSecret()
 
         const data: LoginSuccessResp = {
             token,
             theme,
             initTime,
-            isAdmin,
-            username,
+            groups: [],
+            hasNotice: false,
+            defaultGroupId,
+            createPwdAlphabet,
+            createPwdLength,
             replayAttackSecret,
         }
 
-        loginLocker.clearRecord(ip)
-
+        loginLocker.clearRecord()
         return { code: 200, data }
-    }
-
-    /**
-     * 登录
-     */
-    const login = async (username: string, password: string, ip: string): Promise<AppResponse> => {
-        const userStorage = await db.user().select().where({ username }).first()
-        if (!userStorage) return loginFail(ip)
-
-        const { passwordHash, passwordSalt, isBanned } = userStorage
-        if (passwordHash !== sha(passwordSalt + password)) return loginFail(ip)
-
-        if (isBanned) {
-            return { code: STATUS_CODE.BAN, msg: '您已被封禁' }
-        }
-
-        return getUserInfo(userStorage.id, ip)
-    }
-
-    /**
-     * 注册
-     */
-    const register = async (data: RegisterReqData & { isAdmin?: boolean }): Promise<AppResponse> => {
-        const { username, passwordHash, inviteCode, isAdmin = false } = data
-
-        if (!isAdmin) {
-            const inviteResp = await finishUserInvite(username, inviteCode)
-            if (inviteResp.code !== STATUS_CODE.SUCCESS) return inviteResp
-        }
-
-        const userStorage = await db.user().select('id').where({ username }).first()
-        if (userStorage) {
-            return { code: STATUS_CODE.ALREADY_REGISTER, msg: '已经注册' }
-        }
-
-        const passwordSalt = nanoid()
-        const initStorage: Omit<UserStorage, 'id'> = {
-            username,
-            passwordHash: sha(passwordSalt + passwordHash),
-            passwordSalt,
-            initTime: Date.now(),
-            theme: AppTheme.Light,
-            isAdmin,
-        }
-
-        // 获取新用户的 id
-        await db.user().insert(initStorage)
-        return { code: 200 }
     }
 
     /**
      * 创建管理员
      */
-    const createAdmin = async (username: string, passwordHash: string): Promise<AppResponse> => {
+    const createAdmin = async (data: RegisterReqData): Promise<AppResponse> => {
         const [{ ['count(*)']: userCount }] = await db.user().count()
         if (+userCount > 0) {
-            return { code: 400, msg: '管理员已存在' }
+            return { code: 400, msg: '用户已存在' }
         }
 
-        return await register({
-            username,
-            passwordHash,
-            isAdmin: true,
-            inviteCode: '',
-        })
+        const initStorage: Omit<UserStorage, 'id'> = {
+            passwordHash: data.code,
+            passwordSalt: data.salt,
+            initTime: Date.now(),
+            theme: AppTheme.Light,
+        }
+
+        await db.user().insert(initStorage)
+        return { code: 200 }
     }
 
     /**
@@ -177,7 +190,7 @@ export const createUserService = (props: Props) => {
         return { code: 200, data }
     }
 
-    return { getUserInfo, login, register, createAdmin, changePassword, setTheme, getDiaryCount }
+    return { login, createAdmin, changePassword, setTheme, getDiaryCount }
 }
 
 export type UserService = ReturnType<typeof createUserService>
