@@ -1,16 +1,16 @@
 import { getStoragePath } from '../lib/fileAccessor'
 import { createDb } from '../lib/sqlite'
 import { getAppConfig } from '../lib/fileAccessor'
-import { createFileService } from '@/server/modules/file/service'
 import { createGlobalService } from '../modules/global/service'
 import { createLoginLock } from '../lib/LoginLocker'
 import { createBanLock } from '../lib/banLocker'
 import { createUserService } from '@/server/modules/user/service'
-import { createUserManageService } from '@/server/modules/userManage/service'
 
 import { createOTP, createToken } from '@/server/lib/auth'
 import { secretFile } from '@/server/lib/replayAttackDefense'
 import { createDiaryService } from '../modules/diary/service'
+import { createGroupService } from '../modules/group/service'
+import { createSecurityService } from '../modules/security/service'
 
 /**
  * 构建应用
@@ -26,13 +26,9 @@ export const buildApp = async () => {
 
     const diaryService = createDiaryService({ db })
 
-    const fileService = createFileService({
-        getSaveDir: getStoragePath,
-        db
-    })
-
     const globalService = createGlobalService({
         getConfig: getAppConfig,
+        createChallengeCode: otpManager.create,
         db
     })
 
@@ -42,19 +38,24 @@ export const buildApp = async () => {
     
     const banLocker = createBanLock({ db })
 
-    const userInviteService = createUserManageService({
+    const securityService = createSecurityService({
         db,
-        // 封禁中间件那边有缓存，所以这边状态更新后需要刷掉缓存
-        onUserBanned: (data) => banLocker.clearBanCache(data.userId),
+    })
+
+    const groupService = createGroupService({
+        db,
     })
 
     const userService = createUserService({
         loginLocker,
         createToken: createToken,
+        getChallengeCode: otpManager.pop,
+        addGroup: groupService.addGroup,
+        queryGroupList: groupService.queryGroupList,
+        insertSecurityNotice: securityService.insertSecurityNotice,
         getReplayAttackSecret: secretFile.read,
         db,
-        finishUserInvite: userInviteService.userRegister,
     })
 
-    return { globalService, userService, diaryService, fileService, userInviteService, banLocker, loginLocker }
+    return { globalService, userService, diaryService, banLocker, loginLocker, securityService, groupService }
 }

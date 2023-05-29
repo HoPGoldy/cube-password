@@ -40,7 +40,7 @@ export const DATE_FORMATTER = 'YYYY-MM-DD HH:mm:ss'
  * 无需登录即可访问的接口
  */
 export const AUTH_EXCLUDE = [
-    '/api/global', '/api/user/login', '/api/user/register', '/api/user/createAdmin'
+    '/api/global', '/api/challenge', '/api/user/login', '/api/user/register', '/api/user/createAdmin'
 ]
 
 /**
@@ -66,6 +66,8 @@ export const PAGE_SIZE = 15
 export const TABLE_NAME = {
     /** 用户表 */
     USER: 'users',
+    /** 分组表 */
+    GROUP: 'groups',
     /** 日记表 */
     DIARY: 'diaries',
     /** 附件表 */

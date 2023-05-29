@@ -51,8 +51,6 @@ export const routes = createHashRouter([
             },
             // 登录
             { path: '/login', element: lazyLoad(() => import('./pages/login')) },
-            // 注册
-            { path: '/register/:inviteCode', element: lazyLoad(() => import('./pages/register')) },
             // 初始化管理员
             { path: '/init', element: lazyLoad(() => import('./pages/createAdmin')) },
         ],

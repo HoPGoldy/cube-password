@@ -9,3 +9,7 @@ export const useQueryAppConfig = () => {
         refetchOnWindowFocus: false,
     })
 }
+
+export const queryChallengeCode = () => {
+    return requestGet('challenge')
+}

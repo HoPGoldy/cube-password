@@ -10,12 +10,15 @@ import { SecurityNoticeType } from '@/types/security'
 import { queryIp } from '@/server/lib/queryIp'
 import { formatLocation, isSameLocation } from '@/server/utils'
 import { authenticator } from 'otplib'
+import { GroupService } from '../group/service'
 
 interface Props {
     loginLocker: LoginLocker
     createToken: (payload: Record<string, any>) => Promise<string>
     getReplayAttackSecret: () => Promise<string>
-    getChallengeCode: () => string
+    getChallengeCode: () => string | undefined
+    addGroup: GroupService['addGroup']
+    queryGroupList: GroupService['queryGroupList']
     insertSecurityNotice: SecurityService['insertSecurityNotice']
     db: DatabaseAccessor
 }
@@ -23,6 +26,8 @@ interface Props {
 export const createUserService = (props: Props) => {
     const {
         loginLocker, createToken,
+        addGroup,
+        queryGroupList,
         getReplayAttackSecret,
         getChallengeCode,
         insertSecurityNotice,
@@ -98,12 +103,13 @@ export const createUserService = (props: Props) => {
         // 用户每次重新进入页面都会刷新 token
         const token = await createToken({ userId: userStorage.id })
         const replayAttackSecret = await getReplayAttackSecret()
+        const groupList = await queryGroupList()
 
         const data: LoginSuccessResp = {
             token,
             theme,
             initTime,
-            groups: [],
+            groups: groupList.data,
             hasNotice: false,
             defaultGroupId,
             createPwdAlphabet,
@@ -124,11 +130,17 @@ export const createUserService = (props: Props) => {
             return { code: 400, msg: '用户已存在' }
         }
 
+        const addGroupResp = await addGroup({ name: '默认分组' })
+        if (addGroupResp.code !== 200) {
+            return addGroupResp
+        }
+
         const initStorage: Omit<UserStorage, 'id'> = {
             passwordHash: data.code,
             passwordSalt: data.salt,
             initTime: Date.now(),
             theme: AppTheme.Light,
+            defaultGroupId: addGroupResp.data?.newId,
         }
 
         await db.user().insert(initStorage)

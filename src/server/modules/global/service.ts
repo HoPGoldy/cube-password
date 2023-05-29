@@ -3,6 +3,7 @@ import { AppConfig, AppConfigResp, ColorConfig } from '@/types/appConfig'
 
 interface Props {
     getConfig: () => AppConfig
+    createChallengeCode: () => string
     db: DatabaseAccessor
 }
 
@@ -12,7 +13,7 @@ const getColors = (color: string | ColorConfig): ColorConfig => {
 }
 
 export const createGlobalService = (props: Props) => {
-    const { getConfig, db } = props
+    const { getConfig, createChallengeCode, db } = props
 
     /**
      * 获取当前应用全局配置
@@ -30,7 +31,14 @@ export const createGlobalService = (props: Props) => {
         return data
     }
 
-    return { getAppConfig }
+    /**
+     * 获取挑战码
+     */
+    const getChallengeCode = async () => {
+        return createChallengeCode()
+    }
+
+    return { getAppConfig, getChallengeCode }
 }
 
 export type GlobalService = ReturnType<typeof createGlobalService>

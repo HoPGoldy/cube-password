@@ -22,7 +22,7 @@ export const useLogin = () => {
 
 /** 创建管理员账号 */
 export const useCreateAdmin = () => {
-    return useMutation((data: LoginReqData) => {
+    return useMutation((data: RegisterReqData) => {
         return requestPost('user/createAdmin', data)
     })
 }

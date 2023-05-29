@@ -14,17 +14,12 @@ import 'highlight.js/styles/foundation.css'
 import { useInitMessage } from './utils/message'
 import { AntdConfigProvider } from './components/antdConfigProvider'
 import { ResponsiveProvider } from './layouts/responsive'
-import './lottie.js'
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const rootContainer = document.getElementById('root')!
 
 const App = () => {
     useInitMessage()
-    // @ts-ignore
-    lottie.loadAnimation({})
-    // @ts-ignore
-    console.log('🚀 ~ file: Main.tsx:26 ~ App ~ lottie:', lottie)
     return (
         <QueryClientProvider client={queryClient}>
             <RouterProvider router={routes} />

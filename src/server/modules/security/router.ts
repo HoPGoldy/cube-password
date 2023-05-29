@@ -11,7 +11,7 @@ interface Props {
     service: SecurityService
 }
 
-export const createUserRouter = (props: Props) => {
+export const createSecurityRouter = (props: Props) => {
     const { service } = props
     const router = new Router<any, AppKoaContext>({ prefix: '/security' })
 

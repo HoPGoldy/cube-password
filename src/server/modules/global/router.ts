@@ -20,5 +20,13 @@ export const createGlobalRouter = (props: Props) => {
         response(ctx, { code: 200, data })
     })
 
+    /**
+     * 获取挑战码
+     */
+    router.get('/challenge', async ctx => {
+        const data = await service.getChallengeCode()
+        response(ctx, { code: 200, data })
+    })
+
     return router
 }

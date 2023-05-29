@@ -8,6 +8,7 @@ import { Button, Row, Col, Input, InputRef } from 'antd'
 import { messageError, messageSuccess } from '@/client/utils/message'
 import s from './styles.module.css'
 import { PageTitle } from '@/client/components/pageTitle'
+import { nanoid } from 'nanoid'
 
 const getViewWidth = () => {
     // 获取浏览器宽度
@@ -67,14 +68,15 @@ const Register: FC = () => {
     }
 
     const onSubmit = async () => {
-        const resp = await createAdmin({ username, password: sha(password) })
+        const salt = nanoid(128)
+        const resp = await createAdmin({ code: sha(salt + password), salt })
         if (resp.code !== 200) return
 
         messageSuccess('初始化完成')
         dispatch(initSuccess())
     }
 
-    if (needInit === false) {
+    if (!needInit) {
         return (
             <Navigate to='/login' replace />
         )

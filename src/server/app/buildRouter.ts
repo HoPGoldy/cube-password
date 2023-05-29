@@ -5,11 +5,11 @@ import { createCheckReplayAttack } from '../lib/replayAttackDefense'
 import { AUTH_EXCLUDE, REPLAY_ATTACK_EXCLUDE } from '@/config'
 import { errorWapper } from '../utils'
 import { buildApp } from './buildApp'
-import { createFileRouter } from '../modules/file/router'
 import { createGlobalRouter } from '../modules/global/router'
 import { createUserRouter } from '../modules/user/router'
-import { createUserManageRouter } from '../modules/userManage/router'
 import { createDiaryRouter } from '../modules/diary/router'
+import { createGroupRouter } from '../modules/group/router'
+import { createSecurityRouter } from '../modules/security/router'
 
 /**
  * 构建路由
@@ -29,10 +29,10 @@ export const buildRouter = async () => {
 
     const globalRouter = createGlobalRouter({ service: services.globalService })
     const userRouter = createUserRouter({ service: services.userService })
+    const groupRouter = createGroupRouter({ service: services.groupService })
+    const securityRouter = createSecurityRouter({ service: services.securityService })
     const diaryRouter = createDiaryRouter({ service: services.diaryService })
-    const fileRouter = createFileRouter({ service: services.fileService })
-    const userInviteRouter = createUserManageRouter({ service: services.userInviteService })
-    const routes = [globalRouter, userRouter, diaryRouter, fileRouter, userInviteRouter]
+    const routes = [globalRouter, userRouter, diaryRouter, groupRouter, securityRouter]
 
     routes.forEach(route => apiRouter.use('/api', errorWapper, route.routes(), route.allowedMethods()))
 

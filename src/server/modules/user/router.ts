@@ -29,14 +29,6 @@ export const createUserRouter = (props: Props) => {
         response(ctx, resp)
     })
 
-    router.get('/getInfo', async ctx => {
-        const payload = getJwtPayload(ctx)
-        if (!payload) return
-
-        const resp = await service.getUserInfo(payload.userId, getIp(ctx) || 'anonymous')
-        response(ctx, resp)
-    })
-
     const registerSchema = Joi.object<RegisterReqData>({
         code: Joi.string().required(),
         salt: Joi.string().required()
