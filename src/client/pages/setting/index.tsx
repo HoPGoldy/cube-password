@@ -71,7 +71,13 @@ export const DesktopSetting: FC<DesktopProps> = (props) => {
                 {setting.settingConfig.map(renderConfigItem)}
 
                 <Col span={24}>
-                    <Button block danger onClick={setting.onLogout} icon={<CloseCircleOutlined />}>登出</Button>
+                    <Button
+                        block
+                        danger
+                        onClick={setting.onLogout}
+                        icon={<CloseCircleOutlined />}
+                        loading={setting.isLogouting}
+                    >登出</Button>
                 </Col>
             </Row>
             {renderChangePasswordModal()}

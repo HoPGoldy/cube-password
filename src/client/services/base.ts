@@ -22,7 +22,7 @@ axiosInstance.interceptors.request.use(config => {
     const { token, replayAttackSecret } = state.user
 
     // 附加 jwt header
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) config.headers['X-Session-Id'] = token
     // 附加防重放攻击 header
     if (replayAttackSecret) {
         const raHeaders = createReplayAttackHeaders(`${config.baseURL}${config.url}`, replayAttackSecret)

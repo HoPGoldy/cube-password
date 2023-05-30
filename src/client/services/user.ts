@@ -20,6 +20,13 @@ export const useLogin = () => {
     })
 }
 
+/** 登出 */
+export const useLogout = () => {
+    return useMutation(() => {
+        return requestPost('user/logout')
+    })
+}
+
 /** 创建管理员账号 */
 export const useCreateAdmin = () => {
     return useMutation((data: RegisterReqData) => {

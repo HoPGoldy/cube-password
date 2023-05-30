@@ -16,6 +16,7 @@ import { SessionController } from '@/server/lib/auth'
 interface Props {
     loginLocker: LoginLocker
     startSession: SessionController['start']
+    stopSession: SessionController['stop']
     getChallengeCode: () => string | undefined
     addGroup: GroupService['addGroup']
     queryGroupList: GroupService['queryGroupList']
@@ -27,6 +28,7 @@ export const createUserService = (props: Props) => {
     const {
         loginLocker,
         startSession,
+        stopSession,
         addGroup,
         queryGroupList,
         getChallengeCode,
@@ -121,6 +123,14 @@ export const createUserService = (props: Props) => {
     }
 
     /**
+     * 登出
+     */
+    const logout = async () => {
+        stopSession()
+        return { code: 200 }
+    }
+
+    /**
      * 创建管理员
      */
     const createAdmin = async (data: RegisterReqData): Promise<AppResponse> => {
@@ -201,7 +211,7 @@ export const createUserService = (props: Props) => {
         return { code: 200, data }
     }
 
-    return { login, createAdmin, changePassword, setTheme, getDiaryCount }
+    return { login, logout, createAdmin, changePassword, setTheme, getDiaryCount }
 }
 
 export type UserService = ReturnType<typeof createUserService>

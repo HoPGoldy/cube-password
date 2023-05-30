@@ -162,9 +162,9 @@ export const createSession = (props: CreateSessionProps) => {
         // 允许 excludePath 接口正常访问
         if (isAccessPath) return await next()
 
-        if (!ctx.header.authorization) return createLoginFailResp(ctx)
+        const token = ctx.header['x-session-id']
+        if (!token) return createLoginFailResp(ctx)
 
-        const token = ctx.header.authorization.replace('Bearer ', '')
         if (token !== userInfo.token) return createLoginFailResp(ctx)
 
         return await next()

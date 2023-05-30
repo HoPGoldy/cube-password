@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { AppTheme } from '@/types/user'
 import { useAppDispatch, useAppSelector } from '@/client/store'
 import { changeTheme, getUserTheme, logout } from '@/client/store/user'
-import { useQueryDiaryCount, useSetTheme } from '@/client/services/user'
+import { useLogout, useQueryDiaryCount, useSetTheme } from '@/client/services/user'
 import { LockOutlined, DatabaseOutlined, TagsOutlined, SmileOutlined } from '@ant-design/icons'
 
 export interface SettingLinkItem {
@@ -19,6 +19,8 @@ export const useSetting = () => {
     const { data: countInfo } = useQueryDiaryCount()
     /** 主题设置 */
     const { mutateAsync: setAppTheme } = useSetTheme()
+    /** 登出接口 */
+    const { mutateAsync: postLogout, isLoading: isLogouting } = useLogout()
 
     const settingConfig = useMemo(() => {
         const list = [
@@ -37,7 +39,8 @@ export const useSetting = () => {
         dispatch(changeTheme(newTheme))
     }
 
-    const onLogout = () => {
+    const onLogout = async () => {
+        await postLogout()
         dispatch(logout())
     }
 
@@ -46,7 +49,7 @@ export const useSetting = () => {
     const userTheme = getUserTheme(userInfo?.theme)
 
     return {
-        diaryCount, diaryLength, onLogout, settingConfig,
+        diaryCount, diaryLength, onLogout, isLogouting, settingConfig,
         userTheme, onSwitchTheme
     }
 }

@@ -29,6 +29,11 @@ export const createUserRouter = (props: Props) => {
         response(ctx, resp)
     })
 
+    router.post('/logout', async ctx => {
+        const resp = await service.logout()
+        response(ctx, resp)
+    })
+
     const registerSchema = Joi.object<RegisterReqData>({
         code: Joi.string().required(),
         salt: Joi.string().required()

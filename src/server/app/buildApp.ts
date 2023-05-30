@@ -50,6 +50,7 @@ export const buildApp = async () => {
     const userService = createUserService({
         loginLocker,
         startSession: sessionController.start,
+        stopSession: sessionController.stop,
         getChallengeCode: otpManager.pop,
         addGroup: groupService.addGroup,
         queryGroupList: groupService.queryGroupList,
