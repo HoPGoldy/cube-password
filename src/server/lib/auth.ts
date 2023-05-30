@@ -1,30 +1,15 @@
-import { Context, Next, HttpError } from 'koa'
-import jwt from 'jsonwebtoken'
-import jwtKoa from 'koa-jwt'
+import { Next } from 'koa'
 import { nanoid } from 'nanoid'
 import { response } from '../utils'
 import { AppKoaContext, MyJwtPayload } from '@/types/global'
 import { createAccessor } from './fileAccessor'
+import { getReplayAttackData, validateReplayAttackData } from '@/utils/crypto'
+import { STATUS_CODE } from '@/config'
 
 /**
  * 获取 jwt 密钥
  */
 export const jwtSecretFile = createAccessor({ fileName: 'jwtSecret' })
-
-/**
- * 鉴权失败时完善响应提示信息
- */
-export const middlewareJwtCatcher = async (ctx: Context, next: Next) => {
-    try {
-        await next()
-    } catch (err) {
-        if (err instanceof HttpError && err.status === 401) {
-            response(ctx, { code: 401, msg: '登录已失效，请重新登录' })
-        } else {
-            throw err
-        }
-    }
-}
 
 /**
  * 通过 ctx 获取用户登录的 jwt 载荷
@@ -40,37 +25,6 @@ export const getJwtPayload = (ctx: AppKoaContext, block = true) => {
     }
 
     return userPayload as MyJwtPayload
-}
-
-export const verifyToken = async (token: string) => {
-    return new Promise((resolve, reject) => {
-        jwt.verify(token, async (_, callback) => {
-            const secret = await jwtSecretFile.read()
-            callback(null, secret)
-        }, (err, decoded) => {
-            if (err) return reject(err)
-            resolve(decoded)
-        })
-    })
-}
-
-/**
- * JWT 鉴权中间件
- */
-export const middlewareJwt = jwtKoa({
-    secret: jwtSecretFile.read,
-    getToken: ctx => {
-        if (ctx.header.authorization) return ctx.header.authorization.replace('Bearer ', '')
-        return ctx.cookies.get('cube-password-token') || null
-    },
-})
-
-/**
- * 生成新的 jwt token
- */
-export const createToken = async (payload: Record<string, any> = {}) => {
-    const secret = await jwtSecretFile.read()
-    return jwt.sign(payload, secret, { expiresIn: '30d' })
 }
 
 /**
@@ -109,3 +63,158 @@ export const createOTP = (timeout: number = 1000 * 60) => {
 }
 
 export type CreateOtpFunc = typeof createOTP
+
+interface UserSession {
+    /** 用户登录 token，该值不存在时代表用户未登录 */
+    token?: string;
+    /** 防重放攻击密钥 */
+    replayAttackSecret?: string;
+    /** 已经解锁的分组 id */
+    unlockedGroupIds: Set<string>;
+}
+
+interface CreateSessionProps {
+    /** 登录超时时间，默认 30 分钟 */
+    timeout?: number
+    /** 不需要登录就可以访问的接口 */
+    excludePath?: string[]
+}
+
+/**
+ * SESSION 管理器
+ * 用于维护用户的登录状态
+ */
+export const createSession = (props: CreateSessionProps) => {
+    const { timeout = 1000 * 60 * 30, excludePath = [] } = props
+
+    /**
+     * 用户登录会话信息
+     * 用户在登录后保持的状态最终都保存在这个对象里
+     */
+    const userInfo: UserSession = {
+        unlockedGroupIds: new Set(),
+    }
+
+    /**
+     * 防重放攻击的随机数缓存
+     */
+    const nonceCache = new Map<string, number>()
+
+    /** 添加防重放随机数到缓存 */
+    const addNonceToCache = (nonce: string) => {
+        nonceCache.set(nonce, Date.now())
+    }
+
+    /** 检查随机数是否过期 */
+    const isNonceTimeout = (createTime: number, nowTime: number) => {
+        return nowTime - createTime > 60 * 1000
+    }
+
+    // 每十分钟清理一次 nonce 缓存
+    setInterval(() => {
+        const now = Date.now()
+        nonceCache.forEach((time, nonce) => {
+            if (isNonceTimeout(time, now)) nonceCache.delete(nonce)
+        })
+    }, 10 * 60 * 1000)
+
+    /** 终止会话 */
+    const stop = () => {
+        userInfo.token = undefined
+        userInfo.replayAttackSecret = undefined
+        userInfo.unlockedGroupIds.clear()
+        nonceCache.clear()
+    }
+
+    /** 终止会话的计时器 */
+    let stopTimer: NodeJS.Timeout | undefined
+
+    /** 启动会话 */
+    const start = () => {
+        userInfo.token = nanoid()
+        userInfo.replayAttackSecret = nanoid()
+
+        clearTimeout(stopTimer)
+        stopTimer = setTimeout(stop, timeout)
+
+        return { token: userInfo.token, replayAttackSecret: userInfo.replayAttackSecret }
+    }
+
+    /** 查询指定分组是否解锁 */
+    const isUnlockedGroup = (groupId: string) => {
+        return userInfo.unlockedGroupIds.has(groupId)
+    }
+
+    /** 添加解锁分组 */
+    const addUnlockedGroup = (groupId: string) => {
+        if (isUnlockedGroup(groupId) || !userInfo.token) return
+        userInfo.unlockedGroupIds.add(groupId)
+    }
+
+    const createLoginFailResp = (ctx: AppKoaContext) => {
+        response(ctx, { code: 401, msg: '登录已失效，请重新登录' })
+        ctx.status = 401
+    }
+
+    /** 登录鉴权中间件 */
+    const checkLogin = async (ctx: AppKoaContext, next: Next) => {
+        const isAccessPath = !!excludePath.find(path => ctx.url.endsWith(path) || ctx.url.startsWith(path))
+        // 允许 excludePath 接口正常访问
+        if (isAccessPath) return await next()
+
+        if (!ctx.header.authorization) return createLoginFailResp(ctx)
+
+        const token = ctx.header.authorization.replace('Bearer ', '')
+        if (token !== userInfo.token) return createLoginFailResp(ctx)
+
+        return await next()
+    }
+
+    const createReplayAttackFailResp = (ctx: AppKoaContext) => {
+        response(ctx, { code: STATUS_CODE.REPLAY_ATTACK, msg: '伪造请求攻击，请求已被拦截' })
+        ctx.status = 401
+    }
+
+    /** 防重放攻击中间件 */
+    const checkReplayAttack = async (ctx: AppKoaContext, next: Next) => {
+        const isAccessPath = !!excludePath.find(path => ctx.url.endsWith(path) || ctx.url.startsWith(path))
+        // 允许 excludePath 接口正常访问
+        if (isAccessPath) return await next()
+
+        const replayAttackData = getReplayAttackData(ctx)
+        if (!replayAttackData) {
+            createReplayAttackFailResp(ctx)
+            console.warn(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为未提供防重放攻击 header。`)
+            return
+        }
+
+        const existNonceDate = nonceCache.get(replayAttackData.nonce)
+        // 如果有重复的随机码
+        if (existNonceDate && !isNonceTimeout(existNonceDate, Date.now())) {
+            createReplayAttackFailResp(ctx)
+            console.warn(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为重复的 nonce。`)
+            return
+        }
+
+        const secret = userInfo.replayAttackSecret
+        if (!secret) {
+            createReplayAttackFailResp(ctx)
+            console.warn(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为用户尚未登录。`)
+            return
+        }
+
+        const isValidate = validateReplayAttackData(replayAttackData, secret)
+        if (!isValidate) {
+            createReplayAttackFailResp(ctx)
+            console.warn(`伪造请求攻击，请求路径：${ctx.path}。已被拦截，原因为请求签名异常。`)
+            return
+        }
+
+        addNonceToCache(replayAttackData.nonce)
+        await next()
+    }
+
+    return { start, stop, checkLogin, checkReplayAttack, isUnlockedGroup, addUnlockedGroup }
+}
+
+export type SessionController = ReturnType<typeof createSession>

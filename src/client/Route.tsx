@@ -8,6 +8,7 @@ import Entry from './pages/jumpToDefaultDataEntry'
 import { AppConfigProvider } from './layouts/appConfigProvider'
 import DiaryEdit from './pages/diaryEdit'
 import MonthList from './pages/monthList'
+import CertificateList from './pages/certificateList'
 
 const lazyLoad = (compLoader: () => Promise<{ default: ComponentType<any> }>) => {
     const Comp = lazy(compLoader)
@@ -26,6 +27,8 @@ export const routes = createHashRouter([
                 path: '/',
                 children: [
                     { index: true, element: <Entry /> },
+                    // 凭证列表
+                    { path: '/group/:groupId', element: <CertificateList /> },
                     // 日记列表
                     { path: '/month/:month', element: <MonthList /> },
                     // 日记详情编辑
@@ -38,8 +41,6 @@ export const routes = createHashRouter([
                     { path: '/exportDiary', element: lazyLoad(() => import('./pages/exportDiary')) },
                     // 修改密码
                     { path: '/changePassword', element: lazyLoad(() => import('./pages/changePassword/mobile')) },
-                    // 邀请管理
-                    { path: 'userInvite', element: lazyLoad(() => import('./pages/userInvite')) },
                     // 关于应用
                     { path: '/about', element: lazyLoad(() => import('./pages/about')) },
                 ],

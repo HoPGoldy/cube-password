@@ -1,5 +1,5 @@
 import { STATUS_CODE } from '@/config'
-import { LoginSuccessResp } from '@/types/user'
+import { LoginReqData, LoginSuccessResp } from '@/types/user'
 import { sha } from '@/utils/crypto'
 import { Button, Input, InputRef } from 'antd'
 import React, { useRef, useState } from 'react'
@@ -31,6 +31,12 @@ const Register = () => {
     /** store 里的用户信息 */
     const userInfo = useAppSelector(s => s.user.userInfo)
 
+    // 临时功能，开发自动登录
+    React.useEffect(() => {
+        if (!password) setPassword('123123')
+        else onSubmit()
+    }, [password])
+
     const onSubmit = async () => {
         if (!password) {
             messageError('请输入密码')
@@ -41,12 +47,13 @@ const Register = () => {
         const challengeResp = await queryChallengeCode()
         if (challengeResp.code !== STATUS_CODE.SUCCESS) return
 
-        // const resp = await postLogin({ username, password: sha(password) })
-        // if (resp.code !== STATUS_CODE.SUCCESS) return
+        const loginData: LoginReqData = { a: sha(sha(config?.salt + password) + challengeResp.data) }
+        const resp = await postLogin(loginData)
+        if (resp.code !== STATUS_CODE.SUCCESS) return
 
-        // messageSuccess('登录成功，欢迎回来。')
-        // const userInfo = resp.data as LoginSuccessResp
-        // dispatch(login(userInfo))
+        messageSuccess('登录成功，欢迎回来。')
+        const userInfo = resp.data as LoginSuccessResp
+        dispatch(login(userInfo))
     }
 
     if (userInfo) {

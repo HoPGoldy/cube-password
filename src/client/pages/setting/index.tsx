@@ -117,13 +117,6 @@ export const MobileSetting: FC<MobileProps> = (props) => {
 
                 <Card size="small" className='mt-4'>
                     <Cell
-                        title={(<div><UserOutlined /> &nbsp;登录用户</div>)}
-                        extra={setting.userName}
-                    />
-                </Card>
-
-                <Card size="small" className='mt-4'>
-                    <Cell
                         title={(<div><UserOutlined /> &nbsp;黑夜模式</div>)}
                         extra={(
                             <Switch

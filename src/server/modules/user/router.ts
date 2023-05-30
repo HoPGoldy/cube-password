@@ -17,7 +17,7 @@ export const createUserRouter = (props: Props) => {
 
     const loginSchema = Joi.object<LoginReqData>({
         a: Joi.string().required(),
-        b: Joi.string().required()
+        b: Joi.string().allow(null)
     })
 
     router.post('/login', async ctx => {
@@ -68,10 +68,7 @@ export const createUserRouter = (props: Props) => {
         if (!body) return
         const { theme } = body
 
-        const payload = getJwtPayload(ctx)
-        if (!payload) return
-
-        const resp = await service.setTheme(payload.userId, theme)
+        const resp = await service.setTheme(theme)
         response(ctx, resp)
     })
 

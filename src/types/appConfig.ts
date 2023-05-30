@@ -2,26 +2,18 @@
  * 后端发给前端的应用配置
  */
 export interface AppConfigResp {
-    /**
-     * 主按钮颜色
-     */
+    /** 主按钮颜色 */
     buttonColor: string
-    /**
-     * 项目主题色
-     */
+    /** 项目主题色 */
     primaryColor: string
-    /**
-     * 应用名
-     */
+    /** 应用名 */
     appName: string
-    /**
-     * 登录页副标题
-     */
+    /** 登录页副标题 */
     loginSubtitle: string
-    /**
-     * 是否已完成初始化
-     */
+    /** 是否已完成初始化 */
     needInit?: boolean
+    /** 主密码盐 */
+    salt?: string
 }
 
 export interface ColorConfig {

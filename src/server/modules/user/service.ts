@@ -11,11 +11,11 @@ import { queryIp } from '@/server/lib/queryIp'
 import { formatLocation, isSameLocation } from '@/server/utils'
 import { authenticator } from 'otplib'
 import { GroupService } from '../group/service'
+import { SessionController } from '@/server/lib/auth'
 
 interface Props {
     loginLocker: LoginLocker
-    createToken: (payload: Record<string, any>) => Promise<string>
-    getReplayAttackSecret: () => Promise<string>
+    startSession: SessionController['start']
     getChallengeCode: () => string | undefined
     addGroup: GroupService['addGroup']
     queryGroupList: GroupService['queryGroupList']
@@ -25,10 +25,10 @@ interface Props {
 
 export const createUserService = (props: Props) => {
     const {
-        loginLocker, createToken,
+        loginLocker,
+        startSession,
         addGroup,
         queryGroupList,
-        getReplayAttackSecret,
         getChallengeCode,
         insertSecurityNotice,
         db,
@@ -101,12 +101,12 @@ export const createUserService = (props: Props) => {
         if (password !== sha(passwordHash + challengeCode)) return loginFail(ip)
 
         // 用户每次重新进入页面都会刷新 token
-        const token = await createToken({ userId: userStorage.id })
-        const replayAttackSecret = await getReplayAttackSecret()
+        const session = startSession()
         const groupList = await queryGroupList()
 
         const data: LoginSuccessResp = {
-            token,
+            token: session.token,
+            replayAttackSecret: session.replayAttackSecret,
             theme,
             initTime,
             groups: groupList.data,
@@ -114,7 +114,6 @@ export const createUserService = (props: Props) => {
             defaultGroupId,
             createPwdAlphabet,
             createPwdLength,
-            replayAttackSecret,
         }
 
         loginLocker.clearRecord()
@@ -178,13 +177,13 @@ export const createUserService = (props: Props) => {
     /**
      * 设置应用主题色
      */
-    const setTheme = async (userId: number, theme: AppTheme) => {
-        const userStorage = await db.user().select().where('id', userId).first()
+    const setTheme = async (theme: AppTheme) => {
+        const userStorage = await db.user().select().first()
         if (!userStorage) {
             return { code: 400, msg: '用户不存在' }
         }
 
-        await db.user().update('theme', theme).where('id', userId)
+        await db.user().update('theme', theme).where('id', userStorage.id)
         return { code: 200 }
     }
 

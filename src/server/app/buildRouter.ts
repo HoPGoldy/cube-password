@@ -1,8 +1,5 @@
 import Router from 'koa-router'
 import { AppKoaContext } from '@/types/global'
-import { middlewareJwt, middlewareJwtCatcher } from '../lib/auth'
-import { createCheckReplayAttack } from '../lib/replayAttackDefense'
-import { AUTH_EXCLUDE, REPLAY_ATTACK_EXCLUDE } from '@/config'
 import { errorWapper } from '../utils'
 import { buildApp } from './buildApp'
 import { createGlobalRouter } from '../modules/global/router'
@@ -17,15 +14,13 @@ import { createSecurityRouter } from '../modules/security/router'
  * 会根据构建完成的 app 生成可访问的完整应用路由
  */
 export const buildRouter = async () => {
-    const { banLocker, loginLocker, ...services } = await buildApp()
+    const { sessionController, loginLocker, ...services } = await buildApp()
 
     const apiRouter = new Router<unknown, AppKoaContext>()
     apiRouter
         .use(loginLocker.checkLoginDisable)
-        .use(createCheckReplayAttack({ excludePath: REPLAY_ATTACK_EXCLUDE }))
-        .use(middlewareJwtCatcher)
-        .use(middlewareJwt.unless({ path: AUTH_EXCLUDE }))
-        .use(banLocker.checkBanDisable)
+        .use(sessionController.checkLogin)
+        .use(sessionController.checkReplayAttack)
 
     const globalRouter = createGlobalRouter({ service: services.globalService })
     const userRouter = createUserRouter({ service: services.userService })

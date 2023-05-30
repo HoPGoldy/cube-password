@@ -23,10 +23,10 @@ export const createGlobalService = (props: Props) => {
         const randIndex = Math.floor(Math.random() * (DEFAULT_COLOR.length))
         const colors = getColors(DEFAULT_COLOR[randIndex])
 
-        const { ['count(*)']: userCount } = await db.user().count().first() || {}
-        const needInit = +userCount <= 0
+        const userInfo = await db.user().select().first()
+        const needInit = !userInfo
 
-        const data: AppConfigResp = { appName: APP_NAME, loginSubtitle: LOGIN_SUBTITLE, ...colors }
+        const data: AppConfigResp = { appName: APP_NAME, loginSubtitle: LOGIN_SUBTITLE, ...colors, salt: userInfo?.passwordSalt }
         if (needInit) data.needInit = true
         return data
     }

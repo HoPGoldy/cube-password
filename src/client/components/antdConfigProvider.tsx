@@ -43,7 +43,7 @@ export const AntdConfigProvider: FC<PropsWithChildren> = (props) => {
             if (isMobile) theme.token.fontSize = 16
         }
 
-        const userTheme = getUserTheme(userInfo)
+        const userTheme = getUserTheme(userInfo?.theme)
         if (userTheme === AppTheme.Dark) {
             theme.algorithm = antdTheme.darkAlgorithm
         }
@@ -52,7 +52,7 @@ export const AntdConfigProvider: FC<PropsWithChildren> = (props) => {
     }, [appConfig, userInfo?.theme])
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', getUserTheme(userInfo))
+        document.documentElement.setAttribute('data-theme', getUserTheme(userInfo?.theme))
     }, [userInfo?.theme])
 
     return (

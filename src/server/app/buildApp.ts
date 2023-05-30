@@ -3,14 +3,13 @@ import { createDb } from '../lib/sqlite'
 import { getAppConfig } from '../lib/fileAccessor'
 import { createGlobalService } from '../modules/global/service'
 import { createLoginLock } from '../lib/LoginLocker'
-import { createBanLock } from '../lib/banLocker'
 import { createUserService } from '@/server/modules/user/service'
 
-import { createOTP, createToken } from '@/server/lib/auth'
-import { secretFile } from '@/server/lib/replayAttackDefense'
+import { createOTP, createSession } from '@/server/lib/auth'
 import { createDiaryService } from '../modules/diary/service'
 import { createGroupService } from '../modules/group/service'
 import { createSecurityService } from '../modules/security/service'
+import { AUTH_EXCLUDE } from '@/config'
 
 /**
  * 构建应用
@@ -32,11 +31,13 @@ export const buildApp = async () => {
         db
     })
 
+    const sessionController = createSession({
+        excludePath: AUTH_EXCLUDE
+    })
+
     const loginLocker = createLoginLock({
         excludePath: ['/global', '/user/createAdmin'],
     })
-    
-    const banLocker = createBanLock({ db })
 
     const securityService = createSecurityService({
         db,
@@ -48,14 +49,13 @@ export const buildApp = async () => {
 
     const userService = createUserService({
         loginLocker,
-        createToken: createToken,
+        startSession: sessionController.start,
         getChallengeCode: otpManager.pop,
         addGroup: groupService.addGroup,
         queryGroupList: groupService.queryGroupList,
         insertSecurityNotice: securityService.insertSecurityNotice,
-        getReplayAttackSecret: secretFile.read,
         db,
     })
 
-    return { globalService, userService, diaryService, banLocker, loginLocker, securityService, groupService }
+    return { sessionController, globalService, userService, diaryService, loginLocker, securityService, groupService }
 }

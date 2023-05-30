@@ -13,26 +13,13 @@
 
 .menuItemActive {
     @apply bg-gray-300 dark:bg-neutral-700;
+    @apply hover:bg-gray-400 dark:hover:bg-neutral-600;
 }
 
 /** 侧边栏的工具按钮，比如笔记树、创建笔记等 **/
 .toolBtn {
     @apply flex-shrink-0 bg-gray-300 dark:bg-neutral-900 border-0;
     @apply hover:!bg-gray-100 hover:dark:!bg-neutral-700;
-}
-
-.yearPicker {
-    @apply p-0 h-10;
-    @apply flex-shrink-0 bg-gray-300 dark:bg-neutral-900 border-0;
-    @apply hover:!bg-gray-100 hover:dark:!bg-neutral-700;
-}
-
-.yearPicker :global(input) {
-    @apply cursor-pointer font-bold !text-xl;
-}
-
-.yearPicker :global(.ant-picker-input) {
-    /* @apply !mb-4; */
 }
 
 .selectedToolBtn {

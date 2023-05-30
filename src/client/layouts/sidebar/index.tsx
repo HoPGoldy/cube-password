@@ -1,41 +1,29 @@
 import React, { FC, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { InsertRowLeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, DatePicker, Space } from 'antd'
+import { InsertRowLeftOutlined, RightOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons'
+import { Button, Space } from 'antd'
 import s from './styles.module.css'
-import dayjs, { Dayjs } from 'dayjs'
-
-// 写了个 Array.form 自动生成，没想到比写死的还长...
-const MONTH_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+import { useAppSelector } from '@/client/store'
+import { CertificateGroupDetail } from '@/types/group'
 
 export const Sidebar: FC = () => {
-    const params = useParams()
-    /** 页面年份 */
-    const [pageYear, setPageYear] = useState<Dayjs | null>(null)
-    /** 页面月份 */
-    const [pageMonth, setPageMonth] = useState<Dayjs | null>(null)
+    /** 分组列表 */
+    const groups = useAppSelector(s => s.user.groupList)
+    /** 当前所处的分组 */
+    const { groupId } = useParams()
 
-    useEffect(() => {
-        setPageYear(dayjs(params.month || params.date || undefined))
-        setPageMonth(dayjs(params.month || params.date || undefined))
-    }, [params.month, params.date])
-
-    const renderMenuItem = (index: number) => {
-        const month = pageYear?.clone().month(index)
-        if (month && month.isAfter(dayjs())) return null
-
-        const label = month?.format('YYYY 年 MM 月')
+    const renderGroupItem = (item: CertificateGroupDetail) => {
         const className = [s.menuItem]
-        if (month?.isSame(pageMonth, 'month')) className.push(s.menuItemActive)
+        if (groupId && +groupId === item.id) className.push(s.menuItemActive)
 
         return (
-            <Link key={index} to={`/month/${month?.format('YYYYMM')}`}>
+            <Link key={item.id} to={`/group/${item.id}`}>
                 <div
                     className={className.join(' ')}
-                    title={label}
+                    title={item.name}
                 >
-                    <span className="truncate">{label}</span>
-                    <RightOutlined />
+                    <span className="truncate">{item.name}</span>
+                    {item.requireLogin ? <LockOutlined /> : <RightOutlined />}
                 </div>
             </Link>
         )
@@ -43,33 +31,21 @@ export const Sidebar: FC = () => {
 
     return (
         <section className={s.sideberBox}>
-            <Button
-                className={[s.yearPicker, 'keep-antd-style'].join(' ')}
-            >
-                <DatePicker
-                    picker="year"
-                    style={{ width: '100%' }}
-                    bordered={false}
-                    value={pageYear}
-                    allowClear={false}
-                    format={'YYYY 年'}
-                    onChange={setPageYear}
-                />
-            </Button>
+            <div className="flex flex-row flex-nowrap items-center justify-center">
+                <div className="font-black text-lg">密码本</div>
+            </div>
 
             <div className="flex-grow flex-shrink overflow-y-auto noscrollbar overflow-x-hidden my-3">
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    {MONTH_LIST.map(renderMenuItem)}
+                    {groups.map(renderGroupItem)}
                 </Space>
             </div>
 
-            <Link to={`/month/${dayjs().format('YYYYMM')}`}>
-                <Button
-                    className={`${s.toolBtn} keep-antd-style`}
-                    icon={<InsertRowLeftOutlined />}
-                    block
-                >返回本月</Button>
-            </Link>
+            <Button
+                className={`${s.toolBtn} keep-antd-style`}
+                icon={<InsertRowLeftOutlined />}
+                block
+            >新建分组</Button>
         </section>
     )
 }

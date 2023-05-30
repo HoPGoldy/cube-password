@@ -46,7 +46,7 @@ export interface LoginReqData {
     /** 密码 */
     a: string
     /** totp 验证码 */
-    b: string
+    b?: string
 }
 
 /** 登录接口返回值 */
