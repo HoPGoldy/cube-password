@@ -4,10 +4,10 @@ import { errorWapper } from '../utils'
 import { buildApp } from './buildApp'
 import { createGlobalRouter } from '../modules/global/router'
 import { createUserRouter } from '../modules/user/router'
-import { createDiaryRouter } from '../modules/diary/router'
 import { createGroupRouter } from '../modules/group/router'
 import { createSecurityRouter } from '../modules/security/router'
 import { createCertificateRouter } from '../modules/certificate/router'
+import { createOtpRouter } from '../modules/otp/router'
 
 /**
  * 构建路由
@@ -28,8 +28,8 @@ export const buildRouter = async () => {
     const certificateRouter = createCertificateRouter({ service: services.certificateService })
     const groupRouter = createGroupRouter({ service: services.groupService })
     const securityRouter = createSecurityRouter({ service: services.securityService })
-    const diaryRouter = createDiaryRouter({ service: services.diaryService })
-    const routes = [globalRouter, userRouter, diaryRouter, certificateRouter, groupRouter, securityRouter]
+    const optRouter = createOtpRouter({ service: services.otpService })
+    const routes = [globalRouter, userRouter, certificateRouter, groupRouter, optRouter, securityRouter]
 
     routes.forEach(route => apiRouter.use('/api', errorWapper, route.routes(), route.allowedMethods()))
 

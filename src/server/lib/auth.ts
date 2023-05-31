@@ -2,14 +2,8 @@ import { Next } from 'koa'
 import { nanoid } from 'nanoid'
 import { response } from '../utils'
 import { AppKoaContext, MyJwtPayload } from '@/types/global'
-import { createAccessor } from './fileAccessor'
 import { getReplayAttackData, validateReplayAttackData } from '@/utils/crypto'
 import { STATUS_CODE } from '@/config'
-
-/**
- * 获取 jwt 密钥
- */
-export const jwtSecretFile = createAccessor({ fileName: 'jwtSecret' })
 
 /**
  * 通过 ctx 获取用户登录的 jwt 载荷

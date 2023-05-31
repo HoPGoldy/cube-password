@@ -6,11 +6,11 @@ import { createLoginLock } from '../lib/LoginLocker'
 import { createUserService } from '@/server/modules/user/service'
 
 import { createOTP, createSession } from '@/server/lib/auth'
-import { createDiaryService } from '../modules/diary/service'
 import { createGroupService } from '../modules/group/service'
 import { createSecurityService } from '../modules/security/service'
 import { AUTH_EXCLUDE } from '@/config'
 import { createCertificateService } from '../modules/certificate/service'
+import { createOtpService } from '../modules/otp/service'
 
 /**
  * 构建应用
@@ -23,8 +23,6 @@ export const buildApp = async () => {
 
     // 挑战码十秒内过期
     const otpManager = createOTP(1000 * 10)
-
-    const diaryService = createDiaryService({ db })
 
     const globalService = createGlobalService({
         getConfig: getAppConfig,
@@ -64,5 +62,11 @@ export const buildApp = async () => {
         isGroupUnlocked: sessionController.isGroupUnlocked,
     })
 
-    return { sessionController, globalService, userService, diaryService, loginLocker, securityService, groupService, certificateService }
+    const otpService = createOtpService({
+        db,
+        getChallengeCode: otpManager.pop,
+        insertSecurityNotice: securityService.insertSecurityNotice,
+    })
+
+    return { sessionController, globalService, userService, loginLocker, securityService, groupService, certificateService, otpService }
 }
