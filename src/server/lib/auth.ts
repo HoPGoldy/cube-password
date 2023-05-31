@@ -70,7 +70,7 @@ interface UserSession {
     /** 防重放攻击密钥 */
     replayAttackSecret?: string;
     /** 已经解锁的分组 id */
-    unlockedGroupIds: Set<string>;
+    unlockedGroupIds: Set<number>;
 }
 
 interface CreateSessionProps {
@@ -141,13 +141,13 @@ export const createSession = (props: CreateSessionProps) => {
     }
 
     /** 查询指定分组是否解锁 */
-    const isUnlockedGroup = (groupId: string) => {
+    const isGroupUnlocked = (groupId: number) => {
         return userInfo.unlockedGroupIds.has(groupId)
     }
 
     /** 添加解锁分组 */
-    const addUnlockedGroup = (groupId: string) => {
-        if (isUnlockedGroup(groupId) || !userInfo.token) return
+    const addUnlockedGroup = (groupId: number) => {
+        if (isGroupUnlocked(groupId) || !userInfo.token) return
         userInfo.unlockedGroupIds.add(groupId)
     }
 
@@ -214,7 +214,7 @@ export const createSession = (props: CreateSessionProps) => {
         await next()
     }
 
-    return { start, stop, checkLogin, checkReplayAttack, isUnlockedGroup, addUnlockedGroup }
+    return { start, stop, checkLogin, checkReplayAttack, isGroupUnlocked, addUnlockedGroup }
 }
 
 export type SessionController = ReturnType<typeof createSession>

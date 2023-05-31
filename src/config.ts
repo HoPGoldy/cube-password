@@ -59,6 +59,8 @@ export const PAGE_SIZE = 15
 export const TABLE_NAME = {
     /** 用户表 */
     USER: 'users',
+    /** 凭证表 */
+    CERTIFICATE: 'certificates',
     /** 分组表 */
     GROUP: 'groups',
     /** 日记表 */

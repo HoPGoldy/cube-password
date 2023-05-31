@@ -10,6 +10,7 @@ import { createDiaryService } from '../modules/diary/service'
 import { createGroupService } from '../modules/group/service'
 import { createSecurityService } from '../modules/security/service'
 import { AUTH_EXCLUDE } from '@/config'
+import { createCertificateService } from '../modules/certificate/service'
 
 /**
  * 构建应用
@@ -58,5 +59,10 @@ export const buildApp = async () => {
         db,
     })
 
-    return { sessionController, globalService, userService, diaryService, loginLocker, securityService, groupService }
+    const certificateService = createCertificateService({
+        db,
+        isGroupUnlocked: sessionController.isGroupUnlocked,
+    })
+
+    return { sessionController, globalService, userService, diaryService, loginLocker, securityService, groupService, certificateService }
 }

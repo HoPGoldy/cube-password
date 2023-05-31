@@ -7,6 +7,7 @@ import { createUserRouter } from '../modules/user/router'
 import { createDiaryRouter } from '../modules/diary/router'
 import { createGroupRouter } from '../modules/group/router'
 import { createSecurityRouter } from '../modules/security/router'
+import { createCertificateRouter } from '../modules/certificate/router'
 
 /**
  * 构建路由
@@ -24,10 +25,11 @@ export const buildRouter = async () => {
 
     const globalRouter = createGlobalRouter({ service: services.globalService })
     const userRouter = createUserRouter({ service: services.userService })
+    const certificateRouter = createCertificateRouter({ service: services.certificateService })
     const groupRouter = createGroupRouter({ service: services.groupService })
     const securityRouter = createSecurityRouter({ service: services.securityService })
     const diaryRouter = createDiaryRouter({ service: services.diaryService })
-    const routes = [globalRouter, userRouter, diaryRouter, groupRouter, securityRouter]
+    const routes = [globalRouter, userRouter, diaryRouter, certificateRouter, groupRouter, securityRouter]
 
     routes.forEach(route => apiRouter.use('/api', errorWapper, route.routes(), route.allowedMethods()))
 

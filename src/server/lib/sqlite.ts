@@ -5,6 +5,7 @@ import { FileStorage } from '@/types/file'
 import { UserInviteStorage } from '@/types/userInvite'
 import { DiaryStorage } from '@/types/diary'
 import { CertificateGroupStorage } from '@/types/group'
+import { CertificateStorage } from '@/types/certificate'
 
 interface Props {
     dbPath: string
@@ -31,6 +32,21 @@ export const createDb = (props: Props) => {
             t.string('totpSecret')
             t.string('createPwdAlphabet')
             t.string('createPwdLength')
+        })
+    })
+
+    // 凭证表
+    sqliteDb.schema.hasTable(TABLE_NAME.CERTIFICATE).then(exists => {
+        if (exists) return
+        return sqliteDb.schema.createTable(TABLE_NAME.CERTIFICATE, t => {
+            t.increments('id').primary()
+            t.string('name').notNullable()
+            t.integer('groupId').notNullable()
+            t.timestamp('createTime').notNullable()
+            t.timestamp('updateTime').notNullable()
+            t.text('content').notNullable()
+            t.integer('order')
+            t.string('markColor')
         })
     })
 
@@ -88,6 +104,7 @@ export const createDb = (props: Props) => {
     return {
         knex: sqliteDb,
         user: () => sqliteDb<UserStorage>(TABLE_NAME.USER),
+        certificate: () => sqliteDb<CertificateStorage>(TABLE_NAME.CERTIFICATE),
         group: () => sqliteDb<CertificateGroupStorage>(TABLE_NAME.GROUP),
         diary: () => sqliteDb<DiaryStorage>(TABLE_NAME.DIARY),
         file: () => sqliteDb<FileStorage>(TABLE_NAME.FILE),

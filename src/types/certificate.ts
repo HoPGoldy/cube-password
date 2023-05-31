@@ -15,7 +15,8 @@ export interface CertificateField {
 /**
  * 凭证详情
  */
-export interface CertificateDetail {
+export interface CertificateStorage {
+    id: number
     /**
      * 凭证名称
      */
@@ -34,6 +35,10 @@ export interface CertificateDetail {
      */
     groupId: number
     /**
+     * 凭证创建时间
+     */
+    createTime: number
+    /**
      * 凭证最后更新时间
      */
     updateTime: number
@@ -41,4 +46,15 @@ export interface CertificateDetail {
      * 凭证的加密内容（解密后为凭证字段数组）
      */
     content: string
+}
+
+/**
+ * 凭证移动请求数据
+ */
+export interface CertificateMoveReqBody {
+    ids: number[]
+    /**
+     * 要移动到的新分组
+     */
+    newGroupId: number
 }
