@@ -44,6 +44,9 @@ export const buildApp = async () => {
 
     const groupService = createGroupService({
         db,
+        isGroupUnlocked: sessionController.isGroupUnlocked,
+        addUnlockedGroup: sessionController.addUnlockedGroup,
+        getChallengeCode: otpManager.pop,
     })
 
     const userService = createUserService({

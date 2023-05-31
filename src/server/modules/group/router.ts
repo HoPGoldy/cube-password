@@ -4,7 +4,7 @@ import { response } from '@/server/utils'
 import { GroupService } from './service'
 import { validate } from '@/server/utils'
 import Joi from 'joi'
-import { CertificateGroupStorage } from '@/types/group'
+import { CertificateGroupStorage, GroupAddPasswordData, GroupRemovePasswordData } from '@/types/group'
 
 interface Props {
     service: GroupService
@@ -22,11 +22,109 @@ export const createGroupRouter = (props: Props) => {
     }).with('passwordHash', 'passwordSalt')
 
     // 新增分组
-    router.post('/addGroup', async ctx => {
+    router.post('/add', async ctx => {
         const body = validate(ctx, addGroupSchema)
         if (!body) return
 
         const resp = await service.addGroup(body)
+        response(ctx, resp)
+    })
+
+    // 查询分组下属凭证
+    router.get('/:groupId/certificates', async ctx => {
+        const groupId = +ctx.params.groupId
+
+        const certificates = await service.getCertificateList(groupId)
+        response(ctx, { code: 200, data: certificates })
+    })
+
+    const updateGroupSchema = Joi.object<{ name: string }>({
+        name: Joi.string().required()
+    })
+
+    // 更新分组名称
+    router.post('/:groupId/updateName', async ctx => {
+        const body = validate(ctx, updateGroupSchema)
+        if (!body) return
+
+        const groupId = +ctx.params.groupId
+        const resp = await service.updateGroupName(groupId, body.name)
+        response(ctx, resp)
+    })
+
+    const updateGroupSortSchema = Joi.object<{ groupIds: number[] }>({
+        groupIds: Joi.array().items(Joi.number()).required()
+    })
+
+    // 更新分组排序
+    router.post('/updateSort', async ctx => {
+        const body = validate(ctx, updateGroupSortSchema)
+        if (!body) return
+    
+        const resp = await service.updateSort(body.groupIds)
+        response(ctx, resp)
+    })
+
+    const setDefaultGroupSchema = Joi.object<{ groupId: number }>({
+        groupId: Joi.number().required()
+    })
+
+    // 设置默认分组
+    router.post('/setDefaultGroup', async ctx => {
+        const body = validate(ctx, setDefaultGroupSchema)
+        if (!body) return
+    
+        const resp = await service.setDefaultGroup(body.groupId)
+        response(ctx, resp)
+    })
+
+    // 删除分组
+    router.post('/:groupId/delete', async ctx => {
+        const groupId = +ctx.params.groupId
+        const resp = await service.deleteGroup(groupId)
+        response(ctx, resp)
+    })
+
+    // 分组解密
+    router.post('/:groupId/unlock', async ctx => {
+        const { code } = ctx.request.body
+        if (!code || typeof code !== 'string') {
+            response(ctx, { code: 401, msg: '无效的分组密码凭证' })
+            return
+        }
+
+        const groupId = +ctx.params.groupId
+        const resp = await service.unlockGroup(groupId, code)
+        response(ctx, resp)
+    })
+
+    const addGroupPasswordSchema = Joi.object<GroupAddPasswordData>({
+        a: Joi.string().required(),
+        b: Joi.string().required(),
+    })
+
+    // 分组设置密码
+    router.post('/:groupId/addPassword', async ctx => {
+        const body = validate(ctx, addGroupPasswordSchema)
+        if (!body) return
+    
+        const groupId = +ctx.params.groupId
+        const resp = await service.groupAddPassword(groupId, body)
+        response(ctx, resp)
+    })
+
+    const removeGroupPasswordSchema = Joi.object<GroupRemovePasswordData>({
+        a: Joi.string().required(),
+        b: Joi.string().allow(''),
+    })
+
+    // 分组移除密码
+    router.post('/:groupdId/removePassword', async ctx => {
+        const body = validate(ctx, removeGroupPasswordSchema)
+        if (!body) return
+    
+        const groupId = +ctx.params.groupId
+        const resp = await service.removeGroupPassword(groupId, body)
         response(ctx, resp)
     })
 

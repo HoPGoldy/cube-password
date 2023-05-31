@@ -1,4 +1,5 @@
-import { STATUS_CODE, TABLE_NAME } from '@/config'
+import { TABLE_NAME } from '@/config'
+import { groupLockResp } from '@/server/constants'
 import { DatabaseAccessor } from '@/server/lib/sqlite'
 import { CertificateStorage } from '@/types/certificate'
 
@@ -12,8 +13,6 @@ export const createCertificateService = (props: Props) => {
         db,
         isGroupUnlocked,
     } = props
-
-    const groupLockResp = { code: STATUS_CODE.GROUP_NOT_VERIFY_PASSWORD, msg: '分组未解密' }
 
     /** 查询凭证详情数据 */
     const queryCertificateDetail = async (id: number) => {
