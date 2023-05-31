@@ -1,4 +1,4 @@
-import { AppTheme, UserStorage, LoginSuccessResp, RegisterReqData } from '@/types/user'
+import { AppTheme, UserStorage, LoginSuccessResp, RegisterReqData, AppStatistics } from '@/types/user'
 import { AppResponse } from '@/types/global'
 import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH, STATUS_CODE } from '@/config'
 import { sha } from '@/utils/crypto'
@@ -198,20 +198,20 @@ export const createUserService = (props: Props) => {
     }
 
     /**
-     * 文章统计
+     * 应用统计
      */
-    const getDiaryCount = async (userId: number) => {
-        const [countResult] = await db.diary().count().where('createUserId', userId)
-        const [lengthResult] = await db.diary().sum(db.knex.raw('LENGTH(content)')).where('createUserId', userId) as any
+    const getCount = async () => {
+        const [groupCount] = await db.group().count()
+        const [certificateCount] = await db.certificate().count()
 
-        const data = {
-            diaryCount: countResult['count(*)'],
-            diaryLength: lengthResult['sum(LENGTH(content))'],
+        const data: AppStatistics = {
+            groupCount: groupCount['count(*)'] as number,
+            certificateCount: certificateCount['count(*)'] as number,
         }
         return { code: 200, data }
     }
 
-    return { login, logout, createAdmin, changePassword, setTheme, getDiaryCount }
+    return { login, logout, createAdmin, changePassword, setTheme, getCount }
 }
 
 export type UserService = ReturnType<typeof createUserService>

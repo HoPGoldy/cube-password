@@ -79,10 +79,7 @@ export const createUserRouter = (props: Props) => {
 
     // 统计文章
     router.get('/statistic', async ctx => {
-        const payload = getJwtPayload(ctx)
-        if (!payload) return
-
-        const resp = await service.getDiaryCount(payload.userId)
+        const resp = await service.getCount()
         response(ctx, resp)
     })
 

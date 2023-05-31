@@ -92,3 +92,12 @@ export interface FrontendUserInfo {
     /** 密码生成长度 */
     createPwdLength: number
 }
+
+
+/** 应用统计 */
+export interface AppStatistics {
+    /** 分组数量 */
+    groupCount: number
+    /** 凭证数量 */
+    certificateCount: number
+}
