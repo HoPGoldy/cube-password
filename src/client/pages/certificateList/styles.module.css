@@ -10,34 +10,13 @@
     @apply hover:ring-2 ring-gray-300 dark:ring-neutral-500 transition-shadow;
 }
 
-.mdArea :global(img) {
-    max-width: 100%;
-    margin: auto;
-    display: block;
+.labelInput {
+    @apply block py-2 w-full transition;
 }
 
-.mdArea :global(table) {
-    width: 100%;
-    border-top: 1px solid #ddd;
-    border-left: 1px solid #ddd;
-}
-
-.mdArea :global(th) {
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    padding: 8px;
-    min-width: 60px;
-}
-
-.mdArea :global(td) {
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    padding: 8px;
-    min-width: 60px;
-}
-
-.mdArea :global(p) {
-    @apply my-1;
+.labelInput:global(.ant-input[disabled]) {
+    cursor: default;
+    color: inherit;
 }
 
 .settingDrawer :global(.ant-drawer-body) {

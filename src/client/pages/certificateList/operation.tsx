@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ActionButton, ActionIcon } from '@/client/layouts/pageWithAction'
 import { messageWarning } from '@/client/utils/message'
-import { SettingOutlined, SearchOutlined, CalendarOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons'
+import { PlusOutlined, SettingOutlined, SearchOutlined, CalendarOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons'
 import { MobileSetting } from '../setting'
 import s from './styles.module.css'
-import { Col, Drawer, Row } from 'antd'
+import { Button, Col, Drawer, Row, Space } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { MobileDrawer } from '@/client/components/mobileDrawer'
+import { DesktopArea } from '@/client/layouts/responsive'
 
 /**
  * 生成日记编辑的跳转链接
@@ -20,7 +21,11 @@ export const getDiaryWriteUrl = (datetime?: number) => {
 
 const MONTH_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
-export const useOperation = () => {
+interface Props {
+    onAddNew: () => void
+}
+
+export const useOperation = (props: Props) => {
     const params = useParams()
     const navigate = useNavigate()
     /** 是否展示设置 */
@@ -171,7 +176,28 @@ export const useOperation = () => {
         </>)
     }
 
+    /** PC 端渲染顶部操作栏 */
+    const renderTitleOperation = () => {
+        return (
+            <DesktopArea>
+                <div className="flex flex-row flex-nowrap items-center">
+                    <Space>
+                        <Button
+                            icon={<SettingOutlined />}
+                        >分组设置</Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={props.onAddNew}
+                        >新建密码</Button>
+                    </Space>
+                </div>
+            </DesktopArea>
+        )
+    }
+
     return {
-        renderMobileBar
+        renderMobileBar,
+        renderTitleOperation
     }
 }

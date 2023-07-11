@@ -2,7 +2,7 @@ import React, { FC, MouseEventHandler, useEffect, useRef, useState } from 'react
 import { useParams } from 'react-router-dom'
 import { PageContent, PageAction } from '../../layouts/pageWithAction'
 import Loading from '../../layouts/loading'
-import { Image } from 'antd'
+import { Image, Modal } from 'antd'
 import { PageTitle } from '@/client/components/pageTitle'
 import { useQueryDiaryList } from '@/client/services/diary'
 import { DiaryListItem } from './listItem'
@@ -10,23 +10,21 @@ import { useOperation } from './operation'
 import s from './styles.module.css'
 import { useAppDispatch, useAppSelector } from '@/client/store'
 import { setFocusDiaryDate } from '@/client/store/global'
+import { CertificateDetail } from './detail'
 
 /**
  * 凭证列表
  */
 const CertificateList: FC = () => {
     const { month } = useParams()
-    const dispatch = useAppDispatch()
-    /** 要跳转到的日记 */
-    const focusDate = useAppSelector(s => s.global.focusDiaryDate)
     /** 获取日记列表 */
     const { data: monthListResp, isLoading } = useQueryDiaryList(month)
-    /** 当前正在预览的图片链接 */
-    const [visibleImgSrc, setVisibleImgSrc] = useState('')
+    /** 详情弹窗展示的密码 ID（-1 时代表新增密码） */
+    const [detailId, setDetailId] = useState<false | number>(false)
     /** 底部操作栏 */
-    const { renderMobileBar } = useOperation()
-    /** 列表底部 div 引用 */
-    const listBottomRef = useRef<HTMLDivElement>(null)
+    const { renderMobileBar, renderTitleOperation } = useOperation({
+        onAddNew: () => setDetailId(-1),
+    })
 
     const renderContent = () => {
         if (isLoading) return <Loading />
@@ -38,26 +36,18 @@ const CertificateList: FC = () => {
         )
     }
 
-    useEffect(() => {
-        setTimeout(() => {
-            if (!focusDate) {
-                listBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-                return
-            }
-    
-            const targetDiv = document.querySelector(`[data-diary-date='${focusDate}']`)
-            if (targetDiv) targetDiv.scrollIntoView()
-            dispatch(setFocusDiaryDate(undefined))
-        }, 50)
-    }, [])
-
     return (<>
         <PageTitle title='凭证列表' />
 
         <PageContent>
             <div className="mx-4 mt-4">
+                <div className="flex flex-row flex-nowrap justify-end items-center">
+                    {renderTitleOperation()}
+                </div>
                 {renderContent()}
             </div>
+
+            <CertificateDetail detailId={detailId} onCancel={() => setDetailId(false)} />
         </PageContent>
 
         <PageAction>
