@@ -1,10 +1,11 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAppSelector } from '../store'
+import { useAtomValue } from 'jotai'
+import { stateUser } from '../store/user'
 
 const JumpToDefaultDataEntry = () => {
     // 跳转到默认分组
-    const defaultGroupId = useAppSelector(s => s.user.userInfo?.defaultGroupId)
+    const defaultGroupId = useAtomValue(stateUser)?.defaultGroupId
 
     return (
         <Navigate to={`/group/${defaultGroupId}`} replace />

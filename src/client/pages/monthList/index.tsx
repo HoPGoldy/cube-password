@@ -1,4 +1,4 @@
-import React, { FC, MouseEventHandler, useEffect, useRef, useState } from 'react'
+import React, { FC, MouseEventHandler, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { PageContent, PageAction } from '../../layouts/pageWithAction'
 import Loading from '../../layouts/loading'
@@ -8,8 +8,6 @@ import { useQueryDiaryList } from '@/client/services/diary'
 import { DiaryListItem } from './listItem'
 import { useOperation } from './operation'
 import s from './styles.module.css'
-import { useAppDispatch, useAppSelector } from '@/client/store'
-import { setFocusDiaryDate } from '@/client/store/global'
 
 /**
  * 日记列表
@@ -17,9 +15,6 @@ import { setFocusDiaryDate } from '@/client/store/global'
  */
 const MonthList: FC = () => {
     const { month } = useParams()
-    const dispatch = useAppDispatch()
-    /** 要跳转到的日记 */
-    const focusDate = useAppSelector(s => s.global.focusDiaryDate)
     /** 获取日记列表 */
     const { data: monthListResp, isLoading } = useQueryDiaryList(month)
     /** 当前正在预览的图片链接 */
@@ -46,18 +41,18 @@ const MonthList: FC = () => {
         )
     }
 
-    useEffect(() => {
-        setTimeout(() => {
-            if (!focusDate) {
-                listBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-                return
-            }
+    // useEffect(() => {
+    //     setTimeout(() => {
+    //         if (!focusDate) {
+    //             listBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    //             return
+    //         }
     
-            const targetDiv = document.querySelector(`[data-diary-date='${focusDate}']`)
-            if (targetDiv) targetDiv.scrollIntoView()
-            dispatch(setFocusDiaryDate(undefined))
-        }, 50)
-    }, [])
+    //         const targetDiv = document.querySelector(`[data-diary-date='${focusDate}']`)
+    //         if (targetDiv) targetDiv.scrollIntoView()
+    //         dispatch(setFocusDiaryDate(undefined))
+    //     }, 50)
+    // }, [])
 
     return (<>
         <PageTitle title='日记列表' />

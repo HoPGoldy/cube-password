@@ -3,20 +3,19 @@ import { LoginSuccessResp } from '@/types/user'
 import React, { FC, useEffect, PropsWithChildren } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useQueryUserInfo } from '../services/user'
-import { useAppDispatch, useAppSelector } from '../store'
-import { login } from '../store/user'
+import { login, stateUser, stateUserToken } from '../store/user'
 import Loading from './loading'
+import { useAtomValue } from 'jotai'
 
 export const LoginAuth: FC<PropsWithChildren> = ({ children }) => {
-    const userInfo = useAppSelector(s => s.user.userInfo)
-    const token = useAppSelector(s => s.user.token)
-    const dispatch = useAppDispatch()
+    const userInfo = useAtomValue(stateUser)
+    const token = useAtomValue(stateUserToken)
     const { data: userInfoResp } = useQueryUserInfo(!!(token && !userInfo))
 
     useEffect(() => {
         if (!userInfoResp || userInfoResp.code !== STATUS_CODE.SUCCESS) return
         const userInfo = userInfoResp.data as LoginSuccessResp
-        dispatch(login(userInfo))
+        login(userInfo)
     }, [userInfoResp])
 
     if ((!userInfo && !token) || userInfoResp?.code === 401) {

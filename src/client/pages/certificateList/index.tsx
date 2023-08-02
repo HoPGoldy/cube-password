@@ -8,8 +8,6 @@ import { useQueryDiaryList } from '@/client/services/diary'
 import { DiaryListItem } from './listItem'
 import { useOperation } from './operation'
 import s from './styles.module.css'
-import { useAppDispatch, useAppSelector } from '@/client/store'
-import { setFocusDiaryDate } from '@/client/store/global'
 import { CertificateDetail } from './detail'
 
 /**
@@ -20,7 +18,7 @@ const CertificateList: FC = () => {
     /** 获取日记列表 */
     const { data: monthListResp, isLoading } = useQueryDiaryList(month)
     /** 详情弹窗展示的密码 ID（-1 时代表新增密码） */
-    const [detailId, setDetailId] = useState<false | number>(false)
+    const [detailId, setDetailId] = useState<number>()
     /** 底部操作栏 */
     const { renderMobileBar, renderTitleOperation } = useOperation({
         onAddNew: () => setDetailId(-1),
@@ -47,7 +45,7 @@ const CertificateList: FC = () => {
                 {renderContent()}
             </div>
 
-            <CertificateDetail detailId={detailId} onCancel={() => setDetailId(false)} />
+            <CertificateDetail groupId detailId={detailId} onCancel={() => setDetailId(false)} />
         </PageContent>
 
         <PageAction>

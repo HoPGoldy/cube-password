@@ -3,12 +3,13 @@ import { Link, useParams } from 'react-router-dom'
 import { InsertRowLeftOutlined, RightOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons'
 import { Button, Space } from 'antd'
 import s from './styles.module.css'
-import { useAppSelector } from '@/client/store'
 import { CertificateGroupDetail } from '@/types/group'
+import { useAtomValue } from 'jotai'
+import { stateGroupList } from '@/client/store/user'
 
 export const Sidebar: FC = () => {
     /** 分组列表 */
-    const groups = useAppSelector(s => s.user.groupList)
+    const groups = useAtomValue(stateGroupList)
     /** 当前所处的分组 */
     const { groupId } = useParams()
 

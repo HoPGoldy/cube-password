@@ -9,14 +9,17 @@ import { useQueryDiaryList } from '@/client/services/diary'
 import { DiaryListItem } from './listItem'
 import { useOperation } from './operation'
 import s from './styles.module.css'
-import { useAppDispatch, useAppSelector } from '@/client/store'
 import copy from 'copy-to-clipboard'
 import { CertificateField } from '@/types/certificate'
 import { messageSuccess, messageWarning } from '@/client/utils/message'
-import { getRandName } from '@/client/services/certificate'
+import { getRandName, useSaveCertificate } from '@/client/services/certificate'
 import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH, STATUS_CODE } from '@/config'
 import { openNewTab } from '@/utils/common'
 import { customAlphabet } from 'nanoid'
+import { DetailTitle } from './components/detailTitle'
+import { aes } from '@/utils/crypto'
+import { useAtomValue } from 'jotai'
+import { stateMainPwd, stateUser } from '@/client/store/user'
 
 interface FieldListProps {
     showDelete?: boolean
@@ -138,8 +141,29 @@ const CertificateFieldItem: FC<FieldListProps> = (props) => {
 }
 
 interface Props {
-    detailId: false | number
+    groupId: number
+    detailId: number | undefined
     onCancel: () => void
+}
+
+const getNewFormValues = () => {
+    return {
+        title: '新密码',
+        fields: [
+            {
+                label: '网址',
+                value: '',
+            },
+            {
+                label: '用户名',
+                value: '',
+            },
+            {
+                label: '密码',
+                value: '',
+            },
+        ],
+    }
 }
 
 /**
@@ -147,10 +171,19 @@ interface Props {
  */
 export const CertificateDetail: FC<Props> = (props) => {
     const { detailId, onCancel } = props
-    const userInfo = useAppSelector(s => s.user.userInfo)
-    const modalTitle = detailId === -1 ? '新增' : '详情'
+    const [form] = Form.useForm()
+    const userInfo = useAtomValue(stateUser)
+    const { pwdKey, pwdIv } = useAtomValue(stateMainPwd)
     /** 新建字段时的累加字段名索引 */
     const newFieldIndex = useRef(1)
+    const { mutateAsync: saveDetail, isLoading: isSaving } = useSaveCertificate(detailId)
+
+    useEffect(() => {
+        if (!detailId) return
+        if (detailId === -1) {
+            form.setFieldsValue(getNewFormValues())
+        }
+    }, [detailId])
 
     const createPwd = useMemo(() => {
         return customAlphabet(
@@ -159,52 +192,87 @@ export const CertificateDetail: FC<Props> = (props) => {
         )
     }, [userInfo?.createPwdAlphabet, userInfo?.createPwdLength])
 
+    const onConfirm = async () => {
+        const values = await form.validateFields()
+        if (!values.title) {
+            messageWarning('标题不能为空')
+            return
+        }
+
+        if (!pwdKey || !pwdIv) {
+            messageWarning('主密码错误，请尝试重新登录')
+            return
+        }
+        console.log("🚀 ~ file: detail.tsx:165 ~ onConfirm ~ values:", values, pwdKey, pwdIv)
+        const content = aes(JSON.stringify(values.fields), pwdKey, pwdIv)
+        console.log("🚀 ~ file: detail.tsx:206 ~ onConfirm ~ content:", content)
+        return
+        // saveDetail({
+        //     name: values.title,
+        //     markColor,
+        //     content,
+        //     groupId,
+        //     order: 0,
+        // })
+    }
+
     const renderCertificateDetail = () => {
         return (
-            <Modal
-                open={!!detailId}
-                onCancel={onCancel}
-                title={modalTitle}
-            >
-                {renderDetailForm()}
-            </Modal>
+            <Form form={form}>
+                <Modal
+                    open={!!detailId}
+                    onCancel={onCancel}
+                    closable={false}
+                    title={
+                        <DetailTitle disabled={false} />
+                    }
+                    footer={[
+                        <Button key="back" onClick={onCancel}>
+                        取消
+                        </Button>,
+                        <Button key="submit" type="primary" onClick={onConfirm}>
+                        确定
+                        </Button>,
+                    ]}
+                >
+                    {renderDetailForm()}
+                </Modal>
+            </Form>
         )
     }
 
     const renderDetailForm = () => {
         return (
-            <Form>
-                <Form.List name="users">
-                    {(fields, { add, remove }) => (
-                        <>
-                            {fields.map((field) => (
-                                // eslint-disable-next-line react/jsx-key
-                                <Form.Item
-                                    {...field}
-                                    noStyle
-                                >
-                                    <CertificateFieldItem
-                                        showDelete={fields.length > 1}
-                                        createPwd={createPwd}
-                                        onDelete={() => remove(field.name)}
-                                    />
-                                </Form.Item>
-                            ))}
-                            <Form.Item>
-                                <Button
-                                    type="dashed"
-                                    onClick={() => add({ label: '字段' + newFieldIndex.current++, value: '' })}
-                                    block
-                                    className='mt-4'
-                                    icon={<PlusOutlined />}
-                                >
-                                    新增字段
-                                </Button>
+            <Form.List name="fields">
+                {(fields, { add, remove }) => (
+                    <>
+                        {fields.map((field) => (
+                            // eslint-disable-next-line react/jsx-key
+                            <Form.Item
+                                {...field}
+                                noStyle
+                            >
+                                <CertificateFieldItem
+                                    showDelete={fields.length > 1}
+                                    createPwd={createPwd}
+                                    onDelete={() => remove(field.name)}
+                                />
                             </Form.Item>
-                        </>
-                    )}
-                </Form.List>
-            </Form>
+                        ))}
+                        <Form.Item>
+                            <Button
+                                type="dashed"
+                                onClick={() => add({ label: '字段' + newFieldIndex.current++, value: '' })}
+                                block
+                                className='mt-4'
+                                icon={<PlusOutlined />}
+                            >
+                                新增字段
+                            </Button>
+                        </Form.Item>
+                    </>
+                )}
+            </Form.List>
         )
     }
 

@@ -9,7 +9,6 @@ import { Link } from 'react-router-dom'
 import { Button, Popover } from 'antd'
 import s from './styles.module.css'
 import { DesktopSetting } from '@/client/pages/setting'
-import { useAppSelector } from '@/client/store'
 import { usePageTitle } from './usePageTitle'
 
 interface Props {

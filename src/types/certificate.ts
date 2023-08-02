@@ -58,3 +58,32 @@ export interface CertificateMoveReqBody {
      */
     newGroupId: number
 }
+
+/**
+ * 凭证详情接口返回值
+ */
+export interface CertificateDetailResp<T = string> {
+    name: string
+    markColor: string
+    content: T
+    createTime: string
+    updateTime: string
+}
+
+/**
+ * 新增凭证请求数据
+ */
+export interface CertificateAddReqBody {
+    name: string
+    markColor?: string
+    groupId: number
+    content: string
+    order: number
+}
+
+/**
+ * 更新凭证请求数据
+ */
+export type CertificateUpdateReqBody = CertificateAddReqBody & {
+    id: number
+}

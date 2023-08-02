@@ -11,12 +11,9 @@ import { useOperation } from './operation'
 import { PageTitle } from '@/client/components/pageTitle'
 import { useQueryDiaryDetail, useUpdateDiary } from '@/client/services/diary'
 import { getLabelByDate } from '../monthList/listItem'
-import { useAppDispatch } from '@/client/store'
-import { setFocusDiaryDate } from '@/client/store/global'
 
 const DiaryEdit: FC = () => {
     const params = useParams()
-    const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const diaryDate = useMemo(() => dayjs(params.date).valueOf(), [params.date])
     const diaryTitle = useMemo(() => getLabelByDate(diaryDate), [diaryDate])
@@ -37,7 +34,7 @@ const DiaryEdit: FC = () => {
         if (resp.code !== STATUS_CODE.SUCCESS) return
 
         messageSuccess('保存成功')
-        dispatch(setFocusDiaryDate(diaryDate?.toString()))
+        // dispatch(setFocusDiaryDate(diaryDate?.toString()))
         navigate(-1)
     }
 
