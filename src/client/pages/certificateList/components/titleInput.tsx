@@ -18,7 +18,7 @@ export const TitleInput: FC<Props> = (props) => {
             onChange={e => onChange?.(e.target.value)}
             placeholder="请输入密码名"
             bordered={false}
-            className='font-bold dark:text-slate-200 text-xl'
+            className='font-bold dark:text-slate-200 text-xl pl-0'
         />
     )
 }

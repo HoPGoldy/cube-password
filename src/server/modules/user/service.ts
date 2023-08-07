@@ -19,6 +19,7 @@ interface Props {
     stopSession: SessionController['stop']
     getChallengeCode: () => string | undefined
     addGroup: GroupService['addGroup']
+    addUnlockedGroup: SessionController['addUnlockedGroup']
     queryGroupList: GroupService['queryGroupList']
     insertSecurityNotice: SecurityService['insertSecurityNotice']
     db: DatabaseAccessor
@@ -33,6 +34,7 @@ export const createUserService = (props: Props) => {
         queryGroupList,
         getChallengeCode,
         insertSecurityNotice,
+        addUnlockedGroup,
         db,
     } = props
 
@@ -105,6 +107,10 @@ export const createUserService = (props: Props) => {
         // 用户每次重新进入页面都会刷新 token
         const session = startSession()
         const groupList = await queryGroupList()
+        groupList.data.forEach(group => {
+            if (group.requireLogin) return
+            addUnlockedGroup(group.id)
+        })
 
         const data: LoginSuccessResp = {
             token: session.token,

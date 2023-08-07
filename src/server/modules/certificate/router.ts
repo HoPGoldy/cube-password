@@ -58,7 +58,8 @@ export const createCertificateRouter = (props: Props) => {
         name: Joi.string().required(),
         groupId: Joi.number().required(),
         markColor: Joi.string().allow(''),
-        content: Joi.string().required()
+        content: Joi.string().required(),
+        order: Joi.number().required()
     })
 
     router.post('/add', async ctx => {
@@ -86,7 +87,8 @@ export const createCertificateRouter = (props: Props) => {
         name: Joi.string(),
         groupId: Joi.number(),
         markColor: Joi.string().allow(''),
-        content: Joi.string()
+        content: Joi.string(),
+        order: Joi.number().required()
     })
 
     router.post('/updateDetail', async ctx => {

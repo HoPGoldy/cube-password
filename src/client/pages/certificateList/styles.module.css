@@ -11,7 +11,7 @@
 }
 
 .labelInput {
-    @apply block py-2 w-full transition;
+    @apply block py-2 pl-0 w-full transition;
 }
 
 .labelInput:global(.ant-input[disabled]) {

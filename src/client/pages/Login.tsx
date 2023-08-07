@@ -13,7 +13,7 @@ import { queryChallengeCode } from '../services/global'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { stateAppConfig } from '../store/global'
 
-const Register = () => {
+const Login = () => {
     /** 密码 */
     const [password, setPassword] = useState('')
     /** 密码输入框 */
@@ -97,4 +97,4 @@ const Register = () => {
     )
 }
 
-export default Register
+export default Login

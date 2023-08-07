@@ -55,6 +55,7 @@ export const buildApp = async () => {
         stopSession: sessionController.stop,
         getChallengeCode: otpManager.pop,
         addGroup: groupService.addGroup,
+        addUnlockedGroup: sessionController.addUnlockedGroup,
         queryGroupList: groupService.queryGroupList,
         insertSecurityNotice: securityService.insertSecurityNotice,
         db,

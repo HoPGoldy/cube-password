@@ -203,17 +203,17 @@ export const CertificateDetail: FC<Props> = (props) => {
             messageWarning('主密码错误，请尝试重新登录')
             return
         }
-        console.log("🚀 ~ file: detail.tsx:165 ~ onConfirm ~ values:", values, pwdKey, pwdIv)
         const content = aes(JSON.stringify(values.fields), pwdKey, pwdIv)
-        console.log("🚀 ~ file: detail.tsx:206 ~ onConfirm ~ content:", content)
-        return
-        // saveDetail({
-        //     name: values.title,
-        //     markColor,
-        //     content,
-        //     groupId,
-        //     order: 0,
-        // })
+
+        await saveDetail({
+            name: values.title,
+            markColor: values.markColor,
+            content,
+            groupId: props.groupId,
+            order: 0,
+        })
+
+        messageSuccess('保存成功')
     }
 
     const renderCertificateDetail = () => {
@@ -223,15 +223,13 @@ export const CertificateDetail: FC<Props> = (props) => {
                     open={!!detailId}
                     onCancel={onCancel}
                     closable={false}
-                    title={
-                        <DetailTitle disabled={false} />
-                    }
+                    title={<DetailTitle disabled={false} />}
                     footer={[
                         <Button key="back" onClick={onCancel}>
-                        取消
+                            取消
                         </Button>,
                         <Button key="submit" type="primary" onClick={onConfirm}>
-                        确定
+                            确定
                         </Button>,
                     ]}
                 >
