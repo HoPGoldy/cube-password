@@ -1,144 +1,17 @@
-import React, { FC, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { PageContent, PageAction } from '../../layouts/pageWithAction'
-import Loading from '../../layouts/loading'
-import { Button, Form, Image, Input, Modal, Space } from 'antd'
-import { PlusOutlined, CloseOutlined, GiftOutlined } from '@ant-design/icons'
-import { PageTitle } from '@/client/components/pageTitle'
-import { useQueryDiaryList } from '@/client/services/diary'
-import { DiaryListItem } from './listItem'
-import { useOperation } from './operation'
-import s from './styles.module.css'
-import copy from 'copy-to-clipboard'
-import { CertificateField } from '@/types/certificate'
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Form, Modal } from 'antd'
+import { PlusOutlined, ExclamationCircleFilled } from '@ant-design/icons'
 import { messageSuccess, messageWarning } from '@/client/utils/message'
-import { getRandName, useSaveCertificate } from '@/client/services/certificate'
-import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH, STATUS_CODE } from '@/config'
-import { openNewTab } from '@/utils/common'
+import { useCertificateDetail, useSaveCertificate } from '@/client/services/certificate'
+import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/config'
 import { customAlphabet } from 'nanoid'
 import { DetailTitle } from './components/detailTitle'
-import { aes } from '@/utils/crypto'
+import { aes, aesDecrypt } from '@/utils/crypto'
 import { useAtomValue } from 'jotai'
 import { stateMainPwd, stateUser } from '@/client/store/user'
-
-interface FieldListProps {
-    showDelete?: boolean
-    value?: CertificateField
-    disabled?: boolean
-    onChange?: (value: CertificateField) => void
-    createPwd: (size?: number | undefined) => string
-    onDelete: () => void
-}
-
-const CertificateFieldItem: FC<FieldListProps> = (props) => {
-    const { value, onChange, onDelete, showDelete, disabled, createPwd } = props
-
-    const [isPassword, isUsername, isLink] = useMemo(() => {
-        return [
-            // 是否为密码输入框
-            !!['密码', 'password', 'pwd'].find(text => value?.label.includes(text)),
-            // 是否为用户名输入框
-            !!['用户名', '名称', 'name'].find(text => value?.label.includes(text)),
-            // 是否为链接
-            !!['http://', 'https://'].find(text => value?.value.includes(text)),
-        ]
-    }, [value?.label, value?.value])
-
-    const onLabelChange = (val: string) => {
-        const newValue = { ...value, label: val }
-        onChange?.(newValue as CertificateField)
-    }
-
-    const onValueChange = (val: string) => {
-        const newValue = { ...value, value: val }
-        onChange?.(newValue as CertificateField)
-    }
-
-    const onCreatePassword = () => {
-        const newPassword = createPwd()
-        onValueChange(newPassword)
-        copy(newPassword)
-        messageSuccess('新密码已复制')
-    }
-
-    const onCreateUsername = async () => {
-        const resp = await getRandName()
-        if (resp.code !== STATUS_CODE.SUCCESS) return
-        onValueChange(resp.data || '')
-        copy(resp.data || '')
-        messageSuccess('新名称已复制')
-    }
-
-    const onFieldClick = () => {
-        // 编辑模式下点击文本框不会复制
-        if (!disabled) return
-
-        if (!value || !value.value) {
-            messageWarning('内容为空无法复制')
-            return
-        }
-
-        if (isLink) {
-            openNewTab(value.value)
-            return
-        }
-        copy(value.value)
-        messageSuccess('已复制' + value.label)
-    }
-
-    const MainInput = isPassword ? Input.Password : Input.TextArea
-
-    return (
-        <div className="relative w-full">
-            <Input
-                bordered={false}
-                className={s.labelInput}
-                size="small"
-                value={value?.label}
-                disabled={disabled}
-                onChange={e => onLabelChange(e.target.value)}
-            />
-            <div className="flex">
-                <MainInput
-                    value={value?.value}
-                    onChange={e => onValueChange(e.target.value)}
-                    autoSize={isPassword ? undefined : { minRows: 1, maxRows: 6 }}
-                ></MainInput>
-
-                {/* 用户名生成 */}
-                {!disabled && isUsername && (
-                    <Button
-                        className="ml-2 w-8 shrink-0 keep-antd-style !bg-sky-400"
-                        type="primary"
-                        icon={<GiftOutlined />}
-                        onClick={onCreateUsername}
-                    ></Button>
-                )}
-
-                {/* 密码生成 */}
-                {!disabled && isPassword && (
-                    <Button
-                        className="ml-2 w-8 shrink-0 keep-antd-style !bg-sky-400"
-                        type="primary"
-                        icon={<GiftOutlined />}
-                        onClick={onCreatePassword}
-                    ></Button>
-                )}
-
-                {/* 删除按钮 */}
-                {!disabled && showDelete && (
-                    <Button
-                        className="ml-2 w-8 shrink-0 keep-antd-style !bg-red-400"
-                        icon={<CloseOutlined />}
-                        type="primary"
-                        onClick={onDelete}
-                    ></Button>
-                )}
-            </div>
-            
-        </div>
-    )
-}
+import { CertificateFieldItem } from './components/certificateFieldItem'
+import copy from 'copy-to-clipboard'
+import { CertificateField } from '@/types/certificate'
 
 interface Props {
     groupId: number
@@ -174,16 +47,36 @@ export const CertificateDetail: FC<Props> = (props) => {
     const [form] = Form.useForm()
     const userInfo = useAtomValue(stateUser)
     const { pwdKey, pwdIv } = useAtomValue(stateMainPwd)
+    /** 是否可以编辑 */
+    const [readonly, setReadonly] = useState(true)
     /** 新建字段时的累加字段名索引 */
     const newFieldIndex = useRef(1)
+    /** 获取凭证详情 */
+    const { data: detailResp } = useCertificateDetail(detailId)
+    /** 保存凭证详情 */
     const { mutateAsync: saveDetail, isLoading: isSaving } = useSaveCertificate(detailId)
 
     useEffect(() => {
         if (!detailId) return
-        if (detailId === -1) {
-            form.setFieldsValue(getNewFormValues())
-        }
+        const isAdd = detailId === -1
+        if (isAdd) form.setFieldsValue(getNewFormValues())
+        setReadonly(!isAdd)
     }, [detailId])
+
+    useEffect(() => {
+        if (!detailResp || !detailResp.data) return
+        if (!pwdKey || !pwdIv) return
+
+        const { content, name, markColor } = detailResp.data
+        const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv))
+        const values = {
+            title: name,
+            markColor: markColor || '',
+            fields,
+        }
+
+        form.setFieldsValue(values)
+    }, [detailResp])
 
     const createPwd = useMemo(() => {
         return customAlphabet(
@@ -214,6 +107,54 @@ export const CertificateDetail: FC<Props> = (props) => {
         })
 
         messageSuccess('保存成功')
+        onCancel()
+    }
+
+    /** 复制完整凭证内容 */
+    const onCopyTotal = () => {
+        Modal.confirm({
+            title: '确定要复制完整凭证？',
+            icon: <ExclamationCircleFilled />,
+            content: '所有加密信息都将以明文展示，请确保索要凭证的人值得信赖。',
+            onOk: async () => {
+                const formData = form.getFieldsValue()
+
+                let content = formData.title + '\n\n'
+                formData.fields?.map((field: CertificateField) => {
+                    content += field.label + '\n' + field.value + '\n\n'
+                })
+
+                copy(content)
+                messageSuccess('凭证已复制')
+            }
+        })
+    }
+
+    const renderModalFooter = () => {
+        const btns = [
+            <Button key="back" onClick={onCancel}>
+                取消
+            </Button>
+        ]
+
+        if (readonly) {
+            btns.push(
+                <Button onClick={onCopyTotal} loading={isSaving}>
+                    复制
+                </Button>,
+                <Button key="submit" type="primary" onClick={() => setReadonly(false)} loading={isSaving}>
+                    编辑
+                </Button>
+            )
+        } else {
+            btns.push(
+                <Button key="submit" type="primary" onClick={onConfirm} loading={isSaving}>
+                    保存
+                </Button>
+            )
+        }
+
+        return btns
     }
 
     const renderCertificateDetail = () => {
@@ -223,15 +164,8 @@ export const CertificateDetail: FC<Props> = (props) => {
                     open={!!detailId}
                     onCancel={onCancel}
                     closable={false}
-                    title={<DetailTitle disabled={false} />}
-                    footer={[
-                        <Button key="back" onClick={onCancel}>
-                            取消
-                        </Button>,
-                        <Button key="submit" type="primary" onClick={onConfirm}>
-                            确定
-                        </Button>,
-                    ]}
+                    title={<DetailTitle disabled={readonly} />}
+                    footer={renderModalFooter()}
                 >
                     {renderDetailForm()}
                 </Modal>
@@ -251,23 +185,28 @@ export const CertificateDetail: FC<Props> = (props) => {
                                 noStyle
                             >
                                 <CertificateFieldItem
+                                    disabled={readonly}
                                     showDelete={fields.length > 1}
                                     createPwd={createPwd}
                                     onDelete={() => remove(field.name)}
                                 />
                             </Form.Item>
                         ))}
-                        <Form.Item>
-                            <Button
-                                type="dashed"
-                                onClick={() => add({ label: '字段' + newFieldIndex.current++, value: '' })}
-                                block
-                                className='mt-4'
-                                icon={<PlusOutlined />}
-                            >
-                                新增字段
-                            </Button>
-                        </Form.Item>
+                        {!readonly ? (
+                            <Form.Item>
+                                <Button
+                                    type="dashed"
+                                    onClick={() => add({ label: '字段' + newFieldIndex.current++, value: '' })}
+                                    block
+                                    className='mt-4'
+                                    icon={<PlusOutlined />}
+                                >
+                                    新增字段
+                                </Button>
+                            </Form.Item>
+                        ) : (
+                            <div className='mt-6'></div>
+                        )}
                     </>
                 )}
             </Form.List>

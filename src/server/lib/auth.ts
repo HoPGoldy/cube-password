@@ -147,7 +147,6 @@ export const createSession = (props: CreateSessionProps) => {
 
     const createLoginFailResp = (ctx: AppKoaContext) => {
         response(ctx, { code: 401, msg: '登录已失效，请重新登录' })
-        ctx.status = 401
     }
 
     /** 登录鉴权中间件 */
@@ -166,7 +165,6 @@ export const createSession = (props: CreateSessionProps) => {
 
     const createReplayAttackFailResp = (ctx: AppKoaContext) => {
         response(ctx, { code: STATUS_CODE.REPLAY_ATTACK, msg: '伪造请求攻击，请求已被拦截' })
-        ctx.status = 401
     }
 
     /** 防重放攻击中间件 */

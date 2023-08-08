@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from 'react-query'
-import { requestGet, requestPost } from './base'
+import { queryClient, requestGet, requestPost } from './base'
 import { CertificateAddReqBody, CertificateDetailResp, CertificateUpdateReqBody } from '@/types/certificate'
-import { CertificateGroupDetail } from '@/types/group'
+import { CertificateListItem } from '@/types/group'
 
 /**
  * 获取随机英文名
@@ -13,21 +13,32 @@ export const getRandName = async () => {
 /**
  * 获取凭证详情
  */
-export const useCertificateDetail = (id: number) => {
-    return useQuery(['certificate', id], () => requestGet<CertificateDetailResp>(`certificate/${id}`))
+export const useCertificateDetail = (id: number | undefined) => {
+    return useQuery(
+        ['certificateDetail', id],
+        () => requestGet<CertificateDetailResp>(`certificate/${id}/getDetail`),
+        { enabled: !!id && id !== -1 }
+    )
 }
 
 /**
  * 保存凭证
  */
 export const useSaveCertificate = (id: number | undefined) => {
-    return useMutation(async (data: CertificateAddReqBody) => {
-        if (id === -1) {
-            return await requestPost<CertificateDetailResp>('certificate/add', data)
-        }
+    return useMutation(
+        async (data: CertificateAddReqBody) => {
+            if (id === -1) {
+                return await requestPost<CertificateDetailResp>('certificate/add', data)
+            }
 
-        return await requestPost<CertificateUpdateReqBody>('certificate/updateDetail', { ...data, id })
-    })
+            return await requestPost<CertificateUpdateReqBody>('certificate/updateDetail', { ...data, id })
+        },
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries('certificateList')
+            }
+        }
+    )
 }
 
 /**
@@ -35,8 +46,8 @@ export const useSaveCertificate = (id: number | undefined) => {
  */
 export const useCertificateList = (groupId: number | undefined) => {
     return useQuery(
-        ['certificate', groupId],
-        () => requestGet<CertificateGroupDetail[]>(`group/${groupId}/certificates`),
+        ['certificateList', groupId],
+        () => requestGet<CertificateListItem[]>(`group/${groupId}/certificates`),
         { enabled: !!groupId }
     )
 }

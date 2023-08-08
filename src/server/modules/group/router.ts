@@ -35,7 +35,7 @@ export const createGroupRouter = (props: Props) => {
         const groupId = +ctx.params.groupId
 
         const certificates = await service.getCertificateList(groupId)
-        response(ctx, { code: 200, data: certificates })
+        response(ctx, certificates)
     })
 
     const updateGroupSchema = Joi.object<{ name: string }>({

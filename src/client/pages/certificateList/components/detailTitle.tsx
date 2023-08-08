@@ -1,8 +1,9 @@
 import React, { FC, useState } from 'react'
-import { Button, Form, FormInstance, Modal } from 'antd'
+import { Button, Form, Modal } from 'antd'
 import { TitleInput } from './titleInput'
 import { HeartFilled, QuestionCircleFilled } from '@ant-design/icons'
 import { ColorPicker, MARK_COLORS_MAP } from '@/client/components/colorPicker'
+import { messageWarning } from '@/client/utils/message'
 
 interface UseTip {
     name: string
@@ -43,12 +44,22 @@ const ColorIcon: FC<ColorIconProps> = (props) => {
         props?.onChange?.(color)
     }
 
+    const onClick = () => {
+        if (props.disabled) messageWarning('请先启用编辑')
+        else setIsColorPickerOpen(true)
+    }
+
     return (
         <div>
             <Button
                 type='text'
-                icon={<HeartFilled style={{ color: props?.value ? MARK_COLORS_MAP[props?.value] : '' }} className="text-xl" />}
-                onClick={() => setIsColorPickerOpen(true)}
+                icon={
+                    <HeartFilled
+                        style={{ color: props?.value ? MARK_COLORS_MAP[props?.value] : '' }}
+                        className="text-xl text-gray-500 dark:text-gray-200"
+                    />
+                }
+                onClick={onClick}
             ></Button>
             <ColorPicker
                 onChange={onSelectedColor}
@@ -84,15 +95,17 @@ export const DetailTitle: FC<DetailTitleProps> = (props) => {
             </Form.Item>
 
             <div className='flex'>
-                <Form.Item noStyle name='title'>
+                <Form.Item noStyle name='markColor'>
                     <ColorIcon disabled={disabled} />
                 </Form.Item>
-                <Button
-                    className='ml-2'
-                    type='text'
-                    icon={<QuestionCircleFilled className="text-xl" />}
-                    onClick={() => setUseTipVisible(true)}
-                ></Button>
+                {!disabled && (
+                    <Button
+                        className='ml-2'
+                        type='text'
+                        icon={<QuestionCircleFilled className="text-xl text-gray-500 dark:text-gray-200" />}
+                        onClick={() => setUseTipVisible(true)}
+                    ></Button>
+                )}
             </div>
 
             <Modal

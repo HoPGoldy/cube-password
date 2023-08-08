@@ -51,7 +51,7 @@ export const createCertificateService = (props: Props) => {
         // 先保证要删除的凭证分组都解锁了
         for (const certificate of certificates) {
             const groupUnlocked = await isGroupUnlocked(certificate.groupId)
-            if (groupUnlocked) return groupLockResp
+            if (!groupUnlocked) return groupLockResp
         }
 
         await db.certificate()
@@ -75,7 +75,7 @@ export const createCertificateService = (props: Props) => {
         // 先保证要删除的凭证分组都解锁了
         for (const certificate of certificates) {
             const groupUnlocked = await isGroupUnlocked(certificate.groupId)
-            if (groupUnlocked) return groupLockResp
+            if (!groupUnlocked) return groupLockResp
         }
 
         await db.certificate()
@@ -88,7 +88,7 @@ export const createCertificateService = (props: Props) => {
     /** 添加新凭证 */
     const addCertificate = async (detail: Omit<CertificateStorage, 'id'>) => {
         const groupUnlocked = await isGroupUnlocked(detail.groupId)
-        if (groupUnlocked) return groupLockResp
+        if (!groupUnlocked) return groupLockResp
 
         const newData: Omit<CertificateStorage, 'id'> = {
             ...detail,
@@ -106,7 +106,7 @@ export const createCertificateService = (props: Props) => {
         if (!oldData) return groupLockResp
 
         const groupUnlocked = await isGroupUnlocked(oldData.groupId)
-        if (groupUnlocked) return groupLockResp
+        if (!groupUnlocked) return groupLockResp
 
         const newData: Partial<CertificateStorage> = {
             ...oldData,
