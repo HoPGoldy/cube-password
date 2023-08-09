@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ActionButton, ActionIcon } from '@/client/layouts/pageWithAction'
 import { messageWarning } from '@/client/utils/message'
-import { PlusOutlined, SettingOutlined, SearchOutlined, CalendarOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons'
+import { RetweetOutlined, DeleteOutlined, PlusOutlined, SettingOutlined, SearchOutlined, CalendarOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons'
 import { MobileSetting } from '../setting'
 import s from './styles.module.css'
 import { Button, Col, Drawer, Row, Space } from 'antd'
@@ -183,8 +183,16 @@ export const useOperation = (props: Props) => {
                 <div className="flex flex-row flex-nowrap items-center">
                     <Space>
                         <Button
-                            icon={<SettingOutlined />}
-                        >分组设置</Button>
+                            icon={<DeleteOutlined />}
+                            danger
+                        >删除分组</Button>
+                        <Button
+                            icon={<DeleteOutlined />}
+                            danger
+                        >删除凭证</Button>
+                        <Button
+                            icon={<RetweetOutlined />}
+                        >移动凭证</Button>
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}

@@ -44,10 +44,10 @@ export const useSaveCertificate = (id: number | undefined) => {
 /**
  * 获取分组下属凭证列表
  */
-export const useCertificateList = (groupId: number | undefined) => {
+export const useCertificateList = (groupId: number | undefined, groupUnlocked: boolean) => {
     return useQuery(
         ['certificateList', groupId],
         () => requestGet<CertificateListItem[]>(`group/${groupId}/certificates`),
-        { enabled: !!groupId }
+        { enabled: !!groupId && groupUnlocked }
     )
 }

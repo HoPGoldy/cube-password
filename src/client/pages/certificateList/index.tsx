@@ -4,28 +4,33 @@ import { PageContent, PageAction } from '../../layouts/pageWithAction'
 import Loading from '../../layouts/loading'
 import { Card, Image, List, Modal } from 'antd'
 import { PageTitle } from '@/client/components/pageTitle'
-import { useQueryDiaryList } from '@/client/services/diary'
-import { DiaryListItem } from './listItem'
 import { useOperation } from './operation'
 import s from './styles.module.css'
 import { CertificateDetail } from './detail'
 import { useCertificateList } from '@/client/services/certificate'
 import { CertificateListItem } from '@/types/group'
 import { MARK_COLORS_MAP } from '@/client/components/colorPicker'
+import { useIsGroupUnlocked } from '@/client/store/user'
+import { useGroupLock } from './hooks/useGroupLock'
 
 /**
  * 凭证列表
  */
 const CertificateList: FC = () => {
-    const { month, groupId } = useParams()
+    const { groupId: groupIdStr } = useParams()
+    const groupId = Number(groupIdStr)
     /** 详情弹窗展示的密码 ID（-1 时代表新增密码） */
     const [detailId, setDetailId] = useState<number>()
+    /** 分组是否解密了 */
+    const isGroupUnlock = useIsGroupUnlocked(groupId)
     /** 获取密码列表 */
-    const { data: certificateListResp, isLoading } = useCertificateList(Number(groupId))
-    /** 底部操作栏 */
+    const { data: certificateListResp, isLoading } = useCertificateList(groupId, isGroupUnlock)
+    /** 操作栏功能 */
     const { renderMobileBar, renderTitleOperation } = useOperation({
         onAddNew: () => setDetailId(-1),
     })
+    /** 分组登录功能 */
+    const { renderGroupLogin } = useGroupLock({ groupId })
     /** 列表编辑功能 */
     // const {
     //     showConfigArea, configButtons, selectedItem, setSelectedItem,
@@ -92,11 +97,17 @@ const CertificateList: FC = () => {
     }
 
     const renderContent = () => {
+        if (!isGroupUnlock) return renderGroupLogin()
         if (isLoading) return <Loading />
 
         return (
-            <div className='mt-4 flex flex-wrap justify-start'>
-                {certificateListResp?.data?.map(renderCertificateItem)}
+            <div className="mx-4 mt-4">
+                <div className="flex flex-row flex-nowrap justify-end items-center">
+                    {renderTitleOperation()}
+                </div>
+                <div className='mt-4 flex flex-wrap justify-start'>
+                    {certificateListResp?.data?.map(renderCertificateItem)}
+                </div>
             </div>
         )
     }
@@ -105,13 +116,7 @@ const CertificateList: FC = () => {
         <PageTitle title='凭证列表' />
 
         <PageContent>
-            <div className="mx-4 mt-4">
-                <div className="flex flex-row flex-nowrap justify-end items-center">
-                    {renderTitleOperation()}
-                </div>
-                {renderContent()}
-            </div>
-
+            {renderContent()}
             <CertificateDetail groupId={+groupId} detailId={detailId} onCancel={() => setDetailId(undefined)} />
         </PageContent>
 

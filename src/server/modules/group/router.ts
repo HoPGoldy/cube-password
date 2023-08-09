@@ -17,8 +17,8 @@ export const createGroupRouter = (props: Props) => {
     const addGroupSchema = Joi.object<Omit<CertificateGroupStorage, 'id'>>({
         name: Joi.string().required(),
         order: Joi.number().required(),
-        passwordHash: Joi.string().empty(),
-        passwordSalt: Joi.string().empty(),
+        passwordHash: Joi.string().allow(null),
+        passwordSalt: Joi.string().allow(null),
     }).with('passwordHash', 'passwordSalt')
 
     // 新增分组

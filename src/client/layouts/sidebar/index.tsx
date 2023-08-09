@@ -6,12 +6,15 @@ import s from './styles.module.css'
 import { CertificateGroupDetail } from '@/types/group'
 import { useAtomValue } from 'jotai'
 import { stateGroupList } from '@/client/store/user'
+import { useAddGroupContent } from '@/client/pages/certificateList/hooks/useAddGroup'
 
 export const Sidebar: FC = () => {
     /** 分组列表 */
     const groups = useAtomValue(stateGroupList)
     /** 当前所处的分组 */
     const { groupId } = useParams()
+    /** 新增分组 */
+    const addGroup = useAddGroupContent()
 
     const renderGroupItem = (item: CertificateGroupDetail) => {
         const className = [s.menuItem]
@@ -46,7 +49,9 @@ export const Sidebar: FC = () => {
                 className={`${s.toolBtn} keep-antd-style`}
                 icon={<InsertRowLeftOutlined />}
                 block
+                onClick={() => addGroup.setShowAddModal(true)}
             >新建分组</Button>
+            {addGroup.renderContent()}
         </section>
     )
 }

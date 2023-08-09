@@ -1,6 +1,6 @@
 import { AppTheme, FrontendUserInfo, LoginSuccessResp } from '@/types/user'
 import { CertificateGroupDetail } from '@/types/group'
-import { atom, getDefaultStore } from 'jotai'
+import { atom, getDefaultStore, useAtomValue } from 'jotai'
 
 /**
  * 从用户信息中获取主题色
@@ -32,6 +32,34 @@ export const stateUserToken = atom<string | undefined>(undefined)
  * 当前用户的分组列表
  */
 export const stateGroupList = atom<CertificateGroupDetail[]>([])
+
+/**
+ * 指定分组是否已解锁
+ */
+export const useIsGroupUnlocked = (groupId: number) => {
+    const groupList = useAtomValue(stateGroupList)
+    const group = groupList.find(group => group.id === groupId)
+    if (!group) {
+        console.error(`未找到 id 为 ${groupId} 的分组`)
+        return false
+    }
+
+    return !group.requireLogin
+}
+
+/**
+ * 获取指定分组的密码盐值
+ */
+export const useGroupSalt = (groupId: number) => {
+    const groupList = useAtomValue(stateGroupList)
+    const group = groupList.find(group => group.id === groupId)
+    if (!group) {
+        console.error(`未找到 id 为 ${groupId} 的分组`)
+        return
+    }
+
+    return group.salt
+}
 
 export const logout = () => {
     const store = getDefaultStore()

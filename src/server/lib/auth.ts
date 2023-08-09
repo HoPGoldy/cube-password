@@ -164,7 +164,7 @@ export const createSession = (props: CreateSessionProps) => {
     }
 
     const createReplayAttackFailResp = (ctx: AppKoaContext) => {
-        response(ctx, { code: STATUS_CODE.REPLAY_ATTACK, msg: '伪造请求攻击，请求已被拦截' })
+        response(ctx, { code: STATUS_CODE.REPLAY_ATTACK, msg: '伪造请求，请求已被拦截' })
     }
 
     /** 防重放攻击中间件 */

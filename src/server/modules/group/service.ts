@@ -45,6 +45,8 @@ export const createGroupService = (props: Props) => {
         const [id] = await db.group().insert(newData)
         const list = await queryGroupList()
         const data: AddGroupResp = { newId: id, newList: list.data }
+        // 没密码的就直接解锁
+        if (!newData.passwordHash && !newData.passwordSalt) addUnlockedGroup(id)
         return { code: 200, data }
     }
 

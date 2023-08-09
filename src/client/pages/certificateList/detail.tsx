@@ -133,7 +133,7 @@ export const CertificateDetail: FC<Props> = (props) => {
     const renderModalFooter = () => {
         const btns = [
             <Button key="back" onClick={onCancel}>
-                取消
+                返回
             </Button>
         ]
 
