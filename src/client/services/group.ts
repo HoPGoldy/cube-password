@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from 'react-query'
 import { requestGet, requestPost } from './base'
 import { AddGroupResp, CertificateGroupStorage } from '@/types/group'
-import { sha } from '@/utils/crypto'
 
 /**
  * 新增分组
@@ -17,12 +16,23 @@ export const useAddGroup = () => {
 /**
  * 解锁分组
  */
-export const useUnlockGroup = (groupId: number) => {
+export const useGroupLogin = (groupId: number) => {
     return useMutation(
         async (code: string) => {
             return await requestPost<boolean>(`group/${groupId}/unlock`, {
                 code
             })
+        }
+    )
+}
+
+/**
+ * 删除分组
+ */
+export const useDeleteGroup = (groupId: number) => {
+    return useMutation(
+        async () => {
+            return await requestPost<number>(`group/${groupId}/delete`)
         }
     )
 }

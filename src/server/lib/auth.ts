@@ -4,6 +4,7 @@ import { response } from '../utils'
 import { AppKoaContext, MyJwtPayload } from '@/types/global'
 import { getReplayAttackData, validateReplayAttackData } from '@/utils/crypto'
 import { STATUS_CODE } from '@/config'
+import dayjs from 'dayjs'
 
 /**
  * 通过 ctx 获取用户登录的 jwt 载荷
@@ -127,9 +128,13 @@ export const createSession = (props: CreateSessionProps) => {
     const start = () => {
         userInfo.token = nanoid()
         userInfo.replayAttackSecret = nanoid()
+        console.log('登录成功', userInfo.token, dayjs().format('YYYY-MM-DD HH:mm:ss'))
 
         clearTimeout(stopTimer)
-        stopTimer = setTimeout(stop, timeout)
+        stopTimer = setTimeout(() => {
+            console.log('清除登录状态', userInfo.token, dayjs().format('YYYY-MM-DD HH:mm:ss'))
+            stop()
+        }, timeout)
 
         return { token: userInfo.token, replayAttackSecret: userInfo.replayAttackSecret }
     }
@@ -158,7 +163,10 @@ export const createSession = (props: CreateSessionProps) => {
         const token = ctx.header['x-session-id']
         if (!token) return createLoginFailResp(ctx)
 
-        if (token !== userInfo.token) return createLoginFailResp(ctx)
+        if (token !== userInfo.token) {
+            console.log("🚀 ~ file: auth.ts:162 ~ checkLogin ~ token:", token, userInfo.token)
+            return createLoginFailResp(ctx)
+        }
 
         return await next()
     }

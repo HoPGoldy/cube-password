@@ -92,3 +92,13 @@ export interface GroupRemovePasswordData {
      */
     b?: string
 }
+
+/** 分组加密类型 */
+export enum LockType {
+    /** 不加密 */
+    None = 'None',
+    /** 使用密码加密 */
+    Password = 'Password',
+    /** 使用 totp 加密 */
+    Totp = 'Totp'
+}

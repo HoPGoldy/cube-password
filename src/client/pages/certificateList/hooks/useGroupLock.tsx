@@ -1,16 +1,13 @@
-import { useIsMobile } from '@/client/layouts/responsive'
-import { logout, stateGroupList } from '@/client/store/user'
+import { stateGroupList, useUnlockGroup } from '@/client/store/user'
 import { messageSuccess, messageWarning } from '@/client/utils/message'
 import { sha } from '@/utils/crypto'
-import { Form, Row, Col, Input, Modal, Button, Result } from 'antd'
+import { Row, Col, Input, Button, Result } from 'antd'
 import React, { useState } from 'react'
-import { useAddGroup, useUnlockGroup } from '@/client/services/group'
-import { nanoid } from 'nanoid'
-import { CertificateGroupStorage } from '@/types/group'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { useNavigate } from 'react-router-dom'
+import { useGroupLogin } from '@/client/services/group'
+import { useAtomValue } from 'jotai'
 import { LockOutlined } from '@ant-design/icons'
 import { queryChallengeCode } from '@/client/services/global'
+import { stateAppConfig } from '@/client/store/global'
 
 interface useGroupLockProps {
     groupId: number
@@ -19,11 +16,14 @@ interface useGroupLockProps {
 export const useGroupLock = (props: useGroupLockProps) => {
     const { groupId } = props
     const [password, setPassword] = useState('')
+    const primaryColor = useAtomValue(stateAppConfig)?.primaryColor
     const groupList = useAtomValue(stateGroupList)
     /** 输入框错误提示 */
     const [passwordError, setPasswordError] = useState(false)
     /** 请求 - 解密分组 */
-    const { mutateAsync: runUnlockGroup } = useUnlockGroup(groupId)
+    const { mutateAsync: runGroupLogin } = useGroupLogin(groupId)
+    /** 讲分组设置为已解密状态 */
+    const unlockGroup = useUnlockGroup(groupId)
 
     const onLogin = async () => {
         if (!password) {
@@ -41,16 +41,18 @@ export const useGroupLock = (props: useGroupLockProps) => {
         }
 
         const code = sha(sha(salt + password) + preResp.data)
-        const resp = await runUnlockGroup(code)
+        const resp = await runGroupLogin(code)
         if (resp.code !== 200) return
-        console.log("🚀 ~ file: useGroupLock.tsx:46 ~ onLogin ~ resp:", resp)
+
+        messageSuccess('分组解锁成功')
+        unlockGroup()
     }
 
     const renderGroupLogin = () => {
         return (
             <div className="mt-[15vh]">
                 <Result
-                    icon={<LockOutlined className="!text-gray-400" />}
+                    icon={<LockOutlined style={{ color: primaryColor }} />}
                     title="分组已加密"
                     subTitle="输入正确密码后解锁，登出时分组将被重新锁定"
                     extra={

@@ -1,8 +1,8 @@
 import React, { FC, MouseEventHandler, useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { PageContent, PageAction } from '../../layouts/pageWithAction'
 import Loading from '../../layouts/loading'
-import { Card, Image, List, Modal } from 'antd'
+import { Button, Card, Empty, Image, List, Modal, Result } from 'antd'
 import { PageTitle } from '@/client/components/pageTitle'
 import { useOperation } from './operation'
 import s from './styles.module.css'
@@ -10,7 +10,7 @@ import { CertificateDetail } from './detail'
 import { useCertificateList } from '@/client/services/certificate'
 import { CertificateListItem } from '@/types/group'
 import { MARK_COLORS_MAP } from '@/client/components/colorPicker'
-import { useIsGroupUnlocked } from '@/client/store/user'
+import { useGroupInfo } from '@/client/store/user'
 import { useGroupLock } from './hooks/useGroupLock'
 
 /**
@@ -22,23 +22,30 @@ const CertificateList: FC = () => {
     /** 详情弹窗展示的密码 ID（-1 时代表新增密码） */
     const [detailId, setDetailId] = useState<number>()
     /** 分组是否解密了 */
-    const isGroupUnlock = useIsGroupUnlocked(groupId)
+    const groupInfo = useGroupInfo(groupId)
     /** 获取密码列表 */
-    const { data: certificateListResp, isLoading } = useCertificateList(groupId, isGroupUnlock)
+    const { data: certificateListResp, isLoading } = useCertificateList(groupId, !groupInfo?.requireLogin)
     /** 操作栏功能 */
     const { renderMobileBar, renderTitleOperation } = useOperation({
         onAddNew: () => setDetailId(-1),
+        groupId,
     })
     /** 分组登录功能 */
     const { renderGroupLogin } = useGroupLock({ groupId })
-    /** 列表编辑功能 */
-    // const {
-    //     showConfigArea, configButtons, selectedItem, setSelectedItem,
-    //     onSwitchConfigArea, getNewGroupSelectProps
-    // } = useEditor()
 
-    if (!groupId) return (
-        <div>未知分组，请刷新重试</div>
+    if (!groupId || !groupInfo) return (
+        <Result
+            status="warning"
+            title="未知分组"
+            subTitle="请检查链接是否正确，或者点击下方按钮返回默认分组"
+            extra={
+                <Link to="/">
+                    <Button key="console">
+                        返回首页
+                    </Button>
+                </Link>
+            }
+        />
     )
 
     // 渲染凭证列表项右侧的标记
@@ -96,8 +103,23 @@ const CertificateList: FC = () => {
         )
     }
 
+    const renderList = () => {
+        if (!certificateListResp?.data || certificateListResp?.data?.length === 0) {
+            return (
+                <Empty
+                    className='m-auto mt-[20vh]'
+                    description={
+                        <div className='text-gray-500 cursor-default'>暂无凭证，点击右上角按钮创建</div>
+                    }
+                />
+            )
+        }
+
+        return certificateListResp?.data?.map(renderCertificateItem)
+    }
+
     const renderContent = () => {
-        if (!isGroupUnlock) return renderGroupLogin()
+        if (groupInfo?.requireLogin) return renderGroupLogin()
         if (isLoading) return <Loading />
 
         return (
@@ -106,7 +128,7 @@ const CertificateList: FC = () => {
                     {renderTitleOperation()}
                 </div>
                 <div className='mt-4 flex flex-wrap justify-start'>
-                    {certificateListResp?.data?.map(renderCertificateItem)}
+                    {renderList()}
                 </div>
             </div>
         )

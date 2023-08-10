@@ -1,5 +1,5 @@
 import { getRandName } from '@/client/services/certificate'
-import { messageSuccess, messageWarning } from '@/client/utils/message'
+import { messageSuccess } from '@/client/utils/message'
 import { STATUS_CODE } from '@/config'
 import { CertificateField } from '@/types/certificate'
 import { openNewTab } from '@/utils/common'
@@ -63,7 +63,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
         if (!disabled) return
 
         if (!value || !value.value) {
-            messageWarning('内容为空')
+            // messageWarning('内容为空')
             return
         }
 

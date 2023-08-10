@@ -107,18 +107,17 @@ export const createGroupService = (props: Props) => {
 
         const [{ ['count(*)']: groupCount }, includesCertificate] = await Promise.all<[any, any]>([
             db.group().count().first(),
-            db.certificate().select().where('groupId', groupId).first()
+            db.certificate().select().where('groupId', groupId)
         ])
 
         if (groupCount <= 1) {
             return { code: STATUS_CODE.CANT_DELETE, msg: '不能移除最后一个分组' }
         }
 
-        if (includesCertificate) {
-            return { code: STATUS_CODE.CANT_DELETE, msg: '分组下存在凭证，不能删除' }
-        }
-
         await db.group().delete().where('id', groupId)
+        if (includesCertificate) {
+            await db.certificate().delete().where('groupId', groupId)
+        }
 
         // 看一下是不是把默认分组移除了，是的话就更新一下
         const { defaultGroupId } = await db.user().select('defaultGroupId').first() || {}

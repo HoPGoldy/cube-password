@@ -9,6 +9,7 @@ import { Button, Col, Drawer, Row, Space } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { MobileDrawer } from '@/client/components/mobileDrawer'
 import { DesktopArea } from '@/client/layouts/responsive'
+import { useConfigGroupContent } from './hooks/useConfigGroup'
 
 /**
  * 生成日记编辑的跳转链接
@@ -23,9 +24,11 @@ const MONTH_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 interface Props {
     onAddNew: () => void
+    groupId: number
 }
 
 export const useOperation = (props: Props) => {
+    const { groupId } = props
     const params = useParams()
     const navigate = useNavigate()
     /** 是否展示设置 */
@@ -36,6 +39,8 @@ export const useOperation = (props: Props) => {
     const [currentYear, setCurrentYear] = useState(dayjs(params.month).year())
     /** 当前显示的月份列表 */
     const [currentMonthList, setCurrentMonthList] = useState<Dayjs[]>([])
+    /** 功能 - 分组配置 */
+    const { renderConfigContent, setShowModal: setShowConfigModal } = useConfigGroupContent({ groupId })
 
     useEffect(() => {
         setCurrentYear(dayjs(params.month).year())
@@ -183,13 +188,9 @@ export const useOperation = (props: Props) => {
                 <div className="flex flex-row flex-nowrap items-center">
                     <Space>
                         <Button
-                            icon={<DeleteOutlined />}
-                            danger
-                        >删除分组</Button>
-                        <Button
-                            icon={<DeleteOutlined />}
-                            danger
-                        >删除凭证</Button>
+                            icon={<RetweetOutlined />}
+                            onClick={() => setShowConfigModal(true)}
+                        >分组配置</Button>
                         <Button
                             icon={<RetweetOutlined />}
                         >移动凭证</Button>
@@ -200,6 +201,7 @@ export const useOperation = (props: Props) => {
                         >新建密码</Button>
                     </Space>
                 </div>
+                {renderConfigContent()}
             </DesktopArea>
         )
     }

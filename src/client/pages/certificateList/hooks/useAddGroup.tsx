@@ -1,12 +1,12 @@
 import { useIsMobile } from '@/client/layouts/responsive'
-import { logout, stateGroupList } from '@/client/store/user'
+import { stateGroupList } from '@/client/store/user'
 import { messageSuccess } from '@/client/utils/message'
 import { sha } from '@/utils/crypto'
-import { Form, Row, Col, Input, Modal } from 'antd'
+import { Form, Row, Col, Input, Modal, Segmented } from 'antd'
 import React, { useState } from 'react'
 import { useAddGroup } from '@/client/services/group'
 import { nanoid } from 'nanoid'
-import { CertificateGroupStorage } from '@/types/group'
+import { CertificateGroupStorage, LockType } from '@/types/group'
 import { useSetAtom } from 'jotai'
 import { useNavigate } from 'react-router-dom'
 
@@ -19,8 +19,15 @@ export const useAddGroupContent = () => {
     const [showAddModal, setShowAddModal] = useState(false)
     /** 当前显示的分组列表 */
     const setGroupList = useSetAtom(stateGroupList)
+    const lockType = Form.useWatch('lockType', form)
 
-    const onSavePassword = async () => {
+    const LockTypeOptions = [
+        { label: '不加密', value: LockType.None },
+        { label: '密码加密', value: LockType.Password },
+        { label: 'TOTP 加密', value: LockType.Totp }
+    ]
+
+    const onClickSave = async () => {
         const values = await form.validateFields()
         const salt = nanoid(128)
 
@@ -38,16 +45,24 @@ export const useAddGroupContent = () => {
         navigate(`/group/${resp.data.newId}`)
         setGroupList(resp.data.newList)
         setShowAddModal(false)
+        form.resetFields()
     }
 
     const renderContent = () => {
         return (
-            <Modal title="新建分组" open={showAddModal} onOk={onSavePassword} onCancel={() => setShowAddModal(false)}>
+            <Modal
+                title="新建分组"
+                open={showAddModal}
+                okButtonProps={{ loading: submitting }}
+                onOk={onClickSave}
+                onCancel={() => setShowAddModal(false)}
+            >
                 <Form
                     form={form}
                     labelCol={{ span: 6 }}
                     labelAlign="right"
                     size={isMobile ? 'large' : 'middle'}
+                    initialValues={{ lockType: LockType.None }}
                 >
                     <Row className='md:mt-6'>
                         <Col span={24}>
@@ -61,37 +76,49 @@ export const useAddGroupContent = () => {
                         </Col>
                         <Col span={24}>
                             <Form.Item
-                                label="分组密码"
-                                name="password"
-                                hasFeedback
+                                label="加密方式"
+                                name="lockType"
                             >
-                                <Input.Password placeholder="请输入" />
+                                <Segmented block options={LockTypeOptions} />
                             </Form.Item>
                         </Col>
-                        <Col span={24}>
-                            <Form.Item
-                                label="重复密码"
-                                name="passwordConfirm"
-                                rules={[
-                                    { required: false, message: '请重复分组密码' },
-                                    ({ getFieldValue }) => ({
-                                        validator(_, value) {
-                                            if (!value || getFieldValue('password') === value) {
-                                                return Promise.resolve()
-                                            }
-                                            return Promise.reject(new Error('与分组密码不一致'))
-                                        },
-                                    }),
-                                ]}
-                            >
-                                <Input.Password placeholder="请输入" />
-                            </Form.Item>
-                        </Col>
+                        {lockType === LockType.Password && (
+                            <>
+                                <Col span={24}>
+                                    <Form.Item
+                                        label="分组密码"
+                                        name="password"
+                                        hasFeedback
+                                    >
+                                        <Input.Password placeholder="请输入" />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24}>
+                                    <Form.Item
+                                        label="重复密码"
+                                        name="passwordConfirm"
+                                        rules={[
+                                            { required: false, message: '请重复分组密码' },
+                                            ({ getFieldValue }) => ({
+                                                validator(_, value) {
+                                                    if (!value || getFieldValue('password') === value) {
+                                                        return Promise.resolve()
+                                                    }
+                                                    return Promise.reject(new Error('与分组密码不一致'))
+                                                },
+                                            }),
+                                        ]}
+                                    >
+                                        <Input.Password placeholder="请输入" />
+                                    </Form.Item>
+                                </Col>
+                            </>
+                        )}
                     </Row>
                 </Form>
             </Modal>
         )
     }
 
-    return { onSavePassword, setShowAddModal, submitting, renderContent }
+    return { setShowAddModal, renderContent }
 }

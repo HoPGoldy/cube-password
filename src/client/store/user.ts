@@ -1,6 +1,6 @@
 import { AppTheme, FrontendUserInfo, LoginSuccessResp } from '@/types/user'
 import { CertificateGroupDetail } from '@/types/group'
-import { atom, getDefaultStore, useAtomValue } from 'jotai'
+import { atom, getDefaultStore, useAtomValue, useSetAtom } from 'jotai'
 
 /**
  * 从用户信息中获取主题色
@@ -34,31 +34,35 @@ export const stateUserToken = atom<string | undefined>(undefined)
 export const stateGroupList = atom<CertificateGroupDetail[]>([])
 
 /**
- * 指定分组是否已解锁
+ * 获取指定分组信息
  */
-export const useIsGroupUnlocked = (groupId: number) => {
+export const useGroupInfo = (groupId: number) => {
     const groupList = useAtomValue(stateGroupList)
     const group = groupList.find(group => group.id === groupId)
     if (!group) {
         console.error(`未找到 id 为 ${groupId} 的分组`)
-        return false
+        return undefined
     }
 
-    return !group.requireLogin
+    return group
 }
 
 /**
- * 获取指定分组的密码盐值
+ * 修改指定分组的锁定状态
  */
-export const useGroupSalt = (groupId: number) => {
-    const groupList = useAtomValue(stateGroupList)
-    const group = groupList.find(group => group.id === groupId)
-    if (!group) {
-        console.error(`未找到 id 为 ${groupId} 的分组`)
-        return
+export const useUnlockGroup = (groupId: number) => {
+    const setGroupList = useSetAtom(stateGroupList)
+
+    const unlock = () => {
+        setGroupList(prev => {
+            return prev.map(group => {
+                if (group.id !== groupId) return { ...group }
+                return { ...group, requireLogin: false }
+            })
+        })
     }
 
-    return group.salt
+    return unlock
 }
 
 export const logout = () => {

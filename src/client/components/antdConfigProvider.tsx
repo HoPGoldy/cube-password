@@ -7,6 +7,7 @@ import { getUserTheme, stateUser } from '../store/user'
 import { AppTheme } from '@/types/user'
 import { useAtomValue } from 'jotai'
 import { stateAppConfig } from '../store/global'
+import { SmileOutlined } from '@ant-design/icons'
 
 const globalThemeConfig: ThemeConfig = {
     // algorithm: theme.darkAlgorithm,
@@ -21,6 +22,13 @@ const globalThemeConfig: ThemeConfig = {
         }
     }
 }
+
+const customizeRenderEmpty = () => (
+    <div style={{ textAlign: 'center' }}>
+        <SmileOutlined style={{ fontSize: 20 }} />
+        <p>Data Not Found</p>
+    </div>
+)
 
 /**
  * antd 使用的主题配置
@@ -57,7 +65,7 @@ export const AntdConfigProvider: FC<PropsWithChildren> = (props) => {
     }, [userInfo?.theme])
 
     return (
-        <ConfigProvider locale={zhCN} theme={themeConfig}>
+        <ConfigProvider locale={zhCN} theme={themeConfig} renderEmpty={customizeRenderEmpty}>
             {props.children}
         </ConfigProvider>
     )
