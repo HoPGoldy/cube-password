@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from 'react-query'
 import { queryClient, requestGet, requestPost } from './base'
-import { CertificateAddReqBody, CertificateDetailResp, CertificateUpdateReqBody } from '@/types/certificate'
+import { CertificateAddReqBody, CertificateDetailResp, CertificateMoveReqBody, CertificateUpdateReqBody } from '@/types/certificate'
 import { CertificateListItem } from '@/types/group'
 
 /**
@@ -49,5 +49,21 @@ export const useCertificateList = (groupId: number | undefined, groupUnlocked: b
         ['certificateList', groupId],
         () => requestGet<CertificateListItem[]>(`group/${groupId}/certificates`),
         { enabled: !!groupId && groupUnlocked }
+    )
+}
+
+/**
+ * 移动凭证
+ */
+export const useMoveCertificate = () => {
+    return useMutation(
+        async (data: CertificateMoveReqBody) => {
+            return await requestPost('certificate/move', data)
+        },
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries('certificateList')
+            }
+        }
     )
 }

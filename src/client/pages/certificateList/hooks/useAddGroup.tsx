@@ -42,9 +42,9 @@ export const useAddGroupContent = () => {
         if (resp.code !== 200 || !resp.data) return
 
         messageSuccess('分组添加成功')
-        navigate(`/group/${resp.data.newId}`)
-        setGroupList(resp.data.newList)
         setShowAddModal(false)
+        setGroupList(resp.data.newList)
+        navigate(`/group/${resp.data.newId}`)
         form.resetFields()
     }
 

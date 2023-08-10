@@ -1,8 +1,8 @@
-import React, { FC, MouseEventHandler, useEffect, useRef, useState } from 'react'
+import React, { FC, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { PageContent, PageAction } from '../../layouts/pageWithAction'
 import Loading from '../../layouts/loading'
-import { Button, Card, Empty, Image, List, Modal, Result } from 'antd'
+import { Button, Card, Checkbox, Empty, Result } from 'antd'
 import { PageTitle } from '@/client/components/pageTitle'
 import { useOperation } from './operation'
 import s from './styles.module.css'
@@ -12,6 +12,8 @@ import { CertificateListItem } from '@/types/group'
 import { MARK_COLORS_MAP } from '@/client/components/colorPicker'
 import { useGroupInfo } from '@/client/store/user'
 import { useGroupLock } from './hooks/useGroupLock'
+import { useAtomValue } from 'jotai'
+import { stateAppConfig } from '@/client/store/global'
 
 /**
  * 凭证列表
@@ -23,13 +25,16 @@ const CertificateList: FC = () => {
     const [detailId, setDetailId] = useState<number>()
     /** 分组是否解密了 */
     const groupInfo = useGroupInfo(groupId)
-    /** 获取密码列表 */
+    /** 获取凭证列表 */
     const { data: certificateListResp, isLoading } = useCertificateList(groupId, !groupInfo?.requireLogin)
     /** 操作栏功能 */
-    const { renderMobileBar, renderTitleOperation } = useOperation({
+    const operation = useOperation({
+        certificateList: certificateListResp?.data ?? [],
         onAddNew: () => setDetailId(-1),
         groupId,
     })
+    /** 主题色 */
+    const primaryColor = useAtomValue(stateAppConfig)?.primaryColor
     /** 分组登录功能 */
     const { renderGroupLogin } = useGroupLock({ groupId })
 
@@ -51,13 +56,12 @@ const CertificateList: FC = () => {
     // 渲染凭证列表项右侧的标记
     const renderRightMark = (item: CertificateListItem) => {
         // 编辑模式下右侧的小方块
-        // if (showConfigArea) return (
-        //     <div className={
-        //         'sort-handle absolute h-4 w-4 right-4 top-[38%] text-white ' +
-        //         'ring rounded transition group-hover:ring-slate-500 dark:group-hover:ring-slate-200 ' +
-        //         (selectedItem[item.id] ? 'bg-slate-500 dark:bg-slate-200 ring-slate-500 dark:ring-slate-200' : 'ring-slate-300')
-        //     }></div>
-        // )
+        if (operation.selectMode) return (
+            <Checkbox
+                className='absolute h-4 w-4 right-4 top-[30%] scale-150'
+                checked={operation.selectedItem[item.id]}
+            ></Checkbox>
+        )
 
         if (item.markColor) return (
             <div
@@ -76,7 +80,11 @@ const CertificateList: FC = () => {
                 key={item.id}
                 size="small"
                 className={s.listItem}
-                onClick={() => setDetailId(item.id)}
+                style={{ borderColor: operation.selectedItem[item.id] ? primaryColor : undefined }}
+                onClick={() => {
+                    if (!operation.selectMode) setDetailId(item.id)
+                    else operation.setSelectedItem(old => ({ ...old, [item.id]: !old[item.id]}))
+                }}
             >
                 <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
                 <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
@@ -124,9 +132,7 @@ const CertificateList: FC = () => {
 
         return (
             <div className="mx-4 mt-4">
-                <div className="flex flex-row flex-nowrap justify-end items-center">
-                    {renderTitleOperation()}
-                </div>
+                {operation.renderTitleOperation()}
                 <div className='mt-4 flex flex-wrap justify-start'>
                     {renderList()}
                 </div>
@@ -143,7 +149,7 @@ const CertificateList: FC = () => {
         </PageContent>
 
         <PageAction>
-            {renderMobileBar()}
+            {operation.renderMobileBar()}
         </PageAction>
     </>)
 }
