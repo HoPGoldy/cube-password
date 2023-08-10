@@ -88,7 +88,7 @@ export const createCertificateRouter = (props: Props) => {
         groupId: Joi.number(),
         markColor: Joi.string().allow(''),
         content: Joi.string(),
-        order: Joi.number().required()
+        order: Joi.number()
     })
 
     router.post('/updateDetail', async ctx => {

@@ -26,7 +26,7 @@ export const useCertificateDetail = (id: number | undefined) => {
  */
 export const useSaveCertificate = (id: number | undefined) => {
     return useMutation(
-        async (data: CertificateAddReqBody) => {
+        async (data: Partial<CertificateAddReqBody>) => {
             if (id === -1) {
                 return await requestPost<CertificateDetailResp>('certificate/add', data)
             }

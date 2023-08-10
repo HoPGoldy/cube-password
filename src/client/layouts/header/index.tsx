@@ -18,7 +18,7 @@ interface Props {
 
 const Header: FC<Props> = (props) => {
     const { onClickCollasedIcon, collapsed } = props
-    const title = usePageTitle()
+    const renderTitle = usePageTitle()
     /** 是否打开用户管理菜单 */
     const [userMenuVisible, setUserMenuVisible] = useState(false)
     /** 侧边栏展开按钮 */
@@ -28,7 +28,7 @@ const Header: FC<Props> = (props) => {
         <header className={s.headerBox}>
             <div className='flex flex-nowrap flex-grow overflow-hidden'>
                 <CollasedIcon onClick={onClickCollasedIcon} className="text-xl mr-4" />
-                <div className="text-lg cursor-default">{title}</div>
+                {renderTitle()}
             </div>
             <div className='flex flex-nowrap flex-shrink-0 ml-2'>
                 <Link to="/search">

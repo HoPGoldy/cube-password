@@ -36,3 +36,14 @@ export const useDeleteGroup = (groupId: number) => {
         }
     )
 }
+
+/** 更新分组名称 */
+export const useUpdateGroupName = (groupId: number) => {
+    return useMutation(
+        async (name: string) => {
+            return await requestPost(`group/${groupId}/updateName`, {
+                name
+            })
+        }
+    )
+}
