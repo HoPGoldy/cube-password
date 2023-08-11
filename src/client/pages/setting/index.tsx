@@ -47,12 +47,12 @@ export const DesktopSetting: FC<DesktopProps> = (props) => {
       <div style={{ margin: '1rem 0rem' }}>
         <Row gutter={[16, 16]} justify='space-around'>
           <Col>
-            <Statistic title='分组数量' value={setting.diaryCount} prefix={<SnippetsOutlined />} />
+            <Statistic title='分组数量' value={setting.groupCount} prefix={<SnippetsOutlined />} />
           </Col>
           <Col>
             <Statistic
               title='凭证数量'
-              value={setting.diaryLength}
+              value={setting.certificateCount}
               prefix={<HighlightOutlined />}
             />
           </Col>
@@ -127,14 +127,14 @@ export const MobileSetting: FC<MobileProps> = (props) => {
               <Col>
                 <Statistic
                   title='分组数量'
-                  value={setting.diaryCount}
+                  value={setting.groupCount}
                   prefix={<SnippetsOutlined />}
                 />
               </Col>
               <Col>
                 <Statistic
                   title='凭证数量'
-                  value={setting.diaryLength}
+                  value={setting.certificateCount}
                   prefix={<HighlightOutlined />}
                 />
               </Col>

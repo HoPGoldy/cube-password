@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { AppTheme } from '@/types/user';
 import { changeTheme, getUserTheme, logout, stateUser } from '@/client/store/user';
-import { useLogout, useQueryDiaryCount, useSetTheme } from '@/client/services/user';
+import { useLogout, useQueryStatistic, useSetTheme } from '@/client/services/user';
 import { LockOutlined, DatabaseOutlined, TagsOutlined, SmileOutlined } from '@ant-design/icons';
 import { useAtomValue } from 'jotai';
 
@@ -15,7 +15,7 @@ export interface SettingLinkItem {
 export const useSetting = () => {
   const userInfo = useAtomValue(stateUser);
   // 数量统计接口
-  const { data: countInfo } = useQueryDiaryCount();
+  const { data: countInfo } = useQueryStatistic();
   /** 主题设置 */
   const { mutateAsync: setAppTheme } = useSetTheme();
   /** 登出接口 */
@@ -43,13 +43,13 @@ export const useSetting = () => {
     logout();
   };
 
-  const diaryCount = countInfo?.data?.diaryCount || '---';
-  const diaryLength = countInfo?.data?.diaryLength || '---';
+  const groupCount = countInfo?.data?.groupCount || '---';
+  const certificateCount = countInfo?.data?.certificateCount || '---';
   const userTheme = getUserTheme(userInfo?.theme);
 
   return {
-    diaryCount,
-    diaryLength,
+    groupCount,
+    certificateCount,
     onLogout,
     isLogouting,
     settingConfig,

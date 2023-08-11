@@ -52,7 +52,7 @@ export const useRegister = () => {
 };
 
 /** 统计文章 */
-export const useQueryDiaryCount = () => {
+export const useQueryStatistic = () => {
   return useQuery('userStatistic', () => {
     return requestGet('user/statistic');
   });

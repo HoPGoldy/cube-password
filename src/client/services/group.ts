@@ -39,3 +39,10 @@ export const useUpdateGroupName = (groupId: number) => {
     });
   });
 };
+
+/** 设置默认分组 */
+export const useUpdateDefaultGroup = (groupId: number) => {
+  return useMutation(async () => {
+    return await requestPost(`group/setDefaultGroup`, { groupId });
+  });
+};

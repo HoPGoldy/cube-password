@@ -3,9 +3,9 @@ import { stateGroupList, stateUser, useGroupInfo } from '@/client/store/user';
 import { messageSuccess, messageWarning } from '@/client/utils/message';
 import { Form, Row, Col, Input, Modal, Segmented, Button, Space, Result } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useDeleteGroup } from '@/client/services/group';
+import { useDeleteGroup, useUpdateDefaultGroup } from '@/client/services/group';
 import { CertificateGroupDetail, LockType } from '@/types/group';
-import { useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 
@@ -22,14 +22,15 @@ const getGroupLockType = (groupInfo: CertificateGroupDetail | undefined) => {
 
 export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   const { groupId } = props;
-  const groupInfo = useGroupInfo(groupId);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const setGroupList = useSetAtom(stateGroupList);
-  const setUserInfo = useSetAtom(stateUser);
-  /** 接口 - 删除分组 */
+  const [userInfo, setUserInfo] = useAtom(stateUser);
+  const groupInfo = useGroupInfo(groupId);
   const { mutateAsync: runDeleteGroup, isLoading: deleting } = useDeleteGroup(groupId);
+  const { mutateAsync: runUpdateDefault, isLoading: updateDefaultLoading } =
+    useUpdateDefaultGroup(groupId);
   /** 是否显示新增弹窗 */
   const [showModal, setShowModal] = useState(false);
   /** 当前选中的分组加密类型 */
@@ -38,6 +39,8 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   /** 删除确认输入框内容 */
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  /** 本分组是否为默认分组 */
+  const isDefaultGroup = userInfo?.defaultGroupId === groupId;
 
   const LockTypeOptions = [
     { label: '不加密', value: LockType.None },
@@ -54,6 +57,20 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
 
   const onCancelModal = () => {
     setShowModal(false);
+  };
+
+  const onSetDefaultGroup = async () => {
+    const resp = await runUpdateDefault();
+    if (resp.code !== 200) return;
+
+    messageSuccess('默认分组设置成功');
+    setUserInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        defaultGroupId: groupId,
+      };
+    });
   };
 
   const onShowDeleteConfirm = () => {
@@ -123,6 +140,12 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
                     )}
                     <Button icon={<DeleteOutlined />} danger onClick={onShowDeleteConfirm}>
                       删除分组
+                    </Button>
+                    <Button
+                      disabled={isDefaultGroup}
+                      onClick={onSetDefaultGroup}
+                      loading={updateDefaultLoading}>
+                      {isDefaultGroup ? '默认分组' : '设为默认分组'}
                     </Button>
                   </Space>
                 </Form.Item>
