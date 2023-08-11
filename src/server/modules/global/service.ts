@@ -1,44 +1,49 @@
-import { DatabaseAccessor } from '@/server/lib/sqlite'
-import { AppConfig, AppConfigResp, ColorConfig } from '@/types/appConfig'
+import { DatabaseAccessor } from '@/server/lib/sqlite';
+import { AppConfig, AppConfigResp, ColorConfig } from '@/types/appConfig';
 
 interface Props {
-    getConfig: () => AppConfig
-    createChallengeCode: () => string
-    db: DatabaseAccessor
+  getConfig: () => AppConfig;
+  createChallengeCode: () => string;
+  db: DatabaseAccessor;
 }
 
 const getColors = (color: string | ColorConfig): ColorConfig => {
-    if (typeof color === 'string') return { buttonColor: color, primaryColor: color }
-    return color
-}
+  if (typeof color === 'string') return { buttonColor: color, primaryColor: color };
+  return color;
+};
 
 export const createGlobalService = (props: Props) => {
-    const { getConfig, createChallengeCode, db } = props
+  const { getConfig, createChallengeCode, db } = props;
 
-    /**
-     * 获取当前应用全局配置
-     */
-    const getAppConfig = async (): Promise<AppConfigResp> => {
-        const { DEFAULT_COLOR, APP_NAME, LOGIN_SUBTITLE } = getConfig()
-        const randIndex = Math.floor(Math.random() * (DEFAULT_COLOR.length))
-        const colors = getColors(DEFAULT_COLOR[randIndex])
+  /**
+   * 获取当前应用全局配置
+   */
+  const getAppConfig = async (): Promise<AppConfigResp> => {
+    const { DEFAULT_COLOR, APP_NAME, LOGIN_SUBTITLE } = getConfig();
+    const randIndex = Math.floor(Math.random() * DEFAULT_COLOR.length);
+    const colors = getColors(DEFAULT_COLOR[randIndex]);
 
-        const userInfo = await db.user().select().first()
-        const needInit = !userInfo
+    const userInfo = await db.user().select().first();
+    const needInit = !userInfo;
 
-        const data: AppConfigResp = { appName: APP_NAME, loginSubtitle: LOGIN_SUBTITLE, ...colors, salt: userInfo?.passwordSalt }
-        if (needInit) data.needInit = true
-        return data
-    }
+    const data: AppConfigResp = {
+      appName: APP_NAME,
+      loginSubtitle: LOGIN_SUBTITLE,
+      ...colors,
+      salt: userInfo?.passwordSalt,
+    };
+    if (needInit) data.needInit = true;
+    return data;
+  };
 
-    /**
-     * 获取挑战码
-     */
-    const getChallengeCode = async () => {
-        return createChallengeCode()
-    }
+  /**
+   * 获取挑战码
+   */
+  const getChallengeCode = async () => {
+    return createChallengeCode();
+  };
 
-    return { getAppConfig, getChallengeCode }
-}
+  return { getAppConfig, getChallengeCode };
+};
 
-export type GlobalService = ReturnType<typeof createGlobalService>
+export type GlobalService = ReturnType<typeof createGlobalService>;
