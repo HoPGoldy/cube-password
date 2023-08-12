@@ -1,48 +1,42 @@
 .listContainer {
-    @apply columns-1 md:columns-2 lg:columns-3 gap-x-2;
-}
-
-.listItem {
-    page-break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    @apply mb-2;
-    /* 悬停样式 */
-    @apply hover:ring-2 ring-gray-300 dark:ring-neutral-500 transition-shadow;
+  @apply columns-1 md:columns-2 lg:columns-3 gap-x-2;
 }
 
 .labelInput {
-    @apply block py-2 pl-0 w-full transition;
+  @apply block py-2 pl-0 w-full transition;
 }
 
 .labelInput:global(.ant-input[disabled]) {
-    cursor: default;
-    color: inherit;
+  cursor: default;
+  color: inherit;
 }
 
 .settingDrawer :global(.ant-drawer-body) {
-    padding: 0 !important;
+  padding: 0 !important;
 }
 
 .monthPickerItem {
-    @apply text-center py-1;
+  @apply text-center py-1;
 }
 
 .monthPickerItemActive {
-    @apply rounded text-white;
-    background: var(--cube-password-primary-button-color);
+  @apply rounded text-white;
+
+  background: var(--cube-password-primary-button-color);
 }
 
 .monthPickerItemDisabled {
-    @apply text-gray-300;
+  @apply text-gray-300;
 }
 
 .listItem {
-    @apply mx-2 mb-4 w-col-1 lg:w-col-2 xl:w-col-3;
-    @apply ring-gray-300 dark:ring-gray-600 active:bg-gray-200 transition hover:ring cursor-pointer;
+  @apply mx-2 mb-4 w-col-1 lg:w-col-2 xl:w-col-3;
+  @apply ring-gray-300 dark:ring-gray-600 active:bg-gray-200 transition hover:ring cursor-pointer;
 }
 
 .fieldItemReadonly input, textarea.fieldItemReadonly {
-    @apply !cursor-pointer;
-    /** 把光标隐藏掉 */
-    caret-color: transparent;
+  @apply !cursor-pointer;
+
+  /** 把光标隐藏掉 */
+  caret-color: transparent;
 }
