@@ -16,7 +16,7 @@ const ChangePassword: FC = () => {
       <PageContent>
         <div className='m-2'>
           <Card size='small' className='text-center text-base font-bold mb-2'>
-            用户管理
+            修改密码
           </Card>
           <Card size='small' className='text-base'>
             {renderContent()}

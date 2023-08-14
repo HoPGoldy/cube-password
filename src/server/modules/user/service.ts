@@ -132,6 +132,7 @@ export const createUserService = (props: Props) => {
       initTime,
       groups: groupList.data,
       hasNotice: false,
+      withTotp: !!totpSecret,
       defaultGroupId,
       createPwdAlphabet,
       createPwdLength,

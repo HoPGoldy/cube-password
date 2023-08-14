@@ -4,16 +4,23 @@ import { changeTheme, getUserTheme, logout, stateUser } from '@/client/store/use
 import { useLogout, useQueryStatistic, useSetTheme } from '@/client/services/user';
 import { LockOutlined, DatabaseOutlined, TagsOutlined, SmileOutlined } from '@ant-design/icons';
 import { useAtomValue } from 'jotai';
+import { useOtpConfig } from '../otpConfig';
+import { useChangePassword } from '../changePassword';
+import { useNavigate } from 'react-router-dom';
 
 export interface SettingLinkItem {
   label: string;
   icon: React.ReactNode;
-  link: string;
   onClick?: () => void;
 }
 
 export const useSetting = () => {
+  const navigate = useNavigate();
   const userInfo = useAtomValue(stateUser);
+  /** 修改密码功能 */
+  const { renderModal: renderChangePassword, showModal: showChangePassword } = useChangePassword();
+  /** otp 验证码配置 */
+  const { renderModal: renderOtp, showModal: showOtp } = useOtpConfig();
   // 数量统计接口
   const { data: countInfo } = useQueryStatistic();
   /** 主题设置 */
@@ -22,12 +29,25 @@ export const useSetting = () => {
   const { mutateAsync: postLogout, isLoading: isLogouting } = useLogout();
 
   const settingConfig = useMemo(() => {
-    const list = [
-      { label: '修改密码', icon: <LockOutlined />, link: '/changePassword' },
-      { label: '导入', icon: <DatabaseOutlined />, link: '/importDiary' },
-      { label: '导出', icon: <TagsOutlined />, link: '/exportDiary' },
-      { label: '关于', icon: <SmileOutlined />, link: '/about' },
-    ].filter(Boolean) as SettingLinkItem[];
+    const list: SettingLinkItem[] = [
+      {
+        label: '修改密码',
+        icon: <LockOutlined />,
+        onClick: showChangePassword,
+      },
+      { label: '动态验证码', icon: <LockOutlined />, onClick: showOtp },
+      { label: '导入', icon: <DatabaseOutlined />, onClick: () => navigate('/importDiary') },
+      {
+        label: '导出',
+        icon: <TagsOutlined />,
+        onClick: () => navigate('/exportDiary'),
+      },
+      {
+        label: '关于',
+        icon: <SmileOutlined />,
+        onClick: () => navigate('/about'),
+      },
+    ].filter(Boolean);
 
     return list;
   }, []);
@@ -47,6 +67,15 @@ export const useSetting = () => {
   const certificateCount = countInfo?.data?.certificateCount || '---';
   const userTheme = getUserTheme(userInfo?.theme);
 
+  const renderModal = () => {
+    return (
+      <>
+        {renderChangePassword()}
+        {renderOtp()}
+      </>
+    );
+  };
+
   return {
     groupCount,
     certificateCount,
@@ -55,5 +84,6 @@ export const useSetting = () => {
     settingConfig,
     userTheme,
     onSwitchTheme,
+    renderModal,
   };
 };

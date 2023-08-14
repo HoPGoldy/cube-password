@@ -23,7 +23,7 @@ export const createOtpService = (props: Props) => {
    * 获取 OTP 令牌信息
    * 如果未绑定令牌，则返回绑定二维码 base64
    */
-  const getOtpInfo = async () => {
+  const getOtpQrcode = async () => {
     const userStorage = await db.user().select().first();
     if (!userStorage) return { code: 401, msg: '找不到用户信息' };
 
@@ -109,7 +109,7 @@ export const createOtpService = (props: Props) => {
     return { code: 200 };
   };
 
-  return { getOtpInfo, registerOtp, removeOtp };
+  return { getOtpQrcode, registerOtp, removeOtp };
 };
 
 export type OtpService = ReturnType<typeof createOtpService>;

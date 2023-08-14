@@ -86,6 +86,8 @@ export interface FrontendUserInfo {
   defaultGroupId: number;
   /** 是否有未读通知 */
   hasNotice: boolean;
+  /** 是否配置了 totp */
+  withTotp: boolean;
   /** 密码生成字符集 */
   createPwdAlphabet: string;
   /** 密码生成长度 */
@@ -98,4 +100,10 @@ export interface AppStatistics {
   groupCount: number;
   /** 凭证数量 */
   certificateCount: number;
+}
+
+/** 密码生成配置 */
+export interface PasswordConfigReqData {
+  pwdAlphabet: string;
+  pwdLength: number;
 }

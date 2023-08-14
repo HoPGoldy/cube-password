@@ -11,10 +11,10 @@ interface Props {
 
 export const createOtpRouter = (props: Props) => {
   const { service } = props;
-  const router = new Router<any, AppKoaContext>({ prefix: '/opt' });
+  const router = new Router<any, AppKoaContext>({ prefix: '/otp' });
 
-  router.post('/getInfo', async (ctx) => {
-    const resp = await service.getOtpInfo();
+  router.post('/getQrcode', async (ctx) => {
+    const resp = await service.getOtpQrcode();
     response(ctx, resp);
   });
 

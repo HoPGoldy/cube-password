@@ -27,11 +27,6 @@ a {
   text-decoration: none;
 }
 
-/* 关闭 password 自带的显示隐藏功能 */
-input[type="password"]::-ms-reveal{
-  display: none;
-}
-
 /** 隐藏默认的输入框样式 **/
 input {
   border: none;

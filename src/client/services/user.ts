@@ -4,6 +4,7 @@ import {
   ChangePasswordReqData,
   LoginReqData,
   LoginResp,
+  PasswordConfigReqData,
   RegisterReqData,
 } from '@/types/user';
 import { useQuery, useMutation } from 'react-query';
@@ -51,7 +52,7 @@ export const useRegister = () => {
   });
 };
 
-/** 统计文章 */
+/** 统计 */
 export const useQueryStatistic = () => {
   return useQuery('userStatistic', () => {
     return requestGet('user/statistic');
@@ -69,5 +70,19 @@ export const useChangePassword = () => {
 export const useSetTheme = () => {
   return useMutation((theme: AppTheme) => {
     return requestPost('user/setTheme', { theme });
+  });
+};
+
+/** 修改密码 */
+export const useResetPassword = () => {
+  return useMutation((data: string) => {
+    return requestPost<string>('user/changePwd', data);
+  });
+};
+
+/** 设置新密码生成规则 */
+export const useSetCreatePwdSetting = () => {
+  return useMutation((data: PasswordConfigReqData) => {
+    return requestPost('user/createPwdSetting', data);
   });
 };
