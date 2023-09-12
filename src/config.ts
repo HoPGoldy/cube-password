@@ -29,6 +29,14 @@ export const STATUS_CODE = {
    * 需要提供动态验证码
    */
   NEED_CODE: 40105,
+  /**
+   * 登录密码错误
+   */
+  LOGIN_PASSWORD_ERROR: 40106,
+  /**
+   * 登录超时
+   */
+  LOGIN_TIMEOUT: 40107,
 };
 
 /**

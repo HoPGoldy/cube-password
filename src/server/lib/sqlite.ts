@@ -57,7 +57,7 @@ export const createDb = (props: Props) => {
       t.increments('id').primary();
       t.string('name').notNullable();
       t.integer('order');
-      t.boolean('useTotp');
+      t.string('lockType');
       t.string('passwordHash');
       t.string('passwordSalt');
     });

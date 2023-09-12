@@ -4,11 +4,7 @@ import { response } from '@/server/utils';
 import { GroupService } from './service';
 import { validate } from '@/server/utils';
 import Joi from 'joi';
-import {
-  CertificateGroupStorage,
-  GroupAddPasswordData,
-  GroupRemovePasswordData,
-} from '@/types/group';
+import { CertificateGroupStorage, GroupConfigUpdateData } from '@/types/group';
 
 interface Props {
   service: GroupService;
@@ -102,33 +98,19 @@ export const createGroupRouter = (props: Props) => {
     response(ctx, resp);
   });
 
-  const addGroupPasswordSchema = Joi.object<GroupAddPasswordData>({
-    a: Joi.string().required(),
-    b: Joi.string().required(),
+  const updateConfigSchema = Joi.object<GroupConfigUpdateData>({
+    lockType: Joi.string().required(),
+    passwordHash: Joi.string().allow(null),
+    passwordSalt: Joi.string().allow(null),
   });
 
-  // 分组设置密码
-  router.post('/:groupId/addPassword', async (ctx) => {
-    const body = validate(ctx, addGroupPasswordSchema);
+  // 分组更新配置
+  router.post('/:groupdId/updateConfig', async (ctx) => {
+    const body = validate(ctx, updateConfigSchema);
     if (!body) return;
 
     const groupId = +ctx.params.groupId;
-    const resp = await service.groupAddPassword(groupId, body);
-    response(ctx, resp);
-  });
-
-  const removeGroupPasswordSchema = Joi.object<GroupRemovePasswordData>({
-    a: Joi.string().required(),
-    b: Joi.string().allow(''),
-  });
-
-  // 分组移除密码
-  router.post('/:groupdId/removePassword', async (ctx) => {
-    const body = validate(ctx, removeGroupPasswordSchema);
-    if (!body) return;
-
-    const groupId = +ctx.params.groupId;
-    const resp = await service.removeGroupPassword(groupId, body);
+    const resp = await service.updateGroupConfig(groupId, body);
     response(ctx, resp);
   });
 

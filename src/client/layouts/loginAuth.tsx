@@ -18,7 +18,7 @@ export const LoginAuth: FC<PropsWithChildren> = ({ children }) => {
     login(userInfo);
   }, [userInfoResp]);
 
-  if ((!userInfo && !token) || userInfoResp?.code === 401) {
+  if ((!userInfo && !token) || userInfoResp?.code === STATUS_CODE.LOGIN_TIMEOUT) {
     return <Navigate to='/login' replace />;
   }
 

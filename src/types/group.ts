@@ -1,3 +1,13 @@
+/** 分组加密类型 */
+export enum LockType {
+  /** 不加密 */
+  None = 'None',
+  /** 使用密码加密 */
+  Password = 'Password',
+  /** 使用 totp 加密 */
+  Totp = 'Totp',
+}
+
 /**
  * 凭证分组信息
  */
@@ -8,8 +18,8 @@ export interface CertificateGroupStorage {
   name: string;
   /** 分组排序顺序 */
   order?: number;
-  /** 是否使用 TOTP 密码 */
-  useTotp?: boolean;
+  /** 分组加密类型 */
+  lockType: LockType;
   /** 分组密码 sha512 摘要 */
   passwordHash?: string;
   /** 分组密码盐值 */
@@ -24,10 +34,8 @@ export interface CertificateGroupDetail {
   id: number;
   /** 分组名 */
   name: string;
-  /** 分组是否需要密码 */
-  requireLogin: boolean;
-  /** 是否使用 otp 登录 */
-  useTotp?: boolean;
+  /** 分组加密类型 */
+  lockType: LockType;
   /** 盐值，如果需要密码登录就会有这个值 */
   salt?: string;
 }
@@ -65,40 +73,19 @@ export interface CertificateListItem {
 }
 
 /**
- * 前端发送给后端的分组添加密码数据
+ * 分组配置更新数据
  */
-export interface GroupAddPasswordData {
+export interface GroupConfigUpdateData {
   /**
-   * 密码的 hash 值
+   * 加密类型
    */
-  a: string;
-  /**
-   * 密码盐值
-   */
-  b: string;
-}
-
-/**
- * 前端发送给后端的分组密码移除数据
- */
-export interface GroupRemovePasswordData {
+  lockType: LockType;
   /**
    * 分组密码 hash
    */
-  a: string;
+  passwordHash?: string;
   /**
-   * 动态验证码
-   * 绑定了令牌的话这个就会有值
+   * 分组密码盐值
    */
-  b?: string;
-}
-
-/** 分组加密类型 */
-export enum LockType {
-  /** 不加密 */
-  None = 'None',
-  /** 使用密码加密 */
-  Password = 'Password',
-  /** 使用 totp 加密 */
-  Totp = 'Totp',
+  passwordSalt?: string;
 }

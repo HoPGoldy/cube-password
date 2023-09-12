@@ -7,12 +7,10 @@ import {
   CertificateGroupDetail,
   CertificateGroupStorage,
   CertificateListItem,
-  GroupAddPasswordData,
-  GroupRemovePasswordData,
+  GroupConfigUpdateData,
 } from '@/types/group';
 import { sha } from '@/utils/crypto';
 import dayjs from 'dayjs';
-import { authenticator } from 'otplib';
 
 interface Props {
   db: DatabaseAccessor;
@@ -31,8 +29,7 @@ export const createGroupService = (props: Props) => {
       const newItem: CertificateGroupDetail = {
         id: item.id,
         name: item.name,
-        requireLogin: !!(item.passwordSalt && item.passwordHash) || !!item.useTotp,
-        useTotp: !!item.useTotp,
+        lockType: item.lockType,
       };
 
       if (item.passwordSalt) newItem.salt = item.passwordSalt;
@@ -163,42 +160,23 @@ export const createGroupService = (props: Props) => {
     return { code: 200 };
   };
 
-  /** 分组设置密码 */
-  const groupAddPassword = async (groupId: number, data: GroupAddPasswordData) => {
+  /** 分组更新配置 */
+  const updateGroupConfig = async (groupId: number, data: GroupConfigUpdateData) => {
+    const groupUnlocked = isGroupUnlocked(groupId);
+    if (!groupUnlocked) return groupLockResp;
+
     const groupDetail = await db.group().select('passwordHash').where('id', groupId).first();
     if (!groupDetail) {
       return { code: 404, msg: '分组不存在' };
     }
 
-    const { passwordHash } = groupDetail;
-    if (passwordHash) {
-      return { code: 400, msg: '分组已加密，请先移除密码' };
-    }
+    const newData: Partial<CertificateGroupStorage> = {
+      lockType: data.lockType,
+      passwordHash: data.passwordHash,
+      passwordSalt: data.passwordSalt,
+    };
 
-    await db.group().update({ passwordHash: data.a, passwordSalt: data.b }).where('id', groupId);
-    return { code: 200 };
-  };
-
-  /** 分组移除密码 */
-  const removeGroupPassword = async (groupId: number, data: GroupRemovePasswordData) => {
-    const unlockResult = await unlockGroup(groupId, data.a);
-    if (unlockResult.code !== 200) {
-      return unlockResult;
-    }
-
-    const userInfo = await db.user().select('totpSecret').first();
-    if (userInfo?.totpSecret) {
-      if (!data.b) {
-        return { code: 400, msg: '请填写动态验证码' };
-      }
-
-      const isValid = authenticator.verify({ token: data.b, secret: userInfo.totpSecret });
-      if (!isValid) {
-        return { code: 400, msg: '动态验证码错误' };
-      }
-    }
-
-    await db.group().update({ passwordHash: '', passwordSalt: '' }).where('id', groupId);
+    await db.group().update(newData).where('id', groupId);
     return { code: 200 };
   };
 
@@ -211,8 +189,7 @@ export const createGroupService = (props: Props) => {
     setDefaultGroup,
     deleteGroup,
     unlockGroup,
-    groupAddPassword,
-    removeGroupPassword,
+    updateGroupConfig,
   };
 };
 

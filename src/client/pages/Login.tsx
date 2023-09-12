@@ -6,7 +6,7 @@ import React, { useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useLogin } from '../services/user';
 import { login, stateMainPwd, stateUser } from '../store/user';
-import { messageError, messageSuccess } from '../utils/message';
+import { messageError } from '../utils/message';
 import { KeyOutlined } from '@ant-design/icons';
 import { PageTitle } from '../components/pageTitle';
 import { queryChallengeCode } from '../services/global';
@@ -54,7 +54,7 @@ const Login = () => {
     const resp = await postLogin(loginData);
     if (resp.code !== STATUS_CODE.SUCCESS) return;
 
-    messageSuccess('登录成功，欢迎回来。');
+    // messageSuccess('登录成功，欢迎回来。');
     const userInfo = resp.data as LoginSuccessResp;
     const { key, iv } = getAesMeta(password);
     login(userInfo);

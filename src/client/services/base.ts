@@ -42,14 +42,13 @@ axiosInstance.interceptors.response.use(
     if (!isAppResponse(resp.data)) return resp;
     const { code, msg } = resp.data;
 
-    if (code === 401) {
+    if (code === STATUS_CODE.LOGIN_TIMEOUT) {
       logout();
     } else if (code === STATUS_CODE.BAN) {
       logout();
       message('error', msg || '您已被封禁');
-    } else if (code !== 200) {
-      const type = code === 401 ? 'warning' : 'error';
-      message(type, msg || '未知错误');
+    } else if (code !== STATUS_CODE.SUCCESS) {
+      message('error', msg || '未知错误');
     }
 
     return resp;

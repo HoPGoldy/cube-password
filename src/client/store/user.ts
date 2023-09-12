@@ -36,6 +36,7 @@ export const stateGroupList = atom<CertificateGroupDetail[]>([]);
  */
 export const useGroupInfo = (groupId: number) => {
   const groupList = useAtomValue(stateGroupList);
+  console.log('🚀 ~ file: user.ts:39 ~ useGroupInfo ~ groupList:', groupList);
   const group = groupList.find((group) => group.id === groupId);
   if (!group) {
     console.error(`未找到 id 为 ${groupId} 的分组`);

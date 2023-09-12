@@ -34,6 +34,7 @@ export const useAddGroupContent = () => {
     const postData: Omit<CertificateGroupStorage, 'id'> = {
       name: values.name,
       order: 0,
+      lockType: values.lockType,
       passwordHash: values.password ? sha(salt + values.password) : undefined,
       passwordSalt: values.password ? salt : undefined,
     };

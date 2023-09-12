@@ -4,7 +4,7 @@ import { messageSuccess, messageWarning } from '@/client/utils/message';
 import { Form, Row, Col, Input, Modal, Segmented, Button, Space, Result } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useDeleteGroup, useUpdateDefaultGroup } from '@/client/services/group';
-import { CertificateGroupDetail, LockType } from '@/types/group';
+import { LockType } from '@/types/group';
 import { useAtom, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
@@ -12,13 +12,6 @@ import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 interface UseConfigGroupContentProps {
   groupId: number;
 }
-
-const getGroupLockType = (groupInfo: CertificateGroupDetail | undefined) => {
-  if (!groupInfo) return LockType.None;
-  if (groupInfo.useTotp) return LockType.Totp;
-  if (groupInfo.salt) return LockType.Password;
-  return LockType.None;
-};
 
 export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   const { groupId } = props;
@@ -33,6 +26,8 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
     useUpdateDefaultGroup(groupId);
   /** 是否显示新增弹窗 */
   const [showModal, setShowModal] = useState(false);
+  /** 更新前的分组加密类型 */
+  const [prevLockType, setPrevLockType] = useState<LockType>();
   /** 当前选中的分组加密类型 */
   const lockType = Form.useWatch('lockType', form);
   /** 是否显示删除确认弹窗 */
@@ -50,8 +45,9 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
 
   useEffect(() => {
     if (!groupInfo) return;
+    setPrevLockType(groupInfo.lockType);
     form.setFieldsValue({
-      lockType: getGroupLockType(groupInfo),
+      lockType: groupInfo.lockType,
     });
   }, [groupInfo]);
 
@@ -116,10 +112,34 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
     });
   };
 
+  const onSaveConfig = async () => {
+    const values = await form.validateFields();
+    console.log('🚀 ~ file: useConfigGroup.tsx:121 ~ onSaveConfig ~ values:', values);
+  };
+
   const renderConfigContent = () => {
     return (
       <>
-        <Modal title='分组配置' open={showModal} onCancel={onCancelModal} footer={false}>
+        <Modal
+          title='分组配置'
+          open={showModal}
+          onCancel={onCancelModal}
+          footer={
+            <Space>
+              <Button icon={<DeleteOutlined />} danger onClick={onShowDeleteConfirm}>
+                删除分组
+              </Button>
+              <Button
+                disabled={isDefaultGroup}
+                onClick={onSetDefaultGroup}
+                loading={updateDefaultLoading}>
+                {isDefaultGroup ? '默认分组' : '设为默认分组'}
+              </Button>
+              <Button onClick={onSaveConfig} type='primary'>
+                保存
+              </Button>
+            </Space>
+          }>
           <Form
             form={form}
             labelCol={{ span: 6 }}
@@ -132,24 +152,39 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
                   <Segmented block options={LockTypeOptions} />
                 </Form.Item>
               </Col>
-              <Col span={24}>
-                <Form.Item label='操作'>
-                  <Space>
-                    {lockType === LockType.Password && (
-                      <Button icon={<DeleteOutlined />}>修改密码</Button>
-                    )}
-                    <Button icon={<DeleteOutlined />} danger onClick={onShowDeleteConfirm}>
-                      删除分组
-                    </Button>
-                    <Button
-                      disabled={isDefaultGroup}
-                      onClick={onSetDefaultGroup}
-                      loading={updateDefaultLoading}>
-                      {isDefaultGroup ? '默认分组' : '设为默认分组'}
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Col>
+              {lockType === LockType.Password && (
+                <>
+                  <Col span={24}>
+                    <Form.Item
+                      label='分组密码'
+                      name='password'
+                      hasFeedback
+                      rules={[
+                        { required: prevLockType !== LockType.Password, message: '请填写分组密码' },
+                      ]}>
+                      <Input.Password placeholder='请输入' />
+                    </Form.Item>
+                  </Col>
+                  <Col span={24}>
+                    <Form.Item
+                      label='重复密码'
+                      name='passwordConfirm'
+                      rules={[
+                        { required: prevLockType !== LockType.Password, message: '请重复分组密码' },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            if (!value || getFieldValue('password') === value) {
+                              return Promise.resolve();
+                            }
+                            return Promise.reject(new Error('与分组密码不一致'));
+                          },
+                        }),
+                      ]}>
+                      <Input.Password placeholder='请输入' />
+                    </Form.Item>
+                  </Col>
+                </>
+              )}
             </Row>
           </Form>
         </Modal>

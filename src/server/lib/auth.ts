@@ -154,7 +154,7 @@ export const createSession = (props: CreateSessionProps) => {
   };
 
   const createLoginFailResp = (ctx: AppKoaContext) => {
-    response(ctx, { code: 401, msg: '登录已失效，请重新登录' });
+    response(ctx, { code: STATUS_CODE.LOGIN_TIMEOUT, msg: '登录已失效，请重新登录' });
   };
 
   /** 登录鉴权中间件 */

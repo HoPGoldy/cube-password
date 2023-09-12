@@ -18,6 +18,7 @@ import { formatLocation, isSameLocation } from '@/server/utils';
 import { authenticator } from 'otplib';
 import { GroupService } from '../group/service';
 import { SessionController } from '@/server/lib/auth';
+import { LockType } from '@/types/group';
 
 interface Props {
   loginLocker: LoginLocker;
@@ -56,7 +57,7 @@ export const createUserService = (props: Props) => {
       `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`,
     );
 
-    return { code: 401, msg: `${msg}，${message}` };
+    return { code: STATUS_CODE.LOGIN_PASSWORD_ERROR, msg: `${msg}，${message}` };
   };
 
   /**
@@ -121,7 +122,7 @@ export const createUserService = (props: Props) => {
     const session = startSession();
     const groupList = await queryGroupList();
     groupList.data.forEach((group) => {
-      if (group.requireLogin) return;
+      if (group.lockType !== LockType.None) return;
       addUnlockedGroup(group.id);
     });
 
@@ -159,7 +160,7 @@ export const createUserService = (props: Props) => {
       return { code: 400, msg: '用户已存在' };
     }
 
-    const addGroupResp = await addGroup({ name: '默认分组' });
+    const addGroupResp = await addGroup({ name: '默认分组', lockType: LockType.None });
     if (addGroupResp.code !== 200) {
       return addGroupResp;
     }
