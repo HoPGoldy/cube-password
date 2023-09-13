@@ -139,16 +139,16 @@ export const CertificateDetail: FC<Props> = (props) => {
 
     if (readonly) {
       btns.push(
-        <Button onClick={onCopyTotal} loading={isSaving}>
+        <Button key='copy' onClick={onCopyTotal} loading={isSaving}>
           复制
         </Button>,
-        <Button key='submit' type='primary' onClick={() => setReadonly(false)} loading={isSaving}>
+        <Button key='edit' type='primary' onClick={() => setReadonly(false)} loading={isSaving}>
           编辑
         </Button>,
       );
     } else {
       btns.push(
-        <Button key='submit' type='primary' onClick={onConfirm} loading={isSaving}>
+        <Button key='save' type='primary' onClick={onConfirm} loading={isSaving}>
           保存
         </Button>,
       );
@@ -189,7 +189,7 @@ export const CertificateDetail: FC<Props> = (props) => {
               </Form.Item>
             ))}
             {!readonly ? (
-              <Form.Item>
+              <Form.Item key='add'>
                 <Button
                   type='dashed'
                   onClick={() => add({ label: '字段' + newFieldIndex.current++, value: '' })}
@@ -200,7 +200,7 @@ export const CertificateDetail: FC<Props> = (props) => {
                 </Button>
               </Form.Item>
             ) : (
-              <div className='mt-6'></div>
+              <div key='bottom' className='mt-6'></div>
             )}
           </>
         )}

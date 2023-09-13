@@ -1,4 +1,4 @@
-import { stateGroupList, useUnlockGroup } from '@/client/store/user';
+import { useGroup } from '@/client/store/group';
 import { messageSuccess, messageWarning } from '@/client/utils/message';
 import { sha } from '@/utils/crypto';
 import { Row, Col, Input, Button, Result } from 'antd';
@@ -17,13 +17,12 @@ export const useGroupLock = (props: useGroupLockProps) => {
   const { groupId } = props;
   const [password, setPassword] = useState('');
   const primaryColor = useAtomValue(stateAppConfig)?.primaryColor;
-  const groupList = useAtomValue(stateGroupList);
   /** 输入框错误提示 */
   const [passwordError, setPasswordError] = useState(false);
   /** 请求 - 解密分组 */
   const { mutateAsync: runGroupLogin } = useGroupLogin(groupId);
-  /** 讲分组设置为已解密状态 */
-  const unlockGroup = useUnlockGroup(groupId);
+  /** 把分组设置为已解密状态 */
+  const { group, updateGroup } = useGroup(groupId);
 
   const onLogin = async () => {
     if (!password) {
@@ -34,7 +33,7 @@ export const useGroupLock = (props: useGroupLockProps) => {
     const preResp = await queryChallengeCode();
     if (preResp.code !== 200 || !preResp.data) return;
 
-    const salt = groupList?.find((item) => item.id === groupId)?.salt;
+    const salt = group?.salt;
     if (!salt) {
       messageWarning('分组数据异常，请刷新页面重试');
       return;
@@ -45,7 +44,7 @@ export const useGroupLock = (props: useGroupLockProps) => {
     if (resp.code !== 200) return;
 
     messageSuccess('分组解锁成功');
-    unlockGroup();
+    updateGroup({ unlocked: true });
   };
 
   const renderGroupLogin = () => {

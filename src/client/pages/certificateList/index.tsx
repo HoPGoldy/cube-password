@@ -10,7 +10,7 @@ import { CertificateDetail } from './detail';
 import { useCertificateList } from '@/client/services/certificate';
 import { CertificateListItem } from '@/types/group';
 import { MARK_COLORS_MAP } from '@/client/components/colorPicker';
-import { useGroupInfo } from '@/client/store/user';
+import { useGroup } from '@/client/store/group';
 import { useGroupLock } from './hooks/useGroupLock';
 import { useAtomValue } from 'jotai';
 import { stateAppConfig } from '@/client/store/global';
@@ -24,12 +24,9 @@ const CertificateList: FC = () => {
   /** 详情弹窗展示的密码 ID（-1 时代表新增密码） */
   const [detailId, setDetailId] = useState<number>();
   /** 分组是否解密了 */
-  const groupInfo = useGroupInfo(groupId);
+  const { group } = useGroup(groupId);
   /** 获取凭证列表 */
-  const { data: certificateListResp, isLoading } = useCertificateList(
-    groupId,
-    !groupInfo?.requireLogin,
-  );
+  const { data: certificateListResp, isLoading } = useCertificateList(groupId, !!group?.unlocked);
   /** 操作栏功能 */
   const operation = useOperation({
     certificateList: certificateListResp?.data ?? [],
@@ -41,7 +38,7 @@ const CertificateList: FC = () => {
   /** 分组登录功能 */
   const { renderGroupLogin } = useGroupLock({ groupId });
 
-  if (!groupId || !groupInfo)
+  if (!groupId || !group)
     return (
       <Result
         status='warning'
@@ -130,7 +127,7 @@ const CertificateList: FC = () => {
   };
 
   const renderContent = () => {
-    if (groupInfo?.requireLogin) return renderGroupLogin();
+    if (!group?.unlocked) return renderGroupLogin();
     if (isLoading) return <Loading />;
 
     return (

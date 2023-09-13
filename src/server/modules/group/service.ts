@@ -22,20 +22,21 @@ interface Props {
 export const createGroupService = (props: Props) => {
   const { db, isGroupUnlocked, getChallengeCode, addUnlockedGroup } = props;
 
+  const formatGroupDetail = (item: CertificateGroupStorage) => {
+    const newItem: CertificateGroupDetail = {
+      id: item.id,
+      name: item.name,
+      lockType: item.lockType,
+    };
+
+    if (item.passwordSalt) newItem.salt = item.passwordSalt;
+    return newItem;
+  };
+
   /** 查询分组列表 */
   const queryGroupList = async () => {
     const list = await db.group().select().orderBy('order', 'asc');
-    const data = list.map((item) => {
-      const newItem: CertificateGroupDetail = {
-        id: item.id,
-        name: item.name,
-        lockType: item.lockType,
-      };
-
-      if (item.passwordSalt) newItem.salt = item.passwordSalt;
-
-      return newItem;
-    });
+    const data = list.map(formatGroupDetail);
     return { code: 200, data };
   };
 
@@ -165,19 +166,20 @@ export const createGroupService = (props: Props) => {
     const groupUnlocked = isGroupUnlocked(groupId);
     if (!groupUnlocked) return groupLockResp;
 
-    const groupDetail = await db.group().select('passwordHash').where('id', groupId).first();
+    const groupDetail = await db.group().select().where('id', groupId).first();
     if (!groupDetail) {
       return { code: 404, msg: '分组不存在' };
     }
 
-    const newData: Partial<CertificateGroupStorage> = {
+    const newData: CertificateGroupStorage = {
+      ...groupDetail,
       lockType: data.lockType,
       passwordHash: data.passwordHash,
       passwordSalt: data.passwordSalt,
     };
 
     await db.group().update(newData).where('id', groupId);
-    return { code: 200 };
+    return { code: 200, data: formatGroupDetail(newData) };
   };
 
   return {

@@ -1,16 +1,10 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import {
-  InsertRowLeftOutlined,
-  RightOutlined,
-  SettingOutlined,
-  LockOutlined,
-} from '@ant-design/icons';
+import { RightOutlined, PlusOutlined, LockOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
 import s from './styles.module.css';
-import { CertificateGroupDetail } from '@/types/group';
 import { useAtomValue } from 'jotai';
-import { stateGroupList } from '@/client/store/user';
+import { GroupDetail, stateGroupList } from '@/client/store/group';
 import { useAddGroupContent } from '@/client/pages/certificateList/hooks/useAddGroup';
 
 export const Sidebar: FC = () => {
@@ -21,7 +15,7 @@ export const Sidebar: FC = () => {
   /** 新增分组 */
   const addGroup = useAddGroupContent();
 
-  const renderGroupItem = (item: CertificateGroupDetail) => {
+  const renderGroupItem = (item: GroupDetail) => {
     const className = [s.menuItem];
     if (groupId && +groupId === item.id) className.push(s.menuItemActive);
 
@@ -29,7 +23,7 @@ export const Sidebar: FC = () => {
       <Link key={item.id} to={`/group/${item.id}`}>
         <div className={className.join(' ')} title={item.name}>
           <span className='truncate'>{item.name}</span>
-          {item.requireLogin ? <LockOutlined /> : <RightOutlined />}
+          {item.unlocked ? <RightOutlined /> : <LockOutlined />}
         </div>
       </Link>
     );
@@ -49,7 +43,7 @@ export const Sidebar: FC = () => {
 
       <Button
         className={`${s.toolBtn} keep-antd-style`}
-        icon={<InsertRowLeftOutlined />}
+        icon={<PlusOutlined />}
         block
         onClick={() => addGroup.setShowAddModal(true)}>
         新建分组

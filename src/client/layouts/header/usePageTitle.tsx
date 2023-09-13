@@ -1,7 +1,6 @@
 import { useUpdateGroupName } from '@/client/services/group';
-import { stateGroupList, useGroupInfo } from '@/client/store/user';
+import { useGroup } from '@/client/store/group';
 import { Input } from 'antd';
-import { useSetAtom } from 'jotai';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
@@ -18,16 +17,15 @@ export const usePageTitle = () => {
   const params = useParams();
 
   const groupId = Number(params.groupId);
-  const groupInfo = useGroupInfo(groupId);
+  const { group, updateGroup } = useGroup(groupId);
   /** 当前显示的分组标题 */
   const [groupTitle, setGroupTitle] = useState<string>();
   const { mutateAsync: runSaveName, isLoading: isSaving } = useUpdateGroupName(groupId);
-  const setGroupList = useSetAtom(stateGroupList);
 
   useEffect(() => {
-    if (!groupId || !groupInfo) return;
-    setGroupTitle(groupInfo?.name);
-  }, [groupInfo]);
+    if (!groupId || !group) return;
+    setGroupTitle(group?.name);
+  }, [group]);
 
   const getTitle = () => {
     if (pathname in pageTitle) return pageTitle[pathname];
@@ -35,22 +33,17 @@ export const usePageTitle = () => {
   };
 
   const onSaveTitle = async () => {
-    if (!groupId || !groupInfo) return;
-    if (groupTitle === groupInfo.name) return;
+    if (!groupId || !group) return;
+    if (groupTitle === group.name) return;
     if (!groupTitle) {
-      setGroupTitle(groupInfo.name);
+      setGroupTitle(group.name);
       return;
     }
 
     const resp = await runSaveName(groupTitle);
     if (resp.code !== 200) return;
 
-    setGroupList((prev) => {
-      const index = prev.findIndex((item) => item.id === groupId);
-      const newGroupList = [...prev];
-      newGroupList[index] = { ...newGroupList[index], name: groupTitle };
-      return newGroupList;
-    });
+    updateGroup({ name: groupTitle });
   };
 
   const renderTtitle = () => {

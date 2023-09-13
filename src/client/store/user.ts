@@ -1,6 +1,6 @@
 import { AppTheme, FrontendUserInfo, LoginSuccessResp } from '@/types/user';
-import { CertificateGroupDetail } from '@/types/group';
-import { atom, getDefaultStore, useAtomValue, useSetAtom } from 'jotai';
+import { atom, getDefaultStore } from 'jotai';
+import { rebuildGroup, stateGroupList } from './group';
 
 /**
  * 从用户信息中获取主题色
@@ -26,44 +26,6 @@ export const stateReplayAttackSecret = atom<string | undefined>(undefined);
  */
 export const stateUserToken = atom<string | undefined>(undefined);
 
-/**
- * 当前用户的分组列表
- */
-export const stateGroupList = atom<CertificateGroupDetail[]>([]);
-
-/**
- * 获取指定分组信息
- */
-export const useGroupInfo = (groupId: number) => {
-  const groupList = useAtomValue(stateGroupList);
-  console.log('🚀 ~ file: user.ts:39 ~ useGroupInfo ~ groupList:', groupList);
-  const group = groupList.find((group) => group.id === groupId);
-  if (!group) {
-    console.error(`未找到 id 为 ${groupId} 的分组`);
-    return undefined;
-  }
-
-  return group;
-};
-
-/**
- * 修改指定分组的锁定状态
- */
-export const useUnlockGroup = (groupId: number) => {
-  const setGroupList = useSetAtom(stateGroupList);
-
-  const unlock = () => {
-    setGroupList((prev) => {
-      return prev.map((group) => {
-        if (group.id !== groupId) return { ...group };
-        return { ...group, requireLogin: false };
-      });
-    });
-  };
-
-  return unlock;
-};
-
 export const logout = () => {
   const store = getDefaultStore();
 
@@ -79,7 +41,7 @@ export const login = (payload: LoginSuccessResp) => {
   store.set(stateUser, userInfo);
   store.set(stateReplayAttackSecret, replayAttackSecret);
   store.set(stateUserToken, token);
-  store.set(stateGroupList, groups);
+  store.set(stateGroupList, groups?.map(rebuildGroup) || []);
 };
 
 export const changeTheme = (theme: AppTheme) => {

@@ -24,7 +24,7 @@ import { DesktopArea } from '@/client/layouts/responsive';
 import { useConfigGroupContent } from './hooks/useConfigGroup';
 import { CertificateListItem } from '@/types/group';
 import { useAtomValue } from 'jotai';
-import { stateGroupList } from '@/client/store/user';
+import { stateGroupList } from '@/client/store/group';
 import { useMoveCertificate } from '@/client/services/certificate';
 
 /**

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from 'react-query';
 import { requestGet, requestPost } from './base';
-import { AddGroupResp, CertificateGroupStorage } from '@/types/group';
+import { AddGroupResp, CertificateGroupStorage, GroupConfigUpdateData } from '@/types/group';
 
 /** 新增分组 */
 export const useAddGroup = () => {
@@ -42,4 +42,8 @@ export const useUpdateDefaultGroup = (groupId: number) => {
 };
 
 /** 更新分组设置 */
-export const useSetGroupPassword = (groupId: number) => {};
+export const useUpdateGroupConfig = (groupId: number) => {
+  return useMutation(async (data: GroupConfigUpdateData) => {
+    return await requestPost(`group/${groupId}/updateConfig`, data);
+  });
+};

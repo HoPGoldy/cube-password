@@ -1,5 +1,5 @@
 import { useIsMobile } from '@/client/layouts/responsive';
-import { stateGroupList } from '@/client/store/user';
+import { rebuildGroup, stateGroupList } from '@/client/store/group';
 import { messageSuccess } from '@/client/utils/message';
 import { sha } from '@/utils/crypto';
 import { Form, Row, Col, Input, Modal, Segmented } from 'antd';
@@ -44,7 +44,7 @@ export const useAddGroupContent = () => {
 
     messageSuccess('分组添加成功');
     setShowAddModal(false);
-    setGroupList(resp.data.newList);
+    setGroupList(resp.data.newList?.map(rebuildGroup) ?? []);
     navigate(`/group/${resp.data.newId}`);
     form.resetFields();
   };

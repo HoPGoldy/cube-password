@@ -1,13 +1,20 @@
 import { useIsMobile } from '@/client/layouts/responsive';
-import { stateGroupList, stateUser, useGroupInfo } from '@/client/store/user';
+import { stateUser } from '@/client/store/user';
+import { rebuildGroup, useGroup } from '@/client/store/group';
 import { messageSuccess, messageWarning } from '@/client/utils/message';
 import { Form, Row, Col, Input, Modal, Segmented, Button, Space, Result } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useDeleteGroup, useUpdateDefaultGroup } from '@/client/services/group';
+import {
+  useDeleteGroup,
+  useUpdateDefaultGroup,
+  useUpdateGroupConfig,
+} from '@/client/services/group';
 import { LockType } from '@/types/group';
-import { useAtom, useSetAtom } from 'jotai';
+import { useAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
+import { nanoid } from 'nanoid';
+import { sha } from '@/utils/crypto';
 
 interface UseConfigGroupContentProps {
   groupId: number;
@@ -18,12 +25,13 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const setGroupList = useSetAtom(stateGroupList);
   const [userInfo, setUserInfo] = useAtom(stateUser);
-  const groupInfo = useGroupInfo(groupId);
+  const { group, updateGroup, deleteGroup } = useGroup(groupId);
   const { mutateAsync: runDeleteGroup, isLoading: deleting } = useDeleteGroup(groupId);
   const { mutateAsync: runUpdateDefault, isLoading: updateDefaultLoading } =
     useUpdateDefaultGroup(groupId);
+  const { mutateAsync: runUpdateConfig, isLoading: updateConfigLoading } =
+    useUpdateGroupConfig(groupId);
   /** 是否显示新增弹窗 */
   const [showModal, setShowModal] = useState(false);
   /** 更新前的分组加密类型 */
@@ -44,15 +52,14 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   ];
 
   useEffect(() => {
-    if (!groupInfo) return;
-    setPrevLockType(groupInfo.lockType);
-    form.setFieldsValue({
-      lockType: groupInfo.lockType,
-    });
-  }, [groupInfo]);
+    if (!group) return;
+    setPrevLockType(group.lockType);
+    form.setFieldsValue({ lockType: group.lockType });
+  }, [group]);
 
   const onCancelModal = () => {
     setShowModal(false);
+    form.resetFields();
   };
 
   const onSetDefaultGroup = async () => {
@@ -79,7 +86,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   };
 
   const onDeleteGroup = async () => {
-    if (deleteConfirmInput !== groupInfo?.name) {
+    if (deleteConfirmInput !== group?.name) {
       messageWarning('分组名称不正确');
       onCancelDeleteConfirm();
       return;
@@ -99,10 +106,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
     messageSuccess('分组删除成功');
     navigate(`/group/${newDefaultGroupId}`);
 
-    setGroupList((prev) => {
-      const newGroupList = prev.filter((item) => item.id !== groupId);
-      return newGroupList;
-    });
+    deleteGroup();
     setUserInfo((prev) => {
       if (!prev) return prev;
       return {
@@ -114,7 +118,18 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
 
   const onSaveConfig = async () => {
     const values = await form.validateFields();
-    console.log('🚀 ~ file: useConfigGroup.tsx:121 ~ onSaveConfig ~ values:', values);
+    const salt = nanoid(128);
+
+    const resp = await runUpdateConfig({
+      lockType: values.lockType,
+      passwordHash: values.password ? sha(salt + values.password) : undefined,
+      passwordSalt: values.password ? salt : undefined,
+    });
+    if (resp.code !== 200) return;
+
+    messageSuccess('保存成功');
+    onCancelModal();
+    updateGroup(rebuildGroup(resp.data));
   };
 
   const renderConfigContent = () => {
@@ -135,7 +150,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
                 loading={updateDefaultLoading}>
                 {isDefaultGroup ? '默认分组' : '设为默认分组'}
               </Button>
-              <Button onClick={onSaveConfig} type='primary'>
+              <Button onClick={onSaveConfig} type='primary' loading={updateConfigLoading}>
                 保存
               </Button>
             </Space>
@@ -202,7 +217,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
             subTitle={
               <div className='text-black'>
                 分组删除后，其中的凭证将被 <b>一并删除</b> 且无法恢复，如果确定要删除，请在下方输入“
-                {groupInfo?.name}”
+                {group?.name}”
               </div>
             }
             extra={

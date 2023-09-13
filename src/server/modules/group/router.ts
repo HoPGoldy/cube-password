@@ -105,7 +105,7 @@ export const createGroupRouter = (props: Props) => {
   });
 
   // 分组更新配置
-  router.post('/:groupdId/updateConfig', async (ctx) => {
+  router.post('/:groupId/updateConfig', async (ctx) => {
     const body = validate(ctx, updateConfigSchema);
     if (!body) return;
 
