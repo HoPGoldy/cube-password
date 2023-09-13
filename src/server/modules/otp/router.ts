@@ -22,11 +22,11 @@ export const createOtpRouter = (props: Props) => {
     code: Joi.string().required(),
   });
 
-  router.post('/register', async (ctx) => {
+  router.post('/bind', async (ctx) => {
     const data = validate(ctx, registerOtpShema);
     if (!data) return;
 
-    const resp = await service.registerOtp(data.code);
+    const resp = await service.bindOtp(data.code);
     response(ctx, resp);
   });
 

@@ -1,46 +1,39 @@
-import React, { useState } from 'react';
-import { useContent } from './content';
-import { Modal } from 'antd';
-import { useIsMobile } from '@/client/layouts/responsive';
-import { ActionButton } from '@/client/layouts/pageWithAction';
-import { MobilePageDrawer } from '@/client/components/mobileDrawer';
+import React from 'react';
+import { Content } from './content';
+import { SettingContainer, SettingContainerProps } from '@/client/components/settingContainer';
+import { useSearchParams } from 'react-router-dom';
 
-export const useOtpConfig = () => {
-  const isMobile = useIsMobile();
-  /** 是否显示修改密码弹窗 */
-  const [visible, setVisible] = useState(false);
-  const { onSave, renderContent } = useContent();
+const TITLE = '动态验证码管理';
 
-  /** 展示配置 */
+const PARAM_KEY = 'showOptConfig';
+
+export default () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  /** 是否显示弹窗 */
+  const visible = searchParams.get(PARAM_KEY) === '1';
+
   const showModal = () => {
-    setVisible(true);
+    searchParams.set(PARAM_KEY, '1');
+    setSearchParams(searchParams);
   };
 
-  /** 渲染配置弹窗 */
+  const closeModal = () => {
+    searchParams.delete(PARAM_KEY);
+    setSearchParams(searchParams, { replace: true });
+  };
+
+  /** 渲染弹窗 */
   const renderModal = () => {
-    if (isMobile) {
-      return (
-        <MobilePageDrawer
-          open={visible}
-          onClose={() => setVisible(false)}
-          title='动态验证码管理'
-          content={renderContent()}
-          action={<ActionButton onClick={() => setVisible(false)}>返回</ActionButton>}
-        />
-      );
-    }
+    const props: SettingContainerProps = {
+      title: TITLE,
+      open: visible,
+      onClose: closeModal,
+    };
 
     return (
-      <Modal
-        open={visible}
-        onCancel={() => setVisible(false)}
-        onOk={async () => {
-          const success = await onSave();
-          if (success) setVisible(false);
-        }}
-        title='动态验证码管理'>
-        {renderContent()}
-      </Modal>
+      <SettingContainer {...props}>
+        <Content {...props} />
+      </SettingContainer>
     );
   };
 

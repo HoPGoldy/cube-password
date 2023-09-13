@@ -2,7 +2,6 @@ import { DatabaseAccessor } from '@/server/lib/sqlite';
 import { createOTP } from '@/server/lib/auth';
 import { RegisterOTPInfo } from '@/types/otp';
 import { authenticator } from 'otplib';
-import QRCode from 'qrcode';
 import { SecurityNoticeType } from '@/types/security';
 import { SecurityService } from '../security/service';
 import { sha } from '@/utils/crypto';
@@ -36,9 +35,7 @@ export const createOtpService = (props: Props) => {
     const secret = authenticator.generateSecret();
     optSecretManager.create('default', secret);
 
-    const qrcodeUrl = await QRCode.toDataURL(
-      authenticator.keyuri('main password', 'cube-password', secret),
-    );
+    const qrcodeUrl = authenticator.keyuri('main password', 'cube-password', secret);
     const data: RegisterOTPInfo = { registered: false, qrCode: qrcodeUrl };
     return { code: 200, data };
   };
@@ -48,7 +45,7 @@ export const createOtpService = (props: Props) => {
    *
    * @param code 动态令牌
    */
-  const registerOtp = async (code: string) => {
+  const bindOtp = async (code: string) => {
     const userStorage = await db.user().select().first();
     if (!userStorage) return { code: 401, msg: '找不到用户信息' };
 
@@ -109,7 +106,7 @@ export const createOtpService = (props: Props) => {
     return { code: 200 };
   };
 
-  return { getOtpQrcode, registerOtp, removeOtp };
+  return { getOtpQrcode, bindOtp, removeOtp };
 };
 
 export type OtpService = ReturnType<typeof createOtpService>;

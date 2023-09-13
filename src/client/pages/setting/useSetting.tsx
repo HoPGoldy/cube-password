@@ -4,8 +4,8 @@ import { changeTheme, getUserTheme, logout, stateUser } from '@/client/store/use
 import { useLogout, useQueryStatistic, useSetTheme } from '@/client/services/user';
 import { LockOutlined, DatabaseOutlined, TagsOutlined, SmileOutlined } from '@ant-design/icons';
 import { useAtomValue } from 'jotai';
-import { useOtpConfig } from '../otpConfig';
-import { useChangePassword } from '../changePassword';
+import useOtpConfig from '../otpConfig';
+import useChangePassword from '../changePassword';
 import { useNavigate } from 'react-router-dom';
 
 export interface SettingLinkItem {
@@ -18,9 +18,9 @@ export const useSetting = () => {
   const navigate = useNavigate();
   const userInfo = useAtomValue(stateUser);
   /** 修改密码功能 */
-  const { renderModal: renderChangePassword, showModal: showChangePassword } = useChangePassword();
+  const changePassword = useChangePassword();
   /** otp 验证码配置 */
-  const { renderModal: renderOtp, showModal: showOtp } = useOtpConfig();
+  const optConfig = useOtpConfig();
   // 数量统计接口
   const { data: countInfo } = useQueryStatistic();
   /** 主题设置 */
@@ -33,9 +33,9 @@ export const useSetting = () => {
       {
         label: '修改密码',
         icon: <LockOutlined />,
-        onClick: showChangePassword,
+        onClick: changePassword.showModal,
       },
-      { label: '动态验证码', icon: <LockOutlined />, onClick: showOtp },
+      { label: '动态验证码', icon: <LockOutlined />, onClick: optConfig.showModal },
       { label: '导入', icon: <DatabaseOutlined />, onClick: () => navigate('/importDiary') },
       {
         label: '导出',
@@ -70,8 +70,8 @@ export const useSetting = () => {
   const renderModal = () => {
     return (
       <>
-        {renderChangePassword()}
-        {renderOtp()}
+        {changePassword.renderModal()}
+        {optConfig.renderModal()}
       </>
     );
   };

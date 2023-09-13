@@ -1,7 +1,3 @@
-.changePasswordBox {
-  @apply mb-4;
-}
-
 .changePasswordBox :global(.ant-form-item-label) {
   @apply !pb-0 md:!pb-2;
 }
