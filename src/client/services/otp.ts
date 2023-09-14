@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from 'react-query';
 import { requestPost } from './base';
-import { RegisterOTPInfo } from '@/types/otp';
+import { RegisterOTPInfo, RemoveOtpReqData } from '@/types/otp';
 
 /** 获取 otp 绑定二维码 */
 export const useFetchOtpQrCode = () => {
@@ -24,7 +24,7 @@ export const useBindOtp = () => {
 
 /** 解绑动态验证码 */
 export const useUnbindOtp = () => {
-  return useMutation((code: string) => {
-    return requestPost('otp/remove', { code });
+  return useMutation((data: RemoveOtpReqData) => {
+    return requestPost('otp/remove', data);
   });
 };

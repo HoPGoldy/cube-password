@@ -8,6 +8,7 @@ import {
   CertificateGroupStorage,
   CertificateListItem,
   GroupConfigUpdateData,
+  LockType,
 } from '@/types/group';
 import { sha } from '@/utils/crypto';
 import dayjs from 'dayjs';
@@ -46,7 +47,7 @@ export const createGroupService = (props: Props) => {
     const list = await queryGroupList();
     const data: AddGroupResp = { newId: id, newList: list.data };
     // 没密码的就直接解锁
-    if (!newData.passwordHash && !newData.passwordSalt) addUnlockedGroup(id);
+    if (newData.lockType === LockType.None) addUnlockedGroup(id);
     return { code: 200, data };
   };
 

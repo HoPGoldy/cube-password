@@ -75,9 +75,6 @@ export const createOtpService = (props: Props) => {
    * @param code 动态令牌
    */
   const removeOtp = async (password: string, code: string) => {
-    const userStorage = await db.user().select().first();
-    if (!userStorage) return { code: 401, msg: '找不到用户信息' };
-
     const challengeCode = getChallengeCode();
     if (!challengeCode) {
       insertSecurityNotice(
@@ -88,9 +85,16 @@ export const createOtpService = (props: Props) => {
       return { code: 401, msg: '挑战码错误' };
     }
 
+    const userStorage = await db.user().select().first();
+    if (!userStorage) return { code: 401, msg: '找不到用户信息' };
+
     const { totpSecret, passwordHash } = userStorage;
     if (!totpSecret) {
       return { code: 400, msg: '未绑定令牌' };
+    }
+
+    if (password !== sha(passwordHash + challengeCode)) {
+      return { code: 400, msg: '密码错误' };
     }
 
     const codeConfirmed = authenticator.check(code, totpSecret);
@@ -98,11 +102,7 @@ export const createOtpService = (props: Props) => {
       return { code: 400, msg: '验证码已过期，请重新输入' };
     }
 
-    if (password !== sha(passwordHash + challengeCode)) {
-      return { code: 400, msg: '密码错误' };
-    }
-
-    await db.user().update('totpSecret', undefined).where('id', userStorage.id);
+    await db.user().update('totpSecret', '').where('id', userStorage.id);
     return { code: 200 };
   };
 

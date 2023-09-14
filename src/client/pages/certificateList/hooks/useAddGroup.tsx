@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid';
 import { CertificateGroupStorage, LockType } from '@/types/group';
 import { useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
+import { useLockTypeOptions } from './useLockTypeOptions';
 
 export const useAddGroupContent = () => {
   const [form] = Form.useForm();
@@ -20,12 +21,7 @@ export const useAddGroupContent = () => {
   /** 当前显示的分组列表 */
   const setGroupList = useSetAtom(stateGroupList);
   const lockType = Form.useWatch('lockType', form);
-
-  const LockTypeOptions = [
-    { label: '不加密', value: LockType.None },
-    { label: '密码加密', value: LockType.Password },
-    { label: 'TOTP 加密', value: LockType.Totp },
-  ];
+  const lockTypeOptions = useLockTypeOptions();
 
   const onClickSave = async () => {
     const values = await form.validateFields();
@@ -74,7 +70,7 @@ export const useAddGroupContent = () => {
             </Col>
             <Col span={24}>
               <Form.Item label='加密方式' name='lockType'>
-                <Segmented block options={LockTypeOptions} />
+                <Segmented block options={lockTypeOptions} />
               </Form.Item>
             </Col>
             {lockType === LockType.Password && (

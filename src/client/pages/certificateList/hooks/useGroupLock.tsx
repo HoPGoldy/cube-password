@@ -1,5 +1,5 @@
 import { useGroup } from '@/client/store/group';
-import { messageSuccess, messageWarning } from '@/client/utils/message';
+import { messageWarning } from '@/client/utils/message';
 import { sha } from '@/utils/crypto';
 import { Row, Col, Input, Button, Result } from 'antd';
 import React, { useState } from 'react';
@@ -43,7 +43,7 @@ export const useGroupLock = (props: useGroupLockProps) => {
     const resp = await runGroupLogin(code);
     if (resp.code !== 200) return;
 
-    messageSuccess('分组解锁成功');
+    // messageSuccess('分组解锁成功');
     updateGroup({ unlocked: true });
   };
 
@@ -52,7 +52,7 @@ export const useGroupLock = (props: useGroupLockProps) => {
       <div className='mt-[15vh]'>
         <Result
           icon={<LockOutlined style={{ color: primaryColor }} />}
-          title='分组已加密'
+          title='已加密'
           subTitle='输入正确密码后解锁，登出时分组将被重新锁定'
           extra={
             <div>

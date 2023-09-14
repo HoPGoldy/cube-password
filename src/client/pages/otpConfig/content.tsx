@@ -1,62 +1,59 @@
 import React, { FC, useEffect, useState } from 'react';
 import Loading from '../../layouts/loading';
-import { Button, Card, Space, Input, Modal, QRCode } from 'antd';
+import { Button, Card, Space, Input, Modal, QRCode, Form } from 'antd';
 import { messageSuccess, messageWarning } from '@/client/utils/message';
 import { SettingContainerProps } from '@/client/components/settingContainer';
 import { useIsMobile } from '@/client/layouts/responsive';
 import { ActionButton, ActionIcon, PageAction, PageContent } from '@/client/layouts/pageWithAction';
 import { LeftOutlined } from '@ant-design/icons';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useBindOtp, useFetchOtpQrCode, useUnbindOtp } from '@/client/services/otp';
+import { queryChallengeCode } from '@/client/services/global';
+import { stateAppConfig } from '@/client/store/global';
+import { sha } from '@/utils/crypto';
+import { RemoveOtpReqData } from '@/types/otp';
 import { stateUser } from '@/client/store/user';
-import { useBindOtp, useFetchOtpQrCode } from '@/client/services/otp';
 
 export const Content: FC<SettingContainerProps> = (props) => {
+  const [removeForm] = Form.useForm();
   const isMobile = useIsMobile();
-  const userInfo = useAtomValue(stateUser);
-  console.log('🚀 ~ file: content.tsx:16 ~ useContent ~ userInfo:', userInfo);
+  const appConfig = useAtomValue(stateAppConfig);
+  const setUserInfo = useSetAtom(stateUser);
+
   const {
     data: otpInfo,
     isLoading: isLoadingOtpInfo,
     refetch: refetchOtpInfo,
   } = useFetchOtpQrCode();
   const { mutateAsync: bindOtp, isLoading: isBinding } = useBindOtp();
+  const { mutateAsync: removeOtp, isLoading: isRemoving } = useUnbindOtp();
+
   // 绑定验证码内容
   const [initCode, setInitCode] = useState('');
-  // 解绑验证码内容
-  const [removeCode, setRemoveCode] = useState('');
   // 是否显示解绑弹窗
   const [removeVisible, setRemoveVisible] = useState(false);
-  // 请求是否进行中
-  const [submiting, setSubmiting] = useState(false);
   // 二维码是否已失效
   const [isInvalid, setIsInvalid] = useState(false);
-  console.log('🚀 ~ file: content.tsx:22 ~ useContent ~ otpInfo:', otpInfo);
 
   const { registered, qrCode } = otpInfo?.data || {};
 
   const clearState = () => {
     setInitCode('');
-    setRemoveCode('');
     setRemoveVisible(false);
   };
 
   // 二维码到了之后设置过期倒计时
   useEffect(() => {
     setIsInvalid(false);
+
+    const clearInvalidTimer = () => clearTimeout(invalidTimer);
     if (!otpInfo || registered) {
-      return;
+      return clearInvalidTimer;
     }
 
-    const invalidTimer = setTimeout(
-      () => {
-        setIsInvalid(true);
-      },
-      1000 * 60 * 5,
-    );
+    const invalidTimer = setTimeout(() => setIsInvalid(true), 1000 * 60 * 5);
 
-    return () => {
-      clearTimeout(invalidTimer);
-    };
+    return clearInvalidTimer;
   }, [otpInfo]);
 
   const onSubmit = async () => {
@@ -70,25 +67,47 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
     clearState();
     refetchOtpInfo();
+
+    setUserInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        withTotp: true,
+      };
+    });
   };
 
   const onRemove = async () => {
-    if (!removeCode || removeCode.length !== 6) {
-      messageWarning('请输入正确的验证码');
-      return;
-    }
+    const values = await removeForm.validateFields();
 
-    // setSubmiting(true)
-    // removeOtp(removeCode)
-    //     .then(() => {
-    //         Notify.show({ type: 'success', message: '解绑成功' })
-    //     })
-    //     .finally(() => {
-    //         refetchOtpInfo()
-    //         setSubmiting(false)
-    //         setInitCode('')
-    //         setRemoveCode('')
-    //     })
+    const challengeResp = await queryChallengeCode();
+    if (challengeResp.code !== 200) return;
+
+    const loginData: RemoveOtpReqData = {
+      a: sha(sha(appConfig?.salt + values.password) + challengeResp.data),
+      b: values.removeCode,
+    };
+
+    const resp = await removeOtp(loginData);
+    if (resp.code !== 200) return;
+
+    clearState();
+    refetchOtpInfo();
+
+    setUserInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        withTotp: false,
+      };
+    });
+
+    messageSuccess('解除绑定成功');
+  };
+
+  const onCloseRemoveModal = () => {
+    setRemoveVisible(false);
+    removeForm.resetFields();
   };
 
   const renderContent = () => {
@@ -149,21 +168,43 @@ export const Content: FC<SettingContainerProps> = (props) => {
             应用将会在异地登录、修改主密码，重置分组密码时请求令牌验证
           </div>
         </div>
-        <Modal open={removeVisible} onCancel={() => setRemoveVisible(false)}>
-          <div className='p-6'>
-            <div className='flex items-center'>
-              <Input
-                placeholder='请输入 6 位验证码'
-                onChange={(e) => setRemoveCode(e.target.value)}
-                value={removeCode}
-                onKeyUp={(e) => {
-                  if (e.key === 'Enter') onRemove();
-                }}
-              />
-            </div>
-            <div className='mt-2 text-slate-500 text-center dark:text-slate-300'>
-              解除绑定会导致安全性降低，请谨慎操作。
-            </div>
+        <Modal
+          title='解除绑定确认'
+          width={isMobile ? undefined : 300}
+          open={removeVisible}
+          onCancel={onCloseRemoveModal}
+          footer={
+            <Space>
+              <Button onClick={onCloseRemoveModal}>返回</Button>
+              <Button onClick={onRemove} danger loading={isRemoving}>
+                解除绑定
+              </Button>
+            </Space>
+          }>
+          <Form form={removeForm} className='pt-6'>
+            <Form.Item
+              name='password'
+              label='主密码'
+              rules={[{ required: true, message: '请填写主密码' }]}>
+              <Input.Password placeholder='请输入' />
+            </Form.Item>
+            <Form.Item
+              name='removeCode'
+              label='验证码'
+              rules={[
+                { required: true, message: '请填写验证码' },
+                {
+                  /** 长度为6位 */
+                  pattern: /^\d{6}$/,
+                  message: '验证码长度为 6 位',
+                },
+              ]}>
+              <Input placeholder='请输入 6 位验证码' />
+            </Form.Item>
+          </Form>
+
+          <div className='mb-6 text-slate-500 text-center dark:text-slate-300'>
+            解除绑定会降低安全性，请谨慎操作。
           </div>
         </Modal>
       </div>
@@ -178,9 +219,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
           <Space>
             <Button onClick={props.onClose}>返回</Button>
             {registered ? (
-              <Button onClick={() => setRemoveVisible(true)} loading={submiting}>
-                解除绑定
-              </Button>
+              <Button onClick={() => setRemoveVisible(true)}>解除绑定</Button>
             ) : (
               <Button type='primary' onClick={onSubmit} loading={isBinding}>
                 绑定

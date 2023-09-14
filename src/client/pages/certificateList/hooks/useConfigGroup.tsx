@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { nanoid } from 'nanoid';
 import { sha } from '@/utils/crypto';
+import { useLockTypeOptions } from './useLockTypeOptions';
 
 interface UseConfigGroupContentProps {
   groupId: number;
@@ -44,12 +45,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   /** 本分组是否为默认分组 */
   const isDefaultGroup = userInfo?.defaultGroupId === groupId;
-
-  const LockTypeOptions = [
-    { label: '不加密', value: LockType.None },
-    { label: '密码加密', value: LockType.Password },
-    { label: 'TOTP 加密', value: LockType.Totp },
-  ];
+  const lockTypeOptions = useLockTypeOptions();
 
   useEffect(() => {
     if (!group) return;
@@ -164,7 +160,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
             <Row className='md:mt-6'>
               <Col span={24}>
                 <Form.Item label='加密方式' name='lockType'>
-                  <Segmented block options={LockTypeOptions} />
+                  <Segmented block options={lockTypeOptions} />
                 </Form.Item>
               </Col>
               {lockType === LockType.Password && (
