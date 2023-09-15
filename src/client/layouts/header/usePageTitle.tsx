@@ -58,7 +58,7 @@ export const usePageTitle = () => {
           onKeyUp={(e) => {
             if (e.key === 'Enter') (e.target as HTMLElement).blur();
           }}
-          disabled={isSaving}
+          disabled={isSaving || !group?.unlocked}
         />
       );
     }

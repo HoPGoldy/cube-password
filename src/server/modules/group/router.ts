@@ -90,7 +90,7 @@ export const createGroupRouter = (props: Props) => {
   router.post('/:groupId/unlock', async (ctx) => {
     const { code } = ctx.request.body;
     if (!code || typeof code !== 'string') {
-      response(ctx, { code: 401, msg: '无效的分组密码凭证' });
+      response(ctx, { code: 401, msg: '无效的分组密码' });
       return;
     }
 

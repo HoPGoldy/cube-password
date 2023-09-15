@@ -45,15 +45,10 @@ export const Content: FC<SettingContainerProps> = (props) => {
   // 二维码到了之后设置过期倒计时
   useEffect(() => {
     setIsInvalid(false);
-
-    const clearInvalidTimer = () => clearTimeout(invalidTimer);
-    if (!otpInfo || registered) {
-      return clearInvalidTimer;
-    }
+    if (!otpInfo || registered) return;
 
     const invalidTimer = setTimeout(() => setIsInvalid(true), 1000 * 60 * 5);
-
-    return clearInvalidTimer;
+    return () => clearTimeout(invalidTimer);
   }, [otpInfo]);
 
   const onSubmit = async () => {

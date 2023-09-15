@@ -40,3 +40,21 @@
   /** 把光标隐藏掉 */
   caret-color: transparent;
 }
+
+.passwordLockIcon {
+  @apply relative h-11 w-11 text-7xl;
+}
+
+.passwordLockIcon::after {
+  @apply absolute right-[-18px] bottom-[-8px] text-5xl;
+  content: '🗝️';
+}
+
+.totpLockIcon {
+  @apply relative h-11 w-11 text-7xl;
+}
+
+.totpLockIcon::after {
+  @apply absolute right-[-18px] bottom-[-8px] text-5xl;
+  content: '📱';
+}

@@ -12,6 +12,7 @@ import {
 } from '@/types/group';
 import { sha } from '@/utils/crypto';
 import dayjs from 'dayjs';
+import { authenticator } from 'otplib';
 
 interface Props {
   db: DatabaseAccessor;
@@ -138,24 +139,46 @@ export const createGroupService = (props: Props) => {
   };
 
   /** 分组解锁 */
-  const unlockGroup = async (groupId: number, codeHash: string) => {
-    const challengeCode = getChallengeCode();
-    if (!challengeCode) {
-      return { code: 200, msg: '挑战码错误' };
-    }
-
-    const groupDetail = await db.group().select('passwordHash').where('id', groupId).first();
+  const unlockGroup = async (groupId: number, passwordCode: string) => {
+    const groupDetail = await db
+      .group()
+      .select('passwordHash', 'lockType')
+      .where('id', groupId)
+      .first();
     if (!groupDetail) {
       return { code: 404, msg: '分组不存在' };
     }
 
-    const { passwordHash } = groupDetail;
-    if (!passwordHash) {
+    const { lockType, passwordHash } = groupDetail;
+    // 不需要密码，直接解锁
+    if (lockType === LockType.None) {
       return { code: 200, msg: '分组不需要密码' };
     }
+    // 用密码解锁
+    else if (lockType === LockType.Password) {
+      const challengeCode = getChallengeCode();
+      if (!challengeCode) {
+        return { code: 200, msg: '挑战码错误' };
+      }
 
-    if (sha(passwordHash + challengeCode) !== codeHash) {
-      return { code: STATUS_CODE.GROUP_PASSWORD_ERROR, msg: '密码错误，请检查分组密码是否正确' };
+      if (sha(passwordHash + challengeCode) !== passwordCode) {
+        return { code: STATUS_CODE.GROUP_PASSWORD_ERROR, msg: '密码错误，请检查分组密码是否正确' };
+      }
+    }
+    // 用 totp 解锁
+    else if (lockType === LockType.Totp) {
+      const userStorage = await db.user().select().first();
+      if (!userStorage) return { code: 401, msg: '找不到用户信息' };
+
+      const { totpSecret } = userStorage;
+      if (!totpSecret) {
+        return { code: 200, msg: '未绑定TOTP' };
+      }
+
+      const codeConfirmed = authenticator.check(passwordCode, totpSecret);
+      if (!codeConfirmed) {
+        return { code: 400, msg: '验证码过期，请重新输入' };
+      }
     }
 
     addUnlockedGroup(groupId);

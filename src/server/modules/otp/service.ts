@@ -5,6 +5,7 @@ import { authenticator } from 'otplib';
 import { SecurityNoticeType } from '@/types/security';
 import { SecurityService } from '../security/service';
 import { sha } from '@/utils/crypto';
+import { LockType } from '@/types/group';
 
 interface Props {
   db: DatabaseAccessor;
@@ -85,8 +86,15 @@ export const createOtpService = (props: Props) => {
       return { code: 401, msg: '挑战码错误' };
     }
 
+    const totpGroups = await db.group().select('name').where('lockType', LockType.Totp);
+    if (totpGroups.length > 0) {
+      const groupNames = totpGroups.map((i) => `“${i.name}”`).join('，');
+      const msg = `分组${groupNames}正在使用动态验证码，请先移除分组密码`;
+      return { code: 400, msg };
+    }
+
     const userStorage = await db.user().select().first();
-    if (!userStorage) return { code: 401, msg: '找不到用户信息' };
+    if (!userStorage) return { code: 500, msg: '找不到用户信息' };
 
     const { totpSecret, passwordHash } = userStorage;
     if (!totpSecret) {
