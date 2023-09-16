@@ -67,6 +67,10 @@ body {
   flex-wrap: nowrap !important;
 }
 
+.ant-btn:focus-visible {
+  outline-width: 4px !important;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
