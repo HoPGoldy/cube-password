@@ -76,7 +76,11 @@ export const useAddGroupContent = () => {
             {lockType === LockType.Password && (
               <>
                 <Col span={24}>
-                  <Form.Item label='分组密码' name='password' hasFeedback>
+                  <Form.Item
+                    label='分组密码'
+                    name='password'
+                    hasFeedback
+                    rules={[{ required: true, message: '请输入密码' }]}>
                     <Input.Password placeholder='请输入' />
                   </Form.Item>
                 </Col>
@@ -85,7 +89,7 @@ export const useAddGroupContent = () => {
                     label='重复密码'
                     name='passwordConfirm'
                     rules={[
-                      { required: false, message: '请重复分组密码' },
+                      { required: true, message: '请重复分组密码' },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue('password') === value) {

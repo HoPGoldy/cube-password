@@ -8,7 +8,7 @@ import { messageError, messageSuccess } from '@/client/utils/message';
 import s from './styles.module.css';
 import { PageTitle } from '@/client/components/pageTitle';
 import { nanoid } from 'nanoid';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 
 const getViewWidth = () => {
   // 获取浏览器宽度
@@ -45,8 +45,6 @@ const Register: FC = () => {
   const viewCarouselRef = useRef<HTMLDivElement>(null);
   // 轮播位置
   const [swiperIndex, setSwiperIndex] = useState(0);
-  /** 更新初始化状态 */
-  const setAppConfig = useSetAtom(stateAppConfig);
 
   const onInputedPassword = () => {
     if (password.length < 6) {
@@ -73,10 +71,8 @@ const Register: FC = () => {
     if (resp.code !== 200) return;
 
     messageSuccess('初始化完成');
-    setAppConfig((old) => {
-      if (!old) return old;
-      return { ...old, needInit: false };
-    });
+    // 重新加载，从后端拿到最新的 global 状态
+    window.location.reload();
   };
 
   if (!needInit) {
