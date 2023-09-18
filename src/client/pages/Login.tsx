@@ -32,7 +32,7 @@ const Login = () => {
   const userInfo = useAtomValue(stateUser);
   const setMainPwd = useSetAtom(stateMainPwd);
 
-  // 临时功能，开发自动登录
+  // 临时功能，开发时自动登录
   React.useEffect(() => {
     if (!password) setPassword('123123');
     else onSubmit();

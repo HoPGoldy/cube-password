@@ -2,7 +2,6 @@ import knex from 'knex';
 import { UserStorage } from '@/types/user';
 import { TABLE_NAME } from '@/config';
 import { FileStorage } from '@/types/file';
-import { UserInviteStorage } from '@/types/userInvite';
 import { DiaryStorage } from '@/types/diary';
 import { CertificateGroupStorage } from '@/types/group';
 import { CertificateStorage } from '@/types/certificate';
@@ -97,18 +96,6 @@ export const createDb = (props: Props) => {
     });
   });
 
-  // 用户邀请表
-  sqliteDb.schema.hasTable(TABLE_NAME.USER_INVITE).then((exists) => {
-    if (exists) return;
-    return sqliteDb.schema.createTable(TABLE_NAME.USER_INVITE, (t) => {
-      t.increments('id').primary();
-      t.string('inviteCode').notNullable();
-      t.string('username');
-      t.timestamp('createTime').notNullable();
-      t.timestamp('useTime');
-    });
-  });
-
   return {
     knex: sqliteDb,
     user: () => sqliteDb<UserStorage>(TABLE_NAME.USER),
@@ -116,7 +103,6 @@ export const createDb = (props: Props) => {
     group: () => sqliteDb<CertificateGroupStorage>(TABLE_NAME.GROUP),
     diary: () => sqliteDb<DiaryStorage>(TABLE_NAME.DIARY),
     file: () => sqliteDb<FileStorage>(TABLE_NAME.FILE),
-    userInvite: () => sqliteDb<UserInviteStorage>(TABLE_NAME.USER_INVITE),
   };
 };
 

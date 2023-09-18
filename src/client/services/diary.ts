@@ -2,10 +2,8 @@ import { queryClient, requestGet, requestPost } from './base';
 import { useMutation, useQuery } from 'react-query';
 import {
   Diary,
-  DiaryExportReqData,
   DiaryQueryResp,
   DiaryUpdateReqData,
-  JsonImportResult,
   SearchDiaryReqData,
   SearchDiaryResp,
 } from '@/types/diary';
@@ -82,28 +80,4 @@ export const useSearchDiary = (data: SearchDiaryReqData) => {
       enabled: data.keyword !== '' || !!(data.colors && data.colors.length > 0),
     },
   );
-};
-
-/** 导入日记 */
-export const useImportDiary = () => {
-  return useMutation(
-    (data: FormData) => {
-      return requestPost<JsonImportResult>('diary/importDiary', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('month');
-        queryClient.invalidateQueries('userStatistic');
-      },
-    },
-  );
-};
-
-/** 导出日记 */
-export const useExportDiary = () => {
-  return useMutation((data: DiaryExportReqData) => {
-    return requestPost<JsonImportResult>('diary/exportDiary', data);
-  });
 };

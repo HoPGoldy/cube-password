@@ -78,8 +78,6 @@ export const TABLE_NAME = {
   DIARY: 'diaries',
   /** 附件表 */
   FILE: 'files',
-  /** 用户邀请表 */
-  USER_INVITE: 'userInvites',
 } as const;
 
 /**

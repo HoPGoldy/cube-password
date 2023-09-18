@@ -12,7 +12,6 @@ import {
 } from '@ant-design/icons';
 import { PageTitle } from '@/client/components/pageTitle';
 import { useSearchDiary } from '@/client/services/diary';
-import { DiaryListItem } from '../monthList/listItem';
 import { MobileDrawer } from '@/client/components/mobileDrawer';
 import { ColorMutiplePicker } from '@/client/components/colorPicker';
 import { messageSuccess } from '@/client/utils/message';
@@ -62,9 +61,9 @@ const SearchDiary: FC = () => {
 
     return (
       <>
-        <div className={s.listContainer}>
+        {/* <div className={s.listContainer}>
           {diaryListResp?.data?.rows.map((item) => <DiaryListItem key={item.date} item={item} />)}
-        </div>
+        </div> */}
         <Pagination
           className='mt-4'
           pageSize={PAGE_SIZE}

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { AppTheme } from '@/types/user';
 import { changeTheme, getUserTheme, logout, stateUser } from '@/client/store/user';
 import { useLogout, useQueryStatistic, useSetTheme } from '@/client/services/user';
-import { LockOutlined, DatabaseOutlined, TagsOutlined, SmileOutlined } from '@ant-design/icons';
+import { LockOutlined, SmileOutlined } from '@ant-design/icons';
 import { useAtomValue } from 'jotai';
 import useOtpConfig from '../otpConfig';
 import useChangePassword from '../changePassword';
@@ -40,12 +40,6 @@ export const useSetting = () => {
       },
       { label: '动态验证码', icon: <LockOutlined />, onClick: optConfig.showModal },
       { label: '密码生成', icon: <LockOutlined />, onClick: createPwd.showModal },
-      { label: '导入', icon: <DatabaseOutlined />, onClick: () => navigate('/importDiary') },
-      {
-        label: '导出',
-        icon: <TagsOutlined />,
-        onClick: () => navigate('/exportDiary'),
-      },
       {
         label: '关于',
         icon: <SmileOutlined />,
