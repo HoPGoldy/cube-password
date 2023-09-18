@@ -232,7 +232,28 @@ export const createUserService = (props: Props) => {
     return { code: 200, data };
   };
 
-  return { login, logout, createAdmin, changePassword, setTheme, getCount };
+  /**
+   * 设置新密码的生成参数
+   * 置空以设置为默认
+   *
+   * @param alphabet 密码生成的字符集
+   * @param length 密码生成的长度
+   */
+  const setCreatePwdSetting = async (alphabet: string, length: number) => {
+    const userStorage = await db.user().select().first();
+    if (!userStorage) {
+      return { code: 400, msg: '用户不存在' };
+    }
+
+    await db
+      .user()
+      .update('createPwdAlphabet', alphabet)
+      .update('createPwdLength', length)
+      .where('id', userStorage.id);
+    return { code: 200 };
+  };
+
+  return { login, logout, createAdmin, changePassword, setTheme, getCount, setCreatePwdSetting };
 };
 
 export type UserService = ReturnType<typeof createUserService>;

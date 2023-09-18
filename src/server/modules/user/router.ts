@@ -7,6 +7,7 @@ import Joi from 'joi';
 import {
   ChangePasswordReqData,
   LoginReqData,
+  PasswordConfigReqData,
   RegisterReqData,
   SetThemeReqData,
 } from '@/types/user';
@@ -85,6 +86,20 @@ export const createUserRouter = (props: Props) => {
   // 统计文章
   router.get('/statistic', async (ctx) => {
     const resp = await service.getCount();
+    response(ctx, resp);
+  });
+
+  const createPwdSettingSchema = Joi.object<PasswordConfigReqData>({
+    pwdAlphabet: Joi.string().allow('').required(),
+    pwdLength: Joi.number().required(),
+  });
+
+  // 更新密码生成规则
+  router.post('/createPwdSetting', async (ctx) => {
+    const body = validate(ctx, createPwdSettingSchema);
+    if (!body) return;
+
+    const resp = await service.setCreatePwdSetting(body.pwdAlphabet, body.pwdLength);
     response(ctx, resp);
   });
 

@@ -6,6 +6,7 @@ import { LockOutlined, DatabaseOutlined, TagsOutlined, SmileOutlined } from '@an
 import { useAtomValue } from 'jotai';
 import useOtpConfig from '../otpConfig';
 import useChangePassword from '../changePassword';
+import useCreatePwdSetting from '../createPwdSetting';
 import { useNavigate } from 'react-router-dom';
 
 export interface SettingLinkItem {
@@ -21,6 +22,8 @@ export const useSetting = () => {
   const changePassword = useChangePassword();
   /** otp 验证码配置 */
   const optConfig = useOtpConfig();
+  /** 新密码生成规则 */
+  const createPwd = useCreatePwdSetting();
   // 数量统计接口
   const { data: countInfo } = useQueryStatistic();
   /** 主题设置 */
@@ -36,6 +39,7 @@ export const useSetting = () => {
         onClick: changePassword.showModal,
       },
       { label: '动态验证码', icon: <LockOutlined />, onClick: optConfig.showModal },
+      { label: '密码生成', icon: <LockOutlined />, onClick: createPwd.showModal },
       { label: '导入', icon: <DatabaseOutlined />, onClick: () => navigate('/importDiary') },
       {
         label: '导出',
@@ -72,6 +76,7 @@ export const useSetting = () => {
       <>
         {changePassword.renderModal()}
         {optConfig.renderModal()}
+        {createPwd.renderModal()}
       </>
     );
   };
