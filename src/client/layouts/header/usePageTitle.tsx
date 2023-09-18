@@ -6,7 +6,6 @@ import { useLocation, useParams } from 'react-router-dom';
 
 const pageTitle: Record<string, string> = {
   '/search': '搜索凭证',
-  '/about': '关于',
 };
 
 export const usePageTitle = () => {

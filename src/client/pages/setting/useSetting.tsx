@@ -7,7 +7,7 @@ import { useAtomValue } from 'jotai';
 import useOtpConfig from '../otpConfig';
 import useChangePassword from '../changePassword';
 import useCreatePwdSetting from '../createPwdSetting';
-import { useNavigate } from 'react-router-dom';
+import useAbout from '../about';
 
 export interface SettingLinkItem {
   label: string;
@@ -16,7 +16,6 @@ export interface SettingLinkItem {
 }
 
 export const useSetting = () => {
-  const navigate = useNavigate();
   const userInfo = useAtomValue(stateUser);
   /** 修改密码功能 */
   const changePassword = useChangePassword();
@@ -24,6 +23,8 @@ export const useSetting = () => {
   const optConfig = useOtpConfig();
   /** 新密码生成规则 */
   const createPwd = useCreatePwdSetting();
+  /** 关于页面 */
+  const about = useAbout();
   // 数量统计接口
   const { data: countInfo } = useQueryStatistic();
   /** 主题设置 */
@@ -43,7 +44,7 @@ export const useSetting = () => {
       {
         label: '关于',
         icon: <SmileOutlined />,
-        onClick: () => navigate('/about'),
+        onClick: about.showModal,
       },
     ].filter(Boolean);
 
@@ -71,6 +72,7 @@ export const useSetting = () => {
         {changePassword.renderModal()}
         {optConfig.renderModal()}
         {createPwd.renderModal()}
+        {about.renderModal()}
       </>
     );
   };
