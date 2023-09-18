@@ -1,26 +1,10 @@
 import { Next } from 'koa';
 import { nanoid } from 'nanoid';
 import { response } from '../utils';
-import { AppKoaContext, MyJwtPayload } from '@/types/global';
+import { AppKoaContext } from '@/types/global';
 import { getReplayAttackData, validateReplayAttackData } from '@/utils/crypto';
 import { STATUS_CODE } from '@/config';
-import dayjs from 'dayjs';
-
-/**
- * 通过 ctx 获取用户登录的 jwt 载荷
- *
- * @param ctx 要获取信息的上下文
- * @param block 获取不到时是否添加响应
- */
-export const getJwtPayload = (ctx: AppKoaContext, block = true) => {
-  const userPayload = ctx.state?.user;
-  if (!userPayload?.userId && block) {
-    response(ctx, { code: 400, msg: '未知用户，请重新登录' });
-    return;
-  }
-
-  return userPayload as MyJwtPayload;
-};
+// import dayjs from 'dayjs';
 
 /**
  * 一次性令牌管理器
@@ -131,15 +115,20 @@ export const createSession = (props: CreateSessionProps) => {
   const start = () => {
     userInfo.token = nanoid();
     userInfo.replayAttackSecret = nanoid();
-    console.log('登录成功', userInfo.token, dayjs().format('YYYY-MM-DD HH:mm:ss'));
+    // console.log('login success', userInfo.token, dayjs().format('YYYY-MM-DD HH:mm:ss'));
 
     clearTimeout(stopTimer);
     stopTimer = setTimeout(() => {
-      console.log('清除登录状态', userInfo.token, dayjs().format('YYYY-MM-DD HH:mm:ss'));
+      // console.log('login timeout', userInfo.token, dayjs().format('YYYY-MM-DD HH:mm:ss'));
       stop();
     }, timeout);
 
     return { token: userInfo.token, replayAttackSecret: userInfo.replayAttackSecret };
+  };
+
+  /** 获取用户当前状态 */
+  const getUserInfo = () => {
+    return userInfo;
   };
 
   /** 查询指定分组是否解锁 */
@@ -169,7 +158,6 @@ export const createSession = (props: CreateSessionProps) => {
     if (!token) return createLoginFailResp(ctx);
 
     if (token !== userInfo.token) {
-      console.log('🚀 ~ file: auth.ts:162 ~ checkLogin ~ token:', token, userInfo.token);
       return createLoginFailResp(ctx);
     }
 
@@ -223,7 +211,15 @@ export const createSession = (props: CreateSessionProps) => {
     await next();
   };
 
-  return { start, stop, checkLogin, checkReplayAttack, isGroupUnlocked, addUnlockedGroup };
+  return {
+    start,
+    stop,
+    getUserInfo,
+    checkLogin,
+    checkReplayAttack,
+    isGroupUnlocked,
+    addUnlockedGroup,
+  };
 };
 
 export type SessionController = ReturnType<typeof createSession>;

@@ -67,8 +67,8 @@ export interface LoginFailResp {
 }
 
 export interface ChangePasswordReqData {
-  newP: string;
-  oldP: string;
+  newPassword: string;
+  oldPassword: string;
 }
 
 export interface SetThemeReqData {

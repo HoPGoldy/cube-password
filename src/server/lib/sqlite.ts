@@ -7,6 +7,14 @@ import { DiaryStorage } from '@/types/diary';
 import { CertificateGroupStorage } from '@/types/group';
 import { CertificateStorage } from '@/types/certificate';
 
+declare module 'knex/types/tables' {
+  interface Tables {
+    users: UserStorage;
+    certificates: CertificateStorage;
+    group: CertificateGroupStorage;
+  }
+}
+
 interface Props {
   dbPath: string;
 }

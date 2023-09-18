@@ -1,7 +1,6 @@
 import { requestGet, requestPost } from './base';
 import {
   AppTheme,
-  ChangePasswordReqData,
   LoginReqData,
   LoginResp,
   PasswordConfigReqData,
@@ -61,8 +60,8 @@ export const useQueryStatistic = () => {
 
 /** 修改密码 */
 export const useChangePassword = () => {
-  return useMutation((data: ChangePasswordReqData) => {
-    return requestPost('user/changePwd', data);
+  return useMutation((pwdInfo: string) => {
+    return requestPost('user/changePwd', { a: pwdInfo });
   });
 };
 

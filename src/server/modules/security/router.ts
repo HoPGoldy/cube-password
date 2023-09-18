@@ -10,7 +10,6 @@ import {
   RegisterReqData,
   SetThemeReqData,
 } from '@/types/user';
-import { getJwtPayload } from '@/server/lib/auth';
 
 interface Props {
   service: SecurityService;

@@ -5,13 +5,11 @@ import { UserService } from './service';
 import { validate } from '@/server/utils';
 import Joi from 'joi';
 import {
-  ChangePasswordReqData,
   LoginReqData,
   PasswordConfigReqData,
   RegisterReqData,
   SetThemeReqData,
 } from '@/types/user';
-import { getJwtPayload } from '@/server/lib/auth';
 
 interface Props {
   service: UserService;
@@ -53,20 +51,15 @@ export const createUserRouter = (props: Props) => {
     response(ctx, resp);
   });
 
-  const changePwdSchema = Joi.object<ChangePasswordReqData>({
-    newP: Joi.string().required(),
-    oldP: Joi.string().required(),
+  const changePwdSchema = Joi.object<{ a: string }>({
+    a: Joi.string().required(),
   });
 
   router.post('/changePwd', async (ctx) => {
     const body = validate(ctx, changePwdSchema);
     if (!body) return;
-    const { newP, oldP } = body;
 
-    const payload = getJwtPayload(ctx);
-    if (!payload) return;
-
-    const resp = await service.changePassword(payload.userId, oldP, newP);
+    const resp = await service.changePassword(body.a);
     response(ctx, resp);
   });
 

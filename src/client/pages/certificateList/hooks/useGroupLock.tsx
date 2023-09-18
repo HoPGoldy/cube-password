@@ -22,7 +22,6 @@ export const useGroupLock = (props: useGroupLockProps) => {
   /** 把分组设置为已解密状态 */
   const { group, updateGroup } = useGroup(groupId);
   const isTotpLock = group?.lockType === LockType.Totp;
-  console.log('🚀 ~ file: useGroupLock.tsx:26 ~ useGroupLock ~ group:', group);
 
   const resetState = () => {
     setPassword('');

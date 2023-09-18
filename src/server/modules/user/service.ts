@@ -4,10 +4,11 @@ import {
   LoginSuccessResp,
   RegisterReqData,
   AppStatistics,
+  ChangePasswordReqData,
 } from '@/types/user';
 import { AppResponse } from '@/types/global';
 import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH, STATUS_CODE } from '@/config';
-import { sha } from '@/utils/crypto';
+import { aes, aesDecrypt, getAesMeta, sha } from '@/utils/crypto';
 import { LoginLocker } from '@/server/lib/LoginLocker';
 import { nanoid } from 'nanoid';
 import { DatabaseAccessor } from '@/server/lib/sqlite';
@@ -24,6 +25,7 @@ interface Props {
   loginLocker: LoginLocker;
   startSession: SessionController['start'];
   stopSession: SessionController['stop'];
+  getUserInfo: SessionController['getUserInfo'];
   getChallengeCode: () => string | undefined;
   addGroup: GroupService['addGroup'];
   addUnlockedGroup: SessionController['addUnlockedGroup'];
@@ -40,6 +42,7 @@ export const createUserService = (props: Props) => {
     addGroup,
     queryGroupList,
     getChallengeCode,
+    getUserInfo,
     insertSecurityNotice,
     addUnlockedGroup,
     db,
@@ -179,30 +182,67 @@ export const createUserService = (props: Props) => {
 
   /**
    * 修改密码 - 更新密码
+   * aes 加密，密钥为(sha(主密码 + 盐) + 挑战码 + sessionToken + totp)
+   *
+   * @param changePwdData 被前端加密的修改密码信息
    */
-  const changePassword = async (
-    userId: number,
-    oldPasswordHash: string,
-    newPasswordHash: string,
-  ): Promise<AppResponse> => {
-    const userStorage = await db.user().select().where('id', userId).first();
+  const changePassword = async (changePwdDataStr: string): Promise<AppResponse> => {
+    const challengeCode = getChallengeCode();
+    if (!challengeCode) {
+      insertSecurityNotice(
+        SecurityNoticeType.Danger,
+        '重置密码',
+        '未授权状态下进行密码重置操作，已被拦截。',
+      );
+      return { code: 401, msg: '挑战码错误' };
+    }
+
+    const userStorage = await db.user().select().first();
     if (!userStorage) {
       return { code: 400, msg: '用户不存在' };
     }
 
-    const { passwordHash, passwordSalt } = userStorage;
-    if (sha(passwordSalt + oldPasswordHash) !== passwordHash) {
-      return { code: 400, msg: '旧密码错误' };
+    const userInfo = getUserInfo();
+    const { passwordHash, totpSecret } = userStorage;
+    const totpCode = totpSecret ? authenticator.generate(totpSecret) : '';
+    const postKey = passwordHash + challengeCode + userInfo.token + totpCode;
+    // console.log('🚀 ~ file: service.ts:209 ~ changePassword ~ postKey:', postKey);
+
+    const { key, iv } = getAesMeta(postKey);
+    const changeData = aesDecrypt(changePwdDataStr, key, iv);
+    if (!changeData) return { code: 400, msg: '无效的密码修改凭证' };
+
+    const { oldPassword, newPassword } = JSON.parse(changeData) as ChangePasswordReqData;
+    const oldMeta = getAesMeta(oldPassword);
+    const newMeta = getAesMeta(newPassword);
+
+    try {
+      await db.knex.transaction(async (trx) => {
+        const allCertificates = await trx('certificates').select();
+
+        // 重新加密所有凭证
+        const updateContents = allCertificates.map((certificate) => {
+          const newContent = aesDecrypt(certificate.content, oldMeta.key, oldMeta.iv);
+          const newContentStr = aes(newContent, newMeta.key, newMeta.iv);
+
+          return trx('certificates').update('content', newContentStr).where('id', certificate.id);
+        });
+
+        await Promise.all(updateContents);
+
+        const passwordSalt = nanoid();
+        // 把主密码信息更新上去
+        await trx('users')
+          .update('passwordHash', sha(passwordSalt + newPassword))
+          .update('passwordSalt', passwordSalt)
+          .where('id', userStorage.id);
+      });
+
+      return { code: 200 };
+    } catch (e) {
+      console.error(e);
+      return { code: 500, msg: '修改密码失败' };
     }
-
-    const newPasswordSalt = nanoid();
-    const newStorage: Partial<UserStorage> = {
-      passwordHash: sha(newPasswordSalt + newPasswordHash),
-      passwordSalt: newPasswordSalt,
-    };
-
-    await db.user().update(newStorage).where('id', userId);
-    return { code: 200 };
   };
 
   /**

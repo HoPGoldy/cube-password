@@ -9,17 +9,6 @@ export type AppResponse<T = any> = {
   data?: T;
 };
 
-export interface MyJwtPayload {
-  userId: number;
-  isAdmin: boolean;
-  lat: number;
-  exp: number;
-}
-
 export type AppKoaContext = Context & {
   request: { body: Record<string, unknown> };
-  /**
-   * 用于存储 jwt 解析后的数据
-   */
-  state?: { user: MyJwtPayload };
 };

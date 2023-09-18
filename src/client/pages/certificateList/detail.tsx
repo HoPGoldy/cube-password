@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Form, Modal } from 'antd';
 import { PlusOutlined, ExclamationCircleFilled } from '@ant-design/icons';
-import { messageSuccess, messageWarning } from '@/client/utils/message';
+import { messageError, messageSuccess, messageWarning } from '@/client/utils/message';
 import { useCertificateDetail, useSaveCertificate } from '@/client/services/certificate';
 import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/config';
 import { customAlphabet } from 'nanoid';
@@ -68,14 +68,20 @@ export const CertificateDetail: FC<Props> = (props) => {
     if (!pwdKey || !pwdIv) return;
 
     const { content, name, markColor } = detailResp.data;
-    const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
-    const values = {
-      title: name,
-      markColor: markColor || '',
-      fields,
-    };
+    try {
+      const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
+      const values = {
+        title: name,
+        markColor: markColor || '',
+        fields,
+      };
 
-    form.setFieldsValue(values);
+      form.setFieldsValue(values);
+    } catch (e) {
+      console.error(e);
+      messageError('凭证解密失败');
+      onCancel();
+    }
   }, [detailResp]);
 
   const createPwd = useMemo(() => {
