@@ -11,11 +11,13 @@ import {
   ArrowDownOutlined,
 } from '@ant-design/icons';
 import { PageTitle } from '@/client/components/pageTitle';
-import { useSearchDiary } from '@/client/services/diary';
+import { useSearchCertificate } from '@/client/services/certificate';
 import { MobileDrawer } from '@/client/components/mobileDrawer';
 import { ColorMutiplePicker } from '@/client/components/colorPicker';
 import { messageSuccess } from '@/client/utils/message';
-import s from '@/client/pages/monthList/styles.module.css';
+import { CertificateDetail } from '../certificateList/detail';
+import { CertificateListItem } from '@/types/group';
+import { CertificateListDetail } from '../certificateList/components/certificateListItem';
 
 const TIP_CLASS = 'mt-8 text-gray-500 dark:text-neutral-500 cursor-default';
 
@@ -29,6 +31,10 @@ const SearchDiary: FC = () => {
   const [keyword, setKeyword] = useState('');
   /** 是否显示颜色选择器 */
   const [showColorPicker, setShowColorPicker] = useState(false);
+  /** 详情弹窗展示的分组 ID */
+  const [detailGroupId, setDetailGroupId] = useState<number>(0);
+  /** 详情弹窗展示的凭证 ID */
+  const [detailId, setDetailId] = useState<number>();
   /** 当前选中的颜色 */
   const [selectedColor, setSelectedColor] = useState<string[]>([]);
   /** 当前分页 */
@@ -36,40 +42,53 @@ const SearchDiary: FC = () => {
   /** 是否降序排列 */
   const [desc, setDesc] = useState(true);
   // 搜索结果列表
-  // const { data: diaryListResp, isLoading: isSearching } = useSearchDiary({
-  //   keyword,
-  //   colors: selectedColor,
-  //   desc,
-  //   page: currentPage,
-  // });
+  const { data: searchResultResp, isLoading: isSearching } = useSearchCertificate({
+    keyword,
+    colors: selectedColor,
+    desc,
+    page: currentPage,
+  });
 
   const onKeywordSearch = (value: string) => {
     setKeyword(value);
     setCurrentPage(1);
   };
 
+  const renderCertificateItem = (item: CertificateListItem) => {
+    return (
+      <CertificateListDetail
+        key={item.id}
+        detail={item}
+        onClick={() => {
+          setDetailId(item.id);
+          setDetailGroupId(item.groupId);
+        }}
+      />
+    );
+  };
+
   const renderContent = () => {
-    // if (isSearching) return <Spin spinning={isSearching} />;
+    if (isSearching) return <Spin spinning={isSearching} />;
 
-    // if (!keyword && !selectedColor.length) {
-    //   return <div className={TIP_CLASS}>输入关键字或选择颜色进行搜索</div>;
-    // }
+    if (!keyword && !selectedColor.length) {
+      return <div className={TIP_CLASS}>输入关键字或选择颜色进行搜索</div>;
+    }
 
-    // if (!diaryListResp?.data?.rows.length) {
-    //   return <div className={TIP_CLASS}>没有找到相关日记</div>;
-    // }
+    if (!searchResultResp?.data?.rows.length) {
+      return <div className={TIP_CLASS}>没有找到相关凭证，解锁分组可以扩大搜索范围</div>;
+    }
 
     return (
       <>
-        {/* <div className={s.listContainer}>
-          {diaryListResp?.data?.rows.map((item) => <DiaryListItem key={item.date} item={item} />)}
-        </div> */}
+        <div className='mt-4 w-full flex flex-wrap justify-start'>
+          {searchResultResp?.data?.rows.map(renderCertificateItem)}
+        </div>
         <Pagination
           className='mt-4'
           pageSize={PAGE_SIZE}
           current={currentPage}
           onChange={setCurrentPage}
-          // total={diaryListResp?.data?.total || 0}
+          total={searchResultResp?.data?.total || 0}
         />
       </>
     );
@@ -101,6 +120,11 @@ const SearchDiary: FC = () => {
             {renderContent()}
           </div>
         </div>
+        <CertificateDetail
+          groupId={detailGroupId}
+          detailId={detailId}
+          onCancel={() => setDetailId(undefined)}
+        />
       </PageContent>
 
       <PageAction>

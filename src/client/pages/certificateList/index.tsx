@@ -2,18 +2,15 @@ import React, { FC, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PageContent, PageAction } from '../../layouts/pageWithAction';
 import Loading from '../../layouts/loading';
-import { Button, Card, Checkbox, Empty, Result } from 'antd';
+import { Button, Empty, Result } from 'antd';
 import { PageTitle } from '@/client/components/pageTitle';
 import { useOperation } from './operation';
-import s from './styles.module.css';
 import { CertificateDetail } from './detail';
 import { useCertificateList } from '@/client/services/certificate';
 import { CertificateListItem } from '@/types/group';
-import { MARK_COLORS_MAP } from '@/client/components/colorPicker';
 import { useGroup } from '@/client/store/group';
 import { useGroupLock } from './hooks/useGroupLock';
-import { useAtomValue } from 'jotai';
-import { stateAppConfig } from '@/client/store/global';
+import { CertificateListDetail } from './components/certificateListItem';
 
 /**
  * 凭证列表
@@ -33,8 +30,6 @@ const CertificateList: FC = () => {
     onAddNew: () => setDetailId(-1),
     groupId,
   });
-  /** 主题色 */
-  const primaryColor = useAtomValue(stateAppConfig)?.primaryColor;
   /** 分组登录功能 */
   const { renderGroupLogin } = useGroupLock({ groupId });
 
@@ -52,62 +47,18 @@ const CertificateList: FC = () => {
       />
     );
 
-  // 渲染凭证列表项右侧的标记
-  const renderRightMark = (item: CertificateListItem) => {
-    // 编辑模式下右侧的小方块
-    if (operation.selectMode)
-      return (
-        <Checkbox
-          className='absolute h-4 w-4 right-4 top-[30%] scale-150'
-          checked={operation.selectedItem[item.id]}></Checkbox>
-      );
-
-    if (item.markColor)
-      return (
-        <div
-          className='absolute h-4 w-4 right-4 top-[38%] rounded-full'
-          style={{ backgroundColor: MARK_COLORS_MAP[item.markColor] }}></div>
-      );
-
-    return null;
-  };
-
-  // 渲染凭证列表项
   const renderCertificateItem = (item: CertificateListItem) => {
     return (
-      <Card
+      <CertificateListDetail
         key={item.id}
-        size='small'
-        className={s.listItem}
-        style={{ borderColor: operation.selectedItem[item.id] ? primaryColor : undefined }}
+        detail={item}
+        isSelected={!!operation.selectedItem[item.id]}
+        selectMode={!!operation.selectMode}
         onClick={() => {
           if (!operation.selectMode) setDetailId(item.id);
           else operation.setSelectedItem((old) => ({ ...old, [item.id]: !old[item.id] }));
-        }}>
-        <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>
-          {item.name}
-        </div>
-        <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
-        {renderRightMark(item)}
-      </Card>
-      // <div key={item.id} className="mx-2 mb-4 w-col-1 lg:w-col-2 xl:w-col-3">
-      //     <div
-      //         className={
-      //             'select-none bg-white dark:bg-slate-700 dark:text-gray-200 relative rounded-lg py-2 px-4 ' +
-      //             'cursor-pointer group ' +
-      //             'ring-slate-500 dark:ring-slate-600 active:bg-slate-200 transition '
-      //             // (selectedItem[item.id] ? 'ring' : 'hover:ring')
-      //         }
-      //         // onClick={() => {
-      //         //     if (showConfigArea) setSelectedItem(old => ({ ...old, [item.id]: !old[item.id]}))
-      //         //     else onAddCertificate(item.id)
-      //         // }}
-      //     >
-      //         <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>{item.name}</div>
-      //         <div className='text-gray-600 dark:text-gray-400'>{item.updateTime}</div>
-      //         {renderRightMark(item)}
-      //     </div>
-      // </div>
+        }}
+      />
     );
   };
 

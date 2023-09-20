@@ -5,7 +5,11 @@ import { CertificateService } from './service';
 import { validate } from '@/server/utils';
 import Joi from 'joi';
 import { Random } from 'mockjs';
-import { CertificateMoveReqBody, CertificateStorage } from '@/types/certificate';
+import {
+  CertificateMoveReqBody,
+  CertificateStorage,
+  SearchCertificateReqData,
+} from '@/types/certificate';
 
 interface Props {
   service: CertificateService;
@@ -96,6 +100,21 @@ export const createCertificateRouter = (props: Props) => {
     if (!body) return;
 
     const resp = await service.updateCertificate(body);
+    response(ctx, resp);
+  });
+
+  const searchCertificateShema = Joi.object<SearchCertificateReqData>({
+    keyword: Joi.string().allow(''),
+    colors: Joi.array().items(Joi.string()).allow(null),
+    desc: Joi.boolean().allow(null),
+    page: Joi.number().allow(null),
+  });
+
+  router.post('/search', async (ctx) => {
+    const query = validate(ctx, searchCertificateShema);
+    if (!query) return;
+
+    const resp = await service.serachCertificate(query);
     response(ctx, resp);
   });
 

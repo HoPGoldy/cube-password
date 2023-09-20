@@ -5,6 +5,8 @@ import {
   CertificateDetailResp,
   CertificateMoveReqBody,
   CertificateUpdateReqBody,
+  SearchCertificateReqData,
+  SearchCertificateResp,
 } from '@/types/certificate';
 import { CertificateListItem } from '@/types/group';
 
@@ -72,6 +74,20 @@ export const useMoveCertificate = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('certificateList');
       },
+    },
+  );
+};
+
+/**
+ * 搜索凭证
+ */
+export const useSearchCertificate = (data: SearchCertificateReqData) => {
+  return useQuery(
+    ['certificateSearch', data],
+    () => requestPost<SearchCertificateResp>(`certificate/search`, data),
+    {
+      refetchOnWindowFocus: false,
+      enabled: data.keyword !== '' || !!(data.colors && data.colors.length > 0),
     },
   );
 };

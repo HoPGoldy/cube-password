@@ -70,6 +70,10 @@ export interface CertificateListItem {
    * 标记颜色
    */
   markColor?: string;
+  /**
+   * 所在分组 id
+   */
+  groupId: number;
 }
 
 /**

@@ -1,3 +1,6 @@
+import { QueryListResp } from './global';
+import { CertificateListItem } from './group';
+
 /**
  * 凭证机密字段
  */
@@ -87,3 +90,16 @@ export interface CertificateAddReqBody {
 export type CertificateUpdateReqBody = CertificateAddReqBody & {
   id: number;
 };
+
+/**
+ * 搜索凭证请求数据
+ */
+export interface SearchCertificateReqData {
+  keyword?: string;
+  colors?: string[];
+  desc?: boolean;
+  page?: number;
+}
+
+/** 凭证搜索结果 */
+export type SearchCertificateResp = QueryListResp<CertificateListItem>;

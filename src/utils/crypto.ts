@@ -73,7 +73,10 @@ export const createReplayAttackHeaders = (url: string, secretKey: string) => {
   const timestamp = Date.now();
   const nonce = nanoid();
   const sign = sha(`${url}${nonce}${timestamp}${secretKey}`);
-  // console.log("🚀 ~ file: crypto.ts:69 ~ createReplayAttackHeaders ~ `${url}${nonce}${timestamp}${secretKey}`:", `${url}${nonce}${timestamp}${secretKey}`)
+  // console.log(
+  //   '🚀 ~ file: crypto.ts:69 ~ createReplayAttackHeaders ~ `${url}${nonce}${timestamp}${secretKey}`:',
+  //   `${url}${nonce}${timestamp}${secretKey}`,
+  // );
 
   return {
     'X-cubnote-temestamp': timestamp.toString(),
@@ -115,6 +118,9 @@ export const validateReplayAttackData = (data: ReplayAttackData, secretKey: stri
   if (serverTimestamp - timestamp > 1000 * 60) return false;
 
   const newSign = sha(`${url}${nonce}${timestamp}${secretKey}`);
-  // console.log("🚀 ~ file: crypto.ts:111 ~ validateReplayAttackData ~ `${url}${nonce}${timestamp}${secretKey}`:", `${url}${nonce}${timestamp}${secretKey}`)
+  // console.log(
+  //   '🚀 ~ file: crypto.ts:111 ~ validateReplayAttackData ~ `${url}${nonce}${timestamp}${secretKey}`:',
+  //   `${url}${nonce}${timestamp}${secretKey}`,
+  // );
   return newSign === signature;
 };

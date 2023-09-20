@@ -12,3 +12,8 @@ export type AppResponse<T = any> = {
 export type AppKoaContext = Context & {
   request: { body: Record<string, unknown> };
 };
+
+export interface QueryListResp<ListItem = unknown> {
+  total: number;
+  rows: ListItem[];
+}

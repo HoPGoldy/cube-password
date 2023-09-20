@@ -1,7 +1,13 @@
-import { TABLE_NAME } from '@/config';
+import { PAGE_SIZE, TABLE_NAME } from '@/config';
 import { groupLockResp } from '@/server/constants';
 import { DatabaseAccessor } from '@/server/lib/sqlite';
-import { CertificateStorage } from '@/types/certificate';
+import {
+  CertificateStorage,
+  SearchCertificateReqData,
+  SearchCertificateResp,
+} from '@/types/certificate';
+import { CertificateListItem } from '@/types/group';
+import dayjs from 'dayjs';
 
 interface Props {
   db: DatabaseAccessor;
@@ -119,12 +125,46 @@ export const createCertificateService = (props: Props) => {
     return { code: 200 };
   };
 
+  /** 查询凭证 */
+  const serachCertificate = async (reqData: SearchCertificateReqData) => {
+    const { page = 1, colors = [], keyword, desc = true } = reqData;
+    const query = db.certificate().select();
+
+    if (colors.length > 0) {
+      query.whereIn('markColor', colors);
+    }
+
+    if (keyword) {
+      query.andWhereLike('name', `%${keyword}%`);
+    }
+
+    const { count: total } = (await query.clone().count('id as count').first()) as any;
+
+    const result = await query
+      .orderBy('createTime', desc ? 'desc' : 'asc')
+      .limit(PAGE_SIZE)
+      .offset((page - 1) * PAGE_SIZE);
+
+    const rows: CertificateListItem[] = result.map((item) => ({
+      id: item.id,
+      name: item.name,
+      markColor: item.markColor || '',
+      updateTime: dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss'),
+      groupId: item.groupId,
+    }));
+
+    const data: SearchCertificateResp = { total, rows };
+
+    return { code: 200, data };
+  };
+
   return {
     queryCertificateDetail,
     updateSort,
     deleteCertificate,
     moveCertificate,
     addCertificate,
+    serachCertificate,
     updateCertificate,
   };
 };
