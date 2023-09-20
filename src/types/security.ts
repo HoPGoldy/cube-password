@@ -35,3 +35,12 @@ export interface LoginFailRecord {
   /** ip 定位 */
   location: string;
 }
+
+export interface LockDetail {
+  /** 登录失败的日志 */
+  loginFailure: LoginFailRecord[];
+  /** 剩余重试次数 */
+  retryNumber: number;
+  /** 登录是否被锁定 */
+  isBanned: boolean;
+}

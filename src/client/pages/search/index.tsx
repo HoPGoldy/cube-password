@@ -36,12 +36,12 @@ const SearchDiary: FC = () => {
   /** 是否降序排列 */
   const [desc, setDesc] = useState(true);
   // 搜索结果列表
-  const { data: diaryListResp, isLoading: isSearching } = useSearchDiary({
-    keyword,
-    colors: selectedColor,
-    desc,
-    page: currentPage,
-  });
+  // const { data: diaryListResp, isLoading: isSearching } = useSearchDiary({
+  //   keyword,
+  //   colors: selectedColor,
+  //   desc,
+  //   page: currentPage,
+  // });
 
   const onKeywordSearch = (value: string) => {
     setKeyword(value);
@@ -49,15 +49,15 @@ const SearchDiary: FC = () => {
   };
 
   const renderContent = () => {
-    if (isSearching) return <Spin spinning={isSearching} />;
+    // if (isSearching) return <Spin spinning={isSearching} />;
 
-    if (!keyword && !selectedColor.length) {
-      return <div className={TIP_CLASS}>输入关键字或选择颜色进行搜索</div>;
-    }
+    // if (!keyword && !selectedColor.length) {
+    //   return <div className={TIP_CLASS}>输入关键字或选择颜色进行搜索</div>;
+    // }
 
-    if (!diaryListResp?.data?.rows.length) {
-      return <div className={TIP_CLASS}>没有找到相关日记</div>;
-    }
+    // if (!diaryListResp?.data?.rows.length) {
+    //   return <div className={TIP_CLASS}>没有找到相关日记</div>;
+    // }
 
     return (
       <>
@@ -69,7 +69,7 @@ const SearchDiary: FC = () => {
           pageSize={PAGE_SIZE}
           current={currentPage}
           onChange={setCurrentPage}
-          total={diaryListResp?.data?.total || 0}
+          // total={diaryListResp?.data?.total || 0}
         />
       </>
     );

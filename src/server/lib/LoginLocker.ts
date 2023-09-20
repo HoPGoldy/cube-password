@@ -2,27 +2,13 @@ import { AppKoaContext } from '@/types/global';
 import dayjs from 'dayjs';
 import { Next } from 'koa';
 import { response } from '../utils';
-import { LoginFailRecord } from '@/types/security';
+import { LockDetail, LoginFailRecord } from '@/types/security';
 import { queryIp } from './queryIp';
-
-export interface LoginRecordDetail {
-  /**
-   * 要显示的错误登录信息
-   * 不一定是所有的，一般都是今天的错误信息
-   */
-  records: string[];
-  /**
-   * 是否被锁定
-   */
-  disable: boolean;
-  /**
-   * 是否无限期锁定
-   */
-  dead: boolean;
-}
+import { AppConfig } from '@/types/appConfig';
 
 interface LoginLockOptions {
   excludePath?: string[];
+  getAppConfig: () => AppConfig;
 }
 
 /**
@@ -42,11 +28,6 @@ export const createLoginLock = (props: LoginLockOptions) => {
     const location = await queryIp(ip);
     loginFailRecords.push({ date: Date.now(), ip, location });
 
-    // 把一天前的记录清除掉
-    loginFailRecords = loginFailRecords.filter((item) => {
-      return dayjs(item.date).isSame(dayjs(), 'day');
-    });
-
     return getLockDetail();
   };
 
@@ -60,8 +41,19 @@ export const createLoginLock = (props: LoginLockOptions) => {
   /**
    * 获取登录失败情况
    */
-  const getLockDetail = (): LoginFailRecord[] => {
-    return loginFailRecords || [];
+  const getLockDetail = (): LockDetail => {
+    const { LOGIN_MAX_RETRY_COUNT } = props.getAppConfig();
+
+    // 把一天前的记录清除掉
+    loginFailRecords = loginFailRecords.filter((item) => {
+      return dayjs(item.date).isSame(dayjs(), 'day');
+    });
+
+    return {
+      loginFailure: loginFailRecords || [],
+      retryNumber: LOGIN_MAX_RETRY_COUNT - loginFailRecords.length,
+      isBanned: loginFailRecords.length >= LOGIN_MAX_RETRY_COUNT,
+    };
   };
 
   /**
@@ -74,7 +66,8 @@ export const createLoginLock = (props: LoginLockOptions) => {
     if (isAccessPath) return await next();
 
     try {
-      if (getLockDetail().length >= 3) throw new Error('登录失败次数过多');
+      const { isBanned } = getLockDetail();
+      if (isBanned) throw new Error('登录失败次数过多');
       await next();
     } catch (e) {
       console.error(e);

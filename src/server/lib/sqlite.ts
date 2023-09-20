@@ -1,8 +1,6 @@
 import knex from 'knex';
 import { UserStorage } from '@/types/user';
 import { TABLE_NAME } from '@/config';
-import { FileStorage } from '@/types/file';
-import { DiaryStorage } from '@/types/diary';
 import { CertificateGroupStorage } from '@/types/group';
 import { CertificateStorage } from '@/types/certificate';
 
@@ -70,39 +68,11 @@ export const createDb = (props: Props) => {
     });
   });
 
-  // 日记表
-  sqliteDb.schema.hasTable(TABLE_NAME.DIARY).then((exists) => {
-    if (exists) return;
-    return sqliteDb.schema.createTable(TABLE_NAME.DIARY, (t) => {
-      t.increments('id').primary();
-      t.timestamp('date').notNullable();
-      t.text('content').notNullable();
-      t.integer('createUserId').notNullable();
-      t.string('color');
-    });
-  });
-
-  // 附件表
-  sqliteDb.schema.hasTable(TABLE_NAME.FILE).then((exists) => {
-    if (exists) return;
-    return sqliteDb.schema.createTable(TABLE_NAME.FILE, (t) => {
-      t.increments('id').primary();
-      t.string('md5').notNullable();
-      t.text('filename').notNullable();
-      t.string('type').notNullable();
-      t.integer('size').notNullable();
-      t.integer('createUserId');
-      t.timestamp('createTime').notNullable();
-    });
-  });
-
   return {
     knex: sqliteDb,
     user: () => sqliteDb<UserStorage>(TABLE_NAME.USER),
     certificate: () => sqliteDb<CertificateStorage>(TABLE_NAME.CERTIFICATE),
     group: () => sqliteDb<CertificateGroupStorage>(TABLE_NAME.GROUP),
-    diary: () => sqliteDb<DiaryStorage>(TABLE_NAME.DIARY),
-    file: () => sqliteDb<FileStorage>(TABLE_NAME.FILE),
   };
 };
 

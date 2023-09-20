@@ -1,7 +1,9 @@
+import { LockDetail } from './security';
+
 /**
  * 后端发给前端的应用配置
  */
-export interface AppConfigResp {
+export interface AppConfigResp extends LockDetail {
   /** 主按钮颜色 */
   buttonColor: string;
   /** 项目主题色 */
@@ -27,4 +29,6 @@ export interface AppConfig {
   DEFAULT_COLOR: Array<string | ColorConfig>;
   APP_NAME: string;
   LOGIN_SUBTITLE: string;
+  /** 登录失败允许的最大重试次数 */
+  LOGIN_MAX_RETRY_COUNT: number;
 }

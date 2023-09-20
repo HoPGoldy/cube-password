@@ -24,18 +24,20 @@ export const buildApp = async () => {
   // 挑战码十秒内过期
   const otpManager = createOTP(1000 * 10);
 
-  const globalService = createGlobalService({
-    getConfig: getAppConfig,
-    createChallengeCode: otpManager.create,
-    db,
-  });
-
   const sessionController = createSession({
     excludePath: AUTH_EXCLUDE,
   });
 
   const loginLocker = createLoginLock({
+    getAppConfig,
     excludePath: ['/global', '/user/createAdmin'],
+  });
+
+  const globalService = createGlobalService({
+    getAppConfig,
+    getLockDetail: loginLocker.getLockDetail,
+    createChallengeCode: otpManager.create,
+    db,
   });
 
   const securityService = createSecurityService({

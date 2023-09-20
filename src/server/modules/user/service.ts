@@ -15,7 +15,7 @@ import { DatabaseAccessor } from '@/server/lib/sqlite';
 import { SecurityService } from '../security/service';
 import { SecurityNoticeType } from '@/types/security';
 import { queryIp } from '@/server/lib/queryIp';
-import { formatLocation, isSameLocation } from '@/server/utils';
+import { formatLocation, isSameLocation } from '@/utils/ipLocation';
 import { authenticator } from 'otplib';
 import { GroupService } from '../group/service';
 import { SessionController } from '@/server/lib/auth';
@@ -48,19 +48,17 @@ export const createUserService = (props: Props) => {
     db,
   } = props;
 
-  const loginFail = async (ip: string, msg = '账号或密码错误') => {
+  const loginFail = async (
+    ip: string,
+    code: number = STATUS_CODE.LOGIN_PASSWORD_ERROR,
+    msg = '账号或密码错误',
+  ) => {
     const lockInfo = await loginLocker.recordLoginFail(ip);
-    const retryNumber = 3 - lockInfo.length;
-    const message = retryNumber > 0 ? `将在 ${retryNumber} 次后锁定登录` : '账号已被锁定';
+    const message = lockInfo.isBanned
+      ? '账号已被锁定'
+      : `将在 ${lockInfo.retryNumber} 次后锁定登录`;
 
-    const location = await queryIp(ip);
-    insertSecurityNotice(
-      SecurityNoticeType.Warning,
-      '异地登录',
-      `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`,
-    );
-
-    return { code: STATUS_CODE.LOGIN_PASSWORD_ERROR, msg: `${msg}，${message}` };
+    return { code, msg: `${msg}，${message}`, data: lockInfo };
   };
 
   /**
@@ -68,7 +66,15 @@ export const createUserService = (props: Props) => {
    */
   const login = async (password: string, ip: string, code?: string): Promise<AppResponse> => {
     const userStorage = await db.user().select().first();
-    if (!userStorage) return loginFail(ip);
+    if (!userStorage) {
+      const location = await queryIp(ip);
+      insertSecurityNotice(
+        SecurityNoticeType.Warning,
+        '异地登录',
+        `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`,
+      );
+      return loginFail(ip);
+    }
 
     const challengeCode = getChallengeCode();
     if (!challengeCode) {
@@ -77,8 +83,7 @@ export const createUserService = (props: Props) => {
         '未授权状态下进行登录操作',
         '发起了一次非法登录，已被拦截。',
       );
-      loginLocker.recordLoginFail(ip);
-      return { code: 401, msg: '挑战码错误' };
+      return loginFail(ip, 401, '挑战码错误');
     }
 
     const {
@@ -95,6 +100,7 @@ export const createUserService = (props: Props) => {
 
     // 本次登录地点和常用登录地不同
     if (commonLocation && !isSameLocation(commonLocation, currentLocation)) {
+      // if (true) {
       // 没有绑定动态验证码
       if (!totpSecret) {
         const beforeLocation = formatLocation(commonLocation);
@@ -114,7 +120,7 @@ export const createUserService = (props: Props) => {
 
         const isValid = authenticator.verify({ token: code, secret: totpSecret });
         if (!isValid) {
-          return { code: 400, msg: '动态验证码错误' };
+          return loginFail(ip, 400, '动态验证码错误');
         }
       }
     }

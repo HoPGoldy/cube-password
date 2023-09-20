@@ -1,8 +1,10 @@
+import { LoginLocker } from '@/server/lib/LoginLocker';
 import { DatabaseAccessor } from '@/server/lib/sqlite';
 import { AppConfig, AppConfigResp, ColorConfig } from '@/types/appConfig';
 
 interface Props {
-  getConfig: () => AppConfig;
+  getAppConfig: () => AppConfig;
+  getLockDetail: LoginLocker['getLockDetail'];
   createChallengeCode: () => string;
   db: DatabaseAccessor;
 }
@@ -13,7 +15,7 @@ const getColors = (color: string | ColorConfig): ColorConfig => {
 };
 
 export const createGlobalService = (props: Props) => {
-  const { getConfig, createChallengeCode, db } = props;
+  const { getAppConfig: getConfig, getLockDetail, createChallengeCode, db } = props;
 
   /**
    * 获取当前应用全局配置
@@ -31,6 +33,7 @@ export const createGlobalService = (props: Props) => {
       loginSubtitle: LOGIN_SUBTITLE,
       ...colors,
       salt: userInfo?.passwordSalt,
+      ...getLockDetail(),
     };
     if (needInit) data.needInit = true;
     return data;

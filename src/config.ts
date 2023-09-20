@@ -1,3 +1,5 @@
+import { AppConfig } from './types/appConfig';
+
 /**
  * 接口返回的状态码
  */
@@ -37,7 +39,7 @@ export const STATUS_CODE = {
    * 登录超时
    */
   LOGIN_TIMEOUT: 40107,
-};
+} as const;
 
 /**
  * 统一的日期格式化
@@ -74,10 +76,6 @@ export const TABLE_NAME = {
   CERTIFICATE: 'certificates',
   /** 分组表 */
   GROUP: 'groups',
-  /** 日记表 */
-  DIARY: 'diaries',
-  /** 附件表 */
-  FILE: 'files',
 } as const;
 
 /**
@@ -90,3 +88,38 @@ export const DEFAULT_PASSWORD_ALPHABET =
  * 密码生成的默认长度
  */
 export const DEFAULT_PASSWORD_LENGTH = 18;
+
+/**
+ * 默认的应用配置项
+ */
+export const DEFAULT_APP_CONFIG: AppConfig = {
+  DEFAULT_COLOR: [
+    {
+      primaryColor: '#0081ff',
+      buttonColor: 'linear-gradient(45deg, #0081ff, #1cbbb4)',
+    },
+    {
+      primaryColor: '#9000ff',
+      buttonColor: 'linear-gradient(45deg, #9000ff, #5e00ff)',
+    },
+    {
+      primaryColor: '#ec008c',
+      buttonColor: 'linear-gradient(45deg, #ec008c, #6739b6)',
+    },
+    {
+      primaryColor: '#39b54a',
+      buttonColor: 'linear-gradient(45deg, #39b54a, #8dc63f)',
+    },
+    {
+      primaryColor: '#ff9700',
+      buttonColor: 'linear-gradient(45deg, #ff9700, #ed1c24)',
+    },
+    {
+      primaryColor: '#f43f3b',
+      buttonColor: 'linear-gradient(45deg, #f43f3b, #ec008c)',
+    },
+  ],
+  APP_NAME: '方块密码',
+  LOGIN_SUBTITLE: '🔒 保存你的密码',
+  LOGIN_MAX_RETRY_COUNT: 3,
+};

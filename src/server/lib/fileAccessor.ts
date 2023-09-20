@@ -4,6 +4,7 @@ import { AppConfig } from '@/types/appConfig';
 import path from 'path';
 import { nanoid } from 'nanoid';
 import { ensureFile, readFile, writeFile } from 'fs-extra';
+import { DEFAULT_APP_CONFIG } from '@/config';
 
 export const getFile = (filePath: string) => {
   try {
@@ -35,7 +36,7 @@ export const getAppConfig = () => {
 
   const config = json5.parse<AppConfig>(configResult);
 
-  cache = config;
+  cache = { ...DEFAULT_APP_CONFIG, ...(config || {}) };
   return config;
 };
 

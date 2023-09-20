@@ -29,8 +29,6 @@ export const routes = createHashRouter([
           { path: '/group/:groupId', element: <CertificateList /> },
           // 日记搜索
           { path: '/search', element: <Search /> },
-          // 关于应用
-          { path: '/about', element: lazyLoad(() => import('./pages/about')) },
         ],
         element: (
           <LoginAuth>

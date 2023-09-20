@@ -1,4 +1,5 @@
 import { CertificateGroupDetail } from './group';
+import { LockDetail } from './security';
 
 export interface UserStorage {
   id: number;
@@ -50,7 +51,7 @@ export interface LoginReqData {
 }
 
 /** 登录接口返回值 */
-export type LoginResp = Partial<LoginSuccessResp> & Partial<LoginFailResp>;
+export type LoginResp = Partial<LoginSuccessResp> & Partial<LockDetail>;
 
 export type LoginSuccessResp = {
   /** 用户鉴权令牌 */
@@ -58,13 +59,6 @@ export type LoginSuccessResp = {
   /** 防重放攻击的签名密钥 */
   replayAttackSecret: string;
 } & FrontendUserInfo;
-
-export interface LoginFailResp {
-  /** 登录错误的日期数组 */
-  loginFailure: number[];
-  /** 登录是否被锁定 */
-  ipBaned: boolean;
-}
 
 export interface ChangePasswordReqData {
   newPassword: string;
