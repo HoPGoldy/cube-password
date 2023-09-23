@@ -91,3 +91,19 @@ export const useSearchCertificate = (data: SearchCertificateReqData) => {
     },
   );
 };
+
+/**
+ * 删除凭证
+ */
+export const useDeleteCertificate = () => {
+  return useMutation(
+    async (ids: number[]) => {
+      return await requestPost('certificate/delete', { ids });
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('certificateList');
+      },
+    },
+  );
+};

@@ -1,9 +1,10 @@
 import React, { FC, useState } from 'react';
 import { Button, Form, Modal } from 'antd';
 import { TitleInput } from './titleInput';
-import { HeartFilled, QuestionCircleFilled } from '@ant-design/icons';
+import { HeartFilled, QuestionCircleFilled, DeleteFilled } from '@ant-design/icons';
 import { ColorPicker, MARK_COLORS_MAP } from '@/client/components/colorPicker';
 import { messageWarning } from '@/client/utils/message';
+import { useDeleteCertificate } from '@/client/services/certificate';
 
 interface UseTip {
   name: string;
@@ -73,13 +74,19 @@ const ColorIcon: FC<ColorIconProps> = (props) => {
 };
 
 interface DetailTitleProps {
+  certificateId: number;
   disabled: boolean;
+  onCancel: () => void;
 }
 
 export const DetailTitle: FC<DetailTitleProps> = (props) => {
-  const { disabled } = props;
+  const { disabled, certificateId, onCancel } = props;
   // 操作帮助是否显示
   const [useTipVisible, setUseTipVisible] = useState(false);
+  // 凭证删除功能
+  const { mutateAsync: deleteCertificate, isLoading: deleting } = useDeleteCertificate();
+  // 删除确认
+  const [modal, contextHolder] = Modal.useModal();
 
   const renderUseTip = (item: UseTip) => {
     return (
@@ -90,17 +97,39 @@ export const DetailTitle: FC<DetailTitleProps> = (props) => {
     );
   };
 
+  const onDeleteCertificate = () => {
+    modal.confirm({
+      content: '确定删除该凭证吗？删除后将无法恢复',
+      okText: '删除',
+      onOk: async () => {
+        const resp = await deleteCertificate([certificateId]);
+        if (resp.code !== 200) return;
+        onCancel();
+      },
+    });
+  };
+
   return (
     <div className='w-100 flex flex-row flex-nowrap items-center'>
       <Form.Item noStyle name='title'>
         <TitleInput disabled={disabled} />
       </Form.Item>
 
+      {contextHolder}
+
       <div className='flex'>
         <Form.Item noStyle name='markColor'>
           <ColorIcon disabled={disabled} />
         </Form.Item>
-        {!disabled && (
+        {disabled ? (
+          <Button
+            className='ml-2'
+            type='text'
+            danger
+            loading={deleting}
+            icon={<DeleteFilled className='text-xl text-gray-500 dark:text-gray-200' />}
+            onClick={onDeleteCertificate}></Button>
+        ) : (
           <Button
             className='ml-2'
             type='text'

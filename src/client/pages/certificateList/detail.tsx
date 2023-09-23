@@ -170,7 +170,9 @@ export const CertificateDetail: FC<Props> = (props) => {
           open={!!detailId}
           onCancel={onCancel}
           closable={false}
-          title={<DetailTitle disabled={readonly} />}
+          title={
+            <DetailTitle disabled={readonly} certificateId={detailId || 0} onCancel={onCancel} />
+          }
           footer={renderModalFooter()}>
           {renderDetailForm()}
         </Modal>
