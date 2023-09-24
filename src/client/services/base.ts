@@ -18,7 +18,6 @@ const isAppResponse = (data: unknown): data is AppResponse<unknown> => {
 export const axiosInstance = axios.create({ baseURL: '/api/' });
 
 axiosInstance.interceptors.request.use((config) => {
-  console.log('🚀 ~ file: base.ts:21 ~ axiosInstance.interceptors.request.use ~ config:', config);
   const store = getDefaultStore();
 
   const token = store.get(stateUserToken);

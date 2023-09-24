@@ -4,13 +4,13 @@ export enum SecurityNoticeType {
   Danger,
 }
 
-export interface SecurityNotice {
+export interface SecurityNoticeStorage {
   /**
    * 通知标题
    */
   title: string;
   /**
-   * 具体描述，支持 HTML
+   * 具体描述
    */
   content: string;
   /**

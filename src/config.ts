@@ -76,6 +76,8 @@ export const TABLE_NAME = {
   CERTIFICATE: 'certificates',
   /** 分组表 */
   GROUP: 'groups',
+  /** 通知表 */
+  NOTIFICATION: 'notifications',
 } as const;
 
 /**

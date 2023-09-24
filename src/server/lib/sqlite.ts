@@ -3,6 +3,7 @@ import { UserStorage } from '@/types/user';
 import { TABLE_NAME } from '@/config';
 import { CertificateGroupStorage } from '@/types/group';
 import { CertificateStorage } from '@/types/certificate';
+import { SecurityNoticeStorage } from '@/types/security';
 
 declare module 'knex/types/tables' {
   interface Tables {
@@ -68,11 +69,25 @@ export const createDb = (props: Props) => {
     });
   });
 
+  // 安全通知表
+  sqliteDb.schema.hasTable(TABLE_NAME.NOTIFICATION).then((exists) => {
+    if (exists) return;
+    return sqliteDb.schema.createTable(TABLE_NAME.NOTIFICATION, (t) => {
+      t.increments('id').primary();
+      t.string('title').notNullable();
+      t.text('content').notNullable();
+      t.timestamp('date').notNullable();
+      t.integer('type').notNullable();
+      t.boolean('isRead');
+    });
+  });
+
   return {
     knex: sqliteDb,
     user: () => sqliteDb<UserStorage>(TABLE_NAME.USER),
     certificate: () => sqliteDb<CertificateStorage>(TABLE_NAME.CERTIFICATE),
     group: () => sqliteDb<CertificateGroupStorage>(TABLE_NAME.GROUP),
+    notice: () => sqliteDb<SecurityNoticeStorage>(TABLE_NAME.NOTIFICATION),
   };
 };
 

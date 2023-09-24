@@ -2,12 +2,19 @@ import React, { useMemo } from 'react';
 import { AppTheme } from '@/types/user';
 import { changeTheme, getUserTheme, logout, stateUser } from '@/client/store/user';
 import { useLogout, useQueryStatistic, useSetTheme } from '@/client/services/user';
-import { LockOutlined, SmileOutlined } from '@ant-design/icons';
+import {
+  LockOutlined,
+  SmileOutlined,
+  KeyOutlined,
+  FormOutlined,
+  DatabaseOutlined,
+} from '@ant-design/icons';
 import { useAtomValue } from 'jotai';
 import useOtpConfig from '../otpConfig';
 import useChangePassword from '../changePassword';
 import useCreatePwdSetting from '../createPwdSetting';
 import useAbout from '../about';
+import useSecureLog from '../secureLog';
 
 export interface SettingLinkItem {
   label: string;
@@ -25,6 +32,8 @@ export const useSetting = () => {
   const createPwd = useCreatePwdSetting();
   /** 关于页面 */
   const about = useAbout();
+  /** 安全日志 */
+  const secureLog = useSecureLog();
   // 数量统计接口
   const { data: countInfo } = useQueryStatistic();
   /** 主题设置 */
@@ -36,11 +45,12 @@ export const useSetting = () => {
     const list: SettingLinkItem[] = [
       {
         label: '修改密码',
-        icon: <LockOutlined />,
+        icon: <KeyOutlined />,
         onClick: changePassword.showModal,
       },
       { label: '动态验证码', icon: <LockOutlined />, onClick: optConfig.showModal },
-      { label: '密码生成', icon: <LockOutlined />, onClick: createPwd.showModal },
+      { label: '密码生成', icon: <FormOutlined />, onClick: createPwd.showModal },
+      { label: '安全日志', icon: <DatabaseOutlined />, onClick: secureLog.showModal },
       {
         label: '关于',
         icon: <SmileOutlined />,
@@ -73,6 +83,7 @@ export const useSetting = () => {
         {optConfig.renderModal()}
         {createPwd.renderModal()}
         {about.renderModal()}
+        {secureLog.renderModal()}
       </>
     );
   };

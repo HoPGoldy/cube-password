@@ -17,3 +17,13 @@ export interface QueryListResp<ListItem = unknown> {
   total: number;
   rows: ListItem[];
 }
+
+/**
+ * 带分页的查询条件
+ */
+export interface PageSearchFilter {
+  /**
+   * 要查询的分页
+   */
+  page: number;
+}
