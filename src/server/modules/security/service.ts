@@ -38,7 +38,13 @@ export const createSecurityService = (props: Props) => {
     return { code: 200 };
   };
 
-  return { insertSecurityNotice, queryNoticeList, readAllNotice };
+  /** 删除全部 */
+  const removeAllNotice = async () => {
+    await db.notice().delete();
+    return { code: 200 };
+  };
+
+  return { insertSecurityNotice, queryNoticeList, readAllNotice, removeAllNotice };
 };
 
 export type SecurityService = ReturnType<typeof createSecurityService>;

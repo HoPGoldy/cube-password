@@ -43,10 +43,10 @@ const Login = () => {
   }, [appConfig]);
 
   // 临时功能，开发时自动登录
-  React.useEffect(() => {
-    if (!password) setPassword('123123');
-    else onSubmit();
-  }, [password]);
+  // React.useEffect(() => {
+  //   if (!password) setPassword('123123');
+  //   else onSubmit();
+  // }, [password]);
 
   const onSubmit = async () => {
     if (!password) {

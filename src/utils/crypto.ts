@@ -97,7 +97,7 @@ interface ReplayAttackData {
  */
 export const getReplayAttackData = (ctx: AppKoaContext): ReplayAttackData | undefined => {
   const data = {
-    url: ctx.url,
+    url: ctx.url.split('?')[0],
     timestamp: Number(ctx.get('X-cubnote-temestamp')),
     nonce: ctx.get('X-cubnote-nonce'),
     signature: ctx.get('X-cubnote-signature'),

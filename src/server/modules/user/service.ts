@@ -70,7 +70,7 @@ export const createUserService = (props: Props) => {
       const location = await queryIp(ip);
       insertSecurityNotice(
         SecurityNoticeType.Warning,
-        '异地登录',
+        '密码错误',
         `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`,
       );
       return loginFail(ip);

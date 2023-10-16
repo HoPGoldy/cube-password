@@ -30,5 +30,10 @@ export const createSecurityRouter = (props: Props) => {
     response(ctx, resp);
   });
 
+  router.post('/removeAllNotice', async (ctx) => {
+    const resp = await service.readAllNotice();
+    response(ctx, resp);
+  });
+
   return router;
 };
