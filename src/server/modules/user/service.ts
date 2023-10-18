@@ -67,12 +67,6 @@ export const createUserService = (props: Props) => {
   const login = async (password: string, ip: string, code?: string): Promise<AppResponse> => {
     const userStorage = await db.user().select().first();
     if (!userStorage) {
-      const location = await queryIp(ip);
-      insertSecurityNotice(
-        SecurityNoticeType.Warning,
-        '密码错误',
-        `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`,
-      );
       return loginFail(ip);
     }
 
@@ -125,7 +119,15 @@ export const createUserService = (props: Props) => {
       }
     }
 
-    if (password !== sha(passwordHash + challengeCode)) return loginFail(ip);
+    if (password !== sha(passwordHash + challengeCode)) {
+      const location = await queryIp(ip);
+      insertSecurityNotice(
+        SecurityNoticeType.Warning,
+        '密码错误',
+        `${ip}（${formatLocation(location)}）在登陆时输入了错误的密码，请检查是否为本人操作。`,
+      );
+      return loginFail(ip);
+    }
 
     // 用户每次重新进入页面都会刷新 token
     const session = startSession();

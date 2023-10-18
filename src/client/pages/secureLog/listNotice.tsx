@@ -1,8 +1,10 @@
 import React, { FC, useState } from 'react';
 import { useIsMobile } from '@/client/layouts/responsive';
 import { useQueryNoticeList } from '@/client/services/security';
-import { List, Table } from 'antd';
+import { Card, List, Table, Tag } from 'antd';
 import { PAGE_SIZE } from '@/config';
+import { SecurityNoticeRecord } from '@/types/security';
+import SecurityNotice from '@/client/components/securityNotice';
 
 export const NoticeList: FC = () => {
   const isMobile = useIsMobile();
@@ -10,31 +12,16 @@ export const NoticeList: FC = () => {
   const { data: noticeListResp, isLoading: loadingNoticeList } = useQueryNoticeList(pagination);
   console.log('🚀 ~ file: listNotice.tsx:11 ~ noticeListResp:', noticeListResp);
 
-  const columns = [{}];
+  const renderLogItem = (item: SecurityNoticeRecord) => {
+    console.log('🚀 ~ file: listNotice.tsx:14 ~ renderLogItem ~ item:', item);
+    return <SecurityNotice detail={item} />;
+  };
 
   return (
-    // <Table
-    //   columns={columns}
-    //   rowKey='id'
-    //   dataSource={[]}
-    //   pagination={{
-    //     current: pagination.page,
-    //     pageSize: PAGE_SIZE,
-    //     onChange: (page) => setPagination({ page }),
-    //   }}
-    //   loading={loadingNoticeList}
-    // />
     <List
       pagination={{ position: 'bottom', align: 'center' }}
       dataSource={noticeListResp?.data ?? []}
-      renderItem={(item) => (
-        <List.Item>
-          <List.Item.Meta
-            title={<a href='https://ant.design'>{item.title}</a>}
-            description='Ant Design, a design language for background applications, is refined by Ant UED Team'
-          />
-        </List.Item>
-      )}
+      renderItem={renderLogItem}
     />
   );
 };

@@ -27,6 +27,10 @@ export interface SecurityNoticeStorage {
   isRead: boolean;
 }
 
+export interface SecurityNoticeRecord extends SecurityNoticeStorage {
+  id: number;
+}
+
 export interface LoginFailRecord {
   /** 登录时间 */
   date: number;
