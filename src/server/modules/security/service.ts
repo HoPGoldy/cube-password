@@ -1,6 +1,6 @@
 import { PAGE_SIZE } from '@/config';
 import { DatabaseAccessor } from '@/server/lib/sqlite';
-import { PageSearchFilter } from '@/types/global';
+import { PageSearchFilter, QueryListResp } from '@/types/global';
 import { SecurityNoticeType } from '@/types/security';
 
 interface Props {
@@ -22,6 +22,7 @@ export const createSecurityService = (props: Props) => {
 
   /** 查询通知分组列表 */
   const queryNoticeList = async (query: PageSearchFilter) => {
+    const { 'count(*)': count } = await (db.notice().count().first() as any);
     const list = await db
       .notice()
       .select()
@@ -29,7 +30,8 @@ export const createSecurityService = (props: Props) => {
       .limit(PAGE_SIZE)
       .offset((query.page - 1) * PAGE_SIZE);
 
-    return { code: 200, data: list };
+    const data: QueryListResp = { rows: list, total: count };
+    return { code: 200, data };
   };
 
   /** 已读全部 */

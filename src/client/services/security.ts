@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from 'react-query';
 import { requestGet, requestPost } from './base';
-import { PageSearchFilter } from '@/types/global';
+import { PageSearchFilter, QueryListResp } from '@/types/global';
 
 /** 查询通知列表 */
 export const useQueryNoticeList = (data: PageSearchFilter) => {
-  return useQuery('noticeList', () =>
-    requestGet(`security/noticeList`, {
+  return useQuery(['noticeList', data], () =>
+    requestGet<QueryListResp>(`security/noticeList`, {
       params: data,
     }),
   );

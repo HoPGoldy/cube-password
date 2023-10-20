@@ -28,6 +28,7 @@ export default () => {
       title: TITLE,
       open: visible,
       onClose: closeModal,
+      modalProps: { width: '50%' },
     };
 
     return (

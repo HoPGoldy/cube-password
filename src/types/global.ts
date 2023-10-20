@@ -13,7 +13,7 @@ export type AppKoaContext = Context & {
   request: { body: Record<string, unknown> };
 };
 
-export interface QueryListResp<ListItem = unknown> {
+export interface QueryListResp<ListItem = any> {
   total: number;
   rows: ListItem[];
 }

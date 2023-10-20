@@ -1,27 +1,50 @@
 import React, { FC, useState } from 'react';
-import { useIsMobile } from '@/client/layouts/responsive';
 import { useQueryNoticeList } from '@/client/services/security';
-import { Card, List, Table, Tag } from 'antd';
+import { List, Segmented, Spin } from 'antd';
 import { PAGE_SIZE } from '@/config';
-import { SecurityNoticeRecord } from '@/types/security';
+import { SecurityNoticeRecord, SecurityNoticeType } from '@/types/security';
 import SecurityNotice from '@/client/components/securityNotice';
 
+const READ_OPTIONS = [
+  { label: '未读', value: 0 },
+  { label: '已读', value: 1 },
+];
+
+const NOTICE_SEARCH_OPTIONS = [
+  { label: '危险', value: SecurityNoticeType.Danger },
+  { label: '警告', value: SecurityNoticeType.Warning },
+  { label: '通知', value: SecurityNoticeType.Info },
+];
+
 export const NoticeList: FC = () => {
-  const isMobile = useIsMobile();
   const [pagination, setPagination] = useState({ page: 1 });
   const { data: noticeListResp, isLoading: loadingNoticeList } = useQueryNoticeList(pagination);
-  console.log('🚀 ~ file: listNotice.tsx:11 ~ noticeListResp:', noticeListResp);
 
   const renderLogItem = (item: SecurityNoticeRecord) => {
-    console.log('🚀 ~ file: listNotice.tsx:14 ~ renderLogItem ~ item:', item);
     return <SecurityNotice detail={item} />;
   };
 
   return (
-    <List
-      pagination={{ position: 'bottom', align: 'center' }}
-      dataSource={noticeListResp?.data ?? []}
-      renderItem={renderLogItem}
-    />
+    <>
+      <Spin spinning={loadingNoticeList}>
+        <List
+          className='mb-4'
+          pagination={{
+            position: 'bottom',
+            align: 'center',
+            current: pagination.page,
+            pageSize: PAGE_SIZE,
+            total: noticeListResp?.data?.total ?? 0,
+            showSizeChanger: false,
+            onChange: (page) => {
+              console.log(page);
+              setPagination({ ...pagination, page });
+            },
+          }}
+          dataSource={noticeListResp?.data?.rows ?? []}
+          renderItem={renderLogItem}
+        />
+      </Spin>
+    </>
   );
 };
