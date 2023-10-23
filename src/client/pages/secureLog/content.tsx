@@ -51,6 +51,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
             <Col span='12'>
               <Form.Item name='isRead' noStyle>
                 <Select
+                  size={isMobile ? 'large' : 'middle'}
                   options={READ_OPTIONS}
                   className='w-full'
                   placeholder='是否已读'
@@ -61,6 +62,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
             <Col span='12'>
               <Form.Item name='type' noStyle>
                 <Select
+                  size={isMobile ? 'large' : 'middle'}
                   options={NOTICE_SEARCH_OPTIONS}
                   className='w-full'
                   placeholder='警报等级'
@@ -126,7 +128,9 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
       <PageAction>
         <ActionIcon icon={<LeftOutlined />} onClick={props.onClose} />
-        <ActionButton>新增邀请码</ActionButton>
+        <ActionButton onClick={onReadAll} loading={isLoading}>
+          已读全部
+        </ActionButton>
       </PageAction>
     </>
   );

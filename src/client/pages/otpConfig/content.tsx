@@ -176,7 +176,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
               </Button>
             </Space>
           }>
-          <Form form={removeForm} className='pt-6'>
+          <Form form={removeForm} className='better-form md:pt-6'>
             <Form.Item
               name='password'
               label='主密码'
@@ -239,7 +239,13 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
       <PageAction>
         <ActionIcon icon={<LeftOutlined />} onClick={props.onClose} />
-        <ActionButton>新增邀请码</ActionButton>
+        {registered ? (
+          <ActionButton onClick={() => setRemoveVisible(true)}>解除绑定</ActionButton>
+        ) : (
+          <ActionButton type='primary' onClick={onSubmit} loading={isBinding}>
+            绑定
+          </ActionButton>
+        )}
       </PageAction>
     </>
   );

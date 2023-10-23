@@ -5,7 +5,6 @@ import { aes, getAesMeta, sha, validateAesMeta } from '@/utils/crypto';
 import { stateMainPwd, stateUser, stateUserToken } from '@/client/store/user';
 import { messageError, messageWarning } from '@/client/utils/message';
 import { useIsMobile } from '@/client/layouts/responsive';
-import s from './styles.module.css';
 import { SettingContainerProps } from '@/client/components/settingContainer';
 import { PageContent, PageAction, ActionIcon, ActionButton } from '@/client/layouts/pageWithAction';
 import { LeftOutlined } from '@ant-design/icons';
@@ -66,7 +65,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const renderContent = () => {
     return (
       <Form
-        className={s.changePasswordBox}
+        className='better-form'
         form={form}
         labelCol={{ span: 6 }}
         labelAlign='right'
