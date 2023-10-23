@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from 'react-query';
-import { requestGet, requestPost } from './base';
+import { queryClient, requestGet, requestPost } from './base';
 import { PageSearchFilter, QueryListResp } from '@/types/global';
 
 /** 查询通知列表 */
@@ -13,9 +13,16 @@ export const useQueryNoticeList = (data: PageSearchFilter) => {
 
 /** 已读全部 */
 export const useReadAllNotice = () => {
-  return useMutation(async () => {
-    return await requestPost<number>('security/readAllNotice');
-  });
+  return useMutation(
+    async () => {
+      return await requestPost<number>('security/readAllNotice');
+    },
+    {
+      onSuccess: () => {
+        queryClient.setQueryData('noticeList', undefined);
+      },
+    },
+  );
 };
 
 /** 删除全部 */

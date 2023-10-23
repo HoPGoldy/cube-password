@@ -1,3 +1,5 @@
+import { PageSearchFilter } from './global';
+
 export enum SecurityNoticeType {
   Info = 1,
   Warning,
@@ -47,4 +49,9 @@ export interface LockDetail {
   retryNumber: number;
   /** 登录是否被锁定 */
   isBanned: boolean;
+}
+
+export interface SearchNoticeFilter extends PageSearchFilter {
+  isRead: 0 | 1;
+  type: SecurityNoticeType;
 }

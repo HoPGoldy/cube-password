@@ -1,7 +1,8 @@
 import { PAGE_SIZE } from '@/config';
 import { DatabaseAccessor } from '@/server/lib/sqlite';
-import { PageSearchFilter, QueryListResp } from '@/types/global';
-import { SecurityNoticeType } from '@/types/security';
+import { QueryListResp } from '@/types/global';
+import { SearchNoticeFilter, SecurityNoticeType } from '@/types/security';
+import { isNil } from 'lodash';
 
 interface Props {
   db: DatabaseAccessor;
@@ -21,14 +22,22 @@ export const createSecurityService = (props: Props) => {
   };
 
   /** 查询通知分组列表 */
-  const queryNoticeList = async (query: PageSearchFilter) => {
-    const { 'count(*)': count } = await (db.notice().count().first() as any);
-    const list = await db
-      .notice()
+  const queryNoticeList = async (queryObj: SearchNoticeFilter) => {
+    const query = db.notice();
+
+    if (!isNil(queryObj.isRead)) {
+      query.where('isRead', queryObj.isRead);
+    }
+    if (!isNil(queryObj.type)) {
+      query.where('type', queryObj.type);
+    }
+
+    const { 'count(*)': count } = await (query.clone().count().first() as any);
+    const list = await query
       .select()
       .orderBy('date', 'asc')
       .limit(PAGE_SIZE)
-      .offset((query.page - 1) * PAGE_SIZE);
+      .offset((queryObj.page - 1) * PAGE_SIZE);
 
     const data: QueryListResp = { rows: list, total: count };
     return { code: 200, data };

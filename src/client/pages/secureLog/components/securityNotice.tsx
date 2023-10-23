@@ -25,7 +25,7 @@ const SecurityNotice: FC<Props> = (props) => {
       title={
         <>
           <Tag color={config.color}>{config.label}</Tag>
-          <span>{detail.title}</span>
+          <span style={{ opacity: detail.isRead ? 0.5 : 1 }}>{detail.title}</span>
         </>
       }
       extra={dayjs(detail.date).format('YYYY-MM-DD HH:mm:ss')}>
