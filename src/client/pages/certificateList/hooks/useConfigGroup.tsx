@@ -138,7 +138,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
           footer={
             <Space>
               <Button icon={<DeleteOutlined />} danger onClick={onShowDeleteConfirm}>
-                删除分组
+                删除
               </Button>
               <Button
                 disabled={isDefaultGroup}
@@ -152,6 +152,7 @@ export const useConfigGroupContent = (props: UseConfigGroupContentProps) => {
             </Space>
           }>
           <Form
+            className='better-form'
             form={form}
             labelCol={{ span: 6 }}
             labelAlign='right'

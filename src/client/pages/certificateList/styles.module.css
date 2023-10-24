@@ -26,7 +26,7 @@
 }
 
 .listItem {
-  @apply mx-2 mb-4 w-col-1 lg:w-col-2 xl:w-col-3;
+  @apply md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3;
   @apply ring-gray-300 dark:ring-gray-600 active:bg-gray-200 transition hover:ring cursor-pointer;
 }
 

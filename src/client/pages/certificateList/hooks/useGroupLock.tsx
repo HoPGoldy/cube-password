@@ -7,6 +7,7 @@ import { useGroupLogin } from '@/client/services/group';
 import { queryChallengeCode } from '@/client/services/global';
 import { LockType } from '@/types/group';
 import s from '../styles.module.css';
+import { DesktopArea } from '@/client/layouts/responsive';
 
 interface useGroupLockProps {
   groupId: number;
@@ -18,7 +19,7 @@ export const useGroupLock = (props: useGroupLockProps) => {
   /** 输入框错误提示 */
   const [passwordError, setPasswordError] = useState(false);
   /** 请求 - 解密分组 */
-  const { mutateAsync: runGroupLogin } = useGroupLogin(groupId);
+  const { mutateAsync: runGroupLogin, isLoading: isLoginGroup } = useGroupLogin(groupId);
   /** 把分组设置为已解密状态 */
   const { group, updateGroup } = useGroup(groupId);
   const isTotpLock = group?.lockType === LockType.Totp;
@@ -91,11 +92,13 @@ export const useGroupLock = (props: useGroupLockProps) => {
                       }}
                     />
                   </Col>
-                  <Col span={24}>
-                    <Button type='primary' block onClick={onLogin}>
-                      解锁
-                    </Button>
-                  </Col>
+                  <DesktopArea>
+                    <Col span={24}>
+                      <Button type='primary' block onClick={onLogin}>
+                        解锁
+                      </Button>
+                    </Col>
+                  </DesktopArea>
                 </Row>
               </div>
             </div>
@@ -105,5 +108,5 @@ export const useGroupLock = (props: useGroupLockProps) => {
     );
   };
 
-  return { onLogin, renderGroupLogin };
+  return { onLogin, renderGroupLogin, isLoginGroup };
 };

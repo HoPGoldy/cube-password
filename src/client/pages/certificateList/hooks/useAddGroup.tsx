@@ -54,6 +54,7 @@ export const useAddGroupContent = () => {
         onOk={onClickSave}
         onCancel={() => setShowAddModal(false)}>
         <Form
+          className='better-form'
           form={form}
           labelCol={{ span: 6 }}
           labelAlign='right'
