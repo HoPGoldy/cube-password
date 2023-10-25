@@ -1,10 +1,10 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PageContent, PageAction } from '../../layouts/pageWithAction';
 import Loading from '../../layouts/loading';
 import { Button, Card, Empty, Result } from 'antd';
 import { PageTitle } from '@/client/components/pageTitle';
-import { useOperation } from './operation';
+import { SelectModeType, useOperation } from './operation';
 import { CertificateDetail } from './detail';
 import { useCertificateList } from '@/client/services/certificate';
 import { CertificateListItem } from '@/types/group';
@@ -13,6 +13,7 @@ import { useGroupLock } from './hooks/useGroupLock';
 import { CertificateListDetail } from './components/certificateListItem';
 import { MobileArea, useIsMobile } from '@/client/layouts/responsive';
 import { usePageTitle } from '@/client/layouts/header/usePageTitle';
+import { ReactSortable } from 'react-sortablejs';
 
 /**
  * 凭证列表
@@ -30,14 +31,21 @@ const CertificateList: FC = () => {
   const { data: certificateListResp, isLoading } = useCertificateList(groupId, !!group?.unlocked);
   /** 分组登录功能 */
   const { renderGroupLogin, onLogin, isLoginGroup } = useGroupLock({ groupId });
+  /** 当前的凭证列表（允许排序） */
+  const [certificateList, setCertificateList] = useState<CertificateListItem[]>([]);
   /** 操作栏功能 */
   const operation = useOperation({
-    certificateList: certificateListResp?.data ?? [],
+    certificateList,
     onAddNew: () => setDetailId(-1),
     groupId,
     onLogin,
     isLoginGroup,
   });
+
+  useEffect(() => {
+    if (!certificateListResp?.data) return;
+    setCertificateList(certificateListResp?.data ?? []);
+  }, [certificateListResp?.data]);
 
   if (!groupId || !group)
     return (
@@ -64,12 +72,16 @@ const CertificateList: FC = () => {
           if (!operation.selectMode) setDetailId(item.id);
           else operation.setSelectedItem((old) => ({ ...old, [item.id]: !old[item.id] }));
         }}
+        onLongClick={() => {
+          operation.setSelectMode(SelectModeType.Move);
+          operation.setSelectedItem((old) => ({ ...old, [item.id]: !old[item.id] }));
+        }}
       />
     );
   };
 
   const renderList = () => {
-    if (!certificateListResp?.data || certificateListResp?.data?.length === 0) {
+    if (!certificateList || certificateList?.length === 0) {
       return (
         <Empty
           className='m-auto mt-[20vh]'
@@ -82,7 +94,21 @@ const CertificateList: FC = () => {
       );
     }
 
-    return certificateListResp?.data?.map(renderCertificateItem);
+    return (
+      <ReactSortable
+        className='w-full'
+        list={certificateList}
+        disabled
+        animation={150}
+        setList={(list) => {
+          setCertificateList(list);
+          console.log(list);
+        }}>
+        {certificateList?.map(renderCertificateItem)}
+      </ReactSortable>
+    );
+
+    // certificateListResp?.data?.map(renderCertificateItem);
   };
 
   const renderContent = () => {
@@ -102,15 +128,24 @@ const CertificateList: FC = () => {
       <PageTitle title='凭证列表' />
 
       <PageContent>
-        <MobileArea>
-          <Card size='small' className='text-base m-4'>
-            <div className='flex items-center'>
-              <div className='flex-1'>{renderTitle()}</div>
-              {operation.renderMobileTitleOperation()}
-            </div>
-          </Card>
-        </MobileArea>
-        {renderContent()}
+        <div className='flex flex-col flex-nowrap h-full'>
+          <div className='flex-grow overflow-y-auto overflow-x-hidden'>
+            {group.unlocked && (
+              <MobileArea>
+                <Card size='small' className='text-base m-4'>
+                  <div className='flex items-center'>
+                    <div className='flex-1'>{renderTitle()}</div>
+                    {operation.renderMobileTitleOperation()}
+                  </div>
+                </Card>
+              </MobileArea>
+            )}
+            {renderContent()}
+          </div>
+          <MobileArea>
+            <div className='flex-shrink-0 p-2 pb-0'>{operation.renderMobileMoveBtn()}</div>
+          </MobileArea>
+        </div>
         <CertificateDetail
           groupId={+groupId}
           detailId={detailId}

@@ -101,6 +101,7 @@ export const DetailTitle: FC<DetailTitleProps> = (props) => {
     modal.confirm({
       content: '确定删除该凭证吗？删除后将无法恢复',
       okText: '删除',
+      okType: 'danger',
       onOk: async () => {
         const resp = await deleteCertificate([certificateId]);
         if (resp.code !== 200) return;

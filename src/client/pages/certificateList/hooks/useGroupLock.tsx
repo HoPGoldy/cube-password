@@ -7,7 +7,7 @@ import { useGroupLogin } from '@/client/services/group';
 import { queryChallengeCode } from '@/client/services/global';
 import { LockType } from '@/types/group';
 import s from '../styles.module.css';
-import { DesktopArea } from '@/client/layouts/responsive';
+import { DesktopArea, useIsMobile } from '@/client/layouts/responsive';
 
 interface useGroupLockProps {
   groupId: number;
@@ -16,6 +16,7 @@ interface useGroupLockProps {
 export const useGroupLock = (props: useGroupLockProps) => {
   const { groupId } = props;
   const [password, setPassword] = useState('');
+  const isMobile = useIsMobile();
   /** 输入框错误提示 */
   const [passwordError, setPasswordError] = useState(false);
   /** 请求 - 解密分组 */
@@ -83,6 +84,7 @@ export const useGroupLock = (props: useGroupLockProps) => {
                       status={passwordError ? 'error' : undefined}
                       placeholder={isTotpLock ? '请输入验证码' : '请输入分组密码'}
                       value={password}
+                      size={isMobile ? 'large' : 'middle'}
                       onChange={(e) => {
                         setPassword(e.target.value);
                         setPasswordError(false);

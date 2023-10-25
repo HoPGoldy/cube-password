@@ -3,7 +3,7 @@ import { messageSuccess } from '@/client/utils/message';
 import { STATUS_CODE } from '@/config';
 import { CertificateField } from '@/types/certificate';
 import { openNewTab } from '@/utils/common';
-import { Input, Button, InputProps } from 'antd';
+import { Input, Button, InputProps, Row, Col } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { FC, useMemo } from 'react';
 import { CloseOutlined, GiftOutlined } from '@ant-design/icons';
@@ -101,14 +101,21 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
 
   return (
     <div className='relative w-full'>
-      <Input
-        bordered={false}
-        className={s.labelInput}
-        size='small'
-        value={value?.label}
-        disabled={disabled}
-        onChange={(e) => onLabelChange(e.target.value)}
-      />
+      <Row>
+        <Col span={20}>
+          <Input
+            bordered={false}
+            className={s.labelInput}
+            size='small'
+            value={value?.label}
+            disabled={disabled}
+            onChange={(e) => onLabelChange(e.target.value)}
+          />
+        </Col>
+        <Col span={4}>
+          <div className='w-full h-9 cursor-move move-handle'></div>
+        </Col>
+      </Row>
       <div className='flex'>
         {renderMainInput()}
 

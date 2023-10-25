@@ -12,6 +12,8 @@ import { stateMainPwd, stateUser } from '@/client/store/user';
 import { CertificateFieldItem } from './components/certificateFieldItem';
 import copy from 'copy-to-clipboard';
 import { CertificateField } from '@/types/certificate';
+import { useIsMobile } from '@/client/layouts/responsive';
+import { Draggable } from '@/client/components/draggable';
 
 interface Props {
   groupId: number;
@@ -46,6 +48,7 @@ export const CertificateDetail: FC<Props> = (props) => {
   const { detailId, onCancel } = props;
   const [form] = Form.useForm();
   const userInfo = useAtomValue(stateUser);
+  const isMobile = useIsMobile();
   const { pwdKey, pwdIv } = useAtomValue(stateMainPwd);
   /** 是否可以编辑 */
   const [readonly, setReadonly] = useState(true);
@@ -138,23 +141,37 @@ export const CertificateDetail: FC<Props> = (props) => {
 
   const renderModalFooter = () => {
     const btns = [
-      <Button key='back' onClick={onCancel}>
+      <Button key='back' onClick={onCancel} size={isMobile ? 'large' : 'middle'}>
         返回
       </Button>,
     ];
 
     if (readonly) {
       btns.push(
-        <Button key='copy' onClick={onCopyTotal} loading={isSaving}>
+        <Button
+          key='copy'
+          onClick={onCopyTotal}
+          loading={isSaving}
+          size={isMobile ? 'large' : 'middle'}>
           复制
         </Button>,
-        <Button key='edit' type='primary' onClick={() => setReadonly(false)} loading={isSaving}>
+        <Button
+          key='edit'
+          type='primary'
+          onClick={() => setReadonly(false)}
+          loading={isSaving}
+          size={isMobile ? 'large' : 'middle'}>
           编辑
         </Button>,
       );
     } else {
       btns.push(
-        <Button key='save' type='primary' onClick={onConfirm} loading={isSaving}>
+        <Button
+          key='save'
+          type='primary'
+          onClick={onConfirm}
+          loading={isSaving}
+          size={isMobile ? 'large' : 'middle'}>
           保存
         </Button>,
       );
@@ -183,19 +200,26 @@ export const CertificateDetail: FC<Props> = (props) => {
   const renderDetailForm = () => {
     return (
       <Form.List name='fields'>
-        {(fields, { add, remove }) => (
+        {(fields, { add, remove, move }) => (
           <>
-            {fields.map((field) => (
-              // eslint-disable-next-line react/jsx-key
-              <Form.Item {...field} noStyle>
-                <CertificateFieldItem
-                  disabled={readonly}
-                  showDelete={fields.length > 1}
-                  createPwd={createPwd}
-                  onDelete={() => remove(field.name)}
-                />
-              </Form.Item>
-            ))}
+            <Draggable
+              value={fields}
+              sortableOptions={{ disabled: readonly, handle: '.move-handle' }}
+              renderItem={(field) => (
+                // eslint-disable-next-line react/jsx-key
+                <Form.Item {...field} noStyle>
+                  <CertificateFieldItem
+                    disabled={readonly}
+                    showDelete={fields.length > 1}
+                    createPwd={createPwd}
+                    onDelete={() => remove(field.name)}
+                  />
+                </Form.Item>
+              )}
+              onChange={(list, oldIndex, newIndex) => {
+                move(oldIndex as number, newIndex as number);
+              }}
+            />
             {!readonly ? (
               <Form.Item key='add'>
                 <Button

@@ -1,5 +1,5 @@
 import { Card, Checkbox } from 'antd';
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import s from '../styles.module.css';
 import { CertificateListItem } from '@/types/group';
 import { MARK_COLORS_MAP } from '@/client/components/colorPicker';
@@ -11,12 +11,15 @@ interface CertificateListItemProps {
   isSelected?: boolean;
   selectMode?: boolean;
   onClick: () => void;
+  onLongClick?: () => void;
 }
 
 export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
   const { detail, isSelected = false, selectMode = false, onClick } = props;
   /** 主题色 */
   const primaryColor = useAtomValue(stateAppConfig)?.primaryColor;
+  /** 长按计时器 */
+  const longClickTimer = useRef<NodeJS.Timeout>();
 
   // 渲染凭证列表项右侧的标记
   const renderRightMark = () => {
@@ -38,18 +41,34 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
     return null;
   };
 
+  const onLongClick = () => {
+    longClickTimer.current = setTimeout(() => {
+      props.onLongClick?.();
+    }, 500);
+  };
+
+  const onLongClickEnd = () => {
+    clearTimeout(longClickTimer.current);
+  };
+
   return (
-    <Card
-      key={detail.id}
-      size='small'
-      className={s.listItem}
-      style={{ borderColor: isSelected ? primaryColor : undefined }}
-      onClick={onClick}>
-      <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>
-        {detail.name}
-      </div>
-      <div className='text-gray-600 dark:text-gray-400'>{detail.updateTime}</div>
-      {renderRightMark()}
-    </Card>
+    <div className={s.listItemContainer} key={detail.id}>
+      <Card
+        size='small'
+        className={`${s.listItem} ${isSelected ? 'ring' : undefined}`}
+        style={{
+          borderColor: isSelected ? primaryColor : undefined,
+          ['--tw-ring-color' as string]: isSelected ? primaryColor : undefined,
+        }}
+        onClick={onClick}
+        onTouchStart={onLongClick}
+        onTouchEnd={onLongClickEnd}>
+        <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>
+          {detail.name}
+        </div>
+        <div className='text-gray-600 dark:text-gray-400'>{detail.updateTime}</div>
+        {renderRightMark()}
+      </Card>
+    </div>
   );
 };

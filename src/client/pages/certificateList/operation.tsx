@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActionButton, ActionIcon } from '@/client/layouts/pageWithAction';
 import { messageSuccess, messageWarning } from '@/client/utils/message';
@@ -14,7 +14,7 @@ import {
 } from '@ant-design/icons';
 import { MobileSetting } from '../setting';
 import s from './styles.module.css';
-import { Button, Drawer, Dropdown, Space } from 'antd';
+import { Button, Col, Drawer, Dropdown, Row, Space } from 'antd';
 import { MobileDrawer } from '@/client/components/mobileDrawer';
 import { DesktopArea } from '@/client/layouts/responsive';
 import { useConfigGroupContent } from './hooks/useConfigGroup';
@@ -23,6 +23,7 @@ import { useAtomValue } from 'jotai';
 import { GroupDetail, stateGroupList, useGroup } from '@/client/store/group';
 import { useMoveCertificate } from '@/client/services/certificate';
 import { useAddGroupContent } from './hooks/useAddGroup';
+import { CSSTransition } from 'react-transition-group';
 
 interface Props {
   certificateList: CertificateListItem[];
@@ -57,6 +58,8 @@ export const useOperation = (props: Props) => {
   });
   /** 选择模式 */
   const [selectMode, setSelectMode] = useState<SelectModeType | null>(null);
+  /** 是否显示移动端批量操作弹窗 */
+  const [showMobileSelect, setShowMobileSelect] = useState(false);
   // 被选中的凭证
   const [selectedItem, setSelectedItem] = useState<Record<number, boolean>>({});
   /** 分组列表 */
@@ -70,8 +73,8 @@ export const useOperation = (props: Props) => {
     closeSelectMode();
   }, [groupId]);
 
-  /** 渲染月份选择器 */
-  const renderMonthPicker = () => {
+  /** 渲染分组选择器 */
+  const renderGroupPicker = () => {
     return (
       <MobileDrawer
         title='分组选择'
@@ -121,7 +124,7 @@ export const useOperation = (props: Props) => {
   const renderMobileBar = () => {
     return (
       <>
-        {renderMonthPicker()}
+        {renderGroupPicker()}
         <Drawer
           open={showSetting}
           onClose={() => setShowSetting(false)}
@@ -203,11 +206,7 @@ export const useOperation = (props: Props) => {
       return (
         <>
           <Dropdown menu={{ items: getMoveTarget() }}>
-            <Button
-              key='moveTo'
-              type='primary'
-              icon={<RetweetOutlined />}
-              onClick={() => setSelectMode(SelectModeType.Move)}>
+            <Button key='moveTo' type='primary' icon={<RetweetOutlined />}>
               移动至
             </Button>
           </Dropdown>
@@ -218,6 +217,43 @@ export const useOperation = (props: Props) => {
       );
 
     return null;
+  };
+
+  const transitionRef = useRef(null);
+  const renderMobileMoveBtn = () => {
+    return (
+      <CSSTransition
+        in={selectMode === SelectModeType.Move}
+        nodeRef={transitionRef}
+        timeout={300}
+        classNames='batch-modal'
+        onEnter={() => setShowMobileSelect(true)}
+        onExited={() => setShowMobileSelect(false)}>
+        <Row gutter={[8, 8]} ref={transitionRef}>
+          {showMobileSelect && (
+            <>
+              <Col span={12}>
+                <Dropdown menu={{ items: getMoveTarget() }}>
+                  <Button key='moveTo' icon={<RetweetOutlined />} block size='large'>
+                    移动至
+                  </Button>
+                </Dropdown>
+              </Col>
+              <Col span={12}>
+                <Button
+                  key='cancelMove'
+                  icon={<CloseOutlined />}
+                  onClick={closeSelectMode}
+                  block
+                  size='large'>
+                  取消移动
+                </Button>
+              </Col>
+            </>
+          )}
+        </Row>
+      </CSSTransition>
+    );
   };
 
   const renderAddBtn = () => {
@@ -291,7 +327,9 @@ export const useOperation = (props: Props) => {
     selectedItem,
     setSelectedItem,
     selectMode,
+    setSelectMode,
     renderMobileBar,
+    renderMobileMoveBtn,
     renderTitleOperation,
     renderMobileTitleOperation,
   };

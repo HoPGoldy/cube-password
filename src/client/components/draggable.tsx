@@ -5,26 +5,29 @@ import isNil from 'lodash/isNil';
 
 interface DraggableProps<T> {
   value: T[];
-  onChange: (value: T[]) => void;
+  onChange: (value: T[], oldIndex: number | undefined, newIndex: number | undefined) => void;
   renderItem: (item: T, index: number) => ReactElement | null;
   extra?: ReactElement;
   className?: string;
+  sortableOptions?: Sortable.Options;
 }
 
 export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (props) => {
-  const { value, onChange, className, renderItem, extra } = props;
+  const { value, onChange, className, renderItem, extra, sortableOptions = {} } = props;
   const sortableDomRef = useRef<HTMLDivElement | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const valueRef = useRef(value);
   valueRef.current = value;
+  const sortableRef = useRef<Sortable | null>(null);
 
   useEffect(() => {
     if (!sortableDomRef.current) return;
 
-    Sortable.create(sortableDomRef.current, {
+    sortableRef.current = Sortable.create(sortableDomRef.current, {
       animation: 150,
       // filter: '.ignore-elements',
+      ...sortableOptions,
       onEnd: (e) => {
         const { oldIndex, newIndex } = e;
         if (isNil(oldIndex) && isNil(newIndex)) {
@@ -37,10 +40,17 @@ export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (props) 
         const [removed] = newValue.splice(oldIndex || 0, 1);
         newValue.splice(newIndex || 0, 0, removed);
 
-        onChangeRef.current(newValue);
+        onChangeRef.current(newValue, oldIndex, newIndex);
       },
     });
   }, []);
+
+  useEffect(() => {
+    if (!sortableRef.current) return;
+    Object.entries(sortableOptions).forEach(
+      ([key, value]) => sortableRef.current?.option(key as any, value),
+    );
+  }, [sortableOptions]);
 
   return (
     <div ref={sortableDomRef} className={className}>

@@ -25,9 +25,12 @@
   @apply text-gray-300;
 }
 
+.listItemContainer {
+  @apply md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3 inline-block;
+}
+
 .listItem {
-  @apply md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3;
-  @apply ring-gray-300 dark:ring-gray-600 active:bg-gray-200 transition hover:ring cursor-pointer;
+  @apply ring-gray-300 dark:ring-gray-600 active:bg-gray-100 dark:active:bg-gray-700 transition hover:ring active:ring-0 cursor-pointer;
 }
 
 .fieldItemReadonly input, textarea.fieldItemReadonly {
