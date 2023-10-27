@@ -58,6 +58,7 @@ export const createGroupService = (props: Props) => {
     if (!groupUnlocked) return groupLockResp;
 
     const list = await db.certificate().select().where('groupId', groupId).orderBy('order', 'asc');
+    console.log('🚀 ~ file: service.ts:61 ~ getCertificateList ~ list:', list);
 
     const data: CertificateListItem[] = list.map((item) => ({
       id: item.id,

@@ -12,10 +12,11 @@ interface CertificateListItemProps {
   selectMode?: boolean;
   onClick: () => void;
   onLongClick?: () => void;
+  dragging?: boolean;
 }
 
 export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
-  const { detail, isSelected = false, selectMode = false, onClick } = props;
+  const { detail, isSelected = false, selectMode = false, dragging = false, onClick } = props;
   /** 主题色 */
   const primaryColor = useAtomValue(stateAppConfig)?.primaryColor;
   /** 长按计时器 */
@@ -52,7 +53,7 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
   };
 
   return (
-    <div className={s.listItemContainer} key={detail.id}>
+    <div className={`${s.listItemContainer} ${dragging ? s.itemWrapDrag : ''}`} key={detail.id}>
       <Card
         size='small'
         className={`${s.listItem} ${isSelected ? 'ring' : undefined}`}

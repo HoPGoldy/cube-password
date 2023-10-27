@@ -74,15 +74,15 @@ export const createCertificateRouter = (props: Props) => {
     response(ctx, resp);
   });
 
-  const updateCertificateSortSchema = Joi.object<{ groupIds: number[] }>({
-    groupIds: Joi.array().items(Joi.number()).required(),
+  const updateCertificateSortSchema = Joi.object<{ ids: number[] }>({
+    ids: Joi.array().items(Joi.number()).required(),
   });
 
-  router.post('updateSort', async (ctx) => {
+  router.post('/updateSort', async (ctx) => {
     const body = validate(ctx, updateCertificateSortSchema);
     if (!body) return;
 
-    const resp = await service.updateSort(body.groupIds);
+    const resp = await service.updateSort(body.ids);
     response(ctx, resp);
   });
 

@@ -113,7 +113,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
           />
         </Col>
         <Col span={4}>
-          <div className='w-full h-9 cursor-move move-handle'></div>
+          <div className={`w-full h-9 move-handle ${disabled ? '' : 'cursor-move'}`}></div>
         </Col>
       </Row>
       <div className='flex'>

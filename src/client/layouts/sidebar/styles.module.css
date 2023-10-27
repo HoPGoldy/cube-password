@@ -25,3 +25,16 @@
 .selectedToolBtn {
   @apply bg-gray-400 dark:bg-neutral-600;
 }
+
+.itemWrap {
+  position: relative;
+}
+
+.itemWrapDrag:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}

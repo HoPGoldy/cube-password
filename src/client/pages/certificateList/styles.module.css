@@ -26,7 +26,7 @@
 }
 
 .listItemContainer {
-  @apply md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3 inline-block;
+  @apply relative md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3 inline-block;
 }
 
 .listItem {
@@ -56,4 +56,13 @@
 .totpLockIcon::after {
   @apply absolute right-[-18px] bottom-[-8px] text-5xl;
   content: '📱';
+}
+
+.itemWrapDrag:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }

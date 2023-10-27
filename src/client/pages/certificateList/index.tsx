@@ -6,14 +6,14 @@ import { Button, Card, Empty, Result } from 'antd';
 import { PageTitle } from '@/client/components/pageTitle';
 import { SelectModeType, useOperation } from './operation';
 import { CertificateDetail } from './detail';
-import { useCertificateList } from '@/client/services/certificate';
+import { useCertificateList, useUpdateCertificateSort } from '@/client/services/certificate';
 import { CertificateListItem } from '@/types/group';
 import { useGroup } from '@/client/store/group';
 import { useGroupLock } from './hooks/useGroupLock';
 import { CertificateListDetail } from './components/certificateListItem';
 import { MobileArea, useIsMobile } from '@/client/layouts/responsive';
 import { usePageTitle } from '@/client/layouts/header/usePageTitle';
-import { ReactSortable } from 'react-sortablejs';
+import { Draggable } from '@/client/components/draggable';
 
 /**
  * 凭证列表
@@ -22,6 +22,7 @@ const CertificateList: FC = () => {
   const isMobile = useIsMobile();
   const { groupId: groupIdStr } = useParams();
   const groupId = Number(groupIdStr);
+  const [dragging, setDragging] = useState(false);
   const renderTitle = usePageTitle();
   /** 详情弹窗展示的密码 ID（-1 时代表新增密码） */
   const [detailId, setDetailId] = useState<number>();
@@ -29,6 +30,8 @@ const CertificateList: FC = () => {
   const { group } = useGroup(groupId);
   /** 获取凭证列表 */
   const { data: certificateListResp, isLoading } = useCertificateList(groupId, !!group?.unlocked);
+  /** 凭证排序 */
+  const { mutateAsync: updateCertificateSort } = useUpdateCertificateSort();
   /** 分组登录功能 */
   const { renderGroupLogin, onLogin, isLoginGroup } = useGroupLock({ groupId });
   /** 当前的凭证列表（允许排序） */
@@ -64,8 +67,9 @@ const CertificateList: FC = () => {
   const renderCertificateItem = (item: CertificateListItem) => {
     return (
       <CertificateListDetail
-        key={item.id}
         detail={item}
+        key={item.id}
+        dragging={dragging}
         isSelected={!!operation.selectedItem[item.id]}
         selectMode={!!operation.selectMode}
         onClick={() => {
@@ -95,20 +99,22 @@ const CertificateList: FC = () => {
     }
 
     return (
-      <ReactSortable
+      <Draggable
         className='w-full'
-        list={certificateList}
-        disabled
-        animation={150}
-        setList={(list) => {
+        value={certificateList}
+        sortableOptions={{
+          disabled: isMobile,
+          onStart: () => setDragging(true),
+          onEnd: () => setDragging(false),
+        }}
+        renderItem={renderCertificateItem}
+        onChange={(list) => {
           setCertificateList(list);
+          updateCertificateSort(list.map((i) => i.id));
           console.log(list);
-        }}>
-        {certificateList?.map(renderCertificateItem)}
-      </ReactSortable>
+        }}
+      />
     );
-
-    // certificateListResp?.data?.map(renderCertificateItem);
   };
 
   const renderContent = () => {

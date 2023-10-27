@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from 'react-query';
-import { requestGet, requestPost } from './base';
+import { useMutation } from 'react-query';
+import { requestPost } from './base';
 import { AddGroupResp, CertificateGroupStorage, GroupConfigUpdateData } from '@/types/group';
 
 /** 新增分组 */
@@ -45,5 +45,12 @@ export const useUpdateDefaultGroup = (groupId: number) => {
 export const useUpdateGroupConfig = (groupId: number) => {
   return useMutation(async (data: GroupConfigUpdateData) => {
     return await requestPost(`group/${groupId}/updateConfig`, data);
+  });
+};
+
+/** 更新排序 */
+export const useUpdateGroupSort = () => {
+  return useMutation(async (groupIds: number[]) => {
+    return await requestPost('group/updateSort', { groupIds });
   });
 };

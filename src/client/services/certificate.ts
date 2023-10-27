@@ -107,3 +107,19 @@ export const useDeleteCertificate = () => {
     },
   );
 };
+
+/**
+ * 更新凭证排序
+ */
+export const useUpdateCertificateSort = () => {
+  return useMutation(
+    async (ids: number[]) => {
+      return await requestPost('certificate/updateSort', { ids });
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('certificateList');
+      },
+    },
+  );
+};
