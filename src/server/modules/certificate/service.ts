@@ -86,7 +86,11 @@ export const createCertificateService = (props: Props) => {
       if (!groupUnlocked) return groupLockResp;
     }
 
-    await db.certificate().whereIn('id', certificateIds).update('groupId', newGroupId);
+    await db
+      .certificate()
+      .whereIn('id', certificateIds)
+      .update('groupId', newGroupId)
+      .update('order', -1);
 
     return { code: 200 };
   };
@@ -98,6 +102,7 @@ export const createCertificateService = (props: Props) => {
 
     const newData: Omit<CertificateStorage, 'id'> = {
       ...detail,
+      order: -1,
       createTime: Date.now(),
       updateTime: Date.now(),
     };
@@ -145,13 +150,15 @@ export const createCertificateService = (props: Props) => {
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE);
 
-    const rows: CertificateListItem[] = result.map((item) => ({
-      id: item.id,
-      name: item.name,
-      markColor: item.markColor || '',
-      updateTime: dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss'),
-      groupId: item.groupId,
-    }));
+    const rows: CertificateListItem[] = result
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        markColor: item.markColor || '',
+        updateTime: dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss'),
+        groupId: item.groupId,
+      }))
+      .filter((i) => isGroupUnlocked(i.groupId));
 
     const data: SearchCertificateResp = { total, rows };
 

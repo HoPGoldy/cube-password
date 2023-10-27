@@ -2,6 +2,7 @@ import { STATUS_CODE, TABLE_NAME } from '@/config';
 import { groupLockResp } from '@/server/constants';
 import { SessionController } from '@/server/lib/auth';
 import { DatabaseAccessor } from '@/server/lib/sqlite';
+import { CertificateStorage } from '@/types/certificate';
 import {
   AddGroupResp,
   CertificateGroupDetail,
@@ -58,9 +59,18 @@ export const createGroupService = (props: Props) => {
     if (!groupUnlocked) return groupLockResp;
 
     const list = await db.certificate().select().where('groupId', groupId).orderBy('order', 'asc');
-    console.log('🚀 ~ file: service.ts:61 ~ getCertificateList ~ list:', list);
 
-    const data: CertificateListItem[] = list.map((item) => ({
+    // 取出未排序的凭证并按创建时间排序
+    // 因为新创建的凭证 order 是 -1，如果不进行下面排序的话，当连续创建多个凭证时，新凭证就会默认插入到第 2、3、4...个位置，而不是第一个
+    const unSortedList: CertificateStorage[] = [];
+    const sortedList: CertificateStorage[] = [];
+    list.forEach((item) => {
+      if (item.order === -1) unSortedList.push(item);
+      else sortedList.push(item);
+    });
+    const dateSortList = unSortedList.sort((a, b) => b.createTime - a.createTime);
+
+    const data: CertificateListItem[] = [...dateSortList, ...sortedList].map((item) => ({
       id: item.id,
       name: item.name,
       markColor: item.markColor || '',
