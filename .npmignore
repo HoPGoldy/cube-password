@@ -1,5 +1,6 @@
 docs/
 src/
+.storage/
 tailwind.config.js
 tsconfig.json
 tsconfig.node.json
@@ -7,5 +8,8 @@ tsconfig.server.json
 vite.config.ts
 .vscode
 .eslintrc.js
+.prettierrc.js
+.stylelintrc.js
 iconfont.js
 /index.html
+config.json

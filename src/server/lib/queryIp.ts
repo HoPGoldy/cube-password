@@ -1,7 +1,8 @@
+import path from 'path';
 import Searcher from './ip2region';
 
 // 指定ip2region数据文件路径
-const dbPath = './ip2region.xdb';
+const dbPath = path.join(__dirname, './ip2region.xdb');
 
 // 同步读取vectorIndex
 const vectorIndex = Searcher.loadVectorIndexFromFile(dbPath);
