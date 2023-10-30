@@ -27,7 +27,7 @@ export const routes = createHashRouter([
           { index: true, element: <Entry /> },
           // 凭证列表
           { path: '/group/:groupId', element: <CertificateList /> },
-          // 日记搜索
+          // 搜索
           { path: '/search', element: <Search /> },
         ],
         element: (

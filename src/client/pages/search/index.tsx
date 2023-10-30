@@ -96,7 +96,7 @@ const SearchDiary: FC = () => {
 
   return (
     <>
-      <PageTitle title='搜索日记' />
+      <PageTitle title='搜索凭证' />
 
       <PageContent>
         <div className='p-4'>
