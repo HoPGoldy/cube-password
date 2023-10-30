@@ -62,6 +62,7 @@ export const createCertificateRouter = (props: Props) => {
     name: Joi.string().required(),
     groupId: Joi.number().required(),
     markColor: Joi.string().allow(''),
+    icon: Joi.string().allow(''),
     content: Joi.string().required(),
     order: Joi.number().required(),
   });
@@ -91,6 +92,7 @@ export const createCertificateRouter = (props: Props) => {
     name: Joi.string(),
     groupId: Joi.number(),
     markColor: Joi.string().allow(''),
+    icon: Joi.string().allow(''),
     content: Joi.string(),
     order: Joi.number(),
   });

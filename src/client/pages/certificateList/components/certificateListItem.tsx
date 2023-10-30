@@ -64,11 +64,22 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
         onClick={onClick}
         onTouchStart={onLongClick}
         onTouchEnd={onLongClickEnd}>
-        <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>
-          {detail.name}
+        <div className='flex items-center'>
+          {detail.icon && (
+            <div className='mr-3 absolute'>
+              <i className={`${detail.icon} text-[38px] text-gray-700`} />
+            </div>
+          )}
+
+          <div className={detail.icon ? 'ml-12' : ''}>
+            <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>
+              {detail.name}
+            </div>
+            <div className='text-gray-600 dark:text-gray-400'>{detail.updateTime}</div>
+          </div>
+
+          {renderRightMark()}
         </div>
-        <div className='text-gray-600 dark:text-gray-400'>{detail.updateTime}</div>
-        {renderRightMark()}
       </Card>
     </div>
   );

@@ -53,6 +53,7 @@ export const createDb = (props: Props) => {
       t.text('content').notNullable();
       t.integer('order');
       t.string('markColor');
+      t.string('icon');
     });
   });
 

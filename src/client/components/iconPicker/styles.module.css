@@ -1,0 +1,3 @@
+.container :global(.ant-modal-content) {
+  @apply p-4
+}

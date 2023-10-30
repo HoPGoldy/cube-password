@@ -102,6 +102,7 @@ export const createCertificateService = (props: Props) => {
 
     const newData: Omit<CertificateStorage, 'id'> = {
       ...detail,
+      icon: detail.icon || 'fa-solid fa-key',
       order: -1,
       createTime: Date.now(),
       updateTime: Date.now(),

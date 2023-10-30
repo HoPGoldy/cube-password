@@ -24,6 +24,8 @@ interface Props {
 const getNewFormValues = () => {
   return {
     title: '新密码',
+    icon: 'fa-solid fa-key',
+    markColor: '',
     fields: [
       {
         label: '网址',
@@ -70,12 +72,13 @@ export const CertificateDetail: FC<Props> = (props) => {
     if (!detailResp || !detailResp.data) return;
     if (!pwdKey || !pwdIv) return;
 
-    const { content, name, markColor } = detailResp.data;
+    const { content, name, markColor, icon } = detailResp.data;
     try {
       const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
       const values = {
         title: name,
         markColor: markColor || '',
+        icon,
         fields,
       };
 
@@ -110,6 +113,7 @@ export const CertificateDetail: FC<Props> = (props) => {
     await saveDetail({
       name: values.title,
       markColor: values.markColor,
+      icon: values.icon,
       content,
       groupId: props.groupId,
       order: 0,

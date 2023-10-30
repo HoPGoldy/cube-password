@@ -1,10 +1,11 @@
 import React, { FC, useState } from 'react';
-import { Button, Form, Modal } from 'antd';
+import { Button, Form, Modal, Space } from 'antd';
 import { TitleInput } from './titleInput';
-import { HeartFilled, QuestionCircleFilled, DeleteFilled } from '@ant-design/icons';
+import { HeartFilled, QuestionCircleFilled, DeleteFilled, SmileOutlined } from '@ant-design/icons';
 import { ColorPicker, MARK_COLORS_MAP } from '@/client/components/colorPicker';
 import { messageWarning } from '@/client/utils/message';
 import { useDeleteCertificate } from '@/client/services/certificate';
+import { IconPicker } from '@/client/components/iconPicker';
 
 interface UseTip {
   name: string;
@@ -73,6 +74,36 @@ const ColorIcon: FC<ColorIconProps> = (props) => {
   );
 };
 
+interface IconSelectProps {
+  disabled: boolean;
+  value?: string;
+  onChange?: (color: string) => void;
+}
+
+const IconSelect: FC<IconSelectProps> = (props) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div>
+      <Button
+        type='text'
+        icon={
+          <SmileOutlined
+            style={{ color: props?.value ? MARK_COLORS_MAP[props?.value] : '' }}
+            className='text-xl text-gray-500 dark:text-gray-200'
+          />
+        }
+        onClick={() => setIsOpen(true)}></Button>
+      <IconPicker
+        value={props?.value}
+        onChange={props?.onChange}
+        visible={isOpen}
+        onClose={() => setIsOpen(false)}
+      />
+    </div>
+  );
+};
+
 interface DetailTitleProps {
   certificateId: number;
   disabled: boolean;
@@ -119,24 +150,29 @@ export const DetailTitle: FC<DetailTitleProps> = (props) => {
       {contextHolder}
 
       <div className='flex'>
-        <Form.Item noStyle name='markColor'>
-          <ColorIcon disabled={disabled} />
-        </Form.Item>
-        {disabled ? (
-          <Button
-            className='ml-2'
-            type='text'
-            danger
-            loading={deleting}
-            icon={<DeleteFilled className='text-xl text-gray-500 dark:text-gray-200' />}
-            onClick={onDeleteCertificate}></Button>
-        ) : (
-          <Button
-            className='ml-2'
-            type='text'
-            icon={<QuestionCircleFilled className='text-xl text-gray-500 dark:text-gray-200' />}
-            onClick={() => setUseTipVisible(true)}></Button>
-        )}
+        <Space>
+          {disabled ? (
+            <Button
+              type='text'
+              danger
+              loading={deleting}
+              icon={<DeleteFilled className='text-xl text-gray-500 dark:text-gray-200' />}
+              onClick={onDeleteCertificate}></Button>
+          ) : (
+            <>
+              <Form.Item noStyle name='icon'>
+                <IconSelect disabled={disabled} />
+              </Form.Item>
+              <Form.Item noStyle name='markColor'>
+                <ColorIcon disabled={disabled} />
+              </Form.Item>
+              <Button
+                type='text'
+                icon={<QuestionCircleFilled className='text-xl text-gray-500 dark:text-gray-200' />}
+                onClick={() => setUseTipVisible(true)}></Button>
+            </>
+          )}
+        </Space>
       </div>
 
       <Modal

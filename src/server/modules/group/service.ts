@@ -74,6 +74,7 @@ export const createGroupService = (props: Props) => {
       id: item.id,
       name: item.name,
       markColor: item.markColor || '',
+      icon: item.icon || '',
       updateTime: dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss'),
       groupId: item.groupId,
     }));

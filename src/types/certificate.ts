@@ -34,6 +34,10 @@ export interface CertificateStorage {
    */
   markColor?: string;
   /**
+   * 图标
+   */
+  icon?: string;
+  /**
    * 凭证所属分组 id
    */
   groupId: number;
@@ -69,6 +73,7 @@ export interface CertificateDetailResp<T = string> {
   name: string;
   markColor: string;
   content: T;
+  icon: string;
   createTime: string;
   updateTime: string;
 }
@@ -79,6 +84,7 @@ export interface CertificateDetailResp<T = string> {
 export interface CertificateAddReqBody {
   name: string;
   markColor?: string;
+  icon?: string;
   groupId: number;
   content: string;
   order: number;
