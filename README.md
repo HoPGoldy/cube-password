@@ -2,23 +2,23 @@
 
 ![](https://img.shields.io/npm/v/cube-password)
 
-一个简单扁平的桌面 / 移动端记事本。基于 react / koa2 / sqlite / typescript / antd。
+一个简单扁平的桌面 / 移动端密码管理器。基于 react / koa2 / sqlite / typescript / antd。
 
 <details>
     <summary style="cursor:pointer">查看桌面端截图</summary>
-    <a href="https://imgse.com/i/p9hgbUf"><img src="https://s1.ax1x.com/2023/05/19/p9hgbUf.png" alt="登录"></a>
-    <a href="https://imgse.com/i/p9hgX8g"><img src="https://s1.ax1x.com/2023/05/19/p9hgX8g.png" alt="日记列表"></a>
-    <a href="https://imgse.com/i/p9hgj2Q"><img src="https://s1.ax1x.com/2023/05/19/p9hgj2Q.png" alt="日记编辑"></a>
-    <a href="https://imgse.com/i/p9hgOPS"><img src="https://s1.ax1x.com/2023/05/19/p9hgOPS.png" alt="搜索"></a>
+    <a href="https://imgse.com/i/pim69xK"><img src="https://z1.ax1x.com/2023/10/30/pim69xK.png" alt="登录"></a>
+    <a href="https://imgse.com/i/pim6Fqe"><img src="https://z1.ax1x.com/2023/10/30/pim6Fqe.png" alt="列表"></a>
+    <a href="https://imgse.com/i/pim6AVH"><img src="https://z1.ax1x.com/2023/10/30/pim6AVH.png" alt="详情"></a>
+    <a href="https://imgse.com/i/pim6p26"><img src="https://z1.ax1x.com/2023/10/30/pim6p26.png" alt="编辑"></a>
 </details>
 
 <details>
     <summary style="cursor:pointer">查看移动端截图</summary>
     <div style="display: flex; align-items: center;">
-        <a href="https://imgse.com/i/p9hgTbt"><img src="https://s1.ax1x.com/2023/05/19/p9hgTbt.png" alt="移动端登录"></a>
-        <a href="https://imgse.com/i/p9hgHVP"><img src="https://s1.ax1x.com/2023/05/19/p9hgHVP.png" alt="移动端日记列表"></a>
-        <a href="https://imgse.com/i/p9hgIKA"><img src="https://s1.ax1x.com/2023/05/19/p9hgIKA.png" alt="移动端日记编辑"></a>
-        <a href="https://imgse.com/i/p9hgoDI"><img src="https://s1.ax1x.com/2023/05/19/p9hgoDI.png" alt="移动端搜索"></a>
+        <a href="https://imgse.com/i/pim6PKO"><img src="https://z1.ax1x.com/2023/10/30/pim6PKO.png" alt="移动端登录"></a>
+        <a href="https://imgse.com/i/pim6irD"><img src="https://z1.ax1x.com/2023/10/30/pim6irD.png" alt="移动端列表"></a>
+        <a href="https://imgse.com/i/pim6S8x"><img src="https://z1.ax1x.com/2023/10/30/pim6S8x.png" alt="移动端设置"></a>
+        <a href="https://imgse.com/i/pimyzP1"><img src="https://z1.ax1x.com/2023/10/30/pimyzP1.png" alt="移动端搜索"></a>
     </div>
 </details>
 
@@ -26,11 +26,11 @@
 
 - 🚫 无广告、无收费、完全开源，自己的数据自己掌握
 - 🚀 极其简单的部署，仅需两行命令
-- 📝 支持 MarkDown 语法，支持实时预览、自动保存、颜色标记
-- 🔗 支持笔记内图片、文件上传
-- 📱 桌面端 / 移动端全站响应式设计
-- 🎯 支持关键字搜索
-- 🤖 支持多用户使用
+- 🔀 自动生成随机用户名、自定义强密码
+- 🔒 凭证内容加密存放、支持搜索、排序、颜色标记功能
+- 🗂 支持额外加密的分组
+- 🏹 安全模块：内置一组安全策略，会分析请求，并在发现异常时进行提醒
+- 🛒 内置 TOTP 二次认证，支持 google 身份认证器等令牌工具
 - 🌙 黑夜模式
 
 ## 部署
