@@ -147,7 +147,6 @@ const Login = () => {
           disabled={isLogin}
           type='primary'
           style={{ background: appConfig?.buttonColor }}
-          icon={<i className='fa-solid fa-0' />}
           onClick={onSubmit}>
           登 录
         </Button>

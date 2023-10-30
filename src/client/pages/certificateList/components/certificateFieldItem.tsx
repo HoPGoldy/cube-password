@@ -1,26 +1,31 @@
 import { getRandName } from '@/client/services/certificate';
-import { messageSuccess } from '@/client/utils/message';
-import { STATUS_CODE } from '@/config';
+import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH, STATUS_CODE } from '@/config';
 import { CertificateField } from '@/types/certificate';
 import { openNewTab } from '@/utils/common';
-import { Input, Button, InputProps, Row, Col } from 'antd';
+import { Input, Button, InputProps, Row, Col, message } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { FC, useMemo } from 'react';
 import { CloseOutlined, GiftOutlined } from '@ant-design/icons';
 import s from '../styles.module.css';
 import { TextAreaProps } from 'antd/es/input';
+import { customAlphabet } from 'nanoid';
+import { useAtomValue } from 'jotai';
+import { stateUser } from '@/client/store/user';
 
 interface CertificateFieldItemProps {
   showDelete?: boolean;
   value?: CertificateField;
   disabled?: boolean;
   onChange?: (value: CertificateField) => void;
-  createPwd: (size?: number | undefined) => string;
   onDelete: () => void;
 }
 
+const COPY_MESSAGE_KEY = 'copy';
+
 export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
-  const { value, onChange, onDelete, showDelete, disabled, createPwd } = props;
+  const { value, onChange, onDelete, showDelete, disabled } = props;
+  const userInfo = useAtomValue(stateUser);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const [isPassword, isUsername, isLink] = useMemo(() => {
     return [
@@ -44,10 +49,14 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
   };
 
   const onCreatePassword = () => {
-    const newPassword = createPwd();
+    const alphabet = userInfo?.createPwdAlphabet ?? DEFAULT_PASSWORD_ALPHABET;
+    const length = userInfo?.createPwdLength ?? DEFAULT_PASSWORD_LENGTH;
+    const nanoid = customAlphabet(alphabet, +length);
+    const newPassword = nanoid();
+
     onValueChange(newPassword);
     copy(newPassword);
-    messageSuccess('新密码已复制');
+    messageApi.success({ key: COPY_MESSAGE_KEY, content: '新密码已复制' });
   };
 
   const onCreateUsername = async () => {
@@ -55,7 +64,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
     if (resp.code !== STATUS_CODE.SUCCESS) return;
     onValueChange(resp.data || '');
     copy(resp.data || '');
-    messageSuccess('新名称已复制');
+    messageApi.success({ key: COPY_MESSAGE_KEY, content: '新名称已复制' });
   };
 
   const onFieldClick = () => {
@@ -72,7 +81,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
       return;
     }
     copy(value.value);
-    messageSuccess('已复制' + value.label);
+    messageApi.success({ key: COPY_MESSAGE_KEY, content: '已复制' + value.label });
   };
 
   const renderMainInput = () => {
@@ -101,6 +110,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
 
   return (
     <div className='relative w-full'>
+      {contextHolder}
       <Row>
         <Col span={20}>
           <Input

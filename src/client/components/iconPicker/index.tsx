@@ -23,7 +23,7 @@ export const IconPicker: FC<PropsWithChildren<Props>> = (props) => {
       <div className='flex flex-col justify-center items-center'>
         <div className='my-4'>
           <i
-            className={`${value ?? 'fa-solid fa-xmark'} ${
+            className={`${value || 'fa-solid fa-xmark'} ${
               value ? undefined : 'text-gray-300'
             } text-center text-[96px]`}
           />

@@ -1,14 +1,12 @@
-import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { Button, Form, Modal, Watermark } from 'antd';
 import { PlusOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { messageError, messageSuccess, messageWarning } from '@/client/utils/message';
 import { useCertificateDetail, useSaveCertificate } from '@/client/services/certificate';
-import { DEFAULT_PASSWORD_ALPHABET, DEFAULT_PASSWORD_LENGTH } from '@/config';
-import { customAlphabet } from 'nanoid';
 import { DetailTitle } from './components/detailTitle';
 import { aes, aesDecrypt } from '@/utils/crypto';
 import { useAtomValue } from 'jotai';
-import { stateMainPwd, stateUser } from '@/client/store/user';
+import { stateMainPwd } from '@/client/store/user';
 import { CertificateFieldItem } from './components/certificateFieldItem';
 import copy from 'copy-to-clipboard';
 import { CertificateField } from '@/types/certificate';
@@ -50,7 +48,6 @@ const getNewFormValues = () => {
 export const CertificateDetail: FC<Props> = (props) => {
   const { detailId, onCancel } = props;
   const [form] = Form.useForm();
-  const userInfo = useAtomValue(stateUser);
   const isMobile = useIsMobile();
   const { pwdKey, pwdIv } = useAtomValue(stateMainPwd);
   /** 是否可以编辑 */
@@ -91,13 +88,6 @@ export const CertificateDetail: FC<Props> = (props) => {
     }
   }, [detailResp]);
 
-  const createPwd = useMemo(() => {
-    return customAlphabet(
-      userInfo?.createPwdAlphabet ?? DEFAULT_PASSWORD_ALPHABET,
-      userInfo?.createPwdLength ?? DEFAULT_PASSWORD_LENGTH,
-    );
-  }, [userInfo?.createPwdAlphabet, userInfo?.createPwdLength]);
-
   const onConfirm = async () => {
     const values = await form.validateFields();
     if (!values.title) {
@@ -117,7 +107,6 @@ export const CertificateDetail: FC<Props> = (props) => {
       icon: values.icon,
       content,
       groupId: props.groupId,
-      order: 0,
     });
 
     messageSuccess('保存成功');
@@ -201,7 +190,7 @@ export const CertificateDetail: FC<Props> = (props) => {
             return (
               <Watermark
                 content={[detailResp?.data?.name ?? '-', dayjs().format('YYYY-MM-DD HH:mm:ss')]}
-                gap={[100, 40]}>
+                gap={[100, 50]}>
                 {node}
               </Watermark>
             );
@@ -226,7 +215,6 @@ export const CertificateDetail: FC<Props> = (props) => {
                   <CertificateFieldItem
                     disabled={readonly}
                     showDelete={fields.length > 1}
-                    createPwd={createPwd}
                     onDelete={() => remove(field.name)}
                   />
                 </Form.Item>

@@ -111,7 +111,6 @@ const CertificateList: FC = () => {
         onChange={(list) => {
           setCertificateList(list);
           updateCertificateSort(list.map((i) => i.id));
-          console.log(list);
         }}
       />
     );
