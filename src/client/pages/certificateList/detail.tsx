@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Form, Modal } from 'antd';
+import { Button, Form, Modal, Watermark } from 'antd';
 import { PlusOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { messageError, messageSuccess, messageWarning } from '@/client/utils/message';
 import { useCertificateDetail, useSaveCertificate } from '@/client/services/certificate';
@@ -14,6 +14,7 @@ import copy from 'copy-to-clipboard';
 import { CertificateField } from '@/types/certificate';
 import { useIsMobile } from '@/client/layouts/responsive';
 import { Draggable } from '@/client/components/draggable';
+import dayjs from 'dayjs';
 
 interface Props {
   groupId: number;
@@ -194,7 +195,17 @@ export const CertificateDetail: FC<Props> = (props) => {
           title={
             <DetailTitle disabled={readonly} certificateId={detailId || 0} onCancel={onCancel} />
           }
-          footer={renderModalFooter()}>
+          footer={renderModalFooter()}
+          modalRender={(node) => {
+            if (!readonly) return node;
+            return (
+              <Watermark
+                content={[detailResp?.data?.name ?? '-', dayjs().format('YYYY-MM-DD HH:mm:ss')]}
+                gap={[100, 40]}>
+                {node}
+              </Watermark>
+            );
+          }}>
           {renderDetailForm()}
         </Modal>
       </Form>
