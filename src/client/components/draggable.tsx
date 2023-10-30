@@ -18,6 +18,7 @@ export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (props) 
   const sortableRef = useRef<Sortable | null>(null);
 
   const onEnd = (e: Sortable.SortableEvent) => {
+    sortableOptions?.onEnd?.(e);
     const { oldIndex, newIndex } = e;
     if (isNil(oldIndex) && isNil(newIndex)) {
       console.error('拖动失败，新旧索引为空', e);
@@ -30,7 +31,6 @@ export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (props) 
     newValue.splice(newIndex || 0, 0, removed);
 
     onChange(newValue, oldIndex, newIndex);
-    sortableOptions?.onEnd?.(e);
   };
 
   useEffect(() => {

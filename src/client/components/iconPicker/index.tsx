@@ -21,6 +21,7 @@ export const IconPicker: FC<PropsWithChildren<Props>> = (props) => {
       width={200}
       className={s.container}>
       <div className='flex flex-col justify-center items-center'>
+        <Input value={value} onChange={(e) => onChange?.(e.target.value)} placeholder='图标名' />
         <div className='my-4'>
           <i
             className={`${value || 'fa-solid fa-xmark'} ${
@@ -28,12 +29,6 @@ export const IconPicker: FC<PropsWithChildren<Props>> = (props) => {
             } text-center text-[96px]`}
           />
         </div>
-        <Input
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          className='mt-4'
-          placeholder='图标名'
-        />
         <Button
           onClick={() => {
             window.open(

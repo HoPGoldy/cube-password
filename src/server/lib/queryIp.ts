@@ -2,7 +2,7 @@ import path from 'path';
 import Searcher from './ip2region';
 
 // 指定ip2region数据文件路径
-const dbPath = path.join(__dirname, './ip2region.xdb');
+const dbPath = path.join(__dirname, '../../../ip2region.xdb');
 
 // 同步读取vectorIndex
 const vectorIndex = Searcher.loadVectorIndexFromFile(dbPath);
@@ -15,9 +15,8 @@ const searcher = Searcher.newWithVectorIndex(dbPath, vectorIndex);
  */
 export const queryIp = async (ip?: string): Promise<string> => {
   try {
-    // 不是 ipv4 地址，没法查询
-    if (!ip || !ip.startsWith('::ffff:')) return '';
-    const pureIp = ip?.replace('::ffff:', '');
+    if (!ip) return '';
+    const pureIp = ip.startsWith('::ffff:') ? ip?.replace('::ffff:', '') : ip;
 
     // 查询 await 或 promise均可
     const data = await searcher.search(pureIp);

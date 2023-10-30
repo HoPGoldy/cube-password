@@ -51,6 +51,8 @@ export const useAddGroupContent = () => {
         title='新建分组'
         open={showAddModal}
         okButtonProps={{ loading: submitting }}
+        okText='创建'
+        cancelText='取消'
         onOk={onClickSave}
         onCancel={() => setShowAddModal(false)}>
         <Form

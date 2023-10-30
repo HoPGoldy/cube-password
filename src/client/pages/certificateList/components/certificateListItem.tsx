@@ -66,12 +66,12 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
         onTouchEnd={onLongClickEnd}>
         <div className='flex items-center'>
           {detail.icon && (
-            <div className='mr-3 absolute'>
-              <i className={`${detail.icon} text-[38px] text-gray-700`} />
+            <div className='w-[56px] absolute text-center'>
+              <i className={`${detail.icon} text-[38px] text-gray-700 dark:text-gray-200`} />
             </div>
           )}
 
-          <div className={detail.icon ? 'ml-12' : ''}>
+          <div className={detail.icon ? 'ml-[68px]' : ''}>
             <div className='font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden'>
               {detail.name}
             </div>
