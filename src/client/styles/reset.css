@@ -36,6 +36,7 @@ input {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
 /** 加上这个类可以让表单更紧凑 **/
 .better-form .ant-form-item-label {
   @apply !pb-0 md:!pb-2;

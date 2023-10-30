@@ -46,6 +46,7 @@
 
 .passwordLockIcon::after {
   @apply absolute right-[-18px] bottom-[-8px] text-5xl;
+
   content: '🗝️';
 }
 
@@ -55,14 +56,12 @@
 
 .totpLockIcon::after {
   @apply absolute right-[-18px] bottom-[-8px] text-5xl;
+
   content: '📱';
 }
 
-.itemWrapDrag:after {
+.itemWrapDrag::after {
   content: "";
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
 }
