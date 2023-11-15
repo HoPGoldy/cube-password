@@ -4,6 +4,8 @@
 
 一个简单扁平的桌面 / 移动端密码管理器。基于 react / koa2 / sqlite / typescript / antd。
 
+cube-password 使用的安全机制详见 [这里](./SECURE.md)。
+
 <details>
     <summary style="cursor:pointer">查看桌面端截图</summary>
     <a href="https://imgse.com/i/pim69xK"><img src="https://z1.ax1x.com/2023/10/30/pim69xK.png" alt="登录"></a>
