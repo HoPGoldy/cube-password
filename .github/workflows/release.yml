@@ -30,14 +30,14 @@ jobs:
       - name: Get Version
         uses: rexdefuror/read-package-json@v1.0.5
 
-      - name: Check docker version
-        run: docker -v
+      - name: Set image name
+        run: echo "IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/cube-password" >> $GITHUB_ENV
 
       - name: Build the Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/cube-password:${{ env.PACKAGE_VERSION }} .
+        run: docker build -t $IMAGE_NAME:${{ env.PACKAGE_VERSION }} -t $IMAGE_NAME:latest .
 
       - name: Log in to Docker Hub
         run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push the Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/cube-password:${{ env.PACKAGE_VERSION }}
+        run: docker push $IMAGE_NAME:${{ env.PACKAGE_VERSION }} $IMAGE_NAME:latest

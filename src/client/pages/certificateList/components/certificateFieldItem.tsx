@@ -93,7 +93,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
       autoComplete: 'off',
       'aria-autocomplete': 'none',
       // 如果不设置这个的话，移动端上点击输入框复制内容会弹出键盘
-      readOnly: true,
+      readOnly: disabled,
     };
 
     if (!disabled) {
