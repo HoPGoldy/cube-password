@@ -88,6 +88,12 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
     const commonProps: InputProps = {
       value: value?.value,
       onChange: undefined,
+      // 用户保存的密码输入框上要关闭浏览器的自动补全
+      // 不然有可能会覆盖掉用户保存的密码
+      autoComplete: 'off',
+      'aria-autocomplete': 'none',
+      // 如果不设置这个的话，移动端上点击输入框复制内容会弹出键盘
+      readOnly: true,
     };
 
     if (!disabled) {

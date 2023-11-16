@@ -23,6 +23,10 @@ h6 {
   @apply text-xs font-bold;
 }
 
+input[type="password"]::-ms-reveal{
+  display:none
+}
+
 a {
   text-decoration: none;
 }
