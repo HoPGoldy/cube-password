@@ -117,6 +117,7 @@ const Login = () => {
           size='large'
           className='mb-2'
           ref={passwordInputRef}
+          autoFocus
           placeholder='请输入密码'
           prefix={<KeyOutlined />}
           value={password}
