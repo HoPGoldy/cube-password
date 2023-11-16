@@ -5,6 +5,11 @@ on:
     tags:
       - '*'
 
+# on:
+#   push:
+#     branches:
+#       - master
+
 jobs:
   build-publish-npm:
     runs-on: ubuntu-latest
@@ -40,4 +45,4 @@ jobs:
         run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push the Docker image
-        run: docker push $IMAGE_NAME:${{ env.PACKAGE_VERSION }} $IMAGE_NAME:latest
+        run: docker push $IMAGE_NAME:${{ env.PACKAGE_VERSION }} && docker push $IMAGE_NAME:latest
