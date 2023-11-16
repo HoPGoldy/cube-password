@@ -1,5 +1,5 @@
 import { Card, Checkbox } from 'antd';
-import React, { FC, useRef } from 'react';
+import React, { FC, TouchEventHandler, useRef } from 'react';
 import s from '../styles.module.css';
 import { CertificateListItem } from '@/types/group';
 import { MARK_COLORS_MAP } from '@/client/components/colorPicker';
@@ -21,6 +21,8 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
   const primaryColor = useAtomValue(stateAppConfig)?.primaryColor;
   /** 长按计时器 */
   const longClickTimer = useRef<NodeJS.Timeout>();
+  /** 长按时的点位 */
+  const longClickPos = useRef<{ x: number; y: number }>();
 
   // 渲染凭证列表项右侧的标记
   const renderRightMark = () => {
@@ -42,7 +44,9 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
     return null;
   };
 
-  const onLongClick = () => {
+  const onLongClick: TouchEventHandler<HTMLDivElement> = (e) => {
+    const { clientX, clientY } = e.touches?.[0] || {};
+    longClickPos.current = { x: clientX, y: clientY };
     longClickTimer.current = setTimeout(() => {
       props.onLongClick?.();
     }, 500);
@@ -50,6 +54,20 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
 
   const onLongClickEnd = () => {
     clearTimeout(longClickTimer.current);
+  };
+
+  const onTouchMove: TouchEventHandler<HTMLDivElement> = (e) => {
+    if (!longClickPos.current) return;
+
+    const { clientX, clientY } = e.touches?.[0] || {};
+    // 检查移动和起始点的偏移量
+    const offsetX = clientX - longClickPos.current.x;
+    const offsetY = clientY - longClickPos.current.y;
+
+    // 偏移量太大就认为用户在滚动列表，而不是想触发长按
+    if (Math.abs(offsetX) > 10 || Math.abs(offsetY) > 10) {
+      onLongClickEnd();
+    }
   };
 
   return (
@@ -63,6 +81,7 @@ export const CertificateListDetail: FC<CertificateListItemProps> = (props) => {
         }}
         onClick={onClick}
         onTouchStart={onLongClick}
+        onTouchMove={onTouchMove}
         onTouchEnd={onLongClickEnd}>
         <div className='flex items-center'>
           {detail.icon && (
