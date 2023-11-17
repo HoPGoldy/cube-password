@@ -42,7 +42,7 @@ cube-password 使用的安全机制详见 [这里](./SECURE.md)。
 cube-password 不需要 docker compose，单容器即可运行：
 
 ```bash
-docker run -d -p 3701:3700 -v ~/cube-password-storage:/app hopgoldy/cube-password:1.0.0
+docker run -d -p 3701:3700 -v ~/cube-password-storage:/app hopgoldy/cube-password
 ```
 
 执行后数据将会存放在 `~/cube-password-storage` 目录。
@@ -69,6 +69,14 @@ cube-password run
 ## 数据迁移
 
 所有数据均默认保存在应用目录下的 `.storage` 文件夹里，所以直接将其打包然后复制到其他地方即可。
+
+## cube-app 系列
+
+cube-password 是 cube-app 系列项目中的一员，cube-app 是以相同 UI 风格、相同技术栈、相同部署方式所构建的系列 web app，致力于用最小的成本，解决生活中最常见的需求。
+
+目前 cube-app 包含以下项目：
+
+[日记本 cube-diary](https://github.com/HoPGoldy/cube-diary)，[密码本 cube-password](https://github.com/HoPGoldy/cube-password)，[笔记本 cube-note](https://github.com/HoPGoldy/cube-note)。
 
 ## 许可
 
