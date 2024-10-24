@@ -12,8 +12,17 @@ interface DraggableProps<T> {
   sortableOptions?: Sortable.Options;
 }
 
+const DEFAULT_SORTABLE_OPTIONS: Sortable.Options = {};
+
 export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (props) => {
-  const { value, onChange, className, renderItem, extra, sortableOptions = {} } = props;
+  const {
+    value,
+    onChange,
+    className,
+    renderItem,
+    extra,
+    sortableOptions = DEFAULT_SORTABLE_OPTIONS,
+  } = props;
   const sortableDomRef = useRef<HTMLDivElement | null>(null);
   const sortableRef = useRef<Sortable | null>(null);
 
@@ -33,21 +42,28 @@ export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (props) 
     onChange(newValue, oldIndex, newIndex);
   };
 
+  const getFullOptions = () => {
+    return {
+      ...DEFAULT_SORTABLE_OPTIONS,
+      ...sortableOptions,
+      onEnd,
+    };
+  };
+
   useEffect(() => {
     if (!sortableDomRef.current) return;
 
     sortableRef.current = Sortable.create(sortableDomRef.current, {
       animation: 150,
       // filter: '.ignore-elements',
-      ...sortableOptions,
+      ...getFullOptions(),
     });
   }, []);
 
   useEffect(() => {
     if (!sortableRef.current) return;
-    Object.entries(sortableOptions).forEach(([key, value]) => {
-      const opt = key === 'onEnd' ? onEnd : value;
-      sortableRef.current?.option(key as any, opt);
+    Object.entries(getFullOptions()).forEach(([key, value]) => {
+      sortableRef.current?.option(key as any, value);
     });
   }, [sortableOptions]);
 

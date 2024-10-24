@@ -120,6 +120,7 @@ const Login = () => {
           autoFocus
           placeholder='请输入密码'
           prefix={<KeyOutlined />}
+          autoComplete='new-password'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyUp={(e) => {

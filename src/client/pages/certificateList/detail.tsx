@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState } from 'react';
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Form, Modal, Watermark } from 'antd';
 import { PlusOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { messageError, messageSuccess, messageWarning } from '@/client/utils/message';
@@ -201,6 +201,10 @@ export const CertificateDetail: FC<Props> = (props) => {
     );
   };
 
+  const sortableOptions = useMemo(() => {
+    return { disabled: readonly, handle: '.move-handle' };
+  }, [readonly]);
+
   const renderDetailForm = () => {
     return (
       <Form.List name='fields'>
@@ -208,7 +212,7 @@ export const CertificateDetail: FC<Props> = (props) => {
           <>
             <Draggable
               value={fields}
-              sortableOptions={{ disabled: readonly, handle: '.move-handle' }}
+              sortableOptions={sortableOptions}
               renderItem={(field) => (
                 // eslint-disable-next-line react/jsx-key
                 <Form.Item {...field} noStyle>
