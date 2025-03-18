@@ -146,7 +146,7 @@ const Login = () => {
         <Button
           size='large'
           block
-          disabled={isLogin}
+          loading={isLogin}
           type='primary'
           style={{ background: appConfig?.buttonColor }}
           onClick={onSubmit}>
