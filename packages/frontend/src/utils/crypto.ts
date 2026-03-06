@@ -1,15 +1,38 @@
 import CryptoJS from "crypto-js";
+import { nanoid } from "nanoid";
 
-const { SHA256, AES, MD5, enc, mode, pad } = CryptoJS;
+const { SHA256, SHA512, AES, MD5, enc, mode, pad } = CryptoJS;
 
 /**
- * 获取 sha512 hash
+ * SHA512 hash
+ */
+export const sha512 = (str: string) => {
+  return SHA512(str).toString().toUpperCase();
+};
+
+/**
+ * 获取 sha512 hash (带盐)
  */
 export const shaWithSalt = (str: string, saltValue: string) => {
-  const salt = CryptoJS.SHA512(saltValue).toString(CryptoJS.enc.Hex);
+  const salt = SHA512(saltValue).toString(CryptoJS.enc.Hex);
   const saltedMessage = salt + str;
-  const hash = CryptoJS.SHA512(saltedMessage);
+  const hash = SHA512(saltedMessage);
   return hash.toString(CryptoJS.enc.Hex).toUpperCase();
+};
+
+/**
+ * 生成防重放攻击 header
+ */
+export const createReplayAttackHeaders = (url: string, secretKey: string) => {
+  const timestamp = Date.now();
+  const nonce = nanoid();
+  const sign = sha512(`${url}${nonce}${timestamp}${secretKey}`);
+
+  return {
+    "X-Timestamp": timestamp.toString(),
+    "X-Nonce": nonce,
+    "X-Signature": sign,
+  };
 };
 
 /**

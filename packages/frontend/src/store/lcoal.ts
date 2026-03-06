@@ -1,6 +1,6 @@
 import { createLocalInstance } from "@/utils/localstorage";
 
-export const prefix = "$cube-diary-";
+export const prefix = "$cube-password-";
 
-/** 请求 token */
-export const localAccessToken = createLocalInstance(prefix + "access-token");
+/** 主题 */
+export const localTheme = createLocalInstance(prefix + "theme");

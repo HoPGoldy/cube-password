@@ -4,6 +4,9 @@ import { Type } from "typebox";
 export const SchemaUserSetThemeBody = Type.Object({
   theme: Type.String({ description: "light | dark" }),
 });
+export type SchemaUserSetThemeBodyType = Type.Static<
+  typeof SchemaUserSetThemeBody
+>;
 
 // 统计信息
 export const SchemaUserStatisticResponse = Type.Object({
@@ -16,3 +19,9 @@ export const SchemaUserCreatePwdSettingBody = Type.Object({
   createPwdAlphabet: Type.String(),
   createPwdLength: Type.Number({ minimum: 4, maximum: 128 }),
 });
+export type SchemaUserCreatePwdSettingBodyType = Type.Static<
+  typeof SchemaUserCreatePwdSettingBody
+>;
+export type SchemaUserStatisticResponseType = Type.Static<
+  typeof SchemaUserStatisticResponse
+>;

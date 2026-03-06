@@ -1,30 +1,74 @@
 import { atom, getDefaultStore } from "jotai";
-import JWT from "@/utils/jwt";
-import { localAccessToken } from "./lcoal";
-import { SchemaAuthLoginResponseType } from "@shared-types/auth";
+import { localTheme } from "./lcoal";
+import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
 
-/**
- * 当前用户的登录 token
- */
-export const stateUserToken = atom<string | null>(localAccessToken.get());
+export type AppTheme = "light" | "dark";
 
-export const stateUserJwtData = atom((get) => {
-  const token = get(stateUserToken);
-  if (!token) return null;
-  return new JWT(token).payload;
-});
+export interface UserInfo {
+  theme: AppTheme;
+  initTime: string;
+  defaultGroupId: number;
+  hasNotice: boolean;
+  withTotp: boolean;
+  createPwdAlphabet: string;
+  createPwdLength: number;
+}
+
+export interface GroupInfo {
+  id: number;
+  name: string;
+  lockType: string;
+  unlocked: boolean;
+}
+
+/** session token (in-memory only, not persisted) */
+export const stateSessionToken = atom<string | undefined>(undefined);
+
+/** replay attack secret */
+export const stateReplayAttackSecret = atom<string | undefined>(undefined);
+
+/** user info */
+export const stateUser = atom<UserInfo | undefined>(undefined);
+
+/** is logged in */
+export const stateIsLoggedIn = atom<boolean>((get) => !!get(stateSessionToken));
+
+/** group list */
+export const stateGroupList = atom<GroupInfo[]>([]);
 
 export const logout = () => {
   const store = getDefaultStore();
-
-  store.set(stateUserToken, null);
-  localAccessToken.set();
+  store.set(stateSessionToken, undefined);
+  store.set(stateReplayAttackSecret, undefined);
+  store.set(stateUser, undefined);
+  store.set(stateGroupList, []);
 };
 
 export const login = (payload: SchemaAuthLoginResponseType) => {
-  const { token } = payload;
+  const { token, replayAttackSecret, groups, ...userInfo } = payload;
   const store = getDefaultStore();
 
-  store.set(stateUserToken, token);
-  localAccessToken.set(token);
+  store.set(stateSessionToken, token);
+  store.set(stateReplayAttackSecret, replayAttackSecret);
+  store.set(stateUser, {
+    ...userInfo,
+    theme: (userInfo.theme as AppTheme) || "light",
+  });
+  store.set(
+    stateGroupList,
+    groups.map((g) => ({
+      ...g,
+      unlocked: g.lockType === "None",
+    })),
+  );
+
+  localTheme.set(userInfo.theme || "light");
+};
+
+export const changeTheme = (theme: AppTheme) => {
+  const store = getDefaultStore();
+  const userInfo = store.get(stateUser);
+  if (!userInfo) return;
+  store.set(stateUser, { ...userInfo, theme });
+  localTheme.set(theme);
 };

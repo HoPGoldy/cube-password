@@ -9,17 +9,23 @@ export const SchemaGroupItem = Type.Object({
   order: Type.Number(),
 });
 
+export type SchemaGroupItemType = Type.Static<typeof SchemaGroupItem>;
+
 // 添加分组
 export const SchemaGroupAddBody = Type.Object({
   name: Type.String(),
   lockType: Type.Optional(Type.String({ default: "None" })),
   passwordHash: Type.Optional(Type.String()),
 });
+export type SchemaGroupAddBodyType = Type.Static<typeof SchemaGroupAddBody>;
 
 export const SchemaGroupAddResponse = Type.Object({
   newId: Type.Number(),
   newList: Type.Array(SchemaGroupItem),
 });
+export type SchemaGroupAddResponseType = Type.Static<
+  typeof SchemaGroupAddResponse
+>;
 
 // 分组列表
 export const SchemaGroupListResponse = Type.Object({
@@ -38,6 +44,10 @@ export const SchemaGroupUpdateConfigBody = Type.Object({
   lockType: Type.String(),
   passwordHash: Type.Optional(Type.String()),
 });
+
+export type SchemaGroupUpdateConfigBodyType = Type.Static<
+  typeof SchemaGroupUpdateConfigBody
+>;
 
 // 解锁分组
 export const SchemaGroupUnlockBody = Type.Object({
@@ -63,3 +73,6 @@ export const SchemaGroupSortBody = Type.Object({
 export const SchemaGroupSetDefaultBody = Type.Object({
   id: Type.Number(),
 });
+export type SchemaGroupSetDefaultBodyType = Type.Static<
+  typeof SchemaGroupSetDefaultBody
+>;

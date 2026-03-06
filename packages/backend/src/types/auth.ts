@@ -5,22 +5,30 @@ import { Type } from "typebox";
 export const SchemaChallengeResponse = Type.Object({
   code: Type.String(),
 });
+export type SchemaChallengeResponseType = Type.Static<
+  typeof SchemaChallengeResponse
+>;
 
 // ========== Global ==========
 
 export const SchemaGlobalResponse = Type.Object({
   isInitialized: Type.Boolean(),
 });
+export type SchemaGlobalResponseType = Type.Static<typeof SchemaGlobalResponse>;
 
 // ========== Init ==========
 
 export const SchemaAuthInitBody = Type.Object({
   passwordHash: Type.String({ description: "bcrypt hash of password" }),
 });
+export type SchemaAuthInitBodyType = Type.Static<typeof SchemaAuthInitBody>;
 
 export const SchemaAuthInitResponse = Type.Object({
   success: Type.Boolean(),
 });
+export type SchemaAuthInitResponseType = Type.Static<
+  typeof SchemaAuthInitResponse
+>;
 
 // ========== Login ==========
 
@@ -31,6 +39,7 @@ export const SchemaAuthLoginBody = Type.Object({
     Type.String({ description: "TOTP code for remote login" }),
   ),
 });
+export type SchemaAuthLoginBodyType = Type.Static<typeof SchemaAuthLoginBody>;
 
 export const SchemaAuthLoginResponse = Type.Object({
   token: Type.String(),
@@ -50,6 +59,9 @@ export const SchemaAuthLoginResponse = Type.Object({
     }),
   ),
 });
+export type SchemaAuthLoginResponseType = Type.Static<
+  typeof SchemaAuthLoginResponse
+>;
 
 // ========== Change Password ==========
 
@@ -58,3 +70,6 @@ export const SchemaAuthChangePasswordBody = Type.Object({
   challengeCode: Type.String({ description: "The challenge code used" }),
   newPasswordHash: Type.String({ description: "bcrypt hash of new password" }),
 });
+export type SchemaAuthChangePasswordBodyType = Type.Static<
+  typeof SchemaAuthChangePasswordBody
+>;

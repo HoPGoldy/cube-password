@@ -13,6 +13,9 @@ export const SchemaCertificateAddBody = Type.Object({
 export const SchemaCertificateAddResponse = Type.Object({
   id: Type.Number(),
 });
+export type SchemaCertificateAddBodyType = Type.Static<
+  typeof SchemaCertificateAddBody
+>;
 
 // 凭证详情
 export const SchemaCertificateDetailBody = Type.Object({
@@ -57,6 +60,10 @@ export const SchemaCertificateSortBody = Type.Object({
   ids: Type.Array(Type.Number()),
 });
 
+export type SchemaCertificateMoveBodyType = Type.Static<
+  typeof SchemaCertificateMoveBody
+>;
+
 // 搜索
 export const SchemaCertificateSearchBody = Type.Object({
   keyword: Type.Optional(Type.String()),
@@ -80,3 +87,18 @@ export const SchemaCertificateSearchResponse = Type.Object({
   ),
   total: Type.Number(),
 });
+export type SchemaCertificateSearchBodyType = Type.Static<
+  typeof SchemaCertificateSearchBody
+>;
+export type SchemaCertificateSearchResponseType = Type.Static<
+  typeof SchemaCertificateSearchResponse
+>;
+export type SchemaCertificateDetailResponseType = Type.Static<
+  typeof SchemaCertificateDetailResponse
+>;
+export type SchemaCertificateUpdateBodyType = Type.Static<
+  typeof SchemaCertificateUpdateBody
+>;
+export type SchemaCertificateDeleteBodyType = Type.Static<
+  typeof SchemaCertificateDeleteBody
+>;

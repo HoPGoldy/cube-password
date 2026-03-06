@@ -26,13 +26,13 @@ export const usePageTitle = (title: string) => {
 
   useEffect(() => {
     setCurrentPageTitle(title);
-    document.title = title + " - Cube Note";
+    document.title = title + " - Cube Password";
   }, [title]);
 
   useEffect(() => {
     return () => {
       setCurrentPageTitle("");
-      document.title = "Cube Note";
+      document.title = "Cube Password";
     };
   }, []);
 };

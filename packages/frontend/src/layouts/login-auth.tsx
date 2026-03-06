@@ -1,12 +1,12 @@
 import { FC, PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
-import { stateUserJwtData } from "../store/user";
+import { stateIsLoggedIn } from "../store/user";
 import { useAtomValue } from "jotai";
 
 export const LoginAuth: FC<PropsWithChildren> = ({ children }) => {
-  const userInfo = useAtomValue(stateUserJwtData);
+  const isLoggedIn = useAtomValue(stateIsLoggedIn);
 
-  if (!userInfo) {
+  if (!isLoggedIn) {
     return <Navigate to={`/login`} replace />;
   }
 
