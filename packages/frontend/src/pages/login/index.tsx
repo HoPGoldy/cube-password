@@ -1,40 +1,41 @@
-import { useEffect } from "react";
-import { login, stateUserToken } from "@/store/user";
-import { useAtom } from "jotai";
+import { useEffect, useState } from "react";
+import { login, stateIsLoggedIn } from "@/store/user";
+import { useAtomValue } from "jotai";
 import { LoginPage } from "./page";
 import { PageLoading } from "@/components/page-loading";
-import { useRefreshToken } from "@/services/auth";
+import { queryGlobal } from "@/services/auth";
 import { useLoginSuccess } from "./use-login-success";
+import { Navigate } from "react-router-dom";
 
 const Login = () => {
-  const [userToken, setUserToken] = useAtom(stateUserToken);
-  const { mutateAsync: refreshToken, isPending: renewLoading } =
-    useRefreshToken();
-
-  const { runLoginSuccess } = useLoginSuccess();
+  const isLoggedIn = useAtomValue(stateIsLoggedIn);
+  const [checking, setChecking] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(true);
 
   useEffect(() => {
-    if (!userToken) return;
-    // 进登录页面发现 token 还在，试一下 token 能不能用，能用就跳转回去
-    // 只在页面初始化的时候执行一次
-
-    const runRenew = async () => {
-      const resp = await refreshToken();
-      console.log("resp", resp);
-      if (!resp.success) {
-        setUserToken("");
-        return;
+    const checkGlobal = async () => {
+      try {
+        const resp = await queryGlobal();
+        if (resp.success) {
+          setIsInitialized(resp.data!.isInitialized);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setChecking(false);
       }
-
-      login(resp.data);
-      runLoginSuccess();
     };
-
-    runRenew();
+    checkGlobal();
   }, []);
 
-  if (userToken || renewLoading) {
-    return <PageLoading />;
+  if (checking) return <PageLoading />;
+
+  if (!isInitialized) {
+    return <Navigate to="/init" replace />;
+  }
+
+  if (isLoggedIn) {
+    return <Navigate to="/" replace />;
   }
 
   return <LoginPage />;

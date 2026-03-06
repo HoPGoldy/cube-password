@@ -72,3 +72,9 @@ export const changeTheme = (theme: AppTheme) => {
   store.set(stateUser, { ...userInfo, theme });
   localTheme.set(theme);
 };
+
+/** 主密码的 AES key/iv（用于前端加解密凭证内容） */
+export const stateMainPwd = atom<{
+  pwdKey?: CryptoJS.lib.WordArray;
+  pwdIv?: CryptoJS.lib.WordArray;
+}>({});
