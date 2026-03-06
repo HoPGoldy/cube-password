@@ -52,9 +52,11 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   AppConfig: 'AppConfig',
-  Attachment: 'Attachment',
   AccessToken: 'AccessToken',
-  Diary: 'Diary'
+  User: 'User',
+  Group: 'Group',
+  Certificate: 'Certificate',
+  Notification: 'Notification'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -80,23 +82,6 @@ export const AppConfigScalarFieldEnum = {
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
-export const AttachmentScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  filename: 'filename',
-  size: 'size',
-  hash: 'hash',
-  path: 'path',
-  thumbPath: 'thumbPath',
-  thumbSize: 'thumbSize',
-  type: 'type',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type AttachmentScalarFieldEnum = (typeof AttachmentScalarFieldEnum)[keyof typeof AttachmentScalarFieldEnum]
-
-
 export const AccessTokenScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -109,16 +94,59 @@ export const AccessTokenScalarFieldEnum = {
 export type AccessTokenScalarFieldEnum = (typeof AccessTokenScalarFieldEnum)[keyof typeof AccessTokenScalarFieldEnum]
 
 
-export const DiaryScalarFieldEnum = {
-  dateStr: 'dateStr',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  date: 'date',
-  content: 'content',
-  color: 'color'
+export const UserScalarFieldEnum = {
+  id: 'id',
+  passwordHash: 'passwordHash',
+  initTime: 'initTime',
+  theme: 'theme',
+  defaultGroupId: 'defaultGroupId',
+  commonLocation: 'commonLocation',
+  totpSecret: 'totpSecret',
+  createPwdAlphabet: 'createPwdAlphabet',
+  createPwdLength: 'createPwdLength'
 } as const
 
-export type DiaryScalarFieldEnum = (typeof DiaryScalarFieldEnum)[keyof typeof DiaryScalarFieldEnum]
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const GroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  order: 'order',
+  lockType: 'lockType',
+  passwordHash: 'passwordHash',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GroupScalarFieldEnum = (typeof GroupScalarFieldEnum)[keyof typeof GroupScalarFieldEnum]
+
+
+export const CertificateScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  groupId: 'groupId',
+  content: 'content',
+  order: 'order',
+  markColor: 'markColor',
+  icon: 'icon',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CertificateScalarFieldEnum = (typeof CertificateScalarFieldEnum)[keyof typeof CertificateScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  date: 'date',
+  type: 'type',
+  isRead: 'isRead'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
 export const SortOrder = {

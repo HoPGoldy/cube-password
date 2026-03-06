@@ -23,17 +23,27 @@ export * from './enums';
  */
 export type AppConfig = Prisma.AppConfigModel
 /**
- * Model Attachment
- * 
- */
-export type Attachment = Prisma.AttachmentModel
-/**
  * Model AccessToken
  * 
  */
 export type AccessToken = Prisma.AccessTokenModel
 /**
- * Model Diary
+ * Model User
  * 
  */
-export type Diary = Prisma.DiaryModel
+export type User = Prisma.UserModel
+/**
+ * Model Group
+ * 
+ */
+export type Group = Prisma.GroupModel
+/**
+ * Model Certificate
+ * 
+ */
+export type Certificate = Prisma.CertificateModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel

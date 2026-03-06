@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.0.1",
   "engineVersion": "f09f2815f091dbba658cdcd2264306d88bb5bda6",
   "activeProvider": "sqlite",
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"./client/\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n\nenum UserRole {\n  USER\n  ADMIN\n}\n\nmodel AppConfig {\n  key       String   @id\n  value     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\nmodel Attachment {\n  id        String   @id @default(uuid())\n  userId    String\n  filename  String\n  size      Int\n  hash      String\n  path      String\n  thumbPath String? // 图片类型的附件会有缩略图\n  thumbSize Int?\n  type      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([userId])\n}\n\n// MCP 访问令牌\nmodel AccessToken {\n  id          String    @id @default(uuid())\n  name        String\n  tokenHash   String    @unique\n  tokenPrefix String // 明文前8位，仅用于展示\n  createdAt   DateTime  @default(now())\n  lastUsedAt  DateTime?\n}\n\n// 日记 - 单用户系统\nmodel Diary {\n  dateStr   String   @id // \"20251224\" - 用户本地日期，作为主键\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  date    BigInt  @unique // 毫秒级时间戳 (UTC 0)，用于范围查询和排序\n  content String  @default(\"\")\n  color   String? // 颜色标签\n\n  @@index([date])\n}\n",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"./client/\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n\nmodel AppConfig {\n  key       String   @id\n  value     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// MCP 访问令牌\nmodel AccessToken {\n  id          String    @id @default(uuid())\n  name        String\n  tokenHash   String    @unique\n  tokenPrefix String // 明文前8位，仅用于展示\n  createdAt   DateTime  @default(now())\n  lastUsedAt  DateTime?\n}\n\n// 单用户表\nmodel User {\n  id                Int      @id @default(autoincrement())\n  passwordHash      String\n  initTime          DateTime @default(now())\n  theme             String   @default(\"light\")\n  defaultGroupId    Int      @default(0)\n  commonLocation    String   @default(\"\")\n  totpSecret        String   @default(\"\")\n  createPwdAlphabet String   @default(\"\")\n  createPwdLength   Int      @default(16)\n}\n\n// 凭证分组\nmodel Group {\n  id           Int           @id @default(autoincrement())\n  name         String\n  order        Int           @default(0)\n  lockType     String        @default(\"None\") // None | Password | Totp\n  passwordHash String?\n  createdAt    DateTime      @default(now())\n  updatedAt    DateTime      @updatedAt\n  certificates Certificate[]\n}\n\n// 凭证（密码条目）\nmodel Certificate {\n  id        Int      @id @default(autoincrement())\n  name      String\n  groupId   Int\n  content   String   @default(\"\")\n  order     Int      @default(-1)\n  markColor String?\n  icon      String?\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)\n\n  @@index([groupId])\n}\n\n// 安全通知\nmodel Notification {\n  id      Int      @id @default(autoincrement())\n  title   String\n  content String   @default(\"\")\n  date    DateTime @default(now())\n  type    Int      @default(1)\n  isRead  Int      @default(0)\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"AppConfig\":{\"fields\":[{\"name\":\"key\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"value\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Attachment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"filename\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"size\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"hash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"path\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"thumbPath\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"thumbSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AccessToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenPrefix\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastUsedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Diary\":{\"fields\":[{\"name\":\"dateStr\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"date\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"color\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"AppConfig\":{\"fields\":[{\"name\":\"key\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"value\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AccessToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenPrefix\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastUsedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"initTime\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"theme\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"defaultGroupId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"commonLocation\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"totpSecret\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createPwdAlphabet\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createPwdLength\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null},\"Group\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"lockType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"certificates\",\"kind\":\"object\",\"type\":\"Certificate\",\"relationName\":\"CertificateToGroup\"}],\"dbName\":null},\"Certificate\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"groupId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"markColor\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"icon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"group\",\"kind\":\"object\",\"type\":\"Group\",\"relationName\":\"CertificateToGroup\"}],\"dbName\":null},\"Notification\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"isRead\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -185,16 +185,6 @@ export interface PrismaClient<
   get appConfig(): Prisma.AppConfigDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.attachment`: Exposes CRUD operations for the **Attachment** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Attachments
-    * const attachments = await prisma.attachment.findMany()
-    * ```
-    */
-  get attachment(): Prisma.AttachmentDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
    * `prisma.accessToken`: Exposes CRUD operations for the **AccessToken** model.
     * Example usage:
     * ```ts
@@ -205,14 +195,44 @@ export interface PrismaClient<
   get accessToken(): Prisma.AccessTokenDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.diary`: Exposes CRUD operations for the **Diary** model.
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Diaries
-    * const diaries = await prisma.diary.findMany()
+    * // Fetch zero or more Users
+    * const users = await prisma.user.findMany()
     * ```
     */
-  get diary(): Prisma.DiaryDelegate<ExtArgs, { omit: OmitOpts }>;
+  get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.group`: Exposes CRUD operations for the **Group** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Groups
+    * const groups = await prisma.group.findMany()
+    * ```
+    */
+  get group(): Prisma.GroupDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.certificate`: Exposes CRUD operations for the **Certificate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Certificates
+    * const certificates = await prisma.certificate.findMany()
+    * ```
+    */
+  get certificate(): Prisma.CertificateDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.notification`: Exposes CRUD operations for the **Notification** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Notifications
+    * const notifications = await prisma.notification.findMany()
+    * ```
+    */
+  get notification(): Prisma.NotificationDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {
