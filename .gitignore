@@ -55,5 +55,6 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 storage
+!**/storage/ip2region.xdb
 
 .playwright-mcp
