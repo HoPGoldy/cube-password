@@ -13,11 +13,6 @@ datasource db {
   provider = "sqlite"
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
 model AppConfig {
   key       String   @id
   value     String
@@ -33,6 +28,57 @@ model AccessToken {
   tokenPrefix String // 明文前8位，仅用于展示
   createdAt   DateTime  @default(now())
   lastUsedAt  DateTime?
+}
+
+// 单用户表
+model User {
+  id                Int      @id @default(autoincrement())
+  passwordHash      String
+  initTime          DateTime @default(now())
+  theme             String   @default("light")
+  defaultGroupId    Int      @default(0)
+  commonLocation    String   @default("")
+  totpSecret        String   @default("")
+  createPwdAlphabet String   @default("")
+  createPwdLength   Int      @default(16)
+}
+
+// 凭证分组
+model Group {
+  id           Int           @id @default(autoincrement())
+  name         String
+  order        Int           @default(0)
+  lockType     String        @default("None") // None | Password | Totp
+  passwordHash String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  certificates Certificate[]
+}
+
+// 凭证（密码条目）
+model Certificate {
+  id        Int      @id @default(autoincrement())
+  name      String
+  groupId   Int
+  content   String   @default("")
+  order     Int      @default(-1)
+  markColor String?
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+// 安全通知
+model Notification {
+  id      Int      @id @default(autoincrement())
+  title   String
+  content String   @default("")
+  date    DateTime @default(now())
+  type    Int      @default(1)
+  isRead  Int      @default(0)
 }
 
 

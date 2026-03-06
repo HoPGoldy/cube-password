@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import { UserRole } from "@db/client";
 import { signJwtToken } from "./utils";
 import { AppInstance } from "@/types";
 import {
@@ -62,7 +61,7 @@ export const registerController = (options: RegisterOptions) => {
         throw new ErrorUnauthorized();
       }
 
-      if (requireAdmin && request.user.role !== UserRole.ADMIN) {
+      if (requireAdmin && request.user.role !== "ADMIN") {
         throw new ErrorBanned();
       }
     }
@@ -99,7 +98,7 @@ export const registerController = (options: RegisterOptions) => {
       const token = signJwtToken(server, {
         id: "admin",
         username: "admin",
-        role: UserRole.ADMIN,
+        role: "ADMIN",
       });
 
       return {
