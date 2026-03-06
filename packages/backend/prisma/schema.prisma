@@ -25,22 +25,6 @@ model AppConfig {
   updatedAt DateTime @updatedAt
 }
 
-model Attachment {
-  id        String   @id @default(uuid())
-  userId    String
-  filename  String
-  size      Int
-  hash      String
-  path      String
-  thumbPath String? // 图片类型的附件会有缩略图
-  thumbSize Int?
-  type      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-}
-
 // MCP 访问令牌
 model AccessToken {
   id          String    @id @default(uuid())
@@ -51,15 +35,4 @@ model AccessToken {
   lastUsedAt  DateTime?
 }
 
-// 日记 - 单用户系统
-model Diary {
-  dateStr   String   @id // "20251224" - 用户本地日期，作为主键
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  date    BigInt  @unique // 毫秒级时间戳 (UTC 0)，用于范围查询和排序
-  content String  @default("")
-  color   String? // 颜色标签
-
-  @@index([date])
-}
