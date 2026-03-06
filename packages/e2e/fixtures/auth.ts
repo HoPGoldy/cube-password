@@ -11,7 +11,7 @@ export const test = base.extend({
     await page.goto("/login");
     await page.getByTestId("login-password-input").fill(LOGIN_PASSWORD);
     await page.getByTestId("login-submit-btn").click();
-    // 等待跳转到首页
+    // 等待跳转到首页（/certificates）
     await expect(page).not.toHaveURL(/\/login/);
     await use(page);
   },

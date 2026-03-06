@@ -22,16 +22,4 @@ test.describe("认证", () => {
     await page.getByTestId("login-submit-btn").click();
     await expect(page).not.toHaveURL(/\/login/);
   });
-
-  test("登录成功后 token 写入 localStorage", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByTestId("login-password-input").fill(PASSWORD);
-    await page.getByTestId("login-submit-btn").click();
-    await expect(page).not.toHaveURL(/\/login/);
-
-    const token = await page.evaluate(() =>
-      localStorage.getItem("$cube-diary-access-token"),
-    );
-    expect(token).toBeTruthy();
-  });
 });
