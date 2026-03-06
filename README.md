@@ -1,26 +1,25 @@
-## cube-password
+# cube-diary
 
-![](https://img.shields.io/npm/v/cube-password)
+![Docker Image Version](https://img.shields.io/docker/v/hopgoldy/cube-diary)
+![Docker Image Size](https://img.shields.io/docker/image-size/hopgoldy/cube-diary)
 
-一个简单扁平的桌面 / 移动端密码管理器。基于 react / koa2 / sqlite / typescript / antd。
-
-cube-password 使用的安全机制详见 [这里](./SECURE.md)。
+cube-diary 是基于 nodejs 开发的全栈项目，致力于为个人打造轻量级的 web note 服务。基于 react / fastify / sqlite / typescript 开发。
 
 <details>
     <summary style="cursor:pointer">查看桌面端截图</summary>
-    <a href="https://imgse.com/i/pim69xK"><img src="https://z1.ax1x.com/2023/10/30/pim69xK.png" alt="登录"></a>
-    <a href="https://imgse.com/i/pim6Fqe"><img src="https://z1.ax1x.com/2023/10/30/pim6Fqe.png" alt="列表"></a>
-    <a href="https://imgse.com/i/pim6AVH"><img src="https://z1.ax1x.com/2023/10/30/pim6AVH.png" alt="详情"></a>
-    <a href="https://imgse.com/i/pim6p26"><img src="https://z1.ax1x.com/2023/10/30/pim6p26.png" alt="编辑"></a>
+    <a href="https://imgse.com/i/p9hgbUf"><img src="https://s1.ax1x.com/2023/05/19/p9hgbUf.png" alt="登录"></a>
+    <a href="https://imgse.com/i/p9hgX8g"><img src="https://s1.ax1x.com/2023/05/19/p9hgX8g.png" alt="日记列表"></a>
+    <a href="https://imgse.com/i/p9hgj2Q"><img src="https://s1.ax1x.com/2023/05/19/p9hgj2Q.png" alt="日记编辑"></a>
+    <a href="https://imgse.com/i/p9hgOPS"><img src="https://s1.ax1x.com/2023/05/19/p9hgOPS.png" alt="搜索"></a>
 </details>
 
 <details>
     <summary style="cursor:pointer">查看移动端截图</summary>
     <div style="display: flex; align-items: center;">
-        <a href="https://imgse.com/i/pim6PKO"><img src="https://z1.ax1x.com/2023/10/30/pim6PKO.png" alt="移动端登录"></a>
-        <a href="https://imgse.com/i/pim6irD"><img src="https://z1.ax1x.com/2023/10/30/pim6irD.png" alt="移动端列表"></a>
-        <a href="https://imgse.com/i/pim6S8x"><img src="https://z1.ax1x.com/2023/10/30/pim6S8x.png" alt="移动端设置"></a>
-        <a href="https://imgse.com/i/pimyzP1"><img src="https://z1.ax1x.com/2023/10/30/pimyzP1.png" alt="移动端搜索"></a>
+        <a href="https://imgse.com/i/p9hgTbt"><img src="https://s1.ax1x.com/2023/05/19/p9hgTbt.png" alt="移动端登录"></a>
+        <a href="https://imgse.com/i/p9hgHVP"><img src="https://s1.ax1x.com/2023/05/19/p9hgHVP.png" alt="移动端日记列表"></a>
+        <a href="https://imgse.com/i/p9hgIKA"><img src="https://s1.ax1x.com/2023/05/19/p9hgIKA.png" alt="移动端日记编辑"></a>
+        <a href="https://imgse.com/i/p9hgoDI"><img src="https://s1.ax1x.com/2023/05/19/p9hgoDI.png" alt="移动端搜索"></a>
     </div>
 </details>
 
@@ -28,56 +27,84 @@ cube-password 使用的安全机制详见 [这里](./SECURE.md)。
 
 - 🚫 无广告、无收费、完全开源，自己的数据自己掌握
 - 🚀 极其简单的部署，仅需两行命令
-- 🔀 自动生成随机用户名、自定义强密码
-- 🔒 凭证内容加密存放、支持搜索、排序、颜色标记功能
-- 🗂 支持额外加密的分组
-- 🏹 安全模块：内置一组安全策略，会分析请求，并在发现异常时进行提醒
-- 🛒 内置 TOTP 二次认证，支持 google 身份认证器等令牌工具
-- 🌙 黑夜模式
+- 🧩 自定义 JSON 导入导出
+- 📝 支持 MarkDown 语法，支持实时预览、自动保存、颜色标记
+- 🔗 支持笔记内图片、文件上传
+- 📱 桌面端 / 移动端全站响应式设计
+- 🎯 支持关键字搜索
 
-## 部署
+## cube-diary docker 容器使用
 
-### 1. docker 安装（推荐）
+- `FRONTEND_BASE_URL` 参数用于指定应用部署到的路径，例如想要部署到 `https://your-domain/my-sso/`，那么该参数就需要配置为 `/my-sso/`。
+- `BACKEND_JWT_SECRET` 参数用于指定应用的 jwt 密钥，不配置的话，每次重启应用都会生成一个新的密钥。
 
-cube-password 不需要 docker compose，单容器即可运行：
-
-```bash
-docker run -d -p 3701:3700 -v ~/cube-password-storage:/app hopgoldy/cube-password
+```
+docker run -d \
+  --restart=always \
+  -p 9736:3499 \
+  -v cube-diary-storage:/app/packages/backend/storage \
+  -e FRONTEND_BASE_URL=/cube-diary/ \
+  -e BACKEND_JWT_SECRET=V1StGXR8_Z5jdHi6B-myT \
+  hopgoldy/cube-diary:0.1.1
 ```
 
-执行后数据将会存放在 `~/cube-password-storage` 目录。
+## 初始化安装
 
-### 2. npm 安装
+1、安装依赖：
 
-cube-password 在开发时就以简单部署为目标，不需要配置数据库，不需要安装任何软件。仅需 node（*16+*）环境即可运行。
-
-```bash
-# 安装项目
-# linux 下安装失败时请尝试 sudo 并在安装命令后追加 --unsafe-perm=true --allow-root 参数
-npm install -g cube-password
-
-# 启动项目
-cube-password run
+```sh
+pnpm install
 ```
 
-项目启动后将会在当前目录下生成 `config.json`，可以通过修改该文件来对应用进行简单的自定义。
+2、初始化后端开发数据库：
 
-服务将默认开启在端口 3700 上，可以通过 `cube-password run --port=3701` 修改端口。
+```sh
+pnpm init:dev
+```
 
-*使用 `-h` 参数查看更多配置*
+## 启动项目
+
+启动后端服务：
+
+```sh
+pnpm start:backend
+```
+
+启动前端服务：
+
+```sh
+pnpm start:frontend
+```
+
+然后访问前端服务的地址即可。
+
+## 本地配置
+
+如果需要自定义本地环境变量配置的话，可以进入对应的项目仓库，例如 `packages/frontend` 或者 `packages/backend`，将 `.env` 文件复制一份 `.env.local`，并填写其中参数。
+
+`.env.local` 的配置会覆盖默认的 `.env`。
+
+## 本地 docker 构建
+
+镜像构建：
+
+```sh
+# 在根目录下构建即可
+docker build -t cube-diary:local .
+```
+
+容器启动：
+
+```sh
+docker run -p 3001:3499 cube-diary:local
+```
 
 ## 数据迁移
 
-所有数据均默认保存在应用目录下的 `.storage` 文件夹里，所以直接将其打包然后复制到其他地方即可。
-
-## cube-app 系列
-
-cube-password 是 cube-app 系列项目中的一员，cube-app 是以相同 UI 风格、相同技术栈、相同部署方式所构建的系列 web app，致力于用最小的成本，解决生活中最常见的需求。
-
-目前 cube-app 包含以下项目：
-
-[日记本 cube-diary](https://github.com/HoPGoldy/cube-diary)，[密码本 cube-password](https://github.com/HoPGoldy/cube-password)，[笔记本 cube-note](https://github.com/HoPGoldy/cube-note)。
+所有数据均默认保存在应用目录下的 `packages/backend/storage` 文件夹里，所以直接将其打包然后复制到其他地方即可。
 
 ## 许可
 
-本项目源码基于 GPL v3 许可开源，[点此](https://github.com/HoPGoldy/cube-password/blob/master/LICENSE) 查看更多信息。
+本项目源码基于 GPL v3 许可开源，[点此](https://github.com/HoPGoldy/cube-diary/blob/master/LICENSE) 查看更多信息。
+
+todo 侧边栏空状态处理

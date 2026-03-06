@@ -1,0 +1,54 @@
+import { ComponentType, lazy, Suspense } from "react";
+import { createBrowserRouter } from "react-router-dom";
+import Loading from "./layouts/loading";
+import { LoginAuth } from "./layouts/login-auth";
+import { AppContainer } from "./layouts/app-container";
+import { Error403 } from "./pages/e403";
+import Login from "./pages/login";
+import Entry from "./pages/entry";
+import Search from "./pages/search/search";
+import AttachmentDemo from "./pages/attachment-demo";
+import MarkdownEditorDemo from "./pages/markdown-editor-demo";
+import { DiaryEdit, MonthList } from "./pages/diary";
+
+const lazyLoad = (
+  compLoader: () => Promise<{ default: ComponentType<any> }>,
+) => {
+  const Comp = lazy(compLoader);
+  return (
+    <Suspense fallback={<Loading />}>
+      <Comp />
+    </Suspense>
+  );
+};
+
+export const routes = createBrowserRouter(
+  [
+    {
+      path: "/",
+      children: [
+        { index: true, element: <Entry /> },
+        { path: "month/:month", element: <MonthList /> },
+        { path: "diary/:date", element: <DiaryEdit /> },
+        // 日记搜索
+        { path: "/search", element: <Search /> },
+      ],
+      element: (
+        <LoginAuth>
+          <AppContainer />
+        </LoginAuth>
+      ),
+    },
+    // 登录
+    {
+      path: "/login",
+      element: <Login />,
+    },
+    { path: "/e403", element: <Error403 /> },
+    { path: "/file-demo", element: <AttachmentDemo /> },
+    { path: "/markdown-editor-demo", element: <MarkdownEditorDemo /> },
+  ],
+  {
+    basename: APP_CONFIG.PATH_BASENAME,
+  },
+);
