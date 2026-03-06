@@ -1,5 +1,25 @@
 import { Type } from "typebox";
 
+// 按分组列出凭证
+export const SchemaCertificateListByGroupBody = Type.Object({
+  groupId: Type.Number(),
+});
+
+export const SchemaCertificateListByGroupResponse = Type.Object({
+  items: Type.Array(
+    Type.Object({
+      id: Type.Number(),
+      name: Type.String(),
+      markColor: Type.Union([Type.String(), Type.Null()]),
+      icon: Type.Union([Type.String(), Type.Null()]),
+      updatedAt: Type.String(),
+    }),
+  ),
+});
+export type SchemaCertificateListByGroupResponseType = Type.Static<
+  typeof SchemaCertificateListByGroupResponse
+>;
+
 // 添加凭证
 export const SchemaCertificateAddBody = Type.Object({
   name: Type.String(),

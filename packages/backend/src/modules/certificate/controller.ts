@@ -1,5 +1,7 @@
 import { AppInstance } from "@/types";
 import {
+  SchemaCertificateListByGroupBody,
+  SchemaCertificateListByGroupResponse,
   SchemaCertificateAddBody,
   SchemaCertificateAddResponse,
   SchemaCertificateDetailBody,
@@ -20,6 +22,21 @@ interface RegisterOptions {
 
 export const registerCertificateController = (options: RegisterOptions) => {
   const { server, certificateService } = options;
+
+  server.post(
+    "/certificate/list",
+    {
+      schema: {
+        description: "按分组列出凭证",
+        tags: ["certificate"],
+        body: SchemaCertificateListByGroupBody,
+        response: { 200: SchemaCertificateListByGroupResponse },
+      },
+    },
+    async (request) => {
+      return await certificateService.listByGroup(request.body.groupId);
+    },
+  );
 
   server.post(
     "/certificate/add",

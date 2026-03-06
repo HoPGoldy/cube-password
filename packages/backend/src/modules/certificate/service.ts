@@ -16,6 +16,31 @@ export class CertificateService {
     this.sessionManager = deps.sessionManager;
   }
 
+  async listByGroup(groupId: number) {
+    if (!this.sessionManager.isGroupUnlocked(groupId)) {
+      throw new ErrorForbidden("分组未解锁");
+    }
+
+    const items = await this.prisma.certificate.findMany({
+      where: { groupId },
+      orderBy: { order: "asc" },
+      select: {
+        id: true,
+        name: true,
+        markColor: true,
+        icon: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      items: items.map((item) => ({
+        ...item,
+        updatedAt: item.updatedAt.toISOString(),
+      })),
+    };
+  }
+
   async add(data: {
     name: string;
     groupId: number;

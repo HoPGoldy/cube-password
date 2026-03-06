@@ -1,0 +1,16 @@
+.sidebarBox {
+  @apply bg-gray-100 dark:bg-neutral-800;
+  @apply box-border h-full flex flex-col flex-nowrap;
+}
+
+.menuItem {
+  @apply py-2 px-3 mx-1;
+  @apply flex items-center;
+  @apply hover:dark:bg-neutral-700 hover:bg-gray-200;
+  @apply active:dark:bg-neutral-600 active:bg-gray-300;
+  @apply text-black dark:text-neutral-200 text-left transition-all cursor-pointer rounded text-sm;
+}
+
+.menuItemActive {
+  @apply bg-gray-200 dark:bg-neutral-700 font-medium;
+}

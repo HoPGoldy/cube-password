@@ -3,10 +3,28 @@ import { queryClient, requestPost } from "./base";
 import type {
   SchemaCertificateAddBodyType,
   SchemaCertificateDetailResponseType,
+  SchemaCertificateListByGroupResponseType,
   SchemaCertificateSearchBodyType,
   SchemaCertificateSearchResponseType,
   SchemaCertificateUpdateBodyType,
 } from "@shared-types/certificate";
+
+/** 按分组列出凭证 */
+export const useCertificateList = (
+  groupId: number | undefined,
+  enabled: boolean,
+) => {
+  return useQuery({
+    queryKey: ["certificateList", groupId],
+    queryFn: () =>
+      requestPost<SchemaCertificateListByGroupResponseType>(
+        "certificate/list",
+        { groupId },
+      ),
+    enabled: !!groupId && enabled,
+    refetchOnWindowFocus: false,
+  });
+};
 
 /** 凭证详情 */
 export const useCertificateDetail = (id: number | undefined) => {
