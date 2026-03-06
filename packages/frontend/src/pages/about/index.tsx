@@ -1,16 +1,14 @@
 import { FC } from "react";
-import { Flex, Modal } from "antd";
+import { useNavigate } from "react-router-dom";
+import { Button, Flex } from "antd";
 import {
+  LeftOutlined,
   SendOutlined,
   GithubOutlined,
   BarcodeOutlined,
 } from "@ant-design/icons";
 import { useAppVersion } from "@/services/app-config";
-
-interface AboutModalModalProps {
-  open: boolean;
-  onClose: () => void;
-}
+import { usePageTitle } from "@/store/global";
 
 interface AboutItem {
   icon: React.ReactNode;
@@ -19,7 +17,9 @@ interface AboutItem {
   link?: string;
 }
 
-export const AboutModal: FC<AboutModalModalProps> = (props) => {
+const AboutPage: FC = () => {
+  usePageTitle("关于");
+  const navigate = useNavigate();
   const { appVersion } = useAppVersion();
 
   const aboutItems: AboutItem[] = [
@@ -45,7 +45,7 @@ export const AboutModal: FC<AboutModalModalProps> = (props) => {
   const renderAboutItem = (item: AboutItem) => {
     const el = (
       <div
-        className="p-2 text-gray-500 dark:text-neutral-200 bg-gray-100 rounded-md"
+        className="p-3 text-gray-500 dark:text-neutral-200 bg-gray-100 dark:bg-neutral-700 rounded-md"
         key={item.title}
       >
         <Flex justify="space-between">
@@ -59,7 +59,7 @@ export const AboutModal: FC<AboutModalModalProps> = (props) => {
 
     if (item.link) {
       return (
-        <a key={item.title} href={item.link}>
+        <a key={item.title} href={item.link} target="_blank" rel="noreferrer">
           {el}
         </a>
       );
@@ -69,31 +69,38 @@ export const AboutModal: FC<AboutModalModalProps> = (props) => {
   };
 
   return (
-    <Modal
-      open={props.open}
-      onCancel={() => props.onClose()}
-      onOk={() => props.onClose()}
-      title={`关于应用 ${appVersion?.name || ""}`}
-      footer={(_, { OkBtn }) => (
-        <Flex align="center" justify="space-between">
-          <div className="text-gray-500 dark:text-gray-200">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center p-3 border-b border-gray-200">
+        <Button
+          icon={<LeftOutlined />}
+          type="text"
+          onClick={() => navigate("/settings")}
+        />
+        <span className="ml-2 text-lg font-medium">
+          关于 {appVersion?.name || "Cube Password"}
+        </span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-md mx-auto">
+          <p className="text-base mb-6">
+            安全可靠的自托管密码管理器。
+            <br />
+            <br />
+            支持分组管理、动态验证码、双端响应式布局、数据自托管等功能。
+          </p>
+
+          <Flex gap={16} vertical className="mb-6">
+            {aboutItems.map(renderAboutItem)}
+          </Flex>
+
+          <div className="text-center text-gray-400 text-sm">
             Powered by 💗 Yuzizi
           </div>
-          <OkBtn />
-        </Flex>
-      )}
-    >
-      <Flex gap={16} vertical className="mb-4">
-        <div className="mt-4 mb-2 text-base">
-          又快又好用的简单日记本 APP。
-          <br />
-          <br />
-          包含支持图片上传的 Markdown
-          编辑器、双端响应式布局、数据自托管、导入导出等功能。
         </div>
-
-        {aboutItems.map(renderAboutItem)}
-      </Flex>
-    </Modal>
+      </div>
+    </div>
   );
 };
+
+export default AboutPage;
