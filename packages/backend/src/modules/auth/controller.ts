@@ -1,132 +1,160 @@
-import bcrypt from "bcryptjs";
-import { signJwtToken } from "./utils";
 import { AppInstance } from "@/types";
 import {
+  SchemaChallengeResponse,
+  SchemaGlobalResponse,
+  SchemaAuthInitBody,
+  SchemaAuthInitResponse,
   SchemaAuthLoginBody,
   SchemaAuthLoginResponse,
-  SchemaAuthRenewResponse,
-  SchemaAuthRenewErrorResponse,
+  SchemaAuthChangePasswordBody,
 } from "@/types/auth";
 import { ErrorUnauthorized } from "@/types/error";
-import { ErrorAuthFailed, ErrorBanned } from "./error";
-import { hashPassword, shaWithSalt } from "@/lib/crypto";
-import { ENV_BACKEND_LOGIN_PASSWORD } from "@/config/env";
+import { ErrorNeedLogin } from "./error";
+import { validateReplayAttack } from "@/lib/crypto";
+import { AuthService } from "./service";
 
 declare module "fastify" {
   interface FastifyContextConfig {
-    /**
-     * 是否禁用用户登录访问（允许公开访问呢）
-     * @default false
-     */
+    /** 是否禁用认证（允许公开访问） */
     disableAuth?: boolean;
-    /**
-     * 是否为管理员权限才能访问
-     * @default false
-     */
-    requireAdmin?: boolean;
-  }
-}
-
-declare module "@fastify/jwt" {
-  interface FastifyJWT {
-    payload: { id: string; username: string; role: string; source?: string };
-    user: { id: string; username: string; role: string; source?: string };
   }
 }
 
 interface RegisterOptions {
   server: AppInstance;
+  authService: AuthService;
 }
 
-export const registerController = (options: RegisterOptions) => {
-  const { server } = options;
+export const registerAuthController = (options: RegisterOptions) => {
+  const { server, authService } = options;
 
-  // 根据配置给路由添加 swagger 安全定义
-  server.addHook("onRoute", (routeOptions) => {
-    const { disableAuth } = routeOptions.config || {};
-
-    if (!disableAuth && routeOptions.schema) {
-      routeOptions.schema.security = routeOptions.schema.security || [];
-      (routeOptions.schema.security as any[]).push({ bearerAuth: [] });
-    }
-  });
-
+  // Session + Replay Attack 认证 hook
   server.addHook("preHandler", async (request) => {
-    const { disableAuth, requireAdmin } = request.routeOptions.config;
-    if (!disableAuth) {
-      try {
-        await request.jwtVerify();
-      } catch (err) {
-        console.error(err);
-        throw new ErrorUnauthorized();
-      }
+    const { disableAuth } = request.routeOptions.config;
+    if (disableAuth) return;
 
-      if (requireAdmin && request.user.role !== "ADMIN") {
-        throw new ErrorBanned();
-      }
+    const token = request.headers["x-session-token"] as string;
+    if (!token) throw new ErrorNeedLogin();
+
+    const session = authService.validateSession(token);
+
+    // 验证防重放攻击
+    const nonce = request.headers["x-nonce"] as string;
+    const timestamp = Number(request.headers["x-timestamp"]);
+    const signature = request.headers["x-signature"] as string;
+
+    if (nonce && timestamp && signature) {
+      const url = "api" + request.url.split("/api")[1].split("?")[0];
+      const valid = validateReplayAttack(
+        url,
+        nonce,
+        timestamp,
+        signature,
+        session.replayAttackSecret,
+      );
+      if (!valid) throw new ErrorUnauthorized("请求签名无效");
     }
   });
 
+  // GET /api/challenge — 获取挑战码
+  server.get(
+    "/challenge",
+    {
+      config: { disableAuth: true },
+      schema: {
+        description: "获取登录挑战码",
+        tags: ["auth"],
+        response: { 200: SchemaChallengeResponse },
+      },
+    },
+    async () => {
+      return { code: authService.getChallenge() };
+    },
+  );
+
+  // GET /api/global — 获取初始化状态
+  server.get(
+    "/global",
+    {
+      config: { disableAuth: true },
+      schema: {
+        description: "获取全局配置",
+        tags: ["auth"],
+        response: { 200: SchemaGlobalResponse },
+      },
+    },
+    async () => {
+      return { isInitialized: await authService.isInitialized() };
+    },
+  );
+
+  // POST /api/auth/init — 初始化用户
+  server.post(
+    "/auth/init",
+    {
+      config: { disableAuth: true },
+      schema: {
+        description: "初始化用户（仅限首次）",
+        tags: ["auth"],
+        body: SchemaAuthInitBody,
+        response: { 200: SchemaAuthInitResponse },
+      },
+    },
+    async (request) => {
+      const { passwordHash } = request.body;
+      await authService.init(passwordHash);
+      return { success: true };
+    },
+  );
+
+  // POST /api/auth/login — 登录
   server.post(
     "/auth/login",
     {
-      config: {
-        disableAuth: true,
-      },
+      config: { disableAuth: true },
       schema: {
         description: "用户登录",
         tags: ["auth"],
         body: SchemaAuthLoginBody,
-        response: {
-          200: SchemaAuthLoginResponse,
-        },
+        response: { 200: SchemaAuthLoginResponse },
       },
     },
     async (request) => {
-      const { password } = request.body;
-
-      // 验证密码
-      const isPasswordValid = await bcrypt.compare(
-        password,
-        hashPassword(shaWithSalt(ENV_BACKEND_LOGIN_PASSWORD, "admin")),
-      );
-      if (!isPasswordValid) {
-        throw new ErrorAuthFailed();
-      }
-
-      // 生成 JWT 令牌
-      const token = signJwtToken(server, {
-        id: "admin",
-        username: "admin",
-        role: "ADMIN",
-      });
-
-      return {
-        token,
-      };
+      const { hash, challengeCode, code } = request.body;
+      const ip = request.ip;
+      return await authService.login(hash, challengeCode, ip, code);
     },
   );
 
+  // POST /api/auth/logout — 登出
   server.post(
-    "/auth/renew",
+    "/auth/logout",
     {
       schema: {
-        description: "续期 JWT 令牌",
+        description: "登出",
         tags: ["auth"],
-        response: {
-          200: SchemaAuthRenewResponse,
-          401: SchemaAuthRenewErrorResponse,
-        },
+      },
+    },
+    async () => {
+      authService.logout();
+      return {};
+    },
+  );
+
+  // POST /api/auth/change-password — 修改密码
+  server.post(
+    "/auth/change-password",
+    {
+      schema: {
+        description: "修改密码",
+        tags: ["auth"],
+        body: SchemaAuthChangePasswordBody,
       },
     },
     async (request) => {
-      // 已经在 preHandler 中验证了 JWT，这里直接生成新的令牌
-      const user = request.user;
-      const newToken = signJwtToken(server, user);
-
-      return {
-        token: newToken,
-      };
+      const { oldHash, challengeCode, newPasswordHash } = request.body;
+      await authService.changePassword(oldHash, challengeCode, newPasswordHash);
+      return {};
     },
   );
 };
