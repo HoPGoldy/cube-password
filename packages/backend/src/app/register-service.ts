@@ -1,13 +1,9 @@
 import { PrismaService } from "@/modules/prisma";
 import { registerController as registerAuthController } from "@/modules/auth/controller";
 import { registerController as registerAppConfigController } from "@/modules/app-config/controller";
-import { registerController as registerAttachmentController } from "@/modules/attachment/controller";
-import { registerDiaryController } from "@/modules/diary/controller";
 import { AppConfigService } from "@/modules/app-config/service";
-import { DiaryService } from "@/modules/diary/service";
 import { registerUnifyResponse } from "@/lib/unify-response";
 import type { AppInstance } from "@/types";
-import { AttachmentService } from "@/modules/attachment/service";
 import { AccessTokenService } from "@/modules/access-token/service";
 import { registerAccessTokenController } from "@/modules/access-token/controller";
 import { registerRemoveAdditionalProperties } from "@/lib/security";
@@ -25,14 +21,6 @@ export const registerService = async (instance: AppInstance) => {
     prisma,
   });
 
-  const attachmentService = new AttachmentService({
-    prisma,
-  });
-
-  const diaryService = new DiaryService({
-    prisma,
-  });
-
   const accessTokenService = new AccessTokenService({
     prisma,
   });
@@ -41,11 +29,6 @@ export const registerService = async (instance: AppInstance) => {
     registerRemoveAdditionalProperties(server);
     registerUnifyResponse(server);
 
-    registerAttachmentController({
-      attachmentService,
-      server,
-    });
-
     registerAuthController({
       server,
     });
@@ -53,11 +36,6 @@ export const registerService = async (instance: AppInstance) => {
     registerAppConfigController({
       appConfigService,
       server,
-    });
-
-    await registerDiaryController({
-      server,
-      diaryService,
     });
 
     registerAccessTokenController({
