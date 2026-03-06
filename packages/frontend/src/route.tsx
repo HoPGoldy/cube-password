@@ -7,9 +7,6 @@ import { Error403 } from "./pages/e403";
 import Login from "./pages/login";
 import Entry from "./pages/entry";
 import Search from "./pages/search/search";
-import AttachmentDemo from "./pages/attachment-demo";
-import MarkdownEditorDemo from "./pages/markdown-editor-demo";
-import { DiaryEdit, MonthList } from "./pages/diary";
 
 const lazyLoad = (
   compLoader: () => Promise<{ default: ComponentType<any> }>,
@@ -28,9 +25,6 @@ export const routes = createBrowserRouter(
       path: "/",
       children: [
         { index: true, element: <Entry /> },
-        { path: "month/:month", element: <MonthList /> },
-        { path: "diary/:date", element: <DiaryEdit /> },
-        // 日记搜索
         { path: "/search", element: <Search /> },
       ],
       element: (
@@ -45,8 +39,6 @@ export const routes = createBrowserRouter(
       element: <Login />,
     },
     { path: "/e403", element: <Error403 /> },
-    { path: "/file-demo", element: <AttachmentDemo /> },
-    { path: "/markdown-editor-demo", element: <MarkdownEditorDemo /> },
   ],
   {
     basename: APP_CONFIG.PATH_BASENAME,
