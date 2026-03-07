@@ -4,8 +4,8 @@ import { test as rawTest } from "@playwright/test";
 const PASSWORD = process.env.E2E_LOGIN_PASSWORD ?? "admin";
 
 rawTest.describe("Auth API - 公开接口", () => {
-  rawTest("GET /api/challenge 获取挑战码", async ({ request }) => {
-    const resp = await request.get(`${BASE}/challenge`);
+  rawTest("GET /api/auth/challenge 获取挑战码", async ({ request }) => {
+    const resp = await request.get(`${BASE}/auth/challenge`);
     expect(resp.status()).toBe(200);
 
     const body = await resp.json();
@@ -14,8 +14,8 @@ rawTest.describe("Auth API - 公开接口", () => {
     expect(body.data.code.length).toBeGreaterThan(0);
   });
 
-  rawTest("GET /api/global 获取全局状态", async ({ request }) => {
-    const resp = await request.get(`${BASE}/global`);
+  rawTest("GET /api/auth/global 获取全局状态", async ({ request }) => {
+    const resp = await request.get(`${BASE}/auth/global`);
     expect(resp.status()).toBe(200);
 
     const body = await resp.json();
@@ -24,7 +24,7 @@ rawTest.describe("Auth API - 公开接口", () => {
   });
 
   rawTest("POST /api/auth/login 正确密码登录成功", async ({ request }) => {
-    const challengeResp = await request.get(`${BASE}/challenge`);
+    const challengeResp = await request.get(`${BASE}/auth/challenge`);
     const challengeCode = (await challengeResp.json()).data.code;
 
     const hash = sha512(PASSWORD + challengeCode);
@@ -41,7 +41,7 @@ rawTest.describe("Auth API - 公开接口", () => {
   });
 
   rawTest("POST /api/auth/login 错误密码返回 401", async ({ request }) => {
-    const challengeResp = await request.get(`${BASE}/challenge`);
+    const challengeResp = await request.get(`${BASE}/auth/challenge`);
     const challengeCode = (await challengeResp.json()).data.code;
 
     const hash = sha512("wrong-password" + challengeCode);

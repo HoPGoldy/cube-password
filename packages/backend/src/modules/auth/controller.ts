@@ -56,9 +56,9 @@ export const registerAuthController = (options: RegisterOptions) => {
     }
   });
 
-  // GET /api/challenge — 获取挑战码
+  // GET /api/auth/challenge — 获取挑战码
   server.get(
-    "/challenge",
+    "/auth/challenge",
     {
       config: { disableAuth: true },
       schema: {
@@ -72,9 +72,9 @@ export const registerAuthController = (options: RegisterOptions) => {
     },
   );
 
-  // GET /api/global — 获取初始化状态
+  // GET /api/auth/global — 获取初始化状态
   server.get(
-    "/global",
+    "/auth/global",
     {
       config: { disableAuth: true },
       schema: {

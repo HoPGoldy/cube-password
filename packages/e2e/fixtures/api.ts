@@ -36,7 +36,7 @@ interface SessionInfo {
  */
 async function loginViaApi(request: APIRequestContext): Promise<SessionInfo> {
   // 1. Get challenge code
-  const challengeResp = await request.get(`${BASE}/challenge`);
+  const challengeResp = await request.get(`${BASE}/auth/challenge`);
   const challengeBody = await challengeResp.json();
   expect(challengeBody.success).toBe(true);
   const challengeCode = challengeBody.data.code;

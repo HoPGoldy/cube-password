@@ -80,5 +80,3 @@ model Notification {
   type    Int      @default(1)
   isRead  Int      @default(0)
 }
-
-
