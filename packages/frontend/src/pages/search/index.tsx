@@ -64,7 +64,7 @@ const SearchPage: FC = () => {
             key={item.id}
             size="small"
             className="mb-3 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => navigate("/certificates")}
+            onClick={() => navigate(`/group/${item.groupId}`)}
           >
             <div className="flex items-center">
               {item.markColor && (

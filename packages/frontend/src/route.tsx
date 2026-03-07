@@ -26,32 +26,12 @@ export const routes = createBrowserRouter(
       children: [
         { index: true, element: <Entry /> },
         {
-          path: "/certificates",
+          path: "/group/:groupId",
           element: lazyLoad(() => import("./pages/certificate-list")),
         },
         {
           path: "/search",
           element: lazyLoad(() => import("./pages/search")),
-        },
-        {
-          path: "/settings",
-          element: lazyLoad(() => import("./pages/setting")),
-        },
-        {
-          path: "/change-password",
-          element: lazyLoad(() => import("./pages/change-password")),
-        },
-        {
-          path: "/otp-config",
-          element: lazyLoad(() => import("./pages/otp-config")),
-        },
-        {
-          path: "/security-log",
-          element: lazyLoad(() => import("./pages/security-log")),
-        },
-        {
-          path: "/about",
-          element: lazyLoad(() => import("./pages/about")),
         },
       ],
       element: (

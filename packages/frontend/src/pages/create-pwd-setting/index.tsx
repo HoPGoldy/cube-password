@@ -5,8 +5,8 @@ import {
 } from "@/components/setting-container";
 import { useSearchParams } from "react-router-dom";
 
-const TITLE = "动态验证码管理";
-const PARAM_KEY = "showOtpConfig";
+const TITLE = "新密码生成规则";
+const PARAM_KEY = "showCreatePwdSetting";
 
 export default () => {
   const [searchParams, setSearchParams] = useSearchParams();
