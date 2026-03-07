@@ -13,6 +13,23 @@ export const sha512 = (str: string): string => {
 };
 
 /**
+ * AES-256-CBC 加密（与前端 CryptoJS 兼容）
+ * key = MD5(password) hex 字符串的 UTF-8 字节（32 bytes）
+ * iv  = SHA256(password) hex 字符串的前 16 字符的 UTF-8 字节（16 bytes）
+ */
+export function aesEncrypt(
+  text: string,
+  password: string = LOGIN_PASSWORD,
+): string {
+  const keyStr = crypto.createHash("md5").update(password).digest("hex");
+  const ivStr = crypto.createHash("sha256").update(password).digest("hex");
+  const key = Buffer.from(keyStr, "utf8");
+  const iv = Buffer.from(ivStr.substring(0, 16), "utf8");
+  const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
+  return cipher.update(text, "utf8", "hex") + cipher.final("hex");
+}
+
+/**
  * 生成防重放攻击请求头
  */
 export function createReplayHeaders(url: string, secretKey: string) {

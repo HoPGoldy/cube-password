@@ -1,4 +1,4 @@
-import { test, expect, authHeaders, BASE } from "../fixtures/api";
+import { test, expect, authHeaders, BASE, aesEncrypt } from "../fixtures/api";
 
 test.describe("Group API", () => {
   let createdGroupId: number;
@@ -87,6 +87,14 @@ test.describe("Certificate API", () => {
     groupId = body.data.newId;
   });
 
+  const certContent = aesEncrypt(
+    JSON.stringify([
+      { label: "网址", value: "https://example.com" },
+      { label: "用户名", value: "e2e-user" },
+      { label: "密码", value: "e2e-pass" },
+    ]),
+  );
+
   test("POST /api/certificate/add 创建凭证", async ({ request, session }) => {
     const url = "api/certificate/add";
     const resp = await request.post(`${BASE}/certificate/add`, {
@@ -95,7 +103,7 @@ test.describe("Certificate API", () => {
         name: "e2e-cert",
         icon: "",
         markColor: "#ff0000",
-        content: "encrypted-content",
+        content: certContent,
       },
       headers: authHeaders(session, url),
     });
@@ -141,7 +149,7 @@ test.describe("Certificate API", () => {
     const body = await resp.json();
     expect(body.success).toBe(true);
     expect(body.data.name).toBe("e2e-cert");
-    expect(body.data.content).toBe("encrypted-content");
+    expect(body.data.content).toBe(certContent);
   });
 
   test("POST /api/certificate/update 更新凭证", async ({
@@ -156,7 +164,13 @@ test.describe("Certificate API", () => {
         name: "e2e-cert-updated",
         icon: "",
         markColor: "#00ff00",
-        content: "updated-content",
+        content: aesEncrypt(
+          JSON.stringify([
+            { label: "网址", value: "https://updated.com" },
+            { label: "用户名", value: "updated-user" },
+            { label: "密码", value: "updated-pass" },
+          ]),
+        ),
       },
       headers: authHeaders(session, url),
     });
