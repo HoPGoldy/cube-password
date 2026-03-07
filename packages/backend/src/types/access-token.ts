@@ -40,9 +40,10 @@ export type SchemaAccessTokenExchangeType = Type.Static<
   typeof SchemaAccessTokenExchange
 >;
 
-// 兑换 JWT 响应
+// 兑换会话响应
 export const SchemaAccessTokenExchangeResponse = Type.Object({
-  accessToken: Type.String({ description: "短期 JWT（有效期 2 天）" }),
+  sessionToken: Type.String({ description: "会话令牌" }),
+  replayAttackSecret: Type.String({ description: "防重放密钥" }),
 });
 export type SchemaAccessTokenExchangeResponseType = Type.Static<
   typeof SchemaAccessTokenExchangeResponse

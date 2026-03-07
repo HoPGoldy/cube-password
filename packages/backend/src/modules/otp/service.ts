@@ -1,7 +1,7 @@
 import { PrismaService } from "@/modules/prisma";
 import { ChallengeManager } from "@/lib/challenge";
 import { sha512 } from "@/lib/crypto";
-import { authenticator } from "otplib";
+import { generateSecret, verifySync, TOTP } from "otplib";
 import { toDataURL } from "qrcode";
 import {
   ErrorOtpVerifyFailed,
@@ -34,10 +34,14 @@ export class OtpService {
     }
 
     // 生成新的 secret
-    const secret = authenticator.generateSecret();
+    const secret = generateSecret();
     this.pendingSecret = secret;
 
-    const otpauth = authenticator.keyuri("user", "CubePassword", secret);
+    const otpauth = new TOTP().toURI({
+      label: "user",
+      issuer: "CubePassword",
+      secret,
+    });
     const qrCode = await toDataURL(otpauth);
 
     return { registered: false, qrCode };
@@ -50,10 +54,10 @@ export class OtpService {
     if (user.totpSecret) throw new ErrorOtpAlreadyBound();
     if (!this.pendingSecret) throw new ErrorBadRequest("请先获取二维码");
 
-    const isValid = authenticator.verify({
+    const isValid = verifySync({
       token: code,
       secret: this.pendingSecret,
-    });
+    }).valid;
     if (!isValid) throw new ErrorOtpVerifyFailed();
 
     await this.prisma.user.update({
@@ -85,10 +89,7 @@ export class OtpService {
     }
 
     // 验证 TOTP
-    const isValid = authenticator.verify({
-      token: code,
-      secret: user.totpSecret,
-    });
+    const isValid = verifySync({ token: code, secret: user.totpSecret }).valid;
     if (!isValid) throw new ErrorOtpVerifyFailed();
 
     await this.prisma.user.update({

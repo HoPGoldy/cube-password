@@ -1,7 +1,10 @@
 import path from "path";
+import { fileURLToPath } from "url";
 import { loadContentFromFile, newWithBuffer, isValidIp } from "./ip2region";
 
-const dbPath = path.join(__dirname, "../../../storage/ip2region.xdb");
+const __filename_ = fileURLToPath(import.meta.url);
+const __dirname_ = path.dirname(__filename_);
+const dbPath = path.join(__dirname_, "../../../storage/ip2region.xdb");
 const buffer = loadContentFromFile(dbPath);
 const searcher = newWithBuffer(buffer);
 

@@ -35,7 +35,7 @@ export class ChallengeManager {
 
   private cleanup(): void {
     const now = Date.now();
-    for (const [key, entry] of this.challenges) {
+    for (const [key, entry] of Array.from(this.challenges.entries())) {
       if (now - entry.createdAt > CHALLENGE_TIMEOUT_MS) {
         this.challenges.delete(key);
       }

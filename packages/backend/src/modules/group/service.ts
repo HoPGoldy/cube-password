@@ -2,7 +2,7 @@ import { PrismaService } from "@/modules/prisma";
 import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
 import { sha512 } from "@/lib/crypto";
-import { authenticator } from "otplib";
+import { verifySync } from "otplib";
 import { ErrorGroupNotFound, ErrorGroupUnlockFailed } from "./error";
 
 interface GroupServiceDeps {
@@ -120,10 +120,10 @@ export class GroupService {
       const user = await this.prisma.user.findFirst();
       if (!user?.totpSecret) throw new ErrorGroupUnlockFailed();
 
-      const isValid = authenticator.verify({
+      const isValid = verifySync({
         token: options.totpCode,
         secret: user.totpSecret,
-      });
+      }).valid;
       if (!isValid) throw new ErrorGroupUnlockFailed();
     }
 

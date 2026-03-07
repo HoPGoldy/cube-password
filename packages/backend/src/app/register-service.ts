@@ -72,7 +72,11 @@ export const registerService = async (instance: AppInstance) => {
 
     registerAuthController({ server, authService });
     registerAppConfigController({ appConfigService, server });
-    registerAccessTokenController({ server, accessTokenService });
+    registerAccessTokenController({
+      server,
+      accessTokenService,
+      sessionManager,
+    });
     registerNotificationController({ server, notificationService });
     registerUserController({ server, userService });
     registerGroupController({ server, groupService });

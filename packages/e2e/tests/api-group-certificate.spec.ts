@@ -13,8 +13,8 @@ test.describe("Group API", () => {
 
     const body = await resp.json();
     expect(body.success).toBe(true);
-    expect(typeof body.data.id).toBe("number");
-    createdGroupId = body.data.id;
+    expect(typeof body.data.newId).toBe("number");
+    createdGroupId = body.data.newId;
   });
 
   test("POST /api/group/list 列表包含已创建的分组", async ({
@@ -30,9 +30,9 @@ test.describe("Group API", () => {
 
     const body = await resp.json();
     expect(body.success).toBe(true);
-    expect(Array.isArray(body.data)).toBe(true);
+    expect(Array.isArray(body.data.items)).toBe(true);
 
-    const found = body.data.find(
+    const found = body.data.items.find(
       (g: { id: number }) => g.id === createdGroupId,
     );
     expect(found).toBeDefined();
@@ -84,7 +84,7 @@ test.describe("Certificate API", () => {
       headers: authHeaders(session, url),
     });
     const body = await resp.json();
-    groupId = body.data.id;
+    groupId = body.data.newId;
   });
 
   test("POST /api/certificate/add 创建凭证", async ({ request, session }) => {
@@ -120,9 +120,9 @@ test.describe("Certificate API", () => {
 
     const body = await resp.json();
     expect(body.success).toBe(true);
-    expect(Array.isArray(body.data)).toBe(true);
+    expect(Array.isArray(body.data.items)).toBe(true);
 
-    const found = body.data.find((c: { id: number }) => c.id === certId);
+    const found = body.data.items.find((c: { id: number }) => c.id === certId);
     expect(found).toBeDefined();
     expect(found.name).toBe("e2e-cert");
   });
@@ -152,6 +152,7 @@ test.describe("Certificate API", () => {
     const resp = await request.post(`${BASE}/certificate/update`, {
       data: {
         id: certId,
+        groupId,
         name: "e2e-cert-updated",
         icon: "",
         markColor: "#00ff00",

@@ -6,7 +6,7 @@ import { NotificationService } from "@/modules/notification/service";
 import { NoticeType } from "@/types/notification";
 import { sha512 } from "@/lib/crypto";
 import { queryIp, isSameLocation, formatLocation } from "@/lib/ip-location";
-import { authenticator } from "otplib";
+import { verifySync } from "otplib";
 import { ErrorAuthFailed, ErrorBanned, ErrorNeedLogin } from "./error";
 import {
   ErrorBadRequest,
@@ -112,10 +112,10 @@ export class AuthService {
         if (!code) {
           throw new ErrorUnauthorized("非常用地区登录，请输入动态验证码");
         }
-        const isValid = authenticator.verify({
+        const isValid = verifySync({
           token: code,
           secret: user.totpSecret,
-        });
+        }).valid;
         if (!isValid) {
           this.loginLocker.recordLoginFail(ip);
           throw new ErrorBadRequest("动态验证码错误");

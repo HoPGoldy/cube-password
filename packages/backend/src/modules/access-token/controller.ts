@@ -1,6 +1,7 @@
 import { Type } from "typebox";
 import type { AppInstance } from "@/types";
 import type { AccessTokenService } from "./service";
+import type { SessionManager } from "@/lib/session";
 import { ErrorUnauthorized } from "@/types/error";
 import {
   SchemaAccessTokenCreate,
@@ -13,10 +14,11 @@ import {
 interface RegisterOptions {
   server: AppInstance;
   accessTokenService: AccessTokenService;
+  sessionManager: SessionManager;
 }
 
 export const registerAccessTokenController = (options: RegisterOptions) => {
-  const { server, accessTokenService } = options;
+  const { server, accessTokenService, sessionManager } = options;
 
   server.post(
     "/access-tokens",
@@ -78,7 +80,7 @@ export const registerAccessTokenController = (options: RegisterOptions) => {
     {
       config: { disableAuth: true },
       schema: {
-        description: "使用 Access Token 兑换短期 JWT（有效期 2 天）",
+        description: "使用 Access Token 兑换会话",
         tags: ["access-token"],
         body: SchemaAccessTokenExchange,
         response: {
@@ -93,16 +95,11 @@ export const registerAccessTokenController = (options: RegisterOptions) => {
       if (!accessToken) {
         throw new ErrorUnauthorized("Invalid access token");
       }
-      const jwt = server.jwt.sign(
-        {
-          id: "access-token-user",
-          username: "",
-          role: "user",
-          source: "access-token",
-        },
-        { expiresIn: "2d" },
-      );
-      return { accessToken: jwt };
+      const session = sessionManager.createSession();
+      return {
+        sessionToken: session.token,
+        replayAttackSecret: session.replayAttackSecret,
+      };
     },
   );
 };

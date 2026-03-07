@@ -1,4 +1,5 @@
 import { atom, getDefaultStore } from "jotai";
+import CryptoJS from "crypto-js";
 import { localTheme } from "./lcoal";
 import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
 
@@ -22,13 +23,13 @@ export interface GroupInfo {
 }
 
 /** session token (in-memory only, not persisted) */
-export const stateSessionToken = atom<string | undefined>(undefined);
+export const stateSessionToken = atom(undefined as string | undefined);
 
 /** replay attack secret */
-export const stateReplayAttackSecret = atom<string | undefined>(undefined);
+export const stateReplayAttackSecret = atom(undefined as string | undefined);
 
 /** user info */
-export const stateUser = atom<UserInfo | undefined>(undefined);
+export const stateUser = atom(undefined as UserInfo | undefined);
 
 /** is logged in */
 export const stateIsLoggedIn = atom<boolean>((get) => !!get(stateSessionToken));

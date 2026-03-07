@@ -58,8 +58,9 @@ test.describe("Access Token API", () => {
 
     const body = await resp.json();
     expect(body.success).toBe(true);
-    expect(typeof body.data.accessToken).toBe("string");
-    expect(body.data.accessToken.length).toBeGreaterThan(0);
+    expect(typeof body.data.sessionToken).toBe("string");
+    expect(body.data.sessionToken.length).toBeGreaterThan(0);
+    expect(typeof body.data.replayAttackSecret).toBe("string");
   });
 
   test("POST /api/access-tokens/exchange 无效令牌返回 401", async ({
