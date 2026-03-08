@@ -1,15 +1,15 @@
-import { FC, useEffect, useMemo, useState } from "react";
-import { Button, Input, Modal, Space, Tag } from "antd";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { Button, Form, Input, Modal } from "antd";
 import {
   PlusOutlined,
-  CopyOutlined,
-  DeleteOutlined,
-  HolderOutlined,
+  ExclamationCircleFilled,
+  DeleteFilled,
 } from "@ant-design/icons";
 import {
   useCertificateDetail,
   useAddCertificate,
   useUpdateCertificate,
+  useDeleteCertificate,
 } from "@/services/certificate";
 import { aes, aesDecrypt } from "@/utils/crypto";
 import { useAtomValue } from "jotai";
@@ -17,11 +17,10 @@ import { stateMainPwd } from "@/store/user";
 import { messageError, messageSuccess, messageWarning } from "@/utils/message";
 import copy from "copy-to-clipboard";
 import { Draggable } from "@/components/draggable";
-
-interface CertificateField {
-  label: string;
-  value: string;
-}
+import {
+  CertificateFieldItem,
+  type CertificateField,
+} from "./certificate-field-item";
 
 interface Props {
   groupId: number;
@@ -29,16 +28,25 @@ interface Props {
   onClose: () => void;
 }
 
+const getNewFormValues = () => ({
+  title: "新密码",
+  fields: [
+    { label: "网址", value: "" },
+    { label: "用户名", value: "" },
+    { label: "密码", value: "" },
+  ],
+});
+
 export const CertificateDetailModal: FC<Props> = ({
   groupId,
   detailId,
   onClose,
 }) => {
   const isAdd = detailId === -1;
+  const [form] = Form.useForm();
   const { pwdKey, pwdIv } = useAtomValue(stateMainPwd);
-  const [title, setTitle] = useState("");
-  const [fields, setFields] = useState<CertificateField[]>([]);
   const [readonly, setReadonly] = useState(true);
+  const newFieldIndex = useRef(1);
   const { data: detailResp } = useCertificateDetail(
     isAdd ? undefined : detailId,
   );
@@ -46,16 +54,14 @@ export const CertificateDetailModal: FC<Props> = ({
     useAddCertificate();
   const { mutateAsync: updateCertificate, isPending: isUpdating } =
     useUpdateCertificate();
+  const { mutateAsync: deleteCertificate, isPending: isDeleting } =
+    useDeleteCertificate();
+  const isSaving = isAdding || isUpdating;
 
   useEffect(() => {
     if (!detailId) return;
     if (isAdd) {
-      setTitle("新密码");
-      setFields([
-        { label: "网址", value: "" },
-        { label: "用户名", value: "" },
-        { label: "密码", value: "" },
-      ]);
+      form.setFieldsValue(getNewFormValues());
       setReadonly(false);
     } else {
       setReadonly(true);
@@ -67,9 +73,8 @@ export const CertificateDetailModal: FC<Props> = ({
 
     const { content, name } = detailResp.data;
     try {
-      const parsed = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
-      setTitle(name);
-      setFields(parsed);
+      const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
+      form.setFieldsValue({ title: name, fields });
     } catch {
       messageError("凭证解密失败");
       onClose();
@@ -77,7 +82,8 @@ export const CertificateDetailModal: FC<Props> = ({
   }, [detailResp]);
 
   const onSave = async () => {
-    if (!title.trim()) {
+    const values = await form.validateFields();
+    if (!values.title) {
       messageWarning("标题不能为空");
       return;
     }
@@ -86,14 +92,14 @@ export const CertificateDetailModal: FC<Props> = ({
       return;
     }
 
-    const content = aes(JSON.stringify(fields), pwdKey, pwdIv);
+    const content = aes(JSON.stringify(values.fields), pwdKey, pwdIv);
 
     if (isAdd) {
-      await addCertificate({ name: title, groupId, content });
+      await addCertificate({ name: values.title, groupId, content });
     } else {
       await updateCertificate({
         id: detailId!,
-        name: title,
+        name: values.title,
         groupId,
         content,
       });
@@ -103,125 +109,164 @@ export const CertificateDetailModal: FC<Props> = ({
     onClose();
   };
 
-  const onCopyField = (field: CertificateField) => {
-    copy(field.value);
-    messageSuccess(`已复制: ${field.label}`);
+  /** 复制完整凭证内容 */
+  const onCopyTotal = () => {
+    Modal.confirm({
+      title: "确定要复制完整凭证？",
+      icon: <ExclamationCircleFilled />,
+      content: "所有加密信息都将以明文展示，请确保索要凭证的人值得信赖。",
+      onOk: async () => {
+        const formData = form.getFieldsValue();
+        let text = formData.title + "\n\n";
+        formData.fields?.forEach((field: CertificateField) => {
+          text += field.label + "\n" + field.value + "\n\n";
+        });
+        copy(text);
+        messageSuccess("凭证已复制");
+      },
+    });
   };
 
-  const addField = () => {
-    setFields([...fields, { label: `字段${fields.length + 1}`, value: "" }]);
-  };
-
-  const removeField = (index: number) => {
-    setFields(fields.filter((_, i) => i !== index));
-  };
-
-  const updateField = (index: number, key: "label" | "value", val: string) => {
-    setFields(fields.map((f, i) => (i === index ? { ...f, [key]: val } : f)));
+  /** 删除凭证 */
+  const onDeleteCertificate = () => {
+    if (!detailId || detailId < 0) return;
+    Modal.confirm({
+      content: "确定删除该凭证吗？删除后将无法恢复",
+      okText: "删除",
+      okType: "danger",
+      onOk: async () => {
+        await deleteCertificate([detailId]);
+        onClose();
+      },
+    });
   };
 
   const sortableOptions = useMemo(() => {
     return { disabled: readonly, handle: ".move-handle" };
   }, [readonly]);
 
-  const renderReadonlyField = (field: CertificateField, index: number) => (
-    <div key={index} className="flex items-center gap-2">
-      <Tag className="min-w-[60px] text-center">{field.label}</Tag>
-      <span className="flex-1 break-all">{field.value}</span>
-      <Button
-        icon={<CopyOutlined />}
-        size="small"
-        type="text"
-        onClick={() => onCopyField(field)}
-      />
-    </div>
-  );
-
-  const renderEditableField = (_field: CertificateField, index: number) => (
-    <div key={index} className="flex items-center gap-2 mb-3">
-      <Input
-        className="w-24 flex-shrink-0"
-        placeholder="字段名"
-        value={fields[index]?.label}
-        onChange={(e) => updateField(index, "label", e.target.value)}
-      />
-      <Input
-        className="flex-1"
-        placeholder="字段值"
-        value={fields[index]?.value}
-        onChange={(e) => updateField(index, "value", e.target.value)}
-      />
-      <Button
-        icon={<DeleteOutlined />}
-        size="small"
-        danger
-        type="text"
-        onClick={() => removeField(index)}
-      />
-      <div className="move-handle cursor-move flex items-center px-1 text-gray-400 hover:text-gray-600">
-        <HolderOutlined />
+  const renderTitle = () => {
+    return (
+      <div className="w-full flex items-center">
+        <Form.Item noStyle name="title">
+          <Input
+            variant="borderless"
+            disabled={readonly}
+            placeholder="请输入密码名"
+            className="font-bold text-xl pl-0 disabled:cursor-default disabled:text-inherit flex-1"
+          />
+        </Form.Item>
+        {readonly && !isAdd && (
+          <Button
+            type="text"
+            danger
+            loading={isDeleting}
+            icon={
+              <DeleteFilled className="text-xl text-gray-500 dark:text-gray-200" />
+            }
+            data-testid="detail-delete-btn"
+            onClick={onDeleteCertificate}
+          />
+        )}
       </div>
-    </div>
-  );
+    );
+  };
+
+  const renderFooter = () => {
+    const btns = [
+      <Button key="back" onClick={onClose} data-testid="detail-back-btn">
+        返回
+      </Button>,
+    ];
+
+    if (readonly) {
+      btns.push(
+        <Button key="copy" onClick={onCopyTotal} data-testid="detail-copy-btn">
+          复制
+        </Button>,
+        <Button
+          key="edit"
+          type="primary"
+          onClick={() => setReadonly(false)}
+          data-testid="detail-edit-btn"
+        >
+          编辑
+        </Button>,
+      );
+    } else {
+      btns.push(
+        <Button
+          key="save"
+          type="primary"
+          onClick={onSave}
+          loading={isSaving}
+          data-testid="detail-save-btn"
+        >
+          保存
+        </Button>,
+      );
+    }
+
+    return btns;
+  };
+
+  const renderDetailForm = () => {
+    return (
+      <Form.List name="fields">
+        {(fields, { add, remove, move }) => (
+          <>
+            <Draggable
+              value={fields}
+              sortableOptions={sortableOptions}
+              renderItem={(field) => (
+                <Form.Item {...field} noStyle key={field.key}>
+                  <CertificateFieldItem
+                    disabled={readonly}
+                    showDelete={fields.length > 1}
+                    onDelete={() => remove(field.name)}
+                  />
+                </Form.Item>
+              )}
+              onChange={(_list, oldIndex, newIndex) => {
+                move(oldIndex as number, newIndex as number);
+              }}
+            />
+            {!readonly && (
+              <Form.Item key="add">
+                <Button
+                  type="dashed"
+                  onClick={() =>
+                    add({
+                      label: "字段" + newFieldIndex.current++,
+                      value: "",
+                    })
+                  }
+                  block
+                  className="mt-4"
+                  data-testid="detail-add-field-btn"
+                  icon={<PlusOutlined />}
+                >
+                  新增字段
+                </Button>
+              </Form.Item>
+            )}
+          </>
+        )}
+      </Form.List>
+    );
+  };
 
   return (
-    <Modal
-      title={readonly ? title : "编辑凭证"}
-      open={!!detailId}
-      onCancel={onClose}
-      width={600}
-      footer={
-        readonly ? (
-          <Button type="primary" onClick={() => setReadonly(false)}>
-            编辑
-          </Button>
-        ) : (
-          <Space>
-            <Button onClick={onClose}>取消</Button>
-            <Button
-              type="primary"
-              loading={isAdding || isUpdating}
-              onClick={onSave}
-            >
-              保存
-            </Button>
-          </Space>
-        )
-      }
-    >
-      {!readonly && (
-        <div className="mb-4">
-          <Input
-            placeholder="标题"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            size="large"
-          />
-        </div>
-      )}
-
-      {readonly ? (
-        <div className="space-y-3">{fields.map(renderReadonlyField)}</div>
-      ) : (
-        <Draggable
-          value={fields}
-          sortableOptions={sortableOptions}
-          onChange={(newFields) => setFields(newFields)}
-          renderItem={renderEditableField}
-        />
-      )}
-
-      {!readonly && (
-        <Button
-          type="dashed"
-          block
-          className="mt-3"
-          icon={<PlusOutlined />}
-          onClick={addField}
-        >
-          添加字段
-        </Button>
-      )}
-    </Modal>
+    <Form form={form}>
+      <Modal
+        open={!!detailId}
+        onCancel={onClose}
+        closable={false}
+        title={renderTitle()}
+        footer={renderFooter()}
+      >
+        {renderDetailForm()}
+      </Modal>
+    </Form>
   );
 };
