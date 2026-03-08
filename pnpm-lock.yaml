@@ -246,7 +246,7 @@ importers:
         specifier: ^4.4.5
         version: 4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       sortablejs:
-        specifier: ^1.15.0
+        specifier: ^1.15.6
         version: 1.15.6
     devDependencies:
       '@types/crypto-js':
@@ -274,7 +274,7 @@ importers:
         specifier: ^4.4.5
         version: 4.4.12(@types/react@18.3.20)
       '@types/sortablejs':
-        specifier: ^1.13.0
+        specifier: ^1.15.8
         version: 1.15.8
       '@vitejs/plugin-react':
         specifier: ^4.3.1

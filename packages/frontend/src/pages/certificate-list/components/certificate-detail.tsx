@@ -1,6 +1,11 @@
-import { FC, useEffect, useRef, useState } from "react";
-import { Button, Form, Input, Modal, Space, Tag } from "antd";
-import { PlusOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
+import { FC, useEffect, useMemo, useState } from "react";
+import { Button, Input, Modal, Space, Tag } from "antd";
+import {
+  PlusOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  HolderOutlined,
+} from "@ant-design/icons";
 import {
   useCertificateDetail,
   useAddCertificate,
@@ -11,6 +16,7 @@ import { useAtomValue } from "jotai";
 import { stateMainPwd } from "@/store/user";
 import { messageError, messageSuccess, messageWarning } from "@/utils/message";
 import copy from "copy-to-clipboard";
+import { Draggable } from "@/components/draggable";
 
 interface CertificateField {
   label: string;
@@ -114,6 +120,50 @@ export const CertificateDetailModal: FC<Props> = ({
     setFields(fields.map((f, i) => (i === index ? { ...f, [key]: val } : f)));
   };
 
+  const sortableOptions = useMemo(() => {
+    return { disabled: readonly, handle: ".move-handle" };
+  }, [readonly]);
+
+  const renderReadonlyField = (field: CertificateField, index: number) => (
+    <div key={index} className="flex items-center gap-2">
+      <Tag className="min-w-[60px] text-center">{field.label}</Tag>
+      <span className="flex-1 break-all">{field.value}</span>
+      <Button
+        icon={<CopyOutlined />}
+        size="small"
+        type="text"
+        onClick={() => onCopyField(field)}
+      />
+    </div>
+  );
+
+  const renderEditableField = (_field: CertificateField, index: number) => (
+    <div key={index} className="flex items-center gap-2 mb-3">
+      <Input
+        className="w-24 flex-shrink-0"
+        placeholder="字段名"
+        value={fields[index]?.label}
+        onChange={(e) => updateField(index, "label", e.target.value)}
+      />
+      <Input
+        className="flex-1"
+        placeholder="字段值"
+        value={fields[index]?.value}
+        onChange={(e) => updateField(index, "value", e.target.value)}
+      />
+      <Button
+        icon={<DeleteOutlined />}
+        size="small"
+        danger
+        type="text"
+        onClick={() => removeField(index)}
+      />
+      <div className="move-handle cursor-move flex items-center px-1 text-gray-400 hover:text-gray-600">
+        <HolderOutlined />
+      </div>
+    </div>
+  );
+
   return (
     <Modal
       title={readonly ? title : "编辑凭证"}
@@ -150,46 +200,16 @@ export const CertificateDetailModal: FC<Props> = ({
         </div>
       )}
 
-      <div className="space-y-3">
-        {fields.map((field, index) => (
-          <div key={index} className="flex items-center gap-2">
-            {readonly ? (
-              <>
-                <Tag className="min-w-[60px] text-center">{field.label}</Tag>
-                <span className="flex-1 break-all">{field.value}</span>
-                <Button
-                  icon={<CopyOutlined />}
-                  size="small"
-                  type="text"
-                  onClick={() => onCopyField(field)}
-                />
-              </>
-            ) : (
-              <>
-                <Input
-                  className="w-24 flex-shrink-0"
-                  placeholder="字段名"
-                  value={field.label}
-                  onChange={(e) => updateField(index, "label", e.target.value)}
-                />
-                <Input
-                  className="flex-1"
-                  placeholder="字段值"
-                  value={field.value}
-                  onChange={(e) => updateField(index, "value", e.target.value)}
-                />
-                <Button
-                  icon={<DeleteOutlined />}
-                  size="small"
-                  danger
-                  type="text"
-                  onClick={() => removeField(index)}
-                />
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+      {readonly ? (
+        <div className="space-y-3">{fields.map(renderReadonlyField)}</div>
+      ) : (
+        <Draggable
+          value={fields}
+          sortableOptions={sortableOptions}
+          onChange={(newFields) => setFields(newFields)}
+          renderItem={renderEditableField}
+        />
+      )}
 
       {!readonly && (
         <Button

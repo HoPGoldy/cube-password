@@ -35,7 +35,7 @@
     "react-router-dom": "^7.9.5",
     "react-sortablejs": "^6.1.4",
     "react-transition-group": "^4.4.5",
-    "sortablejs": "^1.15.0"
+    "sortablejs": "^1.15.6"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
@@ -46,7 +46,7 @@
     "@types/react-dom": "^18.3.1",
     "@types/react-helmet": "^6.1.6",
     "@types/react-transition-group": "^4.4.5",
-    "@types/sortablejs": "^1.13.0",
+    "@types/sortablejs": "^1.15.8",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
     "cross-env": "^7.0.3",
