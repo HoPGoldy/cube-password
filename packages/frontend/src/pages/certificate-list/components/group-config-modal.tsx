@@ -23,10 +23,17 @@ import { GroupInfo, stateGroupList, stateUser } from "@/store/user";
 import { useAtom, useSetAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 
-const LOCK_TYPE_OPTIONS = [
-  { label: "不加密", value: "None" },
-  { label: "独立密码", value: "Password" },
-];
+const useLockTypeOptions = () => {
+  const [userInfo] = useAtom(stateUser);
+  const options = [
+    { label: "不加密", value: "None" },
+    { label: "独立密码", value: "Password" },
+  ];
+  if (userInfo?.withTotp) {
+    options.push({ label: "TOTP 加密", value: "Totp" });
+  }
+  return options;
+};
 
 interface GroupConfigModalProps {
   open: boolean;
@@ -53,6 +60,7 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
   const lockType = Form.useWatch("lockType", form);
   const [prevLockType, setPrevLockType] = useState<string>();
   const isDefaultGroup = userInfo?.defaultGroupId === group.id;
+  const lockTypeOptions = useLockTypeOptions();
 
   useEffect(() => {
     if (!open) return;
@@ -183,7 +191,7 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
           <Row className="md:mt-6">
             <Col span={24}>
               <Form.Item label="加密方式" name="lockType">
-                <Segmented block options={LOCK_TYPE_OPTIONS} />
+                <Segmented block options={lockTypeOptions} />
               </Form.Item>
             </Col>
             {lockType === "Password" && (
