@@ -15,7 +15,7 @@ import {
 } from "@/types/certificate";
 import { CertificateService } from "./service";
 
-import { Random } from "mockjs";
+import Mock from "mockjs";
 
 interface RegisterOptions {
   server: AppInstance;
@@ -34,7 +34,7 @@ export const registerCertificateController = (options: RegisterOptions) => {
       },
     },
     async () => {
-      return { data: (Random.name(true) as string).replace(/ /g, "") };
+      return { data: (Mock.Random.name(true) as string).replace(/ /g, "") };
     },
   );
 
