@@ -9,7 +9,7 @@ import { usePageTitle } from "@/store/global";
 const getViewWidth = () => {
   const width = window.innerWidth;
   const isMobile = width < 768;
-  return isMobile ? width * 0.8 + "px" : width / 3 + "px";
+  return isMobile ? width * 0.8 + "px" : Math.min(width * 0.45, 560) + "px";
 };
 
 const viewWidth = getViewWidth();
