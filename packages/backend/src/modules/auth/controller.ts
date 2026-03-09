@@ -84,7 +84,7 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async () => {
-      return { isInitialized: await authService.isInitialized() };
+      return await authService.isInitialized();
     },
   );
 
@@ -101,8 +101,8 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { passwordHash } = request.body;
-      await authService.init(passwordHash);
+      const { passwordHash, passwordSalt } = request.body;
+      await authService.init(passwordHash, passwordSalt);
       return { success: true };
     },
   );
@@ -152,8 +152,8 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { oldHash, challengeCode, newPassword } = request.body;
-      await authService.changePassword(oldHash, challengeCode, newPassword);
+      const { a } = request.body;
+      await authService.changePassword(a);
       return {};
     },
   );

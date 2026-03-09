@@ -42,6 +42,7 @@ export type GroupMinAggregateOutputType = {
   order: number | null
   lockType: string | null
   passwordHash: string | null
+  passwordSalt: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -52,6 +53,7 @@ export type GroupMaxAggregateOutputType = {
   order: number | null
   lockType: string | null
   passwordHash: string | null
+  passwordSalt: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +64,7 @@ export type GroupCountAggregateOutputType = {
   order: number
   lockType: number
   passwordHash: number
+  passwordSalt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -84,6 +87,7 @@ export type GroupMinAggregateInputType = {
   order?: true
   lockType?: true
   passwordHash?: true
+  passwordSalt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -94,6 +98,7 @@ export type GroupMaxAggregateInputType = {
   order?: true
   lockType?: true
   passwordHash?: true
+  passwordSalt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -104,6 +109,7 @@ export type GroupCountAggregateInputType = {
   order?: true
   lockType?: true
   passwordHash?: true
+  passwordSalt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -201,6 +207,7 @@ export type GroupGroupByOutputType = {
   order: number
   lockType: string
   passwordHash: string | null
+  passwordSalt: string | null
   createdAt: Date
   updatedAt: Date
   _count: GroupCountAggregateOutputType | null
@@ -234,6 +241,7 @@ export type GroupWhereInput = {
   order?: Prisma.IntFilter<"Group"> | number
   lockType?: Prisma.StringFilter<"Group"> | string
   passwordHash?: Prisma.StringNullableFilter<"Group"> | string | null
+  passwordSalt?: Prisma.StringNullableFilter<"Group"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Group"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Group"> | Date | string
   certificates?: Prisma.CertificateListRelationFilter
@@ -245,6 +253,7 @@ export type GroupOrderByWithRelationInput = {
   order?: Prisma.SortOrder
   lockType?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   certificates?: Prisma.CertificateOrderByRelationAggregateInput
@@ -259,6 +268,7 @@ export type GroupWhereUniqueInput = Prisma.AtLeast<{
   order?: Prisma.IntFilter<"Group"> | number
   lockType?: Prisma.StringFilter<"Group"> | string
   passwordHash?: Prisma.StringNullableFilter<"Group"> | string | null
+  passwordSalt?: Prisma.StringNullableFilter<"Group"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Group"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Group"> | Date | string
   certificates?: Prisma.CertificateListRelationFilter
@@ -270,6 +280,7 @@ export type GroupOrderByWithAggregationInput = {
   order?: Prisma.SortOrder
   lockType?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.GroupCountOrderByAggregateInput
@@ -288,6 +299,7 @@ export type GroupScalarWhereWithAggregatesInput = {
   order?: Prisma.IntWithAggregatesFilter<"Group"> | number
   lockType?: Prisma.StringWithAggregatesFilter<"Group"> | string
   passwordHash?: Prisma.StringNullableWithAggregatesFilter<"Group"> | string | null
+  passwordSalt?: Prisma.StringNullableWithAggregatesFilter<"Group"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Group"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Group"> | Date | string
 }
@@ -297,6 +309,7 @@ export type GroupCreateInput = {
   order?: number
   lockType?: string
   passwordHash?: string | null
+  passwordSalt?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   certificates?: Prisma.CertificateCreateNestedManyWithoutGroupInput
@@ -308,6 +321,7 @@ export type GroupUncheckedCreateInput = {
   order?: number
   lockType?: string
   passwordHash?: string | null
+  passwordSalt?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutGroupInput
@@ -318,6 +332,7 @@ export type GroupUpdateInput = {
   order?: Prisma.IntFieldUpdateOperationsInput | number
   lockType?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   certificates?: Prisma.CertificateUpdateManyWithoutGroupNestedInput
@@ -329,6 +344,7 @@ export type GroupUncheckedUpdateInput = {
   order?: Prisma.IntFieldUpdateOperationsInput | number
   lockType?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutGroupNestedInput
@@ -340,6 +356,7 @@ export type GroupCreateManyInput = {
   order?: number
   lockType?: string
   passwordHash?: string | null
+  passwordSalt?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -349,6 +366,7 @@ export type GroupUpdateManyMutationInput = {
   order?: Prisma.IntFieldUpdateOperationsInput | number
   lockType?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -359,6 +377,7 @@ export type GroupUncheckedUpdateManyInput = {
   order?: Prisma.IntFieldUpdateOperationsInput | number
   lockType?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -369,6 +388,7 @@ export type GroupCountOrderByAggregateInput = {
   order?: Prisma.SortOrder
   lockType?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -384,6 +404,7 @@ export type GroupMaxOrderByAggregateInput = {
   order?: Prisma.SortOrder
   lockType?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -394,6 +415,7 @@ export type GroupMinOrderByAggregateInput = {
   order?: Prisma.SortOrder
   lockType?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -431,6 +453,7 @@ export type GroupCreateWithoutCertificatesInput = {
   order?: number
   lockType?: string
   passwordHash?: string | null
+  passwordSalt?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -441,6 +464,7 @@ export type GroupUncheckedCreateWithoutCertificatesInput = {
   order?: number
   lockType?: string
   passwordHash?: string | null
+  passwordSalt?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -466,6 +490,7 @@ export type GroupUpdateWithoutCertificatesInput = {
   order?: Prisma.IntFieldUpdateOperationsInput | number
   lockType?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -476,6 +501,7 @@ export type GroupUncheckedUpdateWithoutCertificatesInput = {
   order?: Prisma.IntFieldUpdateOperationsInput | number
   lockType?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -517,6 +543,7 @@ export type GroupSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   order?: boolean
   lockType?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   certificates?: boolean | Prisma.Group$certificatesArgs<ExtArgs>
@@ -529,6 +556,7 @@ export type GroupSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   order?: boolean
   lockType?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["group"]>
@@ -539,6 +567,7 @@ export type GroupSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   order?: boolean
   lockType?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["group"]>
@@ -549,11 +578,12 @@ export type GroupSelectScalar = {
   order?: boolean
   lockType?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type GroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "order" | "lockType" | "passwordHash" | "createdAt" | "updatedAt", ExtArgs["result"]["group"]>
+export type GroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "order" | "lockType" | "passwordHash" | "passwordSalt" | "createdAt" | "updatedAt", ExtArgs["result"]["group"]>
 export type GroupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   certificates?: boolean | Prisma.Group$certificatesArgs<ExtArgs>
   _count?: boolean | Prisma.GroupCountOutputTypeDefaultArgs<ExtArgs>
@@ -572,6 +602,7 @@ export type $GroupPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     order: number
     lockType: string
     passwordHash: string | null
+    passwordSalt: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["group"]>
@@ -1003,6 +1034,7 @@ export interface GroupFieldRefs {
   readonly order: Prisma.FieldRef<"Group", 'Int'>
   readonly lockType: Prisma.FieldRef<"Group", 'String'>
   readonly passwordHash: Prisma.FieldRef<"Group", 'String'>
+  readonly passwordSalt: Prisma.FieldRef<"Group", 'String'>
   readonly createdAt: Prisma.FieldRef<"Group", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Group", 'DateTime'>
 }

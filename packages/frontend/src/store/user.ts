@@ -20,6 +20,7 @@ export interface GroupInfo {
   name: string;
   lockType: string;
   unlocked: boolean;
+  salt?: string;
 }
 
 /** session token (in-memory only, not persisted) */
@@ -37,6 +38,9 @@ export const stateIsLoggedIn = atom<boolean>((get) => !!get(stateSessionToken));
 /** group list */
 export const stateGroupList = atom<GroupInfo[]>([]);
 
+/** 主密码盐值（从 global API 获取） */
+export const statePasswordSalt = atom(undefined as string | undefined);
+
 export const logout = () => {
   const store = getDefaultStore();
   store.set(stateSessionToken, undefined);
@@ -46,11 +50,12 @@ export const logout = () => {
 };
 
 export const login = (payload: SchemaAuthLoginResponseType) => {
-  const { token, replayAttackSecret, groups, ...userInfo } = payload;
+  const { token, replayAttackSecret, groups, salt, ...userInfo } = payload;
   const store = getDefaultStore();
 
   store.set(stateSessionToken, token);
   store.set(stateReplayAttackSecret, replayAttackSecret);
+  store.set(statePasswordSalt, salt);
   store.set(stateUser, {
     ...userInfo,
     theme: (userInfo.theme as AppTheme) || "light",
@@ -60,6 +65,7 @@ export const login = (payload: SchemaAuthLoginResponseType) => {
     groups.map((g) => ({
       ...g,
       unlocked: g.lockType === "None",
+      salt: g.salt,
     })),
   );
 

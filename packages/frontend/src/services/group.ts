@@ -72,6 +72,7 @@ export const useUpdateGroupConfig = () => {
       id: number;
       lockType: string;
       passwordHash?: string;
+      passwordSalt?: string;
     }) => {
       return requestPost("group/update-config", data);
     },

@@ -1,8 +1,13 @@
 import { FC } from "react";
 import { Button, Col, Form, Input, Modal, Row, Space } from "antd";
 import { useAtomValue } from "jotai";
-import { stateMainPwd, stateUser } from "@/store/user";
-import { sha512, validateAesMeta } from "@/utils/crypto";
+import {
+  stateMainPwd,
+  stateUser,
+  stateSessionToken,
+  statePasswordSalt,
+} from "@/store/user";
+import { sha512, validateAesMeta, getAesMeta, aes } from "@/utils/crypto";
 import { queryChallenge, useChangePassword } from "@/services/auth";
 import { messageError, messageWarning } from "@/utils/message";
 import { useIsMobile } from "@/layouts/responsive";
@@ -12,12 +17,14 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const [form] = Form.useForm();
   const userInfo = useAtomValue(stateUser);
   const mainPwdInfo = useAtomValue(stateMainPwd);
+  const sessionToken = useAtomValue(stateSessionToken);
+  const salt = useAtomValue(statePasswordSalt);
   const isMobile = useIsMobile();
   const { mutateAsync: postChangePassword, isPending: isChangingPassword } =
     useChangePassword();
 
   const onSavePassword = async () => {
-    const { oldPassword, newPassword } = await form.validateFields();
+    const { oldPassword, newPassword, totp = "" } = await form.validateFields();
 
     if (!mainPwdInfo?.pwdKey || !mainPwdInfo?.pwdIv) {
       messageError("用户信息解析错误，请重新登录");
@@ -29,17 +36,23 @@ export const Content: FC<SettingContainerProps> = (props) => {
       return;
     }
 
+    if (validateAesMeta(newPassword, mainPwdInfo.pwdKey, mainPwdInfo.pwdIv)) {
+      messageWarning("新密码不得与旧密码重复");
+      return;
+    }
+
     const challengeResp = await queryChallenge();
     if (!challengeResp.success) return;
 
     const challengeCode = challengeResp.data!.code;
-    const oldHash = sha512(oldPassword + challengeCode);
+    const postKey =
+      sha512(salt + oldPassword) + challengeCode + sessionToken + totp;
+    const { key, iv } = getAesMeta(postKey);
 
-    const resp = await postChangePassword({
-      oldHash,
-      challengeCode,
-      newPassword,
-    });
+    const postData = JSON.stringify({ oldPassword, newPassword });
+    const encryptedData = aes(postData, key, iv);
+
+    const resp = await postChangePassword({ a: encryptedData });
     if (resp.code !== 200) return;
 
     props.onClose();

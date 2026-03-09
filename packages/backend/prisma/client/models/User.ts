@@ -41,6 +41,7 @@ export type UserSumAggregateOutputType = {
 export type UserMinAggregateOutputType = {
   id: number | null
   passwordHash: string | null
+  passwordSalt: string | null
   initTime: Date | null
   theme: string | null
   defaultGroupId: number | null
@@ -53,6 +54,7 @@ export type UserMinAggregateOutputType = {
 export type UserMaxAggregateOutputType = {
   id: number | null
   passwordHash: string | null
+  passwordSalt: string | null
   initTime: Date | null
   theme: string | null
   defaultGroupId: number | null
@@ -65,6 +67,7 @@ export type UserMaxAggregateOutputType = {
 export type UserCountAggregateOutputType = {
   id: number
   passwordHash: number
+  passwordSalt: number
   initTime: number
   theme: number
   defaultGroupId: number
@@ -91,6 +94,7 @@ export type UserSumAggregateInputType = {
 export type UserMinAggregateInputType = {
   id?: true
   passwordHash?: true
+  passwordSalt?: true
   initTime?: true
   theme?: true
   defaultGroupId?: true
@@ -103,6 +107,7 @@ export type UserMinAggregateInputType = {
 export type UserMaxAggregateInputType = {
   id?: true
   passwordHash?: true
+  passwordSalt?: true
   initTime?: true
   theme?: true
   defaultGroupId?: true
@@ -115,6 +120,7 @@ export type UserMaxAggregateInputType = {
 export type UserCountAggregateInputType = {
   id?: true
   passwordHash?: true
+  passwordSalt?: true
   initTime?: true
   theme?: true
   defaultGroupId?: true
@@ -214,6 +220,7 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type UserGroupByOutputType = {
   id: number
   passwordHash: string
+  passwordSalt: string
   initTime: Date
   theme: string
   defaultGroupId: number
@@ -249,6 +256,7 @@ export type UserWhereInput = {
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.IntFilter<"User"> | number
   passwordHash?: Prisma.StringFilter<"User"> | string
+  passwordSalt?: Prisma.StringFilter<"User"> | string
   initTime?: Prisma.DateTimeFilter<"User"> | Date | string
   theme?: Prisma.StringFilter<"User"> | string
   defaultGroupId?: Prisma.IntFilter<"User"> | number
@@ -261,6 +269,7 @@ export type UserWhereInput = {
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -276,6 +285,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   passwordHash?: Prisma.StringFilter<"User"> | string
+  passwordSalt?: Prisma.StringFilter<"User"> | string
   initTime?: Prisma.DateTimeFilter<"User"> | Date | string
   theme?: Prisma.StringFilter<"User"> | string
   defaultGroupId?: Prisma.IntFilter<"User"> | number
@@ -288,6 +298,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -308,6 +319,7 @@ export type UserScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"User"> | number
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
+  passwordSalt?: Prisma.StringWithAggregatesFilter<"User"> | string
   initTime?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   theme?: Prisma.StringWithAggregatesFilter<"User"> | string
   defaultGroupId?: Prisma.IntWithAggregatesFilter<"User"> | number
@@ -319,6 +331,7 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   passwordHash: string
+  passwordSalt?: string
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
@@ -331,6 +344,7 @@ export type UserCreateInput = {
 export type UserUncheckedCreateInput = {
   id?: number
   passwordHash: string
+  passwordSalt?: string
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
@@ -342,6 +356,7 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -354,6 +369,7 @@ export type UserUpdateInput = {
 export type UserUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -366,6 +382,7 @@ export type UserUncheckedUpdateInput = {
 export type UserCreateManyInput = {
   id?: number
   passwordHash: string
+  passwordSalt?: string
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
@@ -377,6 +394,7 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -389,6 +407,7 @@ export type UserUpdateManyMutationInput = {
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -401,6 +420,7 @@ export type UserUncheckedUpdateManyInput = {
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -419,6 +439,7 @@ export type UserAvgOrderByAggregateInput = {
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -431,6 +452,7 @@ export type UserMaxOrderByAggregateInput = {
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -459,6 +481,7 @@ export type IntFieldUpdateOperationsInput = {
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -471,6 +494,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -483,6 +507,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -495,6 +520,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type UserSelectScalar = {
   id?: boolean
   passwordHash?: boolean
+  passwordSalt?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -504,7 +530,7 @@ export type UserSelectScalar = {
   createPwdLength?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "initTime" | "theme" | "defaultGroupId" | "commonLocation" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "initTime" | "theme" | "defaultGroupId" | "commonLocation" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -512,6 +538,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     passwordHash: string
+    passwordSalt: string
     initTime: Date
     theme: string
     defaultGroupId: number
@@ -944,6 +971,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'Int'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
+  readonly passwordSalt: Prisma.FieldRef<"User", 'String'>
   readonly initTime: Prisma.FieldRef<"User", 'DateTime'>
   readonly theme: Prisma.FieldRef<"User", 'String'>
   readonly defaultGroupId: Prisma.FieldRef<"User", 'Int'>

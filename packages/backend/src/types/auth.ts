@@ -13,13 +13,15 @@ export type SchemaChallengeResponseType = Type.Static<
 
 export const SchemaGlobalResponse = Type.Object({
   isInitialized: Type.Boolean(),
+  salt: Type.Optional(Type.String()),
 });
 export type SchemaGlobalResponseType = Type.Static<typeof SchemaGlobalResponse>;
 
 // ========== Init ==========
 
 export const SchemaAuthInitBody = Type.Object({
-  passwordHash: Type.String({ description: "The password to store" }),
+  passwordHash: Type.String({ description: "SHA512(salt + password)" }),
+  passwordSalt: Type.String({ description: "Random salt (nanoid 128)" }),
 });
 export type SchemaAuthInitBodyType = Type.Static<typeof SchemaAuthInitBody>;
 
@@ -51,11 +53,13 @@ export const SchemaAuthLoginResponse = Type.Object({
   withTotp: Type.Boolean(),
   createPwdAlphabet: Type.String(),
   createPwdLength: Type.Number(),
+  salt: Type.String(),
   groups: Type.Array(
     Type.Object({
       id: Type.Number(),
       name: Type.String(),
       lockType: Type.String(),
+      salt: Type.Optional(Type.String()),
     }),
   ),
 });
@@ -66,9 +70,9 @@ export type SchemaAuthLoginResponseType = Type.Static<
 // ========== Change Password ==========
 
 export const SchemaAuthChangePasswordBody = Type.Object({
-  oldHash: Type.String({ description: "SHA512(oldPassword + challenge)" }),
-  challengeCode: Type.String({ description: "The challenge code used" }),
-  newPassword: Type.String({ description: "The new plain password" }),
+  a: Type.String({
+    description: "AES-encrypted JSON {oldPassword, newPassword}",
+  }),
 });
 export type SchemaAuthChangePasswordBodyType = Type.Static<
   typeof SchemaAuthChangePasswordBody

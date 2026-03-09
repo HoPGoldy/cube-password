@@ -33,6 +33,29 @@ export class ChallengeManager {
     return true;
   }
 
+  /** 弹出最近生成的挑战码（用于修改密码等场景） */
+  popLastChallenge(): string | undefined {
+    let latest: ChallengeEntry | undefined;
+    let latestKey: string | undefined;
+
+    for (const [key, entry] of Array.from(this.challenges.entries())) {
+      if (!latest || entry.createdAt > latest.createdAt) {
+        latest = entry;
+        latestKey = key;
+      }
+    }
+
+    if (latestKey) {
+      this.challenges.delete(latestKey);
+      if (Date.now() - latest!.createdAt > CHALLENGE_TIMEOUT_MS) {
+        return undefined;
+      }
+      return latest!.code;
+    }
+
+    return undefined;
+  }
+
   private cleanup(): void {
     const now = Date.now();
     for (const [key, entry] of Array.from(this.challenges.entries())) {

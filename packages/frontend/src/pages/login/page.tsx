@@ -3,13 +3,13 @@ import { getAesMeta } from "@/utils/crypto";
 import { Button, Input, InputRef } from "antd";
 import { useRef, useState } from "react";
 import { useLogin, queryChallenge } from "../../services/auth";
-import { login, stateMainPwd } from "../../store/user";
+import { login, stateMainPwd, statePasswordSalt } from "../../store/user";
 import { messageError } from "@/utils/message";
 import { KeyOutlined } from "@ant-design/icons";
 import { useLoginSuccess } from "./use-login-success";
 import { THEME_BUTTON_COLOR } from "@/config";
 import { usePageTitle } from "@/store/global";
-import { useSetAtom } from "jotai";
+import { useSetAtom, useAtomValue } from "jotai";
 
 export const LoginPage = () => {
   usePageTitle("登录");
@@ -20,6 +20,7 @@ export const LoginPage = () => {
   const codeInputRef = useRef<InputRef>(null);
   const { mutateAsync: postLogin, isPending: isLogin } = useLogin();
   const setMainPwd = useSetAtom(stateMainPwd);
+  const salt = useAtomValue(statePasswordSalt);
 
   const { runLoginSuccess } = useLoginSuccess();
 
@@ -35,8 +36,8 @@ export const LoginPage = () => {
     if (!challengeResp.success) return;
 
     const challengeCode = challengeResp.data!.code;
-    // 2. hash = SHA512(password + challengeCode)
-    const hash = sha512(password + challengeCode);
+    // hash = SHA512(SHA512(salt + password) + challengeCode)
+    const hash = sha512(sha512(salt + password) + challengeCode);
 
     const resp = await postLogin({
       hash,

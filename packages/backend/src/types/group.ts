@@ -7,6 +7,7 @@ export const SchemaGroupItem = Type.Object({
   lockType: Type.String(),
   certificateCount: Type.Number(),
   order: Type.Number(),
+  salt: Type.Optional(Type.String()),
 });
 
 export type SchemaGroupItemType = Type.Static<typeof SchemaGroupItem>;
@@ -16,6 +17,7 @@ export const SchemaGroupAddBody = Type.Object({
   name: Type.String(),
   lockType: Type.Optional(Type.String({ default: "None" })),
   passwordHash: Type.Optional(Type.String()),
+  passwordSalt: Type.Optional(Type.String()),
 });
 export type SchemaGroupAddBodyType = Type.Static<typeof SchemaGroupAddBody>;
 
@@ -43,6 +45,7 @@ export const SchemaGroupUpdateConfigBody = Type.Object({
   id: Type.Number(),
   lockType: Type.String(),
   passwordHash: Type.Optional(Type.String()),
+  passwordSalt: Type.Optional(Type.String()),
 });
 
 export type SchemaGroupUpdateConfigBodyType = Type.Static<
@@ -53,7 +56,9 @@ export type SchemaGroupUpdateConfigBodyType = Type.Static<
 export const SchemaGroupUnlockBody = Type.Object({
   id: Type.Number(),
   hash: Type.Optional(
-    Type.String({ description: "SHA512(groupPassword + challenge)" }),
+    Type.String({
+      description: "SHA512(SHA512(groupSalt + password) + challenge)",
+    }),
   ),
   challengeCode: Type.Optional(Type.String()),
   totpCode: Type.Optional(Type.String()),

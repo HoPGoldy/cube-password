@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { login, stateIsLoggedIn } from "@/store/user";
-import { useAtomValue } from "jotai";
+import { login, stateIsLoggedIn, statePasswordSalt } from "@/store/user";
+import { useAtomValue, useSetAtom } from "jotai";
 import { LoginPage } from "./page";
 import { PageLoading } from "@/components/page-loading";
 import { queryGlobal } from "@/services/auth";
@@ -11,6 +11,7 @@ const Login = () => {
   const isLoggedIn = useAtomValue(stateIsLoggedIn);
   const [checking, setChecking] = useState(true);
   const [isInitialized, setIsInitialized] = useState(true);
+  const setSalt = useSetAtom(statePasswordSalt);
 
   useEffect(() => {
     const checkGlobal = async () => {
@@ -18,6 +19,9 @@ const Login = () => {
         const resp = await queryGlobal();
         if (resp.success) {
           setIsInitialized(resp.data!.isInitialized);
+          if (resp.data!.salt) {
+            setSalt(resp.data!.salt);
+          }
         }
       } catch {
         // ignore

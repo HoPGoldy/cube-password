@@ -26,6 +26,7 @@ export class GroupService {
     name: string;
     lockType?: string;
     passwordHash?: string;
+    passwordSalt?: string;
   }) {
     const maxOrder = await this.prisma.group.aggregate({
       _max: { order: true },
@@ -35,6 +36,7 @@ export class GroupService {
         name: data.name,
         lockType: data.lockType ?? "None",
         passwordHash: data.passwordHash,
+        passwordSalt: data.passwordSalt,
         order: (maxOrder._max.order ?? -1) + 1,
       },
     });
@@ -60,6 +62,7 @@ export class GroupService {
         lockType: g.lockType,
         certificateCount: g._count.certificates,
         order: g.order,
+        salt: g.passwordSalt || undefined,
       })),
     };
   }
@@ -74,12 +77,17 @@ export class GroupService {
     id: number,
     lockType: string,
     passwordHash?: string,
+    passwordSalt?: string,
   ): Promise<void> {
     const group = await this.prisma.group.findUnique({ where: { id } });
     if (!group) throw new ErrorGroupNotFound();
     await this.prisma.group.update({
       where: { id },
-      data: { lockType, passwordHash: passwordHash ?? null },
+      data: {
+        lockType,
+        passwordHash: passwordHash ?? null,
+        passwordSalt: passwordSalt ?? null,
+      },
     });
   }
 

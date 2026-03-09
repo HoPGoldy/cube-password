@@ -55,4 +55,13 @@ export class SessionManager {
   isGroupUnlocked(groupId: number): boolean {
     return this.session?.unlockedGroupIds.has(groupId) ?? false;
   }
+
+  getCurrentSession(): UserSession | null {
+    if (!this.session) return null;
+    if (Date.now() - this.session.lastActiveTime > SESSION_TIMEOUT_MS) {
+      this.destroySession();
+      return null;
+    }
+    return this.session;
+  }
 }

@@ -34,6 +34,7 @@ model AccessToken {
 model User {
   id                Int      @id @default(autoincrement())
   passwordHash      String
+  passwordSalt      String   @default("")
   initTime          DateTime @default(now())
   theme             String   @default("light")
   defaultGroupId    Int      @default(0)
@@ -50,6 +51,7 @@ model Group {
   order        Int           @default(0)
   lockType     String        @default("None") // None | Password | Totp
   passwordHash String?
+  passwordSalt String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   certificates Certificate[]

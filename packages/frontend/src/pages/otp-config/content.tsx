@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { Button, Form, Input, Modal, QRCode, Space, Spin } from "antd";
-import { useSetAtom } from "jotai";
-import { stateUser } from "@/store/user";
+import { useSetAtom, useAtomValue } from "jotai";
+import { stateUser, statePasswordSalt } from "@/store/user";
 import { sha512 } from "@/utils/crypto";
 import { queryChallenge } from "@/services/auth";
 import { useOtpQrcode, useBindOtp, useUnbindOtp } from "@/services/otp";
@@ -13,6 +13,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const [removeForm] = Form.useForm();
   const isMobile = useIsMobile();
   const setUserInfo = useSetAtom(stateUser);
+  const salt = useAtomValue(statePasswordSalt);
 
   const {
     data: otpInfo,
@@ -60,7 +61,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
     if (!challengeResp.success) return;
 
     const challengeCode = challengeResp.data!.code;
-    const hash = sha512(values.password + challengeCode);
+    const hash = sha512(sha512(salt + values.password) + challengeCode);
 
     const resp = await removeOtp({
       hash,

@@ -97,6 +97,7 @@ export type AccessTokenScalarFieldEnum = (typeof AccessTokenScalarFieldEnum)[key
 export const UserScalarFieldEnum = {
   id: 'id',
   passwordHash: 'passwordHash',
+  passwordSalt: 'passwordSalt',
   initTime: 'initTime',
   theme: 'theme',
   defaultGroupId: 'defaultGroupId',
@@ -115,6 +116,7 @@ export const GroupScalarFieldEnum = {
   order: 'order',
   lockType: 'lockType',
   passwordHash: 'passwordHash',
+  passwordSalt: 'passwordSalt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

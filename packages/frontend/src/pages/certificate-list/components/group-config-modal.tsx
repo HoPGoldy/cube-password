@@ -110,15 +110,18 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
     const values = await form.validateFields();
 
     let passwordHash: string | undefined;
+    let passwordSalt: string | undefined;
     if (values.password) {
       const salt = nanoid(128);
       passwordHash = sha512(salt + values.password);
+      passwordSalt = salt;
     }
 
     const resp = await runUpdateConfig({
       id: group.id,
       lockType: values.lockType,
       passwordHash,
+      passwordSalt,
     });
     if (resp.code !== 200) return;
 

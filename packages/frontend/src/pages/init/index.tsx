@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Button, Input, InputRef, Row, Col } from "antd";
 import { KeyOutlined } from "@ant-design/icons";
 import { useInit } from "@/services/auth";
+import { sha512 } from "@/utils/crypto";
+import { nanoid } from "nanoid";
 import { messageError, messageSuccess } from "@/utils/message";
 import { usePageTitle } from "@/store/global";
 import { THEME_BUTTON_COLOR } from "@/config";
@@ -36,7 +38,11 @@ const Init = () => {
   };
 
   const onSubmit = async () => {
-    const resp = await postInit({ passwordHash: password });
+    const salt = nanoid(128);
+    const resp = await postInit({
+      passwordHash: sha512(salt + password),
+      passwordSalt: salt,
+    });
     if (resp?.code !== 200) return;
 
     messageSuccess("初始化完成");
