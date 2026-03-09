@@ -41,6 +41,8 @@ const MARK_COLORS_WITH_EMPTY = [
   "",
 ];
 
+const MARK_COLORS = MARK_COLORS_WITH_EMPTY.slice(0, -1);
+
 interface ColorItemProps {
   colorCode: string;
   selected: boolean;
@@ -101,5 +103,38 @@ export const ColorPicker: FC<Props> = ({
         )}
       />
     </Modal>
+  );
+};
+
+interface ColorMultiplePickerProps {
+  value?: string[];
+  onChange?: (value: string[]) => void;
+}
+
+export const ColorMultiplePicker: FC<ColorMultiplePickerProps> = ({
+  value = [],
+  onChange,
+}) => {
+  const onClickItem = (colorCode: string) => {
+    if (value.includes(colorCode)) {
+      onChange?.(value.filter((c) => c !== colorCode));
+    } else {
+      onChange?.([...value, colorCode]);
+    }
+  };
+
+  return (
+    <List
+      className="mt-2"
+      grid={{ gutter: 16, xs: 6, sm: 6, md: 8, lg: 16, xl: 16, xxl: 16 }}
+      dataSource={MARK_COLORS}
+      renderItem={(colorCode) => (
+        <ColorItem
+          colorCode={colorCode}
+          selected={value.includes(colorCode)}
+          onClick={onClickItem}
+        />
+      )}
+    />
   );
 };

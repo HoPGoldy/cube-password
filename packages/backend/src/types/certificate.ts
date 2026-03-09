@@ -87,7 +87,7 @@ export type SchemaCertificateMoveBodyType = Type.Static<
 // 搜索
 export const SchemaCertificateSearchBody = Type.Object({
   keyword: Type.Optional(Type.String()),
-  markColor: Type.Optional(Type.String()),
+  colors: Type.Optional(Type.Array(Type.String())),
   startDate: Type.Optional(Type.String()),
   endDate: Type.Optional(Type.String()),
   page: Type.Number({ minimum: 1, default: 1 }),

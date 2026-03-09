@@ -137,20 +137,20 @@ export class CertificateService {
 
   async search(params: {
     keyword?: string;
-    markColor?: string;
+    colors?: string[];
     startDate?: string;
     endDate?: string;
     page: number;
     pageSize: number;
   }) {
-    const { keyword, markColor, startDate, endDate, page, pageSize } = params;
+    const { keyword, colors, startDate, endDate, page, pageSize } = params;
     const where: Record<string, unknown> = {};
 
     if (keyword) {
       where.name = { contains: keyword };
     }
-    if (markColor) {
-      where.markColor = markColor;
+    if (colors && colors.length > 0) {
+      where.markColor = { in: colors };
     }
     if (startDate || endDate) {
       const dateFilter: Record<string, Date> = {};

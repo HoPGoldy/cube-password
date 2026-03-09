@@ -5,17 +5,27 @@ import { LeftOutlined, SearchOutlined } from "@ant-design/icons";
 import { useSearchCertificate } from "@/services/certificate";
 import { usePageTitle } from "@/store/global";
 import { DEFAULT_PAGE_SIZE } from "@/config";
+import {
+  ColorMultiplePicker,
+  MARK_COLORS_MAP,
+} from "@/components/color-picker";
 import dayjs from "dayjs";
 
 const SearchPage: FC = () => {
   usePageTitle("搜索凭证");
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState("");
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const enabled = keyword.trim().length > 0;
+  const enabled = keyword.trim().length > 0 || selectedColors.length > 0;
   const { data: searchResult, isLoading } = useSearchCertificate(
-    { keyword, page: currentPage, pageSize: DEFAULT_PAGE_SIZE },
+    {
+      keyword: keyword || undefined,
+      colors: selectedColors.length > 0 ? selectedColors : undefined,
+      page: currentPage,
+      pageSize: DEFAULT_PAGE_SIZE,
+    },
     enabled,
   );
 
@@ -44,9 +54,19 @@ const SearchPage: FC = () => {
         />
       </div>
 
+      <div className="px-4">
+        <ColorMultiplePicker
+          value={selectedColors}
+          onChange={setSelectedColors}
+        />
+      </div>
+
       <div className="flex-1 overflow-y-auto p-4">
         {!enabled && (
-          <Empty className="mt-[15vh]" description="输入关键字开始搜索" />
+          <Empty
+            className="mt-[15vh]"
+            description="输入关键字或选择颜色进行搜索"
+          />
         )}
 
         {enabled && isLoading && (
@@ -70,7 +90,10 @@ const SearchPage: FC = () => {
               {item.markColor && (
                 <div
                   className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
-                  style={{ backgroundColor: item.markColor }}
+                  style={{
+                    backgroundColor:
+                      MARK_COLORS_MAP[item.markColor] || item.markColor,
+                  }}
                 />
               )}
               <div className="flex-1">
