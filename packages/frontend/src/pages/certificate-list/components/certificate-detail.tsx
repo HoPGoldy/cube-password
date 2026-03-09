@@ -1,10 +1,15 @@
 import { FC, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Form, Input, Modal } from "antd";
+import { Button, Form, Input, Modal, Space } from "antd";
 import {
   PlusOutlined,
   ExclamationCircleFilled,
   DeleteFilled,
+  SmileOutlined,
+  HeartFilled,
+  QuestionCircleFilled,
 } from "@ant-design/icons";
+import { ColorPicker, MARK_COLORS_MAP } from "@/components/color-picker";
+import { IconPicker } from "@/components/icon-picker";
 import {
   useCertificateDetail,
   useAddCertificate,
@@ -28,14 +33,98 @@ interface Props {
   onClose: () => void;
 }
 
+const USE_TIPS = [
+  { name: "修改名称", content: "在编辑模式下，标题名和字段名均可修改。" },
+  {
+    name: "密码生成",
+    content:
+      '当字段名中包含 "密码"、"password"、"pwd" 时，将会显示密码生成按钮，点击后会生成 18 位的强密码并复制到剪切板。',
+  },
+  {
+    name: "用户名",
+    content:
+      '当字段名中包含 "用户名"、"name" 时，将会显示用户名生成按钮，点击后会生成首字母大写的英文名并复制到剪切板。',
+  },
+  {
+    name: "复制与跳转",
+    content:
+      "在查看凭证时，直接点击字段内容将会直接复制，如果内容以 http https 开头，将会直接跳转到对应网址。",
+  },
+];
+
 const getNewFormValues = () => ({
   title: "新密码",
+  icon: "fa-solid fa-key",
+  markColor: "",
   fields: [
     { label: "网址", value: "" },
     { label: "用户名", value: "" },
     { label: "密码", value: "" },
   ],
 });
+
+/** 图标选择按钮 (Form.Item controlled) */
+const IconSelectBtn: FC<{
+  disabled: boolean;
+  onOpen: () => void;
+  value?: string;
+}> = ({ onOpen, value }) => (
+  <Button
+    type="text"
+    icon={
+      <SmileOutlined className="text-xl text-gray-500 dark:text-gray-200" />
+    }
+    onClick={onOpen}
+  />
+);
+
+/** 颜色选择按钮 (Form.Item controlled) */
+const ColorSelectBtn: FC<{
+  disabled: boolean;
+  onOpen: () => void;
+  value?: string;
+}> = ({ onOpen, value }) => (
+  <Button
+    type="text"
+    icon={
+      <HeartFilled
+        style={{ color: value ? MARK_COLORS_MAP[value] : undefined }}
+        className="text-xl text-gray-500 dark:text-gray-200"
+      />
+    }
+    onClick={onOpen}
+  />
+);
+
+/** IconPicker 受控包装 */
+const IconPickerController: FC<{
+  open: boolean;
+  onClose: () => void;
+  value?: string;
+  onChange?: (v: string) => void;
+}> = ({ open, onClose, value, onChange }) => (
+  <IconPicker
+    value={value}
+    onChange={onChange}
+    visible={open}
+    onClose={onClose}
+  />
+);
+
+/** ColorPicker 受控包装 */
+const ColorPickerController: FC<{
+  open: boolean;
+  onClose: () => void;
+  value?: string;
+  onChange?: (v: string) => void;
+}> = ({ open, onClose, value, onChange }) => (
+  <ColorPicker
+    value={value}
+    onChange={onChange}
+    visible={open}
+    onClose={onClose}
+  />
+);
 
 export const CertificateDetailModal: FC<Props> = ({
   groupId,
@@ -71,10 +160,15 @@ export const CertificateDetailModal: FC<Props> = ({
   useEffect(() => {
     if (!detailResp?.data || !pwdKey || !pwdIv) return;
 
-    const { content, name } = detailResp.data;
+    const { content, name, markColor, icon } = detailResp.data;
     try {
       const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
-      form.setFieldsValue({ title: name, fields });
+      form.setFieldsValue({
+        title: name,
+        icon: icon || "fa-solid fa-key",
+        markColor: markColor || "",
+        fields,
+      });
     } catch {
       messageError("凭证解密失败");
       onClose();
@@ -95,13 +189,21 @@ export const CertificateDetailModal: FC<Props> = ({
     const content = aes(JSON.stringify(values.fields), pwdKey, pwdIv);
 
     if (isAdd) {
-      await addCertificate({ name: values.title, groupId, content });
+      await addCertificate({
+        name: values.title,
+        groupId,
+        content,
+        markColor: values.markColor || undefined,
+        icon: values.icon || undefined,
+      });
     } else {
       await updateCertificate({
         id: detailId!,
         name: values.title,
         groupId,
         content,
+        markColor: values.markColor || null,
+        icon: values.icon || null,
       });
     }
 
@@ -145,9 +247,13 @@ export const CertificateDetailModal: FC<Props> = ({
     return { disabled: readonly, handle: ".move-handle" };
   }, [readonly]);
 
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [useTipVisible, setUseTipVisible] = useState(false);
+
   const renderTitle = () => {
     return (
-      <div className="w-full flex items-center">
+      <div className="w-full flex items-center" data-testid="detail-title">
         <Form.Item noStyle name="title">
           <Input
             variant="borderless"
@@ -156,18 +262,79 @@ export const CertificateDetailModal: FC<Props> = ({
             className="font-bold text-xl pl-0 disabled:cursor-default disabled:text-inherit flex-1"
           />
         </Form.Item>
-        {readonly && !isAdd && (
-          <Button
-            type="text"
-            danger
-            loading={isDeleting}
-            icon={
-              <DeleteFilled className="text-xl text-gray-500 dark:text-gray-200" />
-            }
-            data-testid="detail-delete-btn"
-            onClick={onDeleteCertificate}
+        <div className="flex">
+          <Space>
+            {readonly && !isAdd ? (
+              <Button
+                type="text"
+                danger
+                loading={isDeleting}
+                icon={
+                  <DeleteFilled className="text-xl text-gray-500 dark:text-gray-200" />
+                }
+                data-testid="detail-delete-btn"
+                onClick={onDeleteCertificate}
+              />
+            ) : (
+              !readonly && (
+                <>
+                  <Form.Item noStyle name="icon">
+                    <IconSelectBtn
+                      disabled={readonly}
+                      onOpen={() => setIconPickerOpen(true)}
+                    />
+                  </Form.Item>
+                  <Form.Item noStyle name="markColor">
+                    <ColorSelectBtn
+                      disabled={readonly}
+                      onOpen={() => setColorPickerOpen(true)}
+                    />
+                  </Form.Item>
+                  <Button
+                    type="text"
+                    icon={
+                      <QuestionCircleFilled className="text-xl text-gray-500 dark:text-gray-200" />
+                    }
+                    onClick={() => setUseTipVisible(true)}
+                  />
+                </>
+              )
+            )}
+          </Space>
+        </div>
+
+        <Form.Item noStyle name="icon">
+          <IconPickerController
+            open={iconPickerOpen}
+            onClose={() => setIconPickerOpen(false)}
           />
-        )}
+        </Form.Item>
+        <Form.Item noStyle name="markColor">
+          <ColorPickerController
+            open={colorPickerOpen}
+            onClose={() => setColorPickerOpen(false)}
+          />
+        </Form.Item>
+
+        <Modal
+          open={useTipVisible}
+          onCancel={() => setUseTipVisible(false)}
+          footer={null}
+          closable={false}
+        >
+          <div className="p-4">
+            {USE_TIPS.map((tip) => (
+              <div className="mb-4" key={tip.name}>
+                <div className="font-bold mb-1 dark:text-gray-400">
+                  {tip.name}
+                </div>
+                <div className="text-gray-600 dark:text-gray-200">
+                  {tip.content}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Modal>
       </div>
     );
   };
