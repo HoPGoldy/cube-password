@@ -1,29 +1,66 @@
 import CryptoJS from "crypto-js";
-import bcrypt from "bcryptjs";
+
+const { SHA256, SHA512, AES, MD5, enc, mode, pad } = CryptoJS;
 
 /**
  * 获取 sha512 hash
  */
 export const sha512 = (str: string) => {
-  return CryptoJS.SHA512(str).toString(CryptoJS.enc.Hex).toUpperCase();
+  return SHA512(str).toString(enc.Hex).toUpperCase();
 };
 
 /**
  * 获取带盐的 sha512 hash（兼容旧接口）
  */
 export const shaWithSalt = (str: string, saltValue: string) => {
-  const salt = CryptoJS.SHA512(saltValue).toString(CryptoJS.enc.Hex);
+  const salt = SHA512(saltValue).toString(enc.Hex);
   const saltedMessage = salt + str;
-  const hash = CryptoJS.SHA512(saltedMessage);
-  return hash.toString(CryptoJS.enc.Hex).toUpperCase();
+  const hash = SHA512(saltedMessage);
+  return hash.toString(enc.Hex).toUpperCase();
 };
 
 /**
- * bcrypt 摘要存储
- * 落库的密码都要使用这个函数处理一下
+ * 将密码转换为 AES 加密需要的 key 和 iv
  */
-export const hashPassword = (password: string) => {
-  return bcrypt.hashSync(password, 10);
+export const getAesMeta = (password: string) => {
+  const key = enc.Utf8.parse(MD5(password).toString());
+  const iv = enc.Utf8.parse(SHA256(password).toString());
+  return { key, iv };
+};
+
+/**
+ * AES 加密
+ */
+export const aesEncrypt = (
+  str: string,
+  key: CryptoJS.lib.WordArray,
+  iv: CryptoJS.lib.WordArray,
+) => {
+  const srcs = enc.Utf8.parse(str);
+  const encrypted = AES.encrypt(srcs, key, {
+    iv,
+    mode: mode.CBC,
+    padding: pad.Pkcs7,
+  });
+  return encrypted.ciphertext.toString();
+};
+
+/**
+ * AES 解密
+ */
+export const aesDecrypt = (
+  str: string,
+  key: CryptoJS.lib.WordArray,
+  iv: CryptoJS.lib.WordArray,
+) => {
+  const encryptedHexStr = enc.Hex.parse(str);
+  const srcs = enc.Base64.stringify(encryptedHexStr);
+  const decrypt = AES.decrypt(srcs, key, {
+    iv,
+    mode: mode.CBC,
+    padding: pad.Pkcs7,
+  });
+  return decrypt.toString(enc.Utf8);
 };
 
 /**

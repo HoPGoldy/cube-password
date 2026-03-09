@@ -4,7 +4,7 @@ import { ChallengeManager } from "@/lib/challenge";
 import { LoginLocker } from "@/lib/login-locker";
 import { NotificationService } from "@/modules/notification/service";
 import { NoticeType } from "@/types/notification";
-import { sha512 } from "@/lib/crypto";
+import { sha512, getAesMeta, aesEncrypt, aesDecrypt } from "@/lib/crypto";
 import { queryIp, isSameLocation, formatLocation } from "@/lib/ip-location";
 import { verifySync } from "otplib";
 import { ErrorAuthFailed, ErrorBanned, ErrorNeedLogin } from "./error";
@@ -184,7 +184,7 @@ export class AuthService {
   async changePassword(
     oldHash: string,
     challengeCode: string,
-    newPasswordHash: string,
+    newPassword: string,
   ): Promise<void> {
     const user = await this.prisma.user.findFirst();
     if (!user) throw new ErrorNeedLogin();
@@ -195,10 +195,33 @@ export class AuthService {
       throw new ErrorAuthFailed();
     }
 
-    // 更新密码
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newPasswordHash },
+    // 重新加密所有凭证
+    const oldMeta = getAesMeta(user.passwordHash);
+    const newMeta = getAesMeta(newPassword);
+
+    const allCertificates = await this.prisma.certificate.findMany({
+      select: { id: true, content: true },
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const cert of allCertificates) {
+        try {
+          const decrypted = aesDecrypt(cert.content, oldMeta.key, oldMeta.iv);
+          const reEncrypted = aesEncrypt(decrypted, newMeta.key, newMeta.iv);
+          await tx.certificate.update({
+            where: { id: cert.id },
+            data: { content: reEncrypted },
+          });
+        } catch {
+          // 解密失败的凭证跳过（可能是其他 key 加密的）
+        }
+      }
+
+      // 更新密码
+      await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash: newPassword },
+      });
     });
 
     // 销毁 session

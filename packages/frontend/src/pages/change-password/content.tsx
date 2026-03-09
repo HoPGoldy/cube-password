@@ -1,7 +1,6 @@
 import { FC } from "react";
 import { Button, Col, Form, Input, Modal, Row, Space } from "antd";
 import { useAtomValue } from "jotai";
-import bcrypt from "bcryptjs";
 import { stateMainPwd, stateUser } from "@/store/user";
 import { sha512, validateAesMeta } from "@/utils/crypto";
 import { queryChallenge, useChangePassword } from "@/services/auth";
@@ -35,12 +34,11 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
     const challengeCode = challengeResp.data!.code;
     const oldHash = sha512(oldPassword + challengeCode);
-    const newPasswordHash = bcrypt.hashSync(newPassword, 10);
 
     const resp = await postChangePassword({
       oldHash,
       challengeCode,
-      newPasswordHash,
+      newPassword,
     });
     if (resp.code !== 200) return;
 

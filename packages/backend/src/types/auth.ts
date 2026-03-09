@@ -19,7 +19,7 @@ export type SchemaGlobalResponseType = Type.Static<typeof SchemaGlobalResponse>;
 // ========== Init ==========
 
 export const SchemaAuthInitBody = Type.Object({
-  passwordHash: Type.String({ description: "bcrypt hash of password" }),
+  passwordHash: Type.String({ description: "The password to store" }),
 });
 export type SchemaAuthInitBodyType = Type.Static<typeof SchemaAuthInitBody>;
 
@@ -68,7 +68,7 @@ export type SchemaAuthLoginResponseType = Type.Static<
 export const SchemaAuthChangePasswordBody = Type.Object({
   oldHash: Type.String({ description: "SHA512(oldPassword + challenge)" }),
   challengeCode: Type.String({ description: "The challenge code used" }),
-  newPasswordHash: Type.String({ description: "bcrypt hash of new password" }),
+  newPassword: Type.String({ description: "The new plain password" }),
 });
 export type SchemaAuthChangePasswordBodyType = Type.Static<
   typeof SchemaAuthChangePasswordBody

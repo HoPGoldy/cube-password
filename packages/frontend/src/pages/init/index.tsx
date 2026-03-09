@@ -5,7 +5,6 @@ import { useInit } from "@/services/auth";
 import { messageError, messageSuccess } from "@/utils/message";
 import { usePageTitle } from "@/store/global";
 import { THEME_BUTTON_COLOR } from "@/config";
-import bcrypt from "bcryptjs";
 
 const Init = () => {
   usePageTitle("应用初始化");
@@ -37,8 +36,7 @@ const Init = () => {
   };
 
   const onSubmit = async () => {
-    const passwordHash = bcrypt.hashSync(password, 10);
-    const resp = await postInit({ passwordHash });
+    const resp = await postInit({ passwordHash: password });
     if (resp?.code !== 200) return;
 
     messageSuccess("初始化完成");

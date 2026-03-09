@@ -152,8 +152,8 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { oldHash, challengeCode, newPasswordHash } = request.body;
-      await authService.changePassword(oldHash, challengeCode, newPasswordHash);
+      const { oldHash, challengeCode, newPassword } = request.body;
+      await authService.changePassword(oldHash, challengeCode, newPassword);
       return {};
     },
   );
