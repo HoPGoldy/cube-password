@@ -1,28 +1,31 @@
 import { FC, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { RightOutlined, PlusOutlined, LockOutlined } from "@ant-design/icons";
-import { Button, Input, Modal, Space } from "antd";
+import { Button, Space } from "antd";
 import { useAtom } from "jotai";
 import { stateGroupList, GroupInfo } from "@/store/user";
 import { useAddGroup, useUpdateGroupSort } from "@/services/group";
 import { messageSuccess } from "@/utils/message";
+import { AddGroupModal } from "@/components/add-group-modal";
 import s from "./styles.module.css";
 
 export const Sidebar: FC = () => {
   const [groups, setGroups] = useAtom(stateGroupList);
   const { groupId } = useParams();
-  const { mutateAsync: addGroup } = useAddGroup();
+  const { mutateAsync: addGroup, isPending: addingGroup } = useAddGroup();
   const { mutateAsync: updateGroupSort } = useUpdateGroupSort();
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
 
-  const onAddGroup = async () => {
-    if (!newGroupName.trim()) return;
-    const resp = await addGroup({ name: newGroupName.trim() });
+  const onAddGroup = async (data: {
+    name: string;
+    lockType: string;
+    passwordHash?: string;
+    passwordSalt?: string;
+  }) => {
+    const resp = await addGroup(data);
     if (resp?.code !== 200) return;
     messageSuccess("分组已创建");
     setAddModalOpen(false);
-    setNewGroupName("");
   };
 
   const renderGroupItem = (item: GroupInfo) => {
@@ -67,23 +70,12 @@ export const Sidebar: FC = () => {
         新建分组
       </Button>
 
-      <Modal
-        title="新建分组"
+      <AddGroupModal
         open={addModalOpen}
+        loading={addingGroup}
         onOk={onAddGroup}
-        onCancel={() => {
-          setAddModalOpen(false);
-          setNewGroupName("");
-        }}
-      >
-        <Input
-          placeholder="分组名称"
-          value={newGroupName}
-          onChange={(e) => setNewGroupName(e.target.value)}
-          onKeyUp={(e) => e.key === "Enter" && onAddGroup()}
-          autoFocus
-        />
-      </Modal>
+        onCancel={() => setAddModalOpen(false)}
+      />
     </section>
   );
 };

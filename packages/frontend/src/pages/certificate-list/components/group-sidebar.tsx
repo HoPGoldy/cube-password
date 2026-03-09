@@ -10,12 +10,13 @@ import {
   SearchOutlined,
   BellOutlined,
 } from "@ant-design/icons";
-import { Button, Input, Modal, Space } from "antd";
+import { Button, Space } from "antd";
 import { useAddGroup } from "@/services/group";
 import { messageSuccess } from "@/utils/message";
 import { Link, useNavigate } from "react-router-dom";
 import { useLogout } from "@/services/auth";
 import { logout } from "@/store/user";
+import { AddGroupModal } from "@/components/add-group-modal";
 import s from "./styles.module.css";
 
 interface Props {
@@ -27,18 +28,20 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
   const [groupList, setGroupList] = useAtom(stateGroupList);
   const userInfo = useAtomValue(stateUser);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const { mutateAsync: addGroup } = useAddGroup();
+  const { mutateAsync: addGroup, isPending: addingGroup } = useAddGroup();
   const { mutateAsync: postLogout } = useLogout();
   const navigate = useNavigate();
 
-  const onAddGroup = async () => {
-    if (!newGroupName.trim()) return;
-    const resp = await addGroup({ name: newGroupName.trim() });
+  const onAddGroup = async (data: {
+    name: string;
+    lockType: string;
+    passwordHash?: string;
+    passwordSalt?: string;
+  }) => {
+    const resp = await addGroup(data);
     if (resp?.code !== 200) return;
     messageSuccess("分组已创建");
     setAddModalOpen(false);
-    setNewGroupName("");
     // Refresh group list from login response format
     if (resp.data?.newList) {
       setGroupList(
@@ -142,23 +145,12 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
         </Button>
       </div>
 
-      <Modal
-        title="新建分组"
+      <AddGroupModal
         open={addModalOpen}
+        loading={addingGroup}
         onOk={onAddGroup}
-        onCancel={() => {
-          setAddModalOpen(false);
-          setNewGroupName("");
-        }}
-      >
-        <Input
-          placeholder="分组名称"
-          value={newGroupName}
-          onChange={(e) => setNewGroupName(e.target.value)}
-          onKeyUp={(e) => e.key === "Enter" && onAddGroup()}
-          autoFocus
-        />
-      </Modal>
+        onCancel={() => setAddModalOpen(false)}
+      />
     </section>
   );
 };
