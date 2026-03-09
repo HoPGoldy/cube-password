@@ -1,12 +1,17 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAtom } from "jotai";
 import { stateGroupList } from "@/store/user";
-import { useCertificateList, useMoveCertificate } from "@/services/certificate";
+import {
+  useCertificateList,
+  useMoveCertificate,
+  useUpdateCertificateSort,
+} from "@/services/certificate";
 import { GroupUnlock } from "./components/group-unlock";
 import { CertificateDetailModal } from "./components/certificate-detail";
 import { CertificateListItem } from "./components/certificate-list-item";
 import { GroupConfigModal } from "./components/group-config-modal";
+import { Draggable } from "@/components/draggable";
 import { Button, Dropdown, Empty, Result, Space, Spin } from "antd";
 import {
   PlusOutlined,
@@ -31,6 +36,18 @@ const CertificateListPage: FC = () => {
     {},
   );
   const { mutateAsync: runMoveCertificate } = useMoveCertificate();
+  const { mutateAsync: updateCertificateSort } = useUpdateCertificateSort();
+  const [dragging, setDragging] = useState(false);
+  /** 本地可排序的凭证列表 */
+  const [certificateList, setCertificateList] = useState<
+    {
+      id: number;
+      name: string;
+      markColor: string | null;
+      icon: string | null;
+      updatedAt: string;
+    }[]
+  >([]);
 
   const currentGroup = groupList.find((g) => g.id === groupId);
   const isUnlocked = currentGroup?.unlocked ?? false;
@@ -40,7 +57,12 @@ const CertificateListPage: FC = () => {
     isUnlocked,
   );
 
-  const items = certListResp?.data?.items ?? [];
+  useEffect(() => {
+    if (!certListResp?.data?.items) return;
+    setCertificateList(certListResp.data.items);
+  }, [certListResp?.data?.items]);
+
+  const items = certificateList;
 
   const closeSelectMode = () => {
     setSelectMode(false);
@@ -124,25 +146,43 @@ const CertificateListPage: FC = () => {
       );
     }
 
+    const renderCertificateItem = (item: (typeof items)[0]) => (
+      <CertificateListItem
+        key={item.id}
+        detail={item}
+        dragging={dragging}
+        selected={selectMode ? !!selectedItems[item.id] : undefined}
+        onClick={() => {
+          if (selectMode) {
+            setSelectedItems((prev) => ({
+              ...prev,
+              [item.id]: !prev[item.id],
+            }));
+          } else {
+            setDetailId(item.id);
+          }
+        }}
+      />
+    );
+
     return (
-      <div>
-        {items.map((item) => (
-          <CertificateListItem
-            key={item.id}
-            detail={item}
-            selected={selectMode ? !!selectedItems[item.id] : undefined}
-            onClick={() => {
-              if (selectMode) {
-                setSelectedItems((prev) => ({
-                  ...prev,
-                  [item.id]: !prev[item.id],
-                }));
-              } else {
-                setDetailId(item.id);
-              }
+      <div className="mx-4 mt-4">
+        <div className="flex flex-wrap justify-start">
+          <Draggable
+            className="w-full flex flex-wrap"
+            value={items}
+            sortableOptions={{
+              disabled: isMobile,
+              onStart: () => setDragging(true),
+              onEnd: () => setDragging(false),
+            }}
+            renderItem={renderCertificateItem}
+            onChange={(list) => {
+              setCertificateList(list);
+              updateCertificateSort(list.map((i) => i.id));
             }}
           />
-        ))}
+        </div>
       </div>
     );
   };
