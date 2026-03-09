@@ -14,6 +14,13 @@ export class ErrorNeedLogin extends ErrorUnauthorized {
   }
 }
 
+export class ErrorNeedTotpCode extends ErrorUnauthorized {
+  constructor() {
+    super("非常用地区登录，请输入动态验证码");
+    this.code = 40103;
+  }
+}
+
 export class ErrorBanned extends ErrorForbidden {
   constructor() {
     super("该用户已被禁用");

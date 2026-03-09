@@ -57,10 +57,16 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(resp);
     }
 
-    const { status, data } = resp.response;
+    const { status, data, config } = resp.response;
+    const isLoginRequest = config?.url === "auth/login";
 
     if (status === 413) {
       showGlobalMessage("error", "上传失败，文件大小超出上限");
+      return Promise.reject(resp);
+    }
+
+    // 登录请求的错误直接透传给调用方，不做拦截处理
+    if (isLoginRequest) {
       return Promise.reject(resp);
     }
 

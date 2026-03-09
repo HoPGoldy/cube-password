@@ -9,6 +9,8 @@ import type {
   SchemaChallengeResponseType,
   SchemaGlobalResponseType,
 } from "@shared-types/auth";
+import type { AppResponse } from "@/types/global";
+import type { LockDetail } from "@/types/auth";
 
 /** 获取全局状态（是否已初始化） */
 export const queryGlobal = () => {
@@ -29,11 +31,31 @@ export const useInit = () => {
   });
 };
 
+/** 登录响应类型（成功或失败都走这里） */
+export type LoginResult = AppResponse<SchemaAuthLoginResponseType> & {
+  lockDetail?: LockDetail;
+};
+
 /** 登录 */
 export const useLogin = () => {
   return useMutation({
-    mutationFn: (data: SchemaAuthLoginBodyType) => {
-      return requestPost<SchemaAuthLoginResponseType>("auth/login", data);
+    mutationFn: async (data: SchemaAuthLoginBodyType): Promise<LoginResult> => {
+      try {
+        return await requestPost<SchemaAuthLoginResponseType>(
+          "auth/login",
+          data,
+        );
+      } catch (err: any) {
+        // 登录失败时从 axios error 中提取响应数据
+        const respData = err?.response?.data;
+        if (respData) {
+          return {
+            ...respData,
+            lockDetail: respData.data,
+          } as LoginResult;
+        }
+        throw err;
+      }
     },
   });
 };

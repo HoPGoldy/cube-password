@@ -25,6 +25,7 @@ interface ErrorResponse {
   success: false;
   code: number | string;
   message: string;
+  data?: unknown;
   _stack?: string;
 }
 
@@ -33,6 +34,7 @@ export const createErrorResponse = (error: Error): ErrorResponse => {
     success: false,
     code: (error as any).code || (error as any).statusCode || 500,
     message: error.message,
+    data: (error as any).data,
     _stack: ENV_IS_DEV ? error.stack : undefined,
   };
 };

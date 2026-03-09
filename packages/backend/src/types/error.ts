@@ -2,6 +2,7 @@ export class ErrorHttp extends Error {
   public statusCode: number;
   public code: number;
   public headers?: Record<string, string>;
+  public data?: unknown;
 
   constructor(message: string) {
     super(message);

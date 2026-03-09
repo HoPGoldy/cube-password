@@ -1,21 +1,31 @@
 import { sha512 } from "@/utils/crypto";
 import { getAesMeta } from "@/utils/crypto";
-import { Button, Input, InputRef } from "antd";
-import { useRef, useState } from "react";
+import { Alert, Button, Col, Input, InputRef, Row, Typography } from "antd";
+import { useEffect, useRef, useState } from "react";
 import { useLogin, queryChallenge } from "../../services/auth";
 import { login, stateMainPwd, statePasswordSalt } from "../../store/user";
 import { messageError } from "@/utils/message";
+import { showGlobalMessage } from "@/utils/message";
 import { KeyOutlined } from "@ant-design/icons";
 import { useLoginSuccess } from "./use-login-success";
 import { THEME_BUTTON_COLOR } from "@/config";
 import { usePageTitle } from "@/store/global";
 import { useSetAtom, useAtomValue } from "jotai";
+import type { LockDetail, LoginFailRecord } from "@/types/auth";
+import dayjs from "dayjs";
 
-export const LoginPage = () => {
+interface LoginPageProps {
+  initialLockDetail?: LockDetail;
+}
+
+export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
   usePageTitle("登录");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [codeVisible, setCodeVisible] = useState(false);
+  const [lockDetail, setLockDetail] = useState<LockDetail | undefined>(
+    initialLockDetail,
+  );
   const passwordInputRef = useRef<InputRef>(null);
   const codeInputRef = useRef<InputRef>(null);
   const { mutateAsync: postLogin, isPending: isLogin } = useLogin();
@@ -23,6 +33,10 @@ export const LoginPage = () => {
   const salt = useAtomValue(statePasswordSalt);
 
   const { runLoginSuccess } = useLoginSuccess();
+
+  useEffect(() => {
+    if (initialLockDetail) setLockDetail(initialLockDetail);
+  }, [initialLockDetail]);
 
   const onPasswordSubmit = async () => {
     if (!password) {
@@ -52,7 +66,16 @@ export const LoginPage = () => {
       return;
     }
 
-    if (resp?.code !== 200) return;
+    if (resp?.code !== 200) {
+      // 登录失败，更新锁定信息
+      if (resp?.lockDetail) {
+        setLockDetail(resp.lockDetail);
+      }
+      if (resp?.message) {
+        showGlobalMessage("warning", resp.message);
+      }
+      return;
+    }
 
     // save AES meta for client-side encryption
     const { key, iv } = getAesMeta(password);
@@ -69,17 +92,39 @@ export const LoginPage = () => {
   const appTitle = "Cube Password";
   const appSubTitle = "安全可靠的密码管理器";
 
-  return (
-    <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col justify-center items-center dark:text-gray-100">
-      <header className="w-screen text-center min-h-[236px]">
-        <div className="text-5xl font-bold text-mainColor dark:text-neutral-200">
-          {appTitle}
-        </div>
-        <div className="mt-4 text-xl text-mainColor dark:text-neutral-300">
-          {appSubTitle}
-        </div>
-      </header>
-      <div className="w-[70%] md:w-[40%] lg:w-[30%] xl:w-[20%] flex flex-col items-center">
+  const renderLoginFailure = (item: LoginFailRecord) => {
+    const message =
+      dayjs(item.date).format("YYYY-MM-DD HH:mm:ss") +
+      " 于 " +
+      item.location +
+      " 登录失败";
+    return (
+      <Col span={24} key={item.date}>
+        <Alert message={message} type="error" showIcon />
+      </Col>
+    );
+  };
+
+  const renderLockResult = () => {
+    return (
+      <div>
+        <Typography.Title
+          level={2}
+          className="text-center !text-red-500"
+          data-testid="login-locked-title"
+        >
+          登录已锁定
+        </Typography.Title>
+        <Typography.Paragraph className="text-center !text-red-500">
+          由于登录失败次数超过上限，应用访问功能已被锁定，请重启应用服务或明天再试。
+        </Typography.Paragraph>
+      </div>
+    );
+  };
+
+  const renderLoginForm = () => {
+    return (
+      <>
         <Input.Password
           size="large"
           className="mb-2"
@@ -119,6 +164,27 @@ export const LoginPage = () => {
         >
           登 录
         </Button>
+      </>
+    );
+  };
+
+  return (
+    <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col justify-center items-center dark:text-gray-100">
+      <header className="w-screen text-center min-h-[236px]">
+        <div className="text-5xl font-bold text-mainColor dark:text-neutral-200">
+          {appTitle}
+        </div>
+        <div className="mt-4 text-xl text-mainColor dark:text-neutral-300">
+          {appSubTitle}
+        </div>
+        <div className="w-[70%] my-6 mx-auto">
+          <Row gutter={[12, 12]}>
+            {lockDetail?.loginFailure?.map(renderLoginFailure)}
+          </Row>
+        </div>
+      </header>
+      <div className="w-[70%] md:w-[40%] lg:w-[30%] xl:w-[20%] flex flex-col items-center">
+        {lockDetail?.isBanned ? renderLockResult() : renderLoginForm()}
       </div>
     </div>
   );

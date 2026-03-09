@@ -1,5 +1,13 @@
 import { Type } from "typebox";
 
+// ========== Login Fail Record ==========
+
+export const SchemaLoginFailRecord = Type.Object({
+  ip: Type.String(),
+  date: Type.Number(),
+  location: Type.String(),
+});
+
 // ========== Challenge ==========
 
 export const SchemaChallengeResponse = Type.Object({
@@ -14,6 +22,9 @@ export type SchemaChallengeResponseType = Type.Static<
 export const SchemaGlobalResponse = Type.Object({
   isInitialized: Type.Boolean(),
   salt: Type.Optional(Type.String()),
+  loginFailure: Type.Array(SchemaLoginFailRecord),
+  retryNumber: Type.Number(),
+  isBanned: Type.Boolean(),
 });
 export type SchemaGlobalResponseType = Type.Static<typeof SchemaGlobalResponse>;
 
