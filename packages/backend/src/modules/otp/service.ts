@@ -2,7 +2,6 @@ import { PrismaService } from "@/modules/prisma";
 import { ChallengeManager } from "@/lib/challenge";
 import { sha512 } from "@/lib/crypto";
 import { generateSecret, verifySync, TOTP } from "otplib";
-import { toDataURL } from "qrcode";
 import {
   ErrorOtpVerifyFailed,
   ErrorOtpAlreadyBound,
@@ -37,12 +36,11 @@ export class OtpService {
     const secret = generateSecret();
     this.pendingSecret = secret;
 
-    const otpauth = new TOTP().toURI({
+    const qrCode = new TOTP().toURI({
       label: "user",
       issuer: "CubePassword",
       secret,
     });
-    const qrCode = await toDataURL(otpauth);
 
     return { registered: false, qrCode };
   }
