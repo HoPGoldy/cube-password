@@ -9,6 +9,11 @@ import type {
   SchemaCertificateUpdateBodyType,
 } from "@shared-types/certificate";
 
+/** 获取随机英文名 */
+export const getRandName = () => {
+  return requestPost<string>("certificate/rand-name");
+};
+
 /** 按分组列出凭证 */
 export const useCertificateList = (
   groupId: number | undefined,

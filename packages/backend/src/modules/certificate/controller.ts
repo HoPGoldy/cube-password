@@ -15,6 +15,8 @@ import {
 } from "@/types/certificate";
 import { CertificateService } from "./service";
 
+import { Random } from "mockjs";
+
 interface RegisterOptions {
   server: AppInstance;
   certificateService: CertificateService;
@@ -22,6 +24,19 @@ interface RegisterOptions {
 
 export const registerCertificateController = (options: RegisterOptions) => {
   const { server, certificateService } = options;
+
+  server.post(
+    "/certificate/rand-name",
+    {
+      schema: {
+        description: "生成随机英文名",
+        tags: ["certificate"],
+      },
+    },
+    async () => {
+      return { data: (Random.name(true) as string).replace(/ /g, "") };
+    },
+  );
 
   server.post(
     "/certificate/list",

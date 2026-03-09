@@ -10,7 +10,7 @@ import {
   SearchOutlined,
   BellOutlined,
 } from "@ant-design/icons";
-import { Button, Space } from "antd";
+import { Button } from "antd";
 import { useAddGroup } from "@/services/group";
 import { messageSuccess } from "@/utils/message";
 import { Link, useNavigate } from "react-router-dom";
@@ -94,9 +94,7 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
       </div>
 
       <div className="flex-grow overflow-y-auto noscrollbar px-1">
-        <Space direction="vertical" style={{ width: "100%" }} size={2}>
-          {groupList.map(renderGroupItem)}
-        </Space>
+        {groupList.map(renderGroupItem)}
       </div>
 
       <div className="flex-shrink-0 p-2 border-t border-gray-200 space-y-1">

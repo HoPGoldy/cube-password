@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { RightOutlined, PlusOutlined, LockOutlined } from "@ant-design/icons";
-import { Button, Space } from "antd";
+import { Button } from "antd";
 import { useAtom } from "jotai";
 import { stateGroupList, GroupInfo } from "@/store/user";
 import { useAddGroup, useUpdateGroupSort } from "@/services/group";
@@ -66,9 +66,7 @@ export const Sidebar: FC = () => {
       </div>
 
       <div className="flex-grow flex-shrink overflow-y-auto noscrollbar overflow-x-hidden my-3">
-        <Space direction="vertical" style={{ width: "100%" }}>
-          {groups.map(renderGroupItem)}
-        </Space>
+        {groups.map(renderGroupItem)}
       </div>
 
       <Button

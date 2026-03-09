@@ -7,6 +7,7 @@ import { openNewTab } from "@/utils/common";
 import { useAtomValue } from "jotai";
 import { stateUser } from "@/store/user";
 import { customAlphabet } from "nanoid";
+import { getRandName } from "@/services/certificate";
 import copy from "copy-to-clipboard";
 
 const DEFAULT_PASSWORD_ALPHABET =
@@ -33,9 +34,12 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
   const userInfo = useAtomValue(stateUser);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const [isPassword, isLink] = useMemo(() => {
+  const [isPassword, isUsername, isLink] = useMemo(() => {
     return [
       !!["密码", "password", "pwd"].find((text) =>
+        value?.label?.toLowerCase().includes(text),
+      ),
+      !!["用户名", "名称", "name"].find((text) =>
         value?.label?.toLowerCase().includes(text),
       ),
       !!["http://", "https://"].find((text) => value?.value?.includes(text)),
@@ -59,6 +63,14 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
     onValueChange(newPassword);
     copy(newPassword);
     messageApi.success({ key: COPY_MESSAGE_KEY, content: "新密码已复制" });
+  };
+
+  const onCreateUsername = async () => {
+    const resp = await getRandName();
+    if (resp.code !== 200) return;
+    onValueChange(resp.data || "");
+    copy(resp.data || "");
+    messageApi.success({ key: COPY_MESSAGE_KEY, content: "新名称已复制" });
   };
 
   const onFieldClick = () => {
@@ -126,10 +138,20 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
       <div className="flex">
         {renderMainInput()}
 
+        {/* 用户名生成 */}
+        {!disabled && isUsername && (
+          <Button
+            className="ml-2 w-8 shrink-0 keep-antd-style !bg-sky-400"
+            type="primary"
+            icon={<GiftOutlined />}
+            onClick={onCreateUsername}
+          />
+        )}
+
         {/* 密码生成 */}
         {!disabled && isPassword && (
           <Button
-            className="ml-2 w-8 shrink-0 !bg-sky-400"
+            className="ml-2 w-8 shrink-0 keep-antd-style !bg-sky-400"
             type="primary"
             icon={<GiftOutlined />}
             onClick={onCreatePassword}
@@ -139,7 +161,7 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
         {/* 删除按钮 */}
         {!disabled && showDelete && (
           <Button
-            className="ml-2 w-8 shrink-0 !bg-red-400"
+            className="ml-2 w-8 shrink-0 keep-antd-style !bg-red-400"
             icon={<CloseOutlined />}
             type="primary"
             onClick={onDelete}

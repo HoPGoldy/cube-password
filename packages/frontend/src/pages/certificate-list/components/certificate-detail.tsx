@@ -71,8 +71,9 @@ const IconSelectBtn: FC<{
 }> = ({ onOpen, value }) => (
   <Button
     type="text"
+    size="large"
     icon={
-      <SmileOutlined className="text-xl text-gray-500 dark:text-gray-200" />
+      <SmileOutlined className="text-2xl text-gray-500 dark:text-gray-200" />
     }
     onClick={onOpen}
   />
@@ -86,10 +87,11 @@ const ColorSelectBtn: FC<{
 }> = ({ onOpen, value }) => (
   <Button
     type="text"
+    size="large"
     icon={
       <HeartFilled
         style={{ color: value ? MARK_COLORS_MAP[value] : undefined }}
-        className="text-xl text-gray-500 dark:text-gray-200"
+        className="text-2xl text-gray-500 dark:text-gray-200"
       />
     }
     onClick={onOpen}
@@ -268,9 +270,10 @@ export const CertificateDetailModal: FC<Props> = ({
               <Button
                 type="text"
                 danger
+                size="large"
                 loading={isDeleting}
                 icon={
-                  <DeleteFilled className="text-xl text-gray-500 dark:text-gray-200" />
+                  <DeleteFilled className="text-2xl text-gray-500 dark:text-gray-200" />
                 }
                 data-testid="detail-delete-btn"
                 onClick={onDeleteCertificate}
@@ -292,8 +295,9 @@ export const CertificateDetailModal: FC<Props> = ({
                   </Form.Item>
                   <Button
                     type="text"
+                    size="large"
                     icon={
-                      <QuestionCircleFilled className="text-xl text-gray-500 dark:text-gray-200" />
+                      <QuestionCircleFilled className="text-2xl text-gray-500 dark:text-gray-200" />
                     }
                     onClick={() => setUseTipVisible(true)}
                   />

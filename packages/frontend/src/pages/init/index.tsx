@@ -1,17 +1,23 @@
 import { useRef, useState } from "react";
 import { Button, Input, InputRef, Row, Col } from "antd";
-import { KeyOutlined } from "@ant-design/icons";
 import { useInit } from "@/services/auth";
 import { sha512 } from "@/utils/crypto";
 import { nanoid } from "nanoid";
 import { messageError, messageSuccess } from "@/utils/message";
 import { usePageTitle } from "@/store/global";
-import { THEME_BUTTON_COLOR } from "@/config";
+
+const getViewWidth = () => {
+  const width = window.innerWidth;
+  const isMobile = width < 768;
+  return isMobile ? width * 0.8 + "px" : width / 3 + "px";
+};
+
+const viewWidth = getViewWidth();
 
 const Init = () => {
   usePageTitle("应用初始化");
 
-  const [step, setStep] = useState(0);
+  const [swiperIndex, setSwiperIndex] = useState(0);
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const passwordInputRef = useRef<InputRef>(null);
@@ -24,8 +30,8 @@ const Init = () => {
       passwordInputRef.current?.focus();
       return;
     }
-    setStep(1);
-    setTimeout(() => repeatPasswordInputRef.current?.focus(), 100);
+    setSwiperIndex(1);
+    setTimeout(() => repeatPasswordInputRef.current?.focus(), 600);
   };
 
   const onInputedRepeatPassword = () => {
@@ -34,7 +40,7 @@ const Init = () => {
       repeatPasswordInputRef.current?.focus();
       return;
     }
-    setStep(2);
+    setSwiperIndex(2);
   };
 
   const onSubmit = async () => {
@@ -49,43 +55,59 @@ const Init = () => {
     window.location.href = "/login";
   };
 
+  const getViewStyle = (index: number): React.CSSProperties => ({
+    width: viewWidth,
+    display: "inline-block",
+    verticalAlign: "top",
+    opacity: swiperIndex === index ? 1 : 0,
+  });
+
   return (
-    <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col items-center dark:text-gray-100">
+    <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col flex-nowrap items-center dark:text-gray-100">
       <header className="text-5xl font-bold text-mainColor dark:text-neutral-200 mt-36 w-full text-center">
         应用初始化
       </header>
-
-      <div className="w-[70%] md:w-[40%] lg:w-[30%] xl:w-[20%] mt-8">
-        {step === 0 && (
-          <div>
-            <div className="text-center mb-4">
-              <div className="text-lg font-semibold mb-2">设置主密码</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="overflow-hidden mt-4" style={{ width: viewWidth }}>
+        <div
+          className="transition-all"
+          style={{
+            width: `calc(${viewWidth} * 4)`,
+            transform: `translate(calc(-${viewWidth} * ${swiperIndex}))`,
+          }}
+        >
+          <div style={getViewStyle(0)}>
+            <div className="text-center text-xl mb-16">
+              设置主密码
+              <div className="text-slate-600 dark:text-slate-400 text-base mt-6">
                 主密码是访问应用的唯一凭证，请设置一个至少 6
                 位的强密码，并牢记在心。
+                <br />
+                不要使用生日、姓名缩写等常见信息。
               </div>
             </div>
-            <Row gutter={[8, 8]}>
-              <Col flex="auto">
+            <Row gutter={[8, 8]} justify="center">
+              <Col span={17}>
                 <Input.Password
                   ref={passwordInputRef}
                   size="large"
                   autoFocus
                   placeholder="请输入密码"
-                  prefix={<KeyOutlined />}
                   autoComplete="new-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (repeatPassword) setRepeatPassword("");
+                  }}
                   onKeyUp={(e) => e.key === "Enter" && onInputedPassword()}
                   data-testid="init-password-input"
                 />
               </Col>
-              <Col>
+              <Col span={7} xl={5} xxl={4}>
                 <Button
-                  size="large"
+                  disabled={!password || isCreating}
                   type="primary"
-                  style={{ background: THEME_BUTTON_COLOR }}
-                  disabled={!password}
+                  block
+                  size="large"
                   onClick={onInputedPassword}
                 >
                   下一步
@@ -93,24 +115,20 @@ const Init = () => {
               </Col>
             </Row>
           </div>
-        )}
-
-        {step === 1 && (
-          <div>
-            <div className="text-center mb-4">
-              <div className="text-lg font-semibold mb-2">重复密码</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                隐私数据将使用该密码加密。主密码一旦丢失，所有的数据都将
+          <div style={getViewStyle(1)}>
+            <div className="text-center text-xl mb-16">
+              重复密码
+              <div className="text-slate-600 dark:text-slate-400 text-base mt-6">
+                隐私数据将使用该密码加密。因此，主密码一旦丢失，所有的数据都将{" "}
                 <b>无法找回</b>。
               </div>
             </div>
-            <Row gutter={[8, 8]}>
-              <Col flex="auto">
+            <Row gutter={[8, 8]} justify="center">
+              <Col span={17}>
                 <Input.Password
                   ref={repeatPasswordInputRef}
                   size="large"
                   placeholder="重复密码"
-                  prefix={<KeyOutlined />}
                   autoComplete="new-password"
                   value={repeatPassword}
                   onChange={(e) => setRepeatPassword(e.target.value)}
@@ -120,31 +138,30 @@ const Init = () => {
                   data-testid="init-repeat-password-input"
                 />
               </Col>
-              <Col>
+              <Col span={7} xl={5} xxl={4}>
                 <Button
-                  size="large"
+                  disabled={!repeatPassword || isCreating}
                   type="primary"
-                  style={{ background: THEME_BUTTON_COLOR }}
-                  disabled={!repeatPassword}
+                  block
+                  size="large"
                   onClick={onInputedRepeatPassword}
                 >
                   下一步
                 </Button>
               </Col>
             </Row>
-            <div className="text-center mt-3">
-              <Button type="text" onClick={() => setStep(0)}>
-                返回
-              </Button>
-            </div>
+            <Row justify="center" className="mt-2">
+              <Col span={4}>
+                <Button block onClick={() => setSwiperIndex(0)} type="text">
+                  返回
+                </Button>
+              </Col>
+            </Row>
           </div>
-        )}
-
-        {step === 2 && (
-          <div>
-            <div className="text-center mb-4">
-              <div className="text-lg font-semibold mb-2">告知</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div style={getViewStyle(2)}>
+            <div className="text-center text-xl mb-16">
+              告知
+              <div className="text-slate-600 dark:text-slate-400 text-base mt-6">
                 本应用不会在任何地方使用、分析或明文存储你的信息。
                 <br />
                 你可以使用浏览器的隐私模式进行访问来提高安全性。
@@ -153,24 +170,29 @@ const Init = () => {
                 后点击下方按钮。
               </div>
             </div>
-            <Button
-              size="large"
-              block
-              type="primary"
-              loading={isCreating}
-              style={{ background: THEME_BUTTON_COLOR }}
-              onClick={onSubmit}
-              data-testid="init-submit-btn"
-            >
-              完成初始化
-            </Button>
-            <div className="text-center mt-3">
-              <Button type="text" onClick={() => setStep(1)}>
-                返回
-              </Button>
-            </div>
+            <Row gutter={[8, 8]} justify="center">
+              <Col span={17}>
+                <Button
+                  loading={isCreating}
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={onSubmit}
+                  data-testid="init-submit-btn"
+                >
+                  完成初始化
+                </Button>
+              </Col>
+            </Row>
+            <Row justify="center" className="mt-2">
+              <Col span={4}>
+                <Button block onClick={() => setSwiperIndex(1)} type="text">
+                  返回
+                </Button>
+              </Col>
+            </Row>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
