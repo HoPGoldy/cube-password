@@ -42,14 +42,14 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
     if (resp?.code !== 200) return;
     messageSuccess("分组已创建");
     setAddModalOpen(false);
-    // Refresh group list from login response format
     if (resp.data?.newList) {
       setGroupList(
         resp.data.newList.map((g) => ({
           id: g.id,
           name: g.name,
-          lockType: (g as any).lockType || "None",
-          unlocked: (g as any).lockType === "None",
+          lockType: g.lockType || "None",
+          unlocked: g.lockType === "None",
+          salt: g.salt,
         })),
       );
       onSelectGroup(resp.data.newId);

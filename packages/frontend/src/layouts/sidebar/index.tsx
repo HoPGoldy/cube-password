@@ -26,6 +26,17 @@ export const Sidebar: FC = () => {
     if (resp?.code !== 200) return;
     messageSuccess("分组已创建");
     setAddModalOpen(false);
+    if (resp.data?.newList) {
+      setGroups(
+        resp.data.newList.map((g) => ({
+          id: g.id,
+          name: g.name,
+          lockType: g.lockType || "None",
+          unlocked: g.lockType === "None",
+          salt: g.salt,
+        })),
+      );
+    }
   };
 
   const renderGroupItem = (item: GroupInfo) => {
