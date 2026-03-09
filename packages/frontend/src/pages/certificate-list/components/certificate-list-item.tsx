@@ -33,7 +33,7 @@ export const CertificateListItem: FC<Props> = ({
     >
       <Card
         size="small"
-        className={`ring-gray-300 dark:ring-gray-600 active:bg-gray-100 dark:active:bg-gray-700 transition hover:ring active:ring-0 cursor-pointer ${selected ? "ring" : ""}`}
+        className={`ring-gray-300 dark:ring-gray-600 active:bg-gray-100 dark:active:bg-gray-700 transition hover:ring active:ring-0 cursor-pointer ${selected ? "ring-2 ring-pink-500 border-pink-500" : ""}`}
         onClick={onClick}
       >
         <div className="flex items-center">
@@ -61,14 +61,14 @@ export const CertificateListItem: FC<Props> = ({
           {selected !== undefined && (
             <Checkbox
               checked={selected}
-              className="absolute h-4 w-4 right-4 top-[30%] scale-150"
+              className="absolute right-4 top-1/2 -translate-y-1/2 scale-150"
             />
           )}
 
           {/* Color mark */}
           {selected === undefined && markColor && (
             <div
-              className="absolute h-4 w-4 right-4 top-[38%] rounded-full"
+              className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full"
               style={{ backgroundColor: markColor }}
             />
           )}
