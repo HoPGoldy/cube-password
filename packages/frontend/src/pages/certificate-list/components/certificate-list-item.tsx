@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { Checkbox } from "antd";
 import dayjs from "dayjs";
 
 interface CertificateItem {
@@ -12,9 +13,15 @@ interface CertificateItem {
 interface Props {
   detail: CertificateItem;
   onClick: () => void;
+  /** undefined = not in select mode, boolean = select state */
+  selected?: boolean;
 }
 
-export const CertificateListItem: FC<Props> = ({ detail, onClick }) => {
+export const CertificateListItem: FC<Props> = ({
+  detail,
+  onClick,
+  selected,
+}) => {
   const { name, markColor, updatedAt } = detail;
 
   return (
@@ -22,6 +29,9 @@ export const CertificateListItem: FC<Props> = ({ detail, onClick }) => {
       className="flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer border-b border-gray-100 dark:border-neutral-700"
       onClick={onClick}
     >
+      {selected !== undefined && (
+        <Checkbox checked={selected} className="mr-3" />
+      )}
       {markColor && (
         <div
           className="w-2 h-2 rounded-full mr-3 flex-shrink-0"

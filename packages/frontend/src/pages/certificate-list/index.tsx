@@ -2,13 +2,21 @@ import { FC, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAtom } from "jotai";
 import { stateGroupList } from "@/store/user";
-import { useCertificateList } from "@/services/certificate";
+import { useCertificateList, useMoveCertificate } from "@/services/certificate";
 import { GroupUnlock } from "./components/group-unlock";
 import { CertificateDetailModal } from "./components/certificate-detail";
 import { CertificateListItem } from "./components/certificate-list-item";
-import { Button, Empty, Result, Spin } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { GroupConfigModal } from "./components/group-config-modal";
+import { Button, Dropdown, Empty, Result, Space, Spin } from "antd";
+import {
+  PlusOutlined,
+  SettingOutlined,
+  RetweetOutlined,
+  CloseOutlined,
+  CheckSquareOutlined,
+} from "@ant-design/icons";
 import { useIsMobile } from "@/layouts/responsive";
+import { messageSuccess, messageWarning } from "@/utils/message";
 
 const CertificateListPage: FC = () => {
   const isMobile = useIsMobile();
@@ -16,6 +24,13 @@ const CertificateListPage: FC = () => {
   const groupId = Number(groupIdStr);
   const [groupList] = useAtom(stateGroupList);
   const [detailId, setDetailId] = useState<number | undefined>();
+  const [showGroupConfig, setShowGroupConfig] = useState(false);
+  /** 移动凭证选择模式 */
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Record<number, boolean>>(
+    {},
+  );
+  const { mutateAsync: runMoveCertificate } = useMoveCertificate();
 
   const currentGroup = groupList.find((g) => g.id === groupId);
   const isUnlocked = currentGroup?.unlocked ?? false;
@@ -24,6 +39,48 @@ const CertificateListPage: FC = () => {
     groupId,
     isUnlocked,
   );
+
+  const items = certListResp?.data?.items ?? [];
+
+  const closeSelectMode = () => {
+    setSelectMode(false);
+    setSelectedItems({});
+  };
+
+  const onMoveCertificate = async (newGroupId: number) => {
+    const ids = Object.keys(selectedItems)
+      .filter((key) => selectedItems[+key])
+      .map(Number);
+
+    if (ids.length === 0) {
+      messageWarning("请选择至少一个凭证");
+      return;
+    }
+
+    const resp = await runMoveCertificate({ ids, newGroupId });
+    if (resp.code !== 200) return;
+
+    messageSuccess("移动成功");
+    closeSelectMode();
+  };
+
+  const getMoveTargets = () => {
+    return groupList
+      .filter((g) => g.id !== groupId)
+      .map((g) => ({
+        key: g.id,
+        label: g.name,
+        onClick: () => onMoveCertificate(g.id),
+      }));
+  };
+
+  const onToggleSelectAll = () => {
+    const newSelected: Record<number, boolean> = {};
+    items.forEach((item) => {
+      newSelected[item.id] = !selectedItems[item.id];
+    });
+    setSelectedItems(newSelected);
+  };
 
   if (!groupId || !currentGroup) {
     return (
@@ -53,8 +110,6 @@ const CertificateListPage: FC = () => {
       );
     }
 
-    const items = certListResp?.data?.items ?? [];
-
     if (items.length === 0) {
       return (
         <Empty
@@ -75,24 +130,86 @@ const CertificateListPage: FC = () => {
           <CertificateListItem
             key={item.id}
             detail={item}
-            onClick={() => setDetailId(item.id)}
+            selected={selectMode ? !!selectedItems[item.id] : undefined}
+            onClick={() => {
+              if (selectMode) {
+                setSelectedItems((prev) => ({
+                  ...prev,
+                  [item.id]: !prev[item.id],
+                }));
+              } else {
+                setDetailId(item.id);
+              }
+            }}
           />
         ))}
       </div>
     );
   };
 
+  const renderMoveBtn = () => {
+    if (groupList.length <= 1 || items.length <= 0) return null;
+
+    if (!selectMode) {
+      return (
+        <Button
+          key="move"
+          icon={<RetweetOutlined />}
+          onClick={() => setSelectMode(true)}
+        >
+          移动凭证
+        </Button>
+      );
+    }
+
+    return (
+      <>
+        <Dropdown menu={{ items: getMoveTargets() }}>
+          <Button key="moveTo" type="primary" icon={<RetweetOutlined />}>
+            移动至
+          </Button>
+        </Dropdown>
+        <Button
+          key="reverse"
+          icon={<CheckSquareOutlined />}
+          onClick={onToggleSelectAll}
+        >
+          反选
+        </Button>
+        <Button
+          key="cancelMove"
+          icon={<CloseOutlined />}
+          onClick={closeSelectMode}
+        >
+          取消移动
+        </Button>
+      </>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {isUnlocked && !isMobile && (
-        <div className="flex items-center justify-end p-3 border-b border-gray-200">
-          <Button
-            icon={<PlusOutlined />}
-            type="primary"
-            onClick={() => setDetailId(-1)}
-          >
-            新建凭证
-          </Button>
+        <div className="flex items-center justify-end p-3 border-b border-gray-200 dark:border-gray-700">
+          <Space>
+            <Button
+              icon={<SettingOutlined />}
+              onClick={() => setShowGroupConfig(true)}
+            >
+              分组配置
+            </Button>
+            {renderMoveBtn()}
+            {!selectMode && (
+              <Button
+                icon={<PlusOutlined />}
+                type="primary"
+                onClick={() => setDetailId(-1)}
+                data-testid="add-certificate-btn"
+              >
+                新建密码
+              </Button>
+            )}
+          </Space>
         </div>
       )}
       <div className="flex-1 overflow-y-auto">{renderContent()}</div>
@@ -111,6 +228,11 @@ const CertificateListPage: FC = () => {
         groupId={groupId}
         detailId={detailId}
         onClose={() => setDetailId(undefined)}
+      />
+      <GroupConfigModal
+        open={showGroupConfig}
+        group={currentGroup}
+        onClose={() => setShowGroupConfig(false)}
       />
     </div>
   );
