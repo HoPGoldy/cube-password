@@ -95,7 +95,6 @@ export class GroupService {
     id: number,
     options: {
       hash?: string;
-      challengeCode?: string;
       totpCode?: string;
     },
   ): Promise<void> {
@@ -108,15 +107,16 @@ export class GroupService {
     }
 
     if (group.lockType === "Password") {
-      if (!options.hash || !options.challengeCode) {
+      if (!options.hash) {
         throw new ErrorGroupUnlockFailed();
       }
-      if (!this.challengeManager.validateChallenge(options.challengeCode)) {
+      const challengeCode = this.challengeManager.popLastChallenge();
+      if (!challengeCode) {
         throw new ErrorGroupUnlockFailed();
       }
       if (!group.passwordHash) throw new ErrorGroupUnlockFailed();
 
-      const expectedHash = sha512(group.passwordHash + options.challengeCode);
+      const expectedHash = sha512(group.passwordHash + challengeCode);
       if (options.hash !== expectedHash) {
         throw new ErrorGroupUnlockFailed();
       }

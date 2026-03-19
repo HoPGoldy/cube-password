@@ -26,7 +26,6 @@ export const GroupUnlock: FC<Props> = ({ group }) => {
     const unlockData: {
       id: number;
       hash?: string;
-      challengeCode?: string;
       totpCode?: string;
     } = { id: group.id };
 
@@ -35,7 +34,6 @@ export const GroupUnlock: FC<Props> = ({ group }) => {
       if (!challengeResp.success) return;
       const challengeCode = challengeResp.data!.code;
       unlockData.hash = sha512(sha512(group.salt + code) + challengeCode);
-      unlockData.challengeCode = challengeCode;
     } else if (group.lockType === "Totp") {
       unlockData.totpCode = code;
     }

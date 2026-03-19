@@ -91,8 +91,8 @@ export const registerGroupController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { id, hash, challengeCode, totpCode } = request.body;
-      await groupService.unlock(id, { hash, challengeCode, totpCode });
+      const { id, hash, totpCode } = request.body;
+      await groupService.unlock(id, { hash, totpCode });
       return {};
     },
   );

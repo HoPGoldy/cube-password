@@ -30,12 +30,7 @@ export const useAddGroup = () => {
 /** 解锁分组 */
 export const useUnlockGroup = () => {
   return useMutation({
-    mutationFn: (data: {
-      id: number;
-      hash?: string;
-      challengeCode?: string;
-      totpCode?: string;
-    }) => {
+    mutationFn: (data: { id: number; hash?: string; totpCode?: string }) => {
       return requestPost("group/unlock", data);
     },
   });

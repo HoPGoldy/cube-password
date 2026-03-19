@@ -60,7 +60,6 @@ export const SchemaGroupUnlockBody = Type.Object({
       description: "SHA512(SHA512(groupSalt + password) + challenge)",
     }),
   ),
-  challengeCode: Type.Optional(Type.String()),
   totpCode: Type.Optional(Type.String()),
 });
 
