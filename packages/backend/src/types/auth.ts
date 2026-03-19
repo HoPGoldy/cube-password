@@ -46,8 +46,7 @@ export type SchemaAuthInitResponseType = Type.Static<
 // ========== Login ==========
 
 export const SchemaAuthLoginBody = Type.Object({
-  hash: Type.String({ description: "SHA512(password + challenge)" }),
-  challengeCode: Type.String({ description: "The challenge code used" }),
+  hash: Type.String({ description: "SHA512(passwordHash + challengeCode)" }),
   code: Type.Optional(
     Type.String({ description: "TOTP code for remote login" }),
   ),

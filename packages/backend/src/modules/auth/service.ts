@@ -83,9 +83,10 @@ export class AuthService {
     }
   }
 
-  async login(hash: string, challengeCode: string, ip: string, code?: string) {
-    // 验证 challenge
-    if (!this.challengeManager.validateChallenge(challengeCode)) {
+  async login(hash: string, ip: string, code?: string) {
+    // 验证 challenge（服务端自行 pop，无需客户端回传）
+    const challengeCode = this.challengeManager.popLastChallenge();
+    if (!challengeCode) {
       await this.notificationService.createNotice(
         "非法登录",
         "未授权状态下进行登录操作，已被拦截。",

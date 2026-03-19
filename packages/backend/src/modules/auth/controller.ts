@@ -120,9 +120,9 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { hash, challengeCode, code } = request.body;
+      const { hash, code } = request.body;
       const ip = request.ip;
-      return await authService.login(hash, challengeCode, ip, code);
+      return await authService.login(hash, ip, code);
     },
   );
 

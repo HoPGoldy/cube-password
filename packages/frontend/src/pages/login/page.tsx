@@ -55,7 +55,6 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
 
     const resp = await postLogin({
       hash,
-      challengeCode,
       code: code || undefined,
     });
 
