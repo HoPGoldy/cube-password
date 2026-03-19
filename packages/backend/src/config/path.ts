@@ -71,6 +71,11 @@ export const PATH_MIGRATIONS = ENV_IS_PROD
   : join(__dirname, "../../prisma/migrations");
 
 /**
+ * IP 地址库文件路径
+ */
+export const PATH_IP2REGION = join(PATH_ROOT, "ip2region.xdb");
+
+/**
  * package.json 文件路径
  */
 export const PATH_PACKAGE_JSON = ENV_IS_PROD
