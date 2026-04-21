@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.0.0-rc.4](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.3...v2.0.0-rc.4) (2026-04-21)
+
+
+### Bug Fixes
+
+* copy ip2region.xdb from build-stage in dockerfile ([3218573](https://github.com/HoPGoldy/cube-password/commit/3218573a0f7ce85569b3f45e6d62007430ce29fb))
+
 ## [2.0.0-rc.3](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.2...v2.0.0-rc.3) (2026-04-21)
 
 
