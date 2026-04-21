@@ -6,6 +6,7 @@ import { useAtom } from "jotai";
 import { stateGroupList, GroupInfo } from "@/store/user";
 import { useAddGroup, useUpdateGroupSort } from "@/services/group";
 import { messageSuccess } from "@/utils/message";
+import { APP_NAME } from "@/config";
 import { AddGroupModal } from "@/components/add-group-modal";
 import s from "./styles.module.css";
 
@@ -62,7 +63,7 @@ export const Sidebar: FC = () => {
   return (
     <section className={s.sidebarBox} data-testid="sidebar">
       <div className="flex flex-row flex-nowrap items-center justify-center">
-        <div className="font-black text-lg">密码本</div>
+        <div className="font-black text-lg">{APP_NAME}</div>
       </div>
 
       <div className="flex-grow flex-shrink overflow-y-auto noscrollbar overflow-x-hidden my-3">

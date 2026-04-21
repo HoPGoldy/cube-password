@@ -17,6 +17,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useLogout } from "@/services/auth";
 import { logout } from "@/store/user";
 import { AddGroupModal } from "@/components/add-group-modal";
+import { APP_NAME } from "@/config";
 import s from "./styles.module.css";
 
 interface Props {
@@ -80,7 +81,7 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
 
   return (
     <section className={s.sidebarBox}>
-      <div className="p-3 text-lg font-bold text-center">Cube Password</div>
+      <div className="p-3 text-lg font-bold text-center">{APP_NAME}</div>
 
       <div className="px-3 mb-2">
         <Button

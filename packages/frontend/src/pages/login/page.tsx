@@ -8,7 +8,7 @@ import { messageError } from "@/utils/message";
 import { showGlobalMessage } from "@/utils/message";
 import { KeyOutlined } from "@ant-design/icons";
 import { useLoginSuccess } from "./use-login-success";
-import { THEME_BUTTON_COLOR } from "@/config";
+import { APP_NAME, APP_SUBTITLE, THEME_BUTTON_COLOR } from "@/config";
 import { usePageTitle } from "@/store/global";
 import { useSetAtom, useAtomValue } from "jotai";
 import type { LockDetail, LoginFailRecord } from "@/types/auth";
@@ -88,8 +88,8 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
     if (e.key === "Enter") onPasswordSubmit();
   };
 
-  const appTitle = "Cube Password";
-  const appSubTitle = "安全可靠的密码管理器";
+  const appTitle = APP_NAME;
+  const appSubTitle = APP_SUBTITLE;
 
   const renderLoginFailure = (item: LoginFailRecord) => {
     const message =
