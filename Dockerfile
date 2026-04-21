@@ -35,6 +35,7 @@ COPY packages/backend/prisma ./packages/backend/prisma
 COPY packages/backend/prisma.config.ts ./packages/backend/prisma.config.ts
 COPY --from=build-stage /app/packages/backend/dist /app/packages/backend/dist
 COPY --from=build-stage /app/packages/frontend/dist /app/packages/backend/dist/frontend
+COPY packages/backend/storage/ip2region.xdb /app/packages/backend/dist/ip2region.xdb
 
 RUN addgroup --system --gid 1001 nodejs && \
   adduser --system --uid 1001 backenduser && \

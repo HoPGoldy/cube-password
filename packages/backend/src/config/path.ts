@@ -72,8 +72,11 @@ export const PATH_MIGRATIONS = ENV_IS_PROD
 
 /**
  * IP 地址库文件路径
+ * 生产环境下放在 dist/ 目录，避免被 storage 卷覆盖
  */
-export const PATH_IP2REGION = join(PATH_ROOT, "ip2region.xdb");
+export const PATH_IP2REGION = ENV_IS_PROD
+  ? join(__dirname, "ip2region.xdb")
+  : join(PATH_ROOT, "ip2region.xdb");
 
 /**
  * package.json 文件路径
