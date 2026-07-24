@@ -76,7 +76,7 @@ export const PATH_MIGRATIONS = ENV_IS_PROD
  */
 export const PATH_IP2REGION = ENV_IS_PROD
   ? join(__dirname, "ip2region.xdb")
-  : join(PATH_ROOT, "ip2region.xdb");
+  : join(__dirname, "../../resources/ip2region.xdb");
 
 /**
  * package.json 文件路径

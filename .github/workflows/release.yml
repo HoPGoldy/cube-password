@@ -10,10 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Get Version
-        uses: rexdefuror/read-package-json@v1.0.5
+        run: |
+          echo "PACKAGE_VERSION=$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_ENV"
 
       - name: Check docker version
         run: docker -v
@@ -22,7 +23,7 @@ jobs:
         run: docker build -t hopgoldy/cube-password:${{ env.PACKAGE_VERSION }} .
 
       - name: Log in to Docker Hub
-        run: docker login -u hopgoldy -p ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u hopgoldy --password-stdin
 
       - name: Push the Docker image
         run: docker push hopgoldy/cube-password:${{ env.PACKAGE_VERSION }}

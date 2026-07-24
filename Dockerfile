@@ -6,7 +6,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/backend/package.json ./packages/backend/
 COPY packages/frontend/package.json ./packages/frontend/
 
-RUN npm install -g pnpm && \
+RUN apk add --no-cache python3 make g++ && \
+  npm install -g pnpm && \
   pnpm install --frozen-lockfile
 
 COPY . .
@@ -25,7 +26,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/backend/package.json ./packages/backend/
 
-RUN apk add --no-cache gosu && \
+RUN apk add --no-cache gosu python3 make g++ && \
   npm install -g pnpm && \
   cd /app/packages/backend && \
   pnpm install --frozen-lockfile --prod --filter backend
@@ -35,7 +36,7 @@ COPY packages/backend/prisma ./packages/backend/prisma
 COPY packages/backend/prisma.config.ts ./packages/backend/prisma.config.ts
 COPY --from=build-stage /app/packages/backend/dist /app/packages/backend/dist
 COPY --from=build-stage /app/packages/frontend/dist /app/packages/backend/dist/frontend
-COPY --from=build-stage /app/packages/backend/storage/ip2region.xdb /app/packages/backend/dist/ip2region.xdb
+COPY packages/backend/resources/ip2region.xdb /app/packages/backend/dist/ip2region.xdb
 
 RUN addgroup --system --gid 1001 nodejs && \
   adduser --system --uid 1001 backenduser && \
