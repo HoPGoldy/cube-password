@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.0.0-rc.6](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.5...v2.0.0-rc.6) (2026-07-24)
+
+
+### Bug Fixes
+
+* read docker image version from release tag in GitHub Actions ([98cdb9a](https://github.com/HoPGoldy/cube-password/commit/98cdb9a))
+
 ## [2.0.0-rc.5](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.4...v2.0.0-rc.5) (2026-07-24)
 
 
