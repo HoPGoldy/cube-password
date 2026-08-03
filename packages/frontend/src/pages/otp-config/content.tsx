@@ -6,7 +6,7 @@ import { sha512 } from "@/utils/crypto";
 import { queryChallenge } from "@/services/auth";
 import { useOtpQrcode, useBindOtp, useUnbindOtp } from "@/services/otp";
 import { messageWarning, messageSuccess } from "@/utils/message";
-import { useIsMobile } from "@/layouts/responsive";
+import { useIsMobile } from "@hopgoldy/cube-ui";
 import { SettingContainerProps } from "@/components/setting-container";
 
 export const Content: FC<SettingContainerProps> = (props) => {

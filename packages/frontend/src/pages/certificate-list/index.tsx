@@ -19,8 +19,9 @@ import {
   RetweetOutlined,
   CloseOutlined,
   CheckSquareOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
-import { useIsMobile } from "@/layouts/responsive";
+import { useIsMobile, MobileAccountSheet } from "@hopgoldy/cube-ui";
 import { messageSuccess, messageWarning } from "@/utils/message";
 
 const CertificateListPage: FC = () => {
@@ -38,6 +39,8 @@ const CertificateListPage: FC = () => {
   const { mutateAsync: runMoveCertificate } = useMoveCertificate();
   const { mutateAsync: updateCertificateSort } = useUpdateCertificateSort();
   const [dragging, setDragging] = useState(false);
+  /** 移动端账号抽屉 */
+  const [accountSheetVisible, setAccountSheetVisible] = useState(false);
   /** 本地可排序的凭证列表 */
   const [certificateList, setCertificateList] = useState<
     {
@@ -254,7 +257,13 @@ const CertificateListPage: FC = () => {
       )}
       <div className="flex-1 overflow-y-auto">{renderContent()}</div>
       {isUnlocked && isMobile && (
-        <div className="p-3 border-t border-gray-200 flex justify-end">
+        <div className="p-3 border-t border-gray-200 flex justify-between">
+          <Button
+            icon={<UserOutlined />}
+            onClick={() => setAccountSheetVisible(true)}
+          >
+            账号
+          </Button>
           <Button
             icon={<PlusOutlined />}
             type="primary"
@@ -264,6 +273,10 @@ const CertificateListPage: FC = () => {
           </Button>
         </div>
       )}
+      <MobileAccountSheet
+        visible={accountSheetVisible}
+        onVisibleChange={setAccountSheetVisible}
+      />
       <CertificateDetailModal
         groupId={groupId}
         detailId={detailId}

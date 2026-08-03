@@ -30,6 +30,8 @@ body {
   /* 移动端的底部操作栏高度 */
   --frontend-app-bottombar-height: 40px;
   --color-border-secondary: #d1d5db;
+  /* cube-ui 的 Card 边框色（跟随 --color-border-secondary 的亮暗切换） */
+  --cube-border-color: var(--color-border-secondary);
 }
 
 :root[data-theme="dark"] {
@@ -61,11 +63,6 @@ body {
 
 .ant-drawer-body {
   @apply !p-0;
-}
-
-.ant-btn-primary:not(.keep-antd-style) {
-  background: var(--frontend-app-primary-button-color) !important;
-  border: none;
 }
 
 .ant-btn-primary:disabled {

@@ -10,7 +10,7 @@ import {
 import { sha512, validateAesMeta, getAesMeta, aes } from "@/utils/crypto";
 import { queryChallenge, useChangePassword } from "@/services/auth";
 import { messageError, messageWarning } from "@/utils/message";
-import { useIsMobile } from "@/layouts/responsive";
+import { useIsMobile } from "@hopgoldy/cube-ui";
 import { SettingContainerProps } from "@/components/setting-container";
 
 export const Content: FC<SettingContainerProps> = (props) => {

@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { Button, Card, Col, List, Row, Select, Space, Spin, Tag } from "antd";
 import { SettingContainerProps } from "@/components/setting-container";
-import { useIsMobile } from "@/layouts/responsive";
+import { useIsMobile } from "@hopgoldy/cube-ui";
 import {
   useNotificationList,
   useReadAllNotification,

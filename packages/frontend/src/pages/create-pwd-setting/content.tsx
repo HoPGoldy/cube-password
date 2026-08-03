@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 import { stateUser } from "@/store/user";
 import { useUpdateCreatePwdSetting } from "@/services/user";
 import { messageSuccess } from "@/utils/message";
-import { useIsMobile } from "@/layouts/responsive";
+import { useIsMobile } from "@hopgoldy/cube-ui";
 import { SettingContainerProps } from "@/components/setting-container";
 
 const DEFAULT_PASSWORD_ALPHABET =

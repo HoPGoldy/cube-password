@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { stateIsLoggedIn, statePasswordSalt } from "@/store/user";
 import { useAtomValue, useSetAtom } from "jotai";
 import { LoginPage } from "./page";
-import { PageLoading } from "@/components/page-loading";
+import { PageLoading } from "@hopgoldy/cube-ui";
 import { queryGlobal } from "@/services/auth";
 import { Navigate } from "react-router-dom";
 import type { LockDetail } from "@/types/auth";

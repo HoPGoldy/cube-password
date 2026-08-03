@@ -1,6 +1,6 @@
 import { ComponentType, lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import Loading from "./layouts/loading";
+import { DelayedLoading } from "@hopgoldy/cube-ui";
 import { LoginAuth } from "./layouts/login-auth";
 import { AppContainer } from "./layouts/app-container";
 import { Error403 } from "./pages/e403";
@@ -13,7 +13,7 @@ const lazyLoad = (
 ) => {
   const Comp = lazy(compLoader);
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<DelayedLoading />}>
       <Comp />
     </Suspense>
   );

@@ -1,6 +1,6 @@
 import { FC, PropsWithChildren } from "react";
 import { Drawer, DrawerProps, Modal, ModalProps } from "antd";
-import { useIsMobile } from "@/layouts/responsive";
+import { useIsMobile } from "@hopgoldy/cube-ui";
 
 export interface SettingContainerProps extends PropsWithChildren {
   title: string;
