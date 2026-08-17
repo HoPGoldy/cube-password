@@ -27,7 +27,11 @@ rawTest.describe("Auth API - 公开接口", () => {
     const challengeResp = await request.get(`${BASE}/auth/challenge`);
     const challengeCode = (await challengeResp.json()).data.code;
 
-    const hash = sha512(PASSWORD + challengeCode);
+    const globalResp = await request.get(`${BASE}/auth/global`);
+    const salt = (await globalResp.json()).data.salt as string;
+
+    // 加盐哈希：SHA512(SHA512(salt + password) + challengeCode)
+    const hash = sha512(sha512(salt + PASSWORD) + challengeCode);
     const resp = await request.post(`${BASE}/auth/login`, {
       data: { hash, challengeCode },
     });
@@ -44,7 +48,11 @@ rawTest.describe("Auth API - 公开接口", () => {
     const challengeResp = await request.get(`${BASE}/auth/challenge`);
     const challengeCode = (await challengeResp.json()).data.code;
 
-    const hash = sha512("wrong-password" + challengeCode);
+    const globalResp = await request.get(`${BASE}/auth/global`);
+    const salt = (await globalResp.json()).data.salt as string;
+
+    // 加盐哈希（错误密码）：SHA512(SHA512(salt + password) + challengeCode)
+    const hash = sha512(sha512(salt + "wrong-password") + challengeCode);
     const resp = await request.post(`${BASE}/auth/login`, {
       data: { hash, challengeCode },
     });

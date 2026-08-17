@@ -53,13 +53,21 @@ interface SessionInfo {
  */
 async function loginViaApi(request: APIRequestContext): Promise<SessionInfo> {
   // 1. Get challenge code
+  //    后端 login 服务端自行 popLastChallenge，challenge 请求必须保持为 login 前最后一次发起的请求
   const challengeResp = await request.get(`${BASE}/auth/challenge`);
   const challengeBody = await challengeResp.json();
   expect(challengeBody.success).toBe(true);
   const challengeCode = challengeBody.data.code;
 
-  // 2. Login with SHA512(password + challengeCode)
-  const hash = sha512(LOGIN_PASSWORD + challengeCode);
+  // 2. Get salt（GET /auth/global 不消费 challenge，可在 login 前任意顺序发起）
+  const globalResp = await request.get(`${BASE}/auth/global`);
+  const globalBody = await globalResp.json();
+  expect(globalBody.success).toBe(true);
+  const salt: string = globalBody.data.salt;
+
+  // 3. Login with SHA512(SHA512(salt + password) + challengeCode)
+  //    与后端一致：passwordHash = SHA512(salt + password)，登录校验 SHA512(passwordHash + challengeCode)
+  const hash = sha512(sha512(salt + LOGIN_PASSWORD) + challengeCode);
   const resp = await request.post(`${BASE}/auth/login`, {
     data: { hash, challengeCode },
   });
