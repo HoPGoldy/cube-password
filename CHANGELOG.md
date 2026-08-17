@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.0.0](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.6...v2.0.0) (2026-08-17)
+
+
+### Features
+
+* adopt @hopgoldy/cube-ui for shell, theme and shared primitives ([6153246](https://github.com/HoPGoldy/cube-password/commit/6153246338aff518da7d6d1f1565c298af31cccd))
+
+
+### Bug Fixes
+
+* **e2e:** align API login fixtures with salted hash scheme ([8f276e8](https://github.com/HoPGoldy/cube-password/commit/8f276e84fb693ea3b27f768be140e4e336dd2603))
+
 ## [2.0.0-rc.6](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.5...v2.0.0-rc.6) (2026-07-24)
 
 
