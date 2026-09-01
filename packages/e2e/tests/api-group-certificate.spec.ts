@@ -1,4 +1,10 @@
-import { test, expect, authHeaders, BASE, aesEncrypt } from "../fixtures/api";
+import {
+  test,
+  expect,
+  authHeaders,
+  BASE,
+  encryptContent,
+} from "../fixtures/api";
 
 test.describe("Group API", () => {
   let createdGroupId: number;
@@ -87,15 +93,17 @@ test.describe("Certificate API", () => {
     groupId = body.data.newId;
   });
 
-  const certContent = aesEncrypt(
-    JSON.stringify([
-      { label: "网址", value: "https://example.com" },
-      { label: "用户名", value: "e2e-user" },
-      { label: "密码", value: "e2e-pass" },
-    ]),
-  );
+  // v2：凭证 content 用登录时解出的全局 DEK 加密（v2 自描述格式），
+  // 在「创建凭证」测试中生成（certContent 同时用于 detail 的回读比对）
+  const certPlaintext = JSON.stringify([
+    { label: "网址", value: "https://example.com" },
+    { label: "用户名", value: "e2e-user" },
+    { label: "密码", value: "e2e-pass" },
+  ]);
+  let certContent: string;
 
   test("POST /api/certificate/add 创建凭证", async ({ request, session }) => {
+    certContent = await encryptContent(session.dek, certPlaintext);
     const url = "api/certificate/add";
     const resp = await request.post(`${BASE}/certificate/add`, {
       data: {
@@ -164,7 +172,8 @@ test.describe("Certificate API", () => {
         name: "e2e-cert-updated",
         icon: "",
         markColor: "#00ff00",
-        content: aesEncrypt(
+        content: await encryptContent(
+          session.dek,
           JSON.stringify([
             { label: "网址", value: "https://updated.com" },
             { label: "用户名", value: "updated-user" },

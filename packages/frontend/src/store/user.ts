@@ -1,5 +1,4 @@
 import { atom, getDefaultStore } from "jotai";
-import CryptoJS from "crypto-js";
 import { localTheme } from "./lcoal";
 import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
 
@@ -38,11 +37,46 @@ export const stateIsLoggedIn = atom<boolean>((get) => !!get(stateSessionToken));
 /** group list */
 export const stateGroupList = atom<GroupInfo[]>([]);
 
-/** 主密码盐值（从 global API 获取） */
-export const statePasswordSalt = atom(undefined as string | undefined);
+/**
+ * 登录前 KDF 元数据（登录成功后以 login 响应为准写入 stateVault）
+ * - salt：hex(KDF salt)
+ * - kdfParamsRaw：后端下发的 kdfParams JSON 原文，派生前经 parseKdfParams 校验
+ */
+export interface KdfMeta {
+  salt?: string;
+  kdfParamsRaw?: string;
+}
+
+export const stateKdfMeta = atom<KdfMeta>({});
+
+/**
+ * 内存中的密钥材料（永不进 localStorage / IndexedDB / cookie）
+ * - dek：全局数据加密密钥，用于凭证 content 加解密
+ * - kek：登录派生，解开 keyBlob 后即可丢弃（改密码只需 DEK + 新 KEK）
+ * - keyBlob / salt / kdfParams：改密码时本地验旧密码与 re-wrap 所需
+ */
+export interface VaultState {
+  dek?: Uint8Array;
+  kek?: Uint8Array;
+  keyBlob?: string;
+  salt?: string;
+  kdfParams?: import("@/lib/e2ee").KdfParams;
+}
+
+export const stateVault = atom<VaultState>({});
+
+/**
+ * 清空密钥材料（先覆写内存再置空，防止密钥残留在已释放内存中）
+ */
+export const clearVault = (vault?: VaultState) => {
+  vault?.dek?.fill(0);
+  vault?.kek?.fill(0);
+  return { dek: undefined, kek: undefined };
+};
 
 export const logout = () => {
   const store = getDefaultStore();
+  store.set(stateVault, (prev) => clearVault(prev));
   store.set(stateSessionToken, undefined);
   store.set(stateReplayAttackSecret, undefined);
   store.set(stateUser, undefined);
@@ -55,7 +89,7 @@ export const login = (payload: SchemaAuthLoginResponseType) => {
 
   store.set(stateSessionToken, token);
   store.set(stateReplayAttackSecret, replayAttackSecret);
-  store.set(statePasswordSalt, salt);
+  store.set(stateKdfMeta, { salt, kdfParamsRaw: payload.kdfParams });
   store.set(stateUser, {
     ...userInfo,
     theme: (userInfo.theme as AppTheme) || "light",
@@ -79,9 +113,3 @@ export const changeTheme = (theme: AppTheme) => {
   store.set(stateUser, { ...userInfo, theme });
   localTheme.set(theme);
 };
-
-/** 主密码的 AES key/iv（用于前端加解密凭证内容） */
-export const stateMainPwd = atom<{
-  pwdKey?: CryptoJS.lib.WordArray;
-  pwdIv?: CryptoJS.lib.WordArray;
-}>({});

@@ -2,10 +2,14 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
+    "skipLibCheck": true,
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@frontend/*": ["../frontend/src/*"]
+    }
   },
   "include": ["**/*.ts"]
 }

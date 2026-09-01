@@ -42,6 +42,8 @@ export type UserMinAggregateOutputType = {
   id: number | null
   passwordHash: string | null
   passwordSalt: string | null
+  keyBlob: string | null
+  kdfParams: string | null
   initTime: Date | null
   theme: string | null
   defaultGroupId: number | null
@@ -54,6 +56,8 @@ export type UserMaxAggregateOutputType = {
   id: number | null
   passwordHash: string | null
   passwordSalt: string | null
+  keyBlob: string | null
+  kdfParams: string | null
   initTime: Date | null
   theme: string | null
   defaultGroupId: number | null
@@ -66,6 +70,8 @@ export type UserCountAggregateOutputType = {
   id: number
   passwordHash: number
   passwordSalt: number
+  keyBlob: number
+  kdfParams: number
   initTime: number
   theme: number
   defaultGroupId: number
@@ -92,6 +98,8 @@ export type UserMinAggregateInputType = {
   id?: true
   passwordHash?: true
   passwordSalt?: true
+  keyBlob?: true
+  kdfParams?: true
   initTime?: true
   theme?: true
   defaultGroupId?: true
@@ -104,6 +112,8 @@ export type UserMaxAggregateInputType = {
   id?: true
   passwordHash?: true
   passwordSalt?: true
+  keyBlob?: true
+  kdfParams?: true
   initTime?: true
   theme?: true
   defaultGroupId?: true
@@ -116,6 +126,8 @@ export type UserCountAggregateInputType = {
   id?: true
   passwordHash?: true
   passwordSalt?: true
+  keyBlob?: true
+  kdfParams?: true
   initTime?: true
   theme?: true
   defaultGroupId?: true
@@ -215,6 +227,8 @@ export type UserGroupByOutputType = {
   id: number
   passwordHash: string
   passwordSalt: string
+  keyBlob: string
+  kdfParams: string
   initTime: Date
   theme: string
   defaultGroupId: number
@@ -250,6 +264,8 @@ export type UserWhereInput = {
   id?: Prisma.IntFilter<"User"> | number
   passwordHash?: Prisma.StringFilter<"User"> | string
   passwordSalt?: Prisma.StringFilter<"User"> | string
+  keyBlob?: Prisma.StringFilter<"User"> | string
+  kdfParams?: Prisma.StringFilter<"User"> | string
   initTime?: Prisma.DateTimeFilter<"User"> | Date | string
   theme?: Prisma.StringFilter<"User"> | string
   defaultGroupId?: Prisma.IntFilter<"User"> | number
@@ -262,6 +278,8 @@ export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   passwordSalt?: Prisma.SortOrder
+  keyBlob?: Prisma.SortOrder
+  kdfParams?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -277,6 +295,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   passwordHash?: Prisma.StringFilter<"User"> | string
   passwordSalt?: Prisma.StringFilter<"User"> | string
+  keyBlob?: Prisma.StringFilter<"User"> | string
+  kdfParams?: Prisma.StringFilter<"User"> | string
   initTime?: Prisma.DateTimeFilter<"User"> | Date | string
   theme?: Prisma.StringFilter<"User"> | string
   defaultGroupId?: Prisma.IntFilter<"User"> | number
@@ -289,6 +309,8 @@ export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   passwordSalt?: Prisma.SortOrder
+  keyBlob?: Prisma.SortOrder
+  kdfParams?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -309,6 +331,8 @@ export type UserScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"User"> | number
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordSalt?: Prisma.StringWithAggregatesFilter<"User"> | string
+  keyBlob?: Prisma.StringWithAggregatesFilter<"User"> | string
+  kdfParams?: Prisma.StringWithAggregatesFilter<"User"> | string
   initTime?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   theme?: Prisma.StringWithAggregatesFilter<"User"> | string
   defaultGroupId?: Prisma.IntWithAggregatesFilter<"User"> | number
@@ -320,6 +344,8 @@ export type UserScalarWhereWithAggregatesInput = {
 export type UserCreateInput = {
   passwordHash: string
   passwordSalt?: string
+  keyBlob?: string
+  kdfParams?: string
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
@@ -332,6 +358,8 @@ export type UserUncheckedCreateInput = {
   id?: number
   passwordHash: string
   passwordSalt?: string
+  keyBlob?: string
+  kdfParams?: string
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
@@ -343,6 +371,8 @@ export type UserUncheckedCreateInput = {
 export type UserUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
+  keyBlob?: Prisma.StringFieldUpdateOperationsInput | string
+  kdfParams?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -355,6 +385,8 @@ export type UserUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
+  keyBlob?: Prisma.StringFieldUpdateOperationsInput | string
+  kdfParams?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -367,6 +399,8 @@ export type UserCreateManyInput = {
   id?: number
   passwordHash: string
   passwordSalt?: string
+  keyBlob?: string
+  kdfParams?: string
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
@@ -378,6 +412,8 @@ export type UserCreateManyInput = {
 export type UserUpdateManyMutationInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
+  keyBlob?: Prisma.StringFieldUpdateOperationsInput | string
+  kdfParams?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -390,6 +426,8 @@ export type UserUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   passwordSalt?: Prisma.StringFieldUpdateOperationsInput | string
+  keyBlob?: Prisma.StringFieldUpdateOperationsInput | string
+  kdfParams?: Prisma.StringFieldUpdateOperationsInput | string
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
@@ -402,6 +440,8 @@ export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   passwordSalt?: Prisma.SortOrder
+  keyBlob?: Prisma.SortOrder
+  kdfParams?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -420,6 +460,8 @@ export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   passwordSalt?: Prisma.SortOrder
+  keyBlob?: Prisma.SortOrder
+  kdfParams?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -432,6 +474,8 @@ export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   passwordSalt?: Prisma.SortOrder
+  keyBlob?: Prisma.SortOrder
+  kdfParams?: Prisma.SortOrder
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
@@ -460,6 +504,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   passwordHash?: boolean
   passwordSalt?: boolean
+  keyBlob?: boolean
+  kdfParams?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -472,6 +518,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   passwordHash?: boolean
   passwordSalt?: boolean
+  keyBlob?: boolean
+  kdfParams?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -484,6 +532,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   passwordHash?: boolean
   passwordSalt?: boolean
+  keyBlob?: boolean
+  kdfParams?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -496,6 +546,8 @@ export type UserSelectScalar = {
   id?: boolean
   passwordHash?: boolean
   passwordSalt?: boolean
+  keyBlob?: boolean
+  kdfParams?: boolean
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
@@ -504,7 +556,7 @@ export type UserSelectScalar = {
   createPwdLength?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "initTime" | "theme" | "defaultGroupId" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "keyBlob" | "kdfParams" | "initTime" | "theme" | "defaultGroupId" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -513,6 +565,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: number
     passwordHash: string
     passwordSalt: string
+    keyBlob: string
+    kdfParams: string
     initTime: Date
     theme: string
     defaultGroupId: number
@@ -945,6 +999,8 @@ export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'Int'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly passwordSalt: Prisma.FieldRef<"User", 'String'>
+  readonly keyBlob: Prisma.FieldRef<"User", 'String'>
+  readonly kdfParams: Prisma.FieldRef<"User", 'String'>
   readonly initTime: Prisma.FieldRef<"User", 'DateTime'>
   readonly theme: Prisma.FieldRef<"User", 'String'>
   readonly defaultGroupId: Prisma.FieldRef<"User", 'Int'>

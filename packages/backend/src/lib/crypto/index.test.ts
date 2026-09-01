@@ -1,13 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi, afterEach } from "vitest";
-import {
-  aesDecrypt,
-  aesEncrypt,
-  getAesMeta,
-  sha512,
-  shaWithSalt,
-  validateReplayAttack,
-} from "./index";
+import { sha512, shaWithSalt, validateReplayAttack } from "./index";
 
 const nodeSha512Hex = (input: string) =>
   createHash("sha512").update(input).digest("hex");
@@ -56,37 +49,6 @@ describe("shaWithSalt", () => {
     expect(shaWithSalt("", "")).toBe(
       nodeSha512Hex(nodeSha512Hex("")).toUpperCase(),
     );
-  });
-});
-
-describe("AES round trip", () => {
-  const samples = [
-    "hello world",
-    "",
-    "p@ssw0rd with ünïcode 中文 🎉",
-    "x".repeat(1000),
-  ];
-
-  it("aesEncrypt -> aesDecrypt restores the original string", () => {
-    for (const sample of samples) {
-      const { key, iv } = getAesMeta("my-secret-password");
-      const encrypted = aesEncrypt(sample, key, iv);
-      const decrypted = aesDecrypt(encrypted, key, iv);
-      expect(decrypted).toBe(sample);
-    }
-  });
-
-  it("produces different ciphertext for different passwords but decrypts each correctly", () => {
-    const plain = "sensitive payload";
-    const metaA = getAesMeta("password-A");
-    const metaB = getAesMeta("password-B");
-
-    const encA = aesEncrypt(plain, metaA.key, metaA.iv);
-    const encB = aesEncrypt(plain, metaB.key, metaB.iv);
-
-    expect(encA).not.toBe(encB);
-    expect(aesDecrypt(encA, metaA.key, metaA.iv)).toBe(plain);
-    expect(aesDecrypt(encB, metaB.key, metaB.iv)).toBe(plain);
   });
 });
 

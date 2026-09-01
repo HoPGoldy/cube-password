@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { stateIsLoggedIn, statePasswordSalt } from "@/store/user";
+import { stateIsLoggedIn, stateKdfMeta } from "@/store/user";
 import { useAtomValue, useSetAtom } from "jotai";
 import { LoginPage } from "./page";
 import { PageLoading } from "@hopgoldy/cube-ui";
@@ -11,7 +11,7 @@ const Login = () => {
   const isLoggedIn = useAtomValue(stateIsLoggedIn);
   const [checking, setChecking] = useState(true);
   const [isInitialized, setIsInitialized] = useState(true);
-  const setSalt = useSetAtom(statePasswordSalt);
+  const setKdfMeta = useSetAtom(stateKdfMeta);
   const [initialLockDetail, setInitialLockDetail] = useState<LockDetail>();
 
   useEffect(() => {
@@ -21,7 +21,13 @@ const Login = () => {
         if (resp.success) {
           setIsInitialized(resp.data!.isInitialized);
           if (resp.data!.salt) {
-            setSalt(resp.data!.salt);
+            setKdfMeta((prev) => ({ ...prev, salt: resp.data!.salt }));
+          }
+          if (resp.data!.kdfParams) {
+            setKdfMeta((prev) => ({
+              ...prev,
+              kdfParamsRaw: resp.data!.kdfParams,
+            }));
           }
           setInitialLockDetail({
             loginFailure: resp.data!.loginFailure,

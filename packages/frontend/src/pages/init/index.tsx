@@ -1,10 +1,17 @@
 import { useRef, useState } from "react";
-import { Button, Input, InputRef, Row, Col } from "antd";
+import { Alert, Button, Input, InputRef, Row, Col } from "antd";
 import { useInit } from "@/services/auth";
-import { sha512 } from "@/utils/crypto";
-import { nanoid } from "nanoid";
 import { messageError, messageSuccess } from "@/utils/message";
 import { usePageTitle } from "@/store/global";
+import { bytesToHex } from "@/lib/e2ee/format";
+import {
+  randomBytes,
+  deriveMasterKey,
+  wrapDek,
+  DEFAULT_KDF_PARAMS,
+  SALT_LENGTH,
+} from "@/lib/e2ee";
+import { useZxcvbnWarning } from "@/utils/password-strength";
 
 const getViewWidth = () => {
   const width = window.innerWidth;
@@ -20,16 +27,22 @@ const Init = () => {
   const [swiperIndex, setSwiperIndex] = useState(0);
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
+  const [strengthWarning, setStrengthWarning] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const passwordInputRef = useRef<InputRef>(null);
   const repeatPasswordInputRef = useRef<InputRef>(null);
   const { mutateAsync: postInit, isPending: isCreating } = useInit();
+  const checkStrength = useZxcvbnWarning();
 
-  const onInputedPassword = () => {
+  const onInputedPassword = async () => {
     if (password.length < 6) {
       messageError("密码长度应大于 6 位");
       passwordInputRef.current?.focus();
       return;
     }
+    // zxcvbn 懒加载强度提示（评分 < 3 警告，不拦截）
+    const warning = await checkStrength(password);
+    setStrengthWarning(warning ?? "");
     setSwiperIndex(1);
     setTimeout(() => repeatPasswordInputRef.current?.focus(), 600);
   };
@@ -44,15 +57,32 @@ const Init = () => {
   };
 
   const onSubmit = async () => {
-    const salt = nanoid(128);
-    const resp = await postInit({
-      passwordHash: sha512(salt + password),
-      passwordSalt: salt,
-    });
-    if (resp?.code !== 200) return;
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      // salt 前端生成 → argon2id 派生 (KEK, V) → 随机 DEK 用 KEK 包裹为 keyBlob
+      const salt = randomBytes(SALT_LENGTH);
+      const { kek, verifier } = await deriveMasterKey(
+        password,
+        salt,
+        DEFAULT_KDF_PARAMS,
+      );
+      const dek = randomBytes(32);
+      const keyBlob = await wrapDek(kek, dek);
 
-    messageSuccess("初始化完成");
-    window.location.href = "/login";
+      const resp = await postInit({
+        verifier: bytesToHex(verifier),
+        salt: bytesToHex(salt),
+        keyBlob,
+        kdfParams: JSON.stringify(DEFAULT_KDF_PARAMS),
+      });
+      if (resp?.code !== 200) return;
+
+      messageSuccess("初始化完成");
+      window.location.href = "/login";
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getViewStyle = (index: number): React.CSSProperties => ({
@@ -97,6 +127,7 @@ const Init = () => {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (repeatPassword) setRepeatPassword("");
+                    if (strengthWarning) setStrengthWarning("");
                   }}
                   onKeyUp={(e) => e.key === "Enter" && onInputedPassword()}
                   data-testid="init-password-input"
@@ -114,6 +145,13 @@ const Init = () => {
                 </Button>
               </Col>
             </Row>
+            {strengthWarning && (
+              <Row justify="center" className="mt-4">
+                <Col span={24}>
+                  <Alert type="warning" showIcon message={strengthWarning} />
+                </Col>
+              </Row>
+            )}
           </div>
           <div style={getViewStyle(1)}>
             <div className="text-center text-xl mb-16">
@@ -173,7 +211,7 @@ const Init = () => {
             <Row gutter={[8, 8]} justify="center">
               <Col span={17}>
                 <Button
-                  loading={isCreating}
+                  loading={submitting || isCreating}
                   type="primary"
                   block
                   size="large"

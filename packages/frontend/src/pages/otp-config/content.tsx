@@ -1,20 +1,21 @@
 import { FC, useEffect, useState } from "react";
 import { Button, Form, Input, Modal, QRCode, Space, Spin } from "antd";
 import { useSetAtom, useAtomValue } from "jotai";
-import { stateUser, statePasswordSalt } from "@/store/user";
+import { stateUser, stateVault } from "@/store/user";
 import { sha512 } from "@/utils/crypto";
 import { queryChallenge } from "@/services/auth";
 import { useOtpQrcode, useBindOtp, useUnbindOtp } from "@/services/otp";
 import { messageWarning, messageSuccess } from "@/utils/message";
 import { useIsMobile } from "@hopgoldy/cube-ui";
 import { SettingContainerProps } from "@/components/setting-container";
+import { bytesToHex, hexToBytes } from "@/lib/e2ee/format";
+import { deriveMasterKey } from "@/lib/e2ee";
 
 export const Content: FC<SettingContainerProps> = (props) => {
   const [removeForm] = Form.useForm();
   const isMobile = useIsMobile();
   const setUserInfo = useSetAtom(stateUser);
-  const salt = useAtomValue(statePasswordSalt);
-
+  const vault = useAtomValue(stateVault);
   const {
     data: otpInfo,
     isLoading: isLoadingOtpInfo,
@@ -56,12 +57,23 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
   const onRemove = async () => {
     const values = await removeForm.validateFields();
+    // 改密码后 vault.salt 会同步更新，此处始终为当前生效的 KDF 盐值
+    if (!vault.salt || !vault.kdfParams) {
+      messageWarning("密钥材料缺失，请重新登录");
+      return;
+    }
 
     const challengeResp = await queryChallenge();
     if (!challengeResp.success) return;
 
+    // hash = SHA512(hex(V) + challengeCode)，V = argon2id(主密码, salt) 后 32B
     const challengeCode = challengeResp.data!.code;
-    const hash = sha512(sha512(salt + values.password) + challengeCode);
+    const { verifier } = await deriveMasterKey(
+      values.password,
+      hexToBytes(vault.salt),
+      vault.kdfParams,
+    );
+    const hash = sha512(bytesToHex(verifier) + challengeCode);
 
     const resp = await removeOtp({
       hash,

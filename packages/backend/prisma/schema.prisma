@@ -35,6 +35,8 @@ model User {
   id                Int      @id @default(autoincrement())
   passwordHash      String
   passwordSalt      String   @default("")
+  keyBlob           String   @default("") // v2 格式：AES-256-GCM(KEK, DEK)
+  kdfParams         String   @default("") // JSON: {"algorithm":"argon2id","m":65536,"t":2,"p":1,"version":1}
   initTime          DateTime @default(now())
   theme             String   @default("light")
   defaultGroupId    Int      @default(0)
@@ -51,6 +53,7 @@ model Group {
   lockType     String        @default("None") // None | Password | Totp
   passwordHash String?
   passwordSalt String?
+  keyBlob      String? // 预留：二期方案 B，AES-256-GCM(KEK, 组DEK)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   certificates Certificate[]

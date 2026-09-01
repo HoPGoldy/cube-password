@@ -1,4 +1,14 @@
+import { argon2id } from "hash-wasm";
 import crypto from "crypto";
+import {
+  bytesToHex,
+  hexToBytes,
+  randomBytes,
+  wrapDek,
+  DEFAULT_KDF_PARAMS,
+  parseKdfParams,
+  type KdfParams,
+} from "@frontend/lib/e2ee";
 
 /**
  * 后端直连地址（baseURL 是前端 3500，setup 阶段必须使用后端的绝对地址）。
@@ -10,24 +20,56 @@ const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://127.0.0.1:3499";
 const LOGIN_PASSWORD = process.env.E2E_LOGIN_PASSWORD ?? "admin";
 
 /**
- * 初始化固定盐（可复现）
- * 后端存储 passwordHash = SHA512(salt + password)，登录校验 SHA512(passwordHash + challengeCode)
+ * 初始化固定盐（hex，可复现；ascii "e2e-fixed-salt" 共 14 字节，满足 RFC 9106 ≥8 字节）
+ * v2 存储：passwordHash = hex(V)，V = argon2id(password, salt) 输出的后 32 字节；
+ * 登录校验 SHA512(hex(V) + challengeCode)
  */
-const FIXED_SALT = "e2e-fixed-salt";
+const FIXED_SALT_HEX = "6532652d66697865642d73616c74"; // ascii("e2e-fixed-salt")，14 字节（≥ RFC 9106 要求的 8 字节）
 
-/** SHA-512（大写 hex），与 packages/e2e/fixtures/api.ts 及后端一致 */
+/** SHA-512（大写 hex），与后端一致 */
 export const sha512 = (str: string): string => {
-  return crypto.createHash("sha512").update(str).digest("hex").toUpperCase();
+  return crypto
+    .createHash("sha512")
+    .update(str, "utf8")
+    .digest("hex")
+    .toUpperCase();
+};
+
+/** argon2id 输出 64B：前 32B = KEK，后 32B = V */
+const KDF_HASH_LENGTH = 64;
+
+/**
+ * argon2id(password, salt) → { kek: 前 32B, verifier: 后 32B }，与前端 e2ee/kdf.ts 一致
+ * @param params KDF 参数；闭环场景应传后端下发的 kdfParams（经 parseKdfParams 校验）
+ */
+const deriveMasterKey = async (
+  password: string,
+  saltBytes: Uint8Array,
+  params: KdfParams = DEFAULT_KDF_PARAMS,
+): Promise<{ kek: Uint8Array; verifier: Uint8Array }> => {
+  const derived = await argon2id({
+    password,
+    salt: saltBytes,
+    parallelism: params.p,
+    iterations: params.t,
+    memorySize: params.m,
+    hashLength: KDF_HASH_LENGTH,
+    outputType: "binary",
+  });
+  return {
+    kek: derived.slice(0, 32),
+    verifier: derived.slice(32, 64),
+  };
 };
 
 interface GlobalData {
   isInitialized?: boolean;
   salt?: string;
+  kdfParams?: string;
 }
 
 interface GlobalResponse {
   success?: boolean;
-  code?: number;
   data?: GlobalData;
 }
 
@@ -35,6 +77,7 @@ interface GlobalResponse {
 async function probeLogin(
   password: string,
   salt: string,
+  kdfParams?: string,
 ): Promise<{ ok: boolean; body?: unknown }> {
   try {
     const challengeResp = await fetch(`${BACKEND_URL}/api/auth/challenge`);
@@ -44,7 +87,15 @@ async function probeLogin(
       return { ok: false, body: challengeBody };
     }
 
-    const hash = sha512(sha512(salt + password) + code);
+    // v2 流程：argon2id(密码, salt, kdfParams) → V → SHA512(hex(V) + challengeCode)；
+    // kdfParams 经前端 parseKdfParams 严格校验（非法/不支持版本显式失败，不静默回落）
+    const params = kdfParams ? parseKdfParams(kdfParams) : DEFAULT_KDF_PARAMS;
+    const { verifier } = await deriveMasterKey(
+      password,
+      hexToBytes(salt),
+      params,
+    );
+    const hash = sha512(bytesToHex(verifier) + code);
     const loginResp = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -73,13 +124,23 @@ async function ensureInitialized() {
 
   const { isInitialized } = globalBody.data ?? {};
 
-  // 数据库未初始化：用固定盐自动初始化管理员账号
+  // 数据库未初始化：用固定盐自动初始化管理员账号（v2 格式）
   if (!isInitialized) {
-    const passwordHash = sha512(FIXED_SALT + LOGIN_PASSWORD);
+    const saltBytes = hexToBytes(FIXED_SALT_HEX);
+    const { kek, verifier } = await deriveMasterKey(LOGIN_PASSWORD, saltBytes);
+    // 全局 DEK：随机生成一次，以 keyBlob = AES-256-GCM(KEK, DEK) 存储
+    const dek = randomBytes(32);
+    const keyBlob = await wrapDek(kek, dek);
+
     const initResp = await fetch(`${BACKEND_URL}/api/auth/init`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ passwordHash, passwordSalt: FIXED_SALT }),
+      body: JSON.stringify({
+        verifier: bytesToHex(verifier),
+        salt: FIXED_SALT_HEX,
+        keyBlob,
+        kdfParams: JSON.stringify(DEFAULT_KDF_PARAMS),
+      }),
     });
     const initBody = await initResp.json();
     if (!initResp.ok || !initBody?.success) {
@@ -88,12 +149,13 @@ async function ensureInitialized() {
       );
     }
     console.log(
-      `[global-setup] 数据库未初始化，已自动创建管理员用户（E2E_LOGIN_PASSWORD=${LOGIN_PASSWORD}）`,
+      `[global-setup] 数据库未初始化，已自动创建管理员用户（v2 格式，E2E_LOGIN_PASSWORD=${LOGIN_PASSWORD}）`,
     );
     return;
   }
 
   // 数据库已初始化：单次登录探测校验密码是否与 E2E_LOGIN_PASSWORD 一致
+  // （salt 与 kdfParams 均取自 /auth/global 下发，与前端登录流程同源）
   const salt = globalBody.data?.salt;
   if (!salt) {
     throw new Error(
@@ -101,7 +163,11 @@ async function ensureInitialized() {
     );
   }
 
-  const probe = await probeLogin(LOGIN_PASSWORD, salt);
+  const probe = await probeLogin(
+    LOGIN_PASSWORD,
+    salt,
+    globalBody.data?.kdfParams,
+  );
   if (!probe.ok) {
     throw new Error(
       `现有数据库的用户密码与 E2E_LOGIN_PASSWORD 不一致：期望 '${LOGIN_PASSWORD}'。` +

@@ -1,9 +1,7 @@
-import { sha512 } from "@/utils/crypto";
-import { getAesMeta } from "@/utils/crypto";
 import { Alert, Button, Col, Input, InputRef, Row, Typography } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { useLogin, queryChallenge } from "../../services/auth";
-import { login, stateMainPwd, statePasswordSalt } from "../../store/user";
+import { login, stateVault, stateKdfMeta } from "../../store/user";
 import { messageError } from "@/utils/message";
 import { showGlobalMessage } from "@/utils/message";
 import { KeyOutlined } from "@ant-design/icons";
@@ -11,6 +9,16 @@ import { useLoginSuccess } from "./use-login-success";
 import { APP_NAME, APP_SUBTITLE, THEME_BUTTON_COLOR } from "@/config";
 import { usePageTitle } from "@/store/global";
 import { useSetAtom, useAtomValue } from "jotai";
+import { bytesToHex, hexToBytes } from "@/lib/e2ee/format";
+import { sha512 } from "@/utils/crypto";
+import {
+  deriveMasterKey,
+  unwrapDek,
+  parseKdfParams,
+  ErrorInvalidKdfParams,
+  ErrorDecryptionFailed,
+  ErrorInvalidV2Format,
+} from "@/lib/e2ee";
 import type { LockDetail, LoginFailRecord } from "@/types/auth";
 import dayjs from "dayjs";
 
@@ -24,10 +32,11 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
   const [lockDetail, setLockDetail] = useState<LockDetail | undefined>(
     initialLockDetail,
   );
+  const [deriving, setDeriving] = useState(false);
   const passwordInputRef = useRef<InputRef>(null);
   const { mutateAsync: postLogin, isPending: isLogin } = useLogin();
-  const setMainPwd = useSetAtom(stateMainPwd);
-  const salt = useAtomValue(statePasswordSalt);
+  const setVault = useSetAtom(stateVault);
+  const kdfMeta = useAtomValue(stateKdfMeta);
 
   const { runLoginSuccess } = useLoginSuccess();
 
@@ -41,16 +50,61 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
       passwordInputRef.current?.focus();
       return;
     }
+    if (!kdfMeta.salt) {
+      messageError("盐值缺失，请刷新页面重试");
+      return;
+    }
+    // 解析并校验后端下发的 kdfParams（JSON 非法 / 算法或版本不识别时显式报错，
+    // 禁止静默回落默认值，否则会派生出与库内 V 不一致的密钥）
+    if (!kdfMeta.kdfParamsRaw) {
+      messageError("KDF 参数缺失，请刷新页面重试");
+      return;
+    }
+    let kdfParams;
+    try {
+      kdfParams = parseKdfParams(kdfMeta.kdfParamsRaw);
+    } catch (err) {
+      const detail =
+        err instanceof ErrorInvalidKdfParams
+          ? err.message
+          : `未知错误：${err instanceof Error ? err.message : String(err)}`;
+      messageError(`KDF 参数校验失败，无法登录：${detail}`);
+      return;
+    }
 
-    // 1. fetch challenge code
-    const challengeResp = await queryChallenge();
-    if (!challengeResp.success) return;
+    // 1. 本地派生 (KEK, V)，约 0.5s，按钮显示"密钥派生中"
+    setDeriving(true);
+    let kek: Uint8Array;
+    let verifier: Uint8Array;
+    try {
+      ({ kek, verifier } = await deriveMasterKey(
+        password,
+        hexToBytes(kdfMeta.salt),
+        kdfParams,
+      ));
+    } catch (err) {
+      setDeriving(false);
+      messageError(
+        `密钥派生失败：${err instanceof Error ? err.message : String(err)}`,
+      );
+      return;
+    }
 
-    const challengeCode = challengeResp.data!.code;
-    // hash = SHA512(SHA512(salt + password) + challengeCode)
-    const hash = sha512(sha512(salt + password) + challengeCode);
+    // 2. 取挑战码并计算登录 hash；finally 确保任何异常路径都会结束 deriving 状态
+    let challengeCode: string;
+    let resp: Awaited<ReturnType<typeof postLogin>>;
+    try {
+      const challengeResp = await queryChallenge();
+      if (!challengeResp.success) return;
 
-    const resp = await postLogin({ hash });
+      challengeCode = challengeResp.data!.code;
+      // hash = SHA512(hex(V) + challengeCode)，与后端比对逻辑一致
+      const hash = sha512(bytesToHex(verifier) + challengeCode);
+
+      resp = await postLogin({ hash });
+    } finally {
+      setDeriving(false);
+    }
 
     if (resp?.code !== 200) {
       // 登录失败，更新锁定信息
@@ -63,11 +117,59 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
       return;
     }
 
-    // save AES meta for client-side encryption
-    const { key, iv } = getAesMeta(password);
-    setMainPwd({ pwdKey: key, pwdIv: iv });
+    // 3. KEK 解开 keyBlob 得到 DEK（AEAD tag 校验 = 第二重密码确认）
+    let dek: Uint8Array;
+    try {
+      dek = await unwrapDek(kek, resp.data!.keyBlob);
+    } catch (err) {
+      kek.fill(0);
+      if (
+        err instanceof ErrorDecryptionFailed ||
+        err instanceof ErrorInvalidV2Format
+      ) {
+        messageError(
+          "密钥校验失败：主密码可能不正确或数据已被篡改，请重新登录",
+        );
+      } else {
+        messageError(
+          `密钥解包失败：${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      return;
+    }
 
-    login(resp.data);
+    // KEK 已完成使命，覆写后丢弃，内存中只留 DEK
+    kek.fill(0);
+    // vault.kdfParams 以 login 响应为准（版本化闭环），
+    // 响应中的参数必须与登录派生所用的参数一致，否则拒绝进入
+    let loginKdfParams;
+    try {
+      loginKdfParams = parseKdfParams(resp.data!.kdfParams);
+    } catch (err) {
+      const detail =
+        err instanceof ErrorInvalidKdfParams
+          ? err.message
+          : `未知错误：${err instanceof Error ? err.message : String(err)}`;
+      messageError(`登录响应的 KDF 参数校验失败：${detail}`);
+      return;
+    }
+    if (
+      loginKdfParams.m !== kdfParams.m ||
+      loginKdfParams.t !== kdfParams.t ||
+      loginKdfParams.p !== kdfParams.p
+    ) {
+      messageError(
+        "登录响应的 KDF 参数与登录前不一致，可能存在数据异常，请刷新页面重试",
+      );
+      return;
+    }
+    setVault({
+      dek,
+      keyBlob: resp.data!.keyBlob,
+      salt: resp.data!.salt,
+      kdfParams: loginKdfParams,
+    });
+    login(resp.data!);
     runLoginSuccess();
   };
 
@@ -128,13 +230,13 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
         <Button
           size="large"
           block
-          loading={isLogin}
+          loading={isLogin || deriving}
           type="primary"
           style={{ background: THEME_BUTTON_COLOR }}
           onClick={onPasswordSubmit}
           data-testid="login-submit-btn"
         >
-          登 录
+          {deriving ? "密钥派生中" : "登 录"}
         </Button>
       </>
     );

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "keyBlob" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "User" ADD COLUMN "kdfParams" TEXT NOT NULL DEFAULT '';
+
+-- AlterTable
+ALTER TABLE "Group" ADD COLUMN "keyBlob" TEXT;

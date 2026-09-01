@@ -1,23 +1,22 @@
-import CryptoJS from "crypto-js";
+import { sha512 as nobleSha512 } from "@noble/hashes/sha2.js";
+import { utf8ToBytes } from "@noble/hashes/utils.js";
+import { bytesToHex } from "@/lib/e2ee/format";
 import { nanoid } from "nanoid";
 
-const { SHA256, SHA512, AES, MD5, enc, mode, pad } = CryptoJS;
-
 /**
- * SHA512 hash
+ * SHA512 hash（大写 hex，输出与旧版实现保持一致）
  */
 export const sha512 = (str: string) => {
-  return SHA512(str).toString().toUpperCase();
+  return bytesToHex(nobleSha512(utf8ToBytes(str))).toUpperCase();
 };
 
 /**
  * 获取 sha512 hash (带盐)
+ * 与旧版实现保持一致：盐哈希为小写 hex，最终输出大写 hex
  */
 export const shaWithSalt = (str: string, saltValue: string) => {
-  const salt = SHA512(saltValue).toString(CryptoJS.enc.Hex);
-  const saltedMessage = salt + str;
-  const hash = SHA512(saltedMessage);
-  return hash.toString(CryptoJS.enc.Hex).toUpperCase();
+  const salt = bytesToHex(nobleSha512(utf8ToBytes(saltValue)));
+  return sha512(salt + str);
 };
 
 /**
@@ -33,67 +32,4 @@ export const createReplayAttackHeaders = (url: string, secretKey: string) => {
     "X-Nonce": nonce,
     "X-Signature": sign,
   };
-};
-
-/**
- * 将密码转换为 aes 加密需要的 key 和初始向量
- */
-export const getAesMeta = (password: string) => {
-  const key = enc.Utf8.parse(MD5(password).toString());
-  const iv = enc.Utf8.parse(SHA256(password).toString());
-
-  return { key, iv };
-};
-
-/**
- * 验证 aes 加密信息
- * 用于判断 key 和 iv 是否是从这个密码生成的
- */
-export const validateAesMeta = (
-  password: string,
-  key: CryptoJS.lib.WordArray,
-  iv: CryptoJS.lib.WordArray,
-) => {
-  const newKey = enc.Utf8.parse(MD5(password).toString());
-  const newIv = enc.Utf8.parse(SHA256(password).toString());
-
-  if (enc.Utf8.stringify(newKey) !== enc.Utf8.stringify(key)) return false;
-  if (enc.Utf8.stringify(newIv) !== enc.Utf8.stringify(iv)) return false;
-  return true;
-};
-
-/**
- * aes 加密
- */
-export const aes = (
-  str: string,
-  key: CryptoJS.lib.WordArray,
-  iv: CryptoJS.lib.WordArray,
-) => {
-  const srcs = enc.Utf8.parse(str);
-  const encrypted = AES.encrypt(srcs, key, {
-    iv,
-    mode: mode.CBC,
-    padding: pad.Pkcs7,
-  });
-  return encrypted.ciphertext.toString();
-};
-
-/**
- * aes 解密
- */
-export const aesDecrypt = (
-  str: string,
-  key: CryptoJS.lib.WordArray,
-  iv: CryptoJS.lib.WordArray,
-) => {
-  const encryptedHexStr = enc.Hex.parse(str);
-  const srcs = enc.Base64.stringify(encryptedHexStr);
-  const decrypt = AES.decrypt(srcs, key, {
-    iv,
-    mode: mode.CBC,
-    padding: pad.Pkcs7,
-  });
-  const decryptedStr = decrypt.toString(enc.Utf8);
-  return decryptedStr.toString();
 };

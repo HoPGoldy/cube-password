@@ -4,15 +4,14 @@ import { ChallengeManager } from "@/lib/challenge";
 import { LoginLocker } from "@/lib/login-locker";
 import { NotificationService } from "@/modules/notification/service";
 import { NoticeType } from "@/types/notification";
-import { sha512, getAesMeta, aesEncrypt, aesDecrypt } from "@/lib/crypto";
-import { generateSync } from "otplib";
+import { sha512 } from "@/lib/crypto";
+import { verifySync } from "otplib";
 import { ErrorAuthFailed, ErrorBanned, ErrorNeedLogin } from "./error";
 import {
   ErrorBadRequest,
   ErrorForbidden,
   ErrorUnauthorized,
 } from "@/types/error";
-import { nanoid } from "nanoid";
 
 interface AuthServiceDeps {
   prisma: PrismaService;
@@ -47,19 +46,30 @@ export class AuthService {
     return {
       isInitialized: !!user,
       salt: user?.passwordSalt || undefined,
+      kdfParams: user?.kdfParams || undefined,
       ...lockDetail,
     };
   }
 
-  async init(passwordHash: string, passwordSalt: string): Promise<void> {
+  async init(data: {
+    verifier: string;
+    salt: string;
+    keyBlob: string;
+    kdfParams: string;
+  }): Promise<void> {
     const existing = await this.prisma.user.findFirst();
     if (existing) {
       throw new ErrorBadRequest("用户已存在，不可重复初始化");
     }
 
-    // 创建用户
+    // 创建用户（passwordHash 语义变为 hex(V)，原样存储）
     const user = await this.prisma.user.create({
-      data: { passwordHash, passwordSalt },
+      data: {
+        passwordHash: data.verifier,
+        passwordSalt: data.salt,
+        keyBlob: data.keyBlob,
+        kdfParams: data.kdfParams,
+      },
     });
 
     // 创建默认分组
@@ -101,7 +111,7 @@ export class AuthService {
       throw new ErrorAuthFailed();
     }
 
-    // 验证密码: hash = SHA512(passwordHash + challengeCode)
+    // 验证密码: hash = SHA512(hex(V) + challengeCode)，V 存于 passwordHash
     const expectedHash = sha512(user.passwordHash + challengeCode);
     if (hash !== expectedHash) {
       const lockDetail = this.loginLocker.recordLoginFail(ip);
@@ -144,6 +154,8 @@ export class AuthService {
       createPwdAlphabet: user.createPwdAlphabet,
       createPwdLength: user.createPwdLength,
       salt: user.passwordSalt,
+      keyBlob: user.keyBlob,
+      kdfParams: user.kdfParams,
       groups: groups.map((g) => ({
         id: g.id,
         name: g.name,
@@ -157,7 +169,12 @@ export class AuthService {
     this.sessionManager.destroySession();
   }
 
-  async changePassword(encryptedData: string): Promise<void> {
+  async changePassword(data: {
+    verifier: string;
+    salt: string;
+    keyBlob: string;
+    totp?: string;
+  }): Promise<void> {
     const user = await this.prisma.user.findFirst();
     if (!user) throw new ErrorNeedLogin();
 
@@ -169,69 +186,26 @@ export class AuthService {
       throw new ErrorUnauthorized("挑战码无效或已过期");
     }
 
-    const totpCode = user.totpSecret
-      ? generateSync({ secret: user.totpSecret })
-      : "";
-
-    // 构造解密密钥: SHA512(salt + oldPassword) + challengeCode + sessionToken + totpCode
-    // 注意：passwordHash 就是 SHA512(salt + oldPassword)
-    const postKey =
-      user.passwordHash + challengeCode + session.token + totpCode;
-    const { key, iv } = getAesMeta(postKey);
-
-    const decrypted = aesDecrypt(encryptedData, key, iv);
-    if (!decrypted) {
-      throw new ErrorBadRequest("无效的密码修改凭证");
+    // TOTP 校验（如启用）
+    if (user.totpSecret) {
+      const isValid = verifySync({
+        token: data.totp ?? "",
+        secret: user.totpSecret,
+      }).valid;
+      if (!isValid) {
+        throw new ErrorUnauthorized("动态验证码错误");
+      }
     }
 
-    const { oldPassword, newPassword } = JSON.parse(decrypted) as {
-      oldPassword: string;
-      newPassword: string;
-    };
-
-    // 重新加密所有凭证
-    const oldMeta = getAesMeta(oldPassword);
-    const newMeta = getAesMeta(newPassword);
-
-    const allCertificates = await this.prisma.certificate.findMany({
-      select: { id: true, content: true },
+    // O(1) re-wrap：凭证零改动，仅更新用户三字段，不销毁 session
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: data.verifier,
+        passwordSalt: data.salt,
+        keyBlob: data.keyBlob,
+      },
     });
-
-    await this.prisma.$transaction(async (tx) => {
-      for (const cert of allCertificates) {
-        try {
-          const decryptedContent = aesDecrypt(
-            cert.content,
-            oldMeta.key,
-            oldMeta.iv,
-          );
-          const reEncrypted = aesEncrypt(
-            decryptedContent,
-            newMeta.key,
-            newMeta.iv,
-          );
-          await tx.certificate.update({
-            where: { id: cert.id },
-            data: { content: reEncrypted },
-          });
-        } catch {
-          // 解密失败的凭证跳过（可能是分组加密的）
-        }
-      }
-
-      // 更新密码
-      const newSalt = nanoid(128);
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
-          passwordHash: sha512(newSalt + newPassword),
-          passwordSalt: newSalt,
-        },
-      });
-    });
-
-    // 销毁 session
-    this.sessionManager.destroySession();
   }
 
   validateSession(token: string) {

@@ -915,6 +915,8 @@ export const UserScalarFieldEnum = {
   id: 'id',
   passwordHash: 'passwordHash',
   passwordSalt: 'passwordSalt',
+  keyBlob: 'keyBlob',
+  kdfParams: 'kdfParams',
   initTime: 'initTime',
   theme: 'theme',
   defaultGroupId: 'defaultGroupId',
@@ -933,6 +935,7 @@ export const GroupScalarFieldEnum = {
   lockType: 'lockType',
   passwordHash: 'passwordHash',
   passwordSalt: 'passwordSalt',
+  keyBlob: 'keyBlob',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

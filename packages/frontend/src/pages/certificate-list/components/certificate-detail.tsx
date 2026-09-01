@@ -16,10 +16,10 @@ import {
   useUpdateCertificate,
   useDeleteCertificate,
 } from "@/services/certificate";
-import { aes, aesDecrypt } from "@/utils/crypto";
 import { useAtomValue } from "jotai";
-import { stateMainPwd } from "@/store/user";
+import { stateVault } from "@/store/user";
 import { messageError, messageSuccess, messageWarning } from "@/utils/message";
+import { encryptContent, decryptContent } from "@/lib/e2ee";
 import copy from "copy-to-clipboard";
 import { Draggable } from "@/components/draggable";
 import {
@@ -135,7 +135,7 @@ export const CertificateDetailModal: FC<Props> = ({
 }) => {
   const isAdd = detailId === -1;
   const [form] = Form.useForm();
-  const { pwdKey, pwdIv } = useAtomValue(stateMainPwd);
+  const vault = useAtomValue(stateVault);
   const [readonly, setReadonly] = useState(true);
   const newFieldIndex = useRef(1);
   const { data: detailResp } = useCertificateDetail(
@@ -160,21 +160,23 @@ export const CertificateDetailModal: FC<Props> = ({
   }, [detailId]);
 
   useEffect(() => {
-    if (!detailResp?.data || !pwdKey || !pwdIv) return;
+    if (!detailResp?.data || !vault.dek) return;
 
     const { content, name, markColor, icon } = detailResp.data;
-    try {
-      const fields = JSON.parse(aesDecrypt(content, pwdKey, pwdIv));
-      form.setFieldsValue({
-        title: name,
-        icon: icon || "fa-solid fa-key",
-        markColor: markColor || "",
-        fields,
+    decryptContent(vault.dek, content)
+      .then((plain) => {
+        const fields = JSON.parse(plain);
+        form.setFieldsValue({
+          title: name,
+          icon: icon || "fa-solid fa-key",
+          markColor: markColor || "",
+          fields,
+        });
+      })
+      .catch(() => {
+        messageError("凭证解密失败");
+        onClose();
       });
-    } catch {
-      messageError("凭证解密失败");
-      onClose();
-    }
   }, [detailResp]);
 
   const onSave = async () => {
@@ -183,12 +185,15 @@ export const CertificateDetailModal: FC<Props> = ({
       messageWarning("标题不能为空");
       return;
     }
-    if (!pwdKey || !pwdIv) {
-      messageWarning("主密码错误，请尝试重新登录");
+    if (!vault.dek) {
+      messageWarning("密钥缺失，请尝试重新登录");
       return;
     }
 
-    const content = aes(JSON.stringify(values.fields), pwdKey, pwdIv);
+    const content = await encryptContent(
+      vault.dek,
+      JSON.stringify(values.fields),
+    );
 
     if (isAdd) {
       await addCertificate({

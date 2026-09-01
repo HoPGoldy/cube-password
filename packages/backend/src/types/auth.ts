@@ -21,6 +21,11 @@ export type SchemaChallengeResponseType = Type.Static<
 export const SchemaGlobalResponse = Type.Object({
   isInitialized: Type.Boolean(),
   salt: Type.Optional(Type.String()),
+  kdfParams: Type.Optional(
+    Type.String({
+      description: "JSON: 登录派生所需的 KDF 参数（未初始化时不下发）",
+    }),
+  ),
   loginFailure: Type.Array(SchemaLoginFailRecord),
   retryNumber: Type.Number(),
   isBanned: Type.Boolean(),
@@ -30,8 +35,13 @@ export type SchemaGlobalResponseType = Type.Static<typeof SchemaGlobalResponse>;
 // ========== Init ==========
 
 export const SchemaAuthInitBody = Type.Object({
-  passwordHash: Type.String({ description: "SHA512(salt + password)" }),
-  passwordSalt: Type.String({ description: "Random salt (nanoid 128)" }),
+  verifier: Type.String({ description: "hex(V)，V = argon2id 输出后 32 字节" }),
+  salt: Type.String({ description: "hex(KDF salt)，前端生成（32 字节）" }),
+  keyBlob: Type.String({ description: "v2 格式：AES-256-GCM(KEK, DEK)" }),
+  kdfParams: Type.String({
+    description:
+      'JSON: {"algorithm":"argon2id","m":65536,"t":2,"p":1,"version":1}',
+  }),
 });
 export type SchemaAuthInitBodyType = Type.Static<typeof SchemaAuthInitBody>;
 
@@ -45,7 +55,7 @@ export type SchemaAuthInitResponseType = Type.Static<
 // ========== Login ==========
 
 export const SchemaAuthLoginBody = Type.Object({
-  hash: Type.String({ description: "SHA512(passwordHash + challengeCode)" }),
+  hash: Type.String({ description: "SHA512(hex(V) + challengeCode)" }),
 });
 export type SchemaAuthLoginBodyType = Type.Static<typeof SchemaAuthLoginBody>;
 
@@ -60,6 +70,10 @@ export const SchemaAuthLoginResponse = Type.Object({
   createPwdAlphabet: Type.String(),
   createPwdLength: Type.Number(),
   salt: Type.String(),
+  keyBlob: Type.String({
+    description: "v2 格式：AES-256-GCM(KEK, DEK)，前端用 KEK 解出 DEK",
+  }),
+  kdfParams: Type.String({ description: "JSON: 登录派生所需的 KDF 参数" }),
   groups: Type.Array(
     Type.Object({
       id: Type.Number(),
@@ -76,9 +90,12 @@ export type SchemaAuthLoginResponseType = Type.Static<
 // ========== Change Password ==========
 
 export const SchemaAuthChangePasswordBody = Type.Object({
-  a: Type.String({
-    description: "AES-encrypted JSON {oldPassword, newPassword}",
-  }),
+  verifier: Type.String({ description: "hex(newV)，新密码的 argon2id 验证者" }),
+  salt: Type.String({ description: "hex(newKDF salt)，前端生成（32 字节）" }),
+  keyBlob: Type.String({ description: "v2 格式：新 KEK 重包衷后的 DEK" }),
+  totp: Type.Optional(
+    Type.String({ description: "TOTP 码（启用 TOTP 时必填）" }),
+  ),
 });
 export type SchemaAuthChangePasswordBodyType = Type.Static<
   typeof SchemaAuthChangePasswordBody

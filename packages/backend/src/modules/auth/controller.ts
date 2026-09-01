@@ -101,8 +101,8 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { passwordHash, passwordSalt } = request.body;
-      await authService.init(passwordHash, passwordSalt);
+      const { verifier, salt, keyBlob, kdfParams } = request.body;
+      await authService.init({ verifier, salt, keyBlob, kdfParams });
       return { success: true };
     },
   );
@@ -152,8 +152,8 @@ export const registerAuthController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { a } = request.body;
-      await authService.changePassword(a);
+      const { verifier, salt, keyBlob, totp } = request.body;
+      await authService.changePassword({ verifier, salt, keyBlob, totp });
       return {};
     },
   );
