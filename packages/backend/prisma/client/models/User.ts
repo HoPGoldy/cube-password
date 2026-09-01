@@ -45,7 +45,6 @@ export type UserMinAggregateOutputType = {
   initTime: Date | null
   theme: string | null
   defaultGroupId: number | null
-  commonLocation: string | null
   totpSecret: string | null
   createPwdAlphabet: string | null
   createPwdLength: number | null
@@ -58,7 +57,6 @@ export type UserMaxAggregateOutputType = {
   initTime: Date | null
   theme: string | null
   defaultGroupId: number | null
-  commonLocation: string | null
   totpSecret: string | null
   createPwdAlphabet: string | null
   createPwdLength: number | null
@@ -71,7 +69,6 @@ export type UserCountAggregateOutputType = {
   initTime: number
   theme: number
   defaultGroupId: number
-  commonLocation: number
   totpSecret: number
   createPwdAlphabet: number
   createPwdLength: number
@@ -98,7 +95,6 @@ export type UserMinAggregateInputType = {
   initTime?: true
   theme?: true
   defaultGroupId?: true
-  commonLocation?: true
   totpSecret?: true
   createPwdAlphabet?: true
   createPwdLength?: true
@@ -111,7 +107,6 @@ export type UserMaxAggregateInputType = {
   initTime?: true
   theme?: true
   defaultGroupId?: true
-  commonLocation?: true
   totpSecret?: true
   createPwdAlphabet?: true
   createPwdLength?: true
@@ -124,7 +119,6 @@ export type UserCountAggregateInputType = {
   initTime?: true
   theme?: true
   defaultGroupId?: true
-  commonLocation?: true
   totpSecret?: true
   createPwdAlphabet?: true
   createPwdLength?: true
@@ -224,7 +218,6 @@ export type UserGroupByOutputType = {
   initTime: Date
   theme: string
   defaultGroupId: number
-  commonLocation: string
   totpSecret: string
   createPwdAlphabet: string
   createPwdLength: number
@@ -260,7 +253,6 @@ export type UserWhereInput = {
   initTime?: Prisma.DateTimeFilter<"User"> | Date | string
   theme?: Prisma.StringFilter<"User"> | string
   defaultGroupId?: Prisma.IntFilter<"User"> | number
-  commonLocation?: Prisma.StringFilter<"User"> | string
   totpSecret?: Prisma.StringFilter<"User"> | string
   createPwdAlphabet?: Prisma.StringFilter<"User"> | string
   createPwdLength?: Prisma.IntFilter<"User"> | number
@@ -273,7 +265,6 @@ export type UserOrderByWithRelationInput = {
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
-  commonLocation?: Prisma.SortOrder
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
@@ -289,7 +280,6 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   initTime?: Prisma.DateTimeFilter<"User"> | Date | string
   theme?: Prisma.StringFilter<"User"> | string
   defaultGroupId?: Prisma.IntFilter<"User"> | number
-  commonLocation?: Prisma.StringFilter<"User"> | string
   totpSecret?: Prisma.StringFilter<"User"> | string
   createPwdAlphabet?: Prisma.StringFilter<"User"> | string
   createPwdLength?: Prisma.IntFilter<"User"> | number
@@ -302,7 +292,6 @@ export type UserOrderByWithAggregationInput = {
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
-  commonLocation?: Prisma.SortOrder
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
@@ -323,7 +312,6 @@ export type UserScalarWhereWithAggregatesInput = {
   initTime?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   theme?: Prisma.StringWithAggregatesFilter<"User"> | string
   defaultGroupId?: Prisma.IntWithAggregatesFilter<"User"> | number
-  commonLocation?: Prisma.StringWithAggregatesFilter<"User"> | string
   totpSecret?: Prisma.StringWithAggregatesFilter<"User"> | string
   createPwdAlphabet?: Prisma.StringWithAggregatesFilter<"User"> | string
   createPwdLength?: Prisma.IntWithAggregatesFilter<"User"> | number
@@ -335,7 +323,6 @@ export type UserCreateInput = {
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
-  commonLocation?: string
   totpSecret?: string
   createPwdAlphabet?: string
   createPwdLength?: number
@@ -348,7 +335,6 @@ export type UserUncheckedCreateInput = {
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
-  commonLocation?: string
   totpSecret?: string
   createPwdAlphabet?: string
   createPwdLength?: number
@@ -360,7 +346,6 @@ export type UserUpdateInput = {
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
-  commonLocation?: Prisma.StringFieldUpdateOperationsInput | string
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
@@ -373,7 +358,6 @@ export type UserUncheckedUpdateInput = {
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
-  commonLocation?: Prisma.StringFieldUpdateOperationsInput | string
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
@@ -386,7 +370,6 @@ export type UserCreateManyInput = {
   initTime?: Date | string
   theme?: string
   defaultGroupId?: number
-  commonLocation?: string
   totpSecret?: string
   createPwdAlphabet?: string
   createPwdLength?: number
@@ -398,7 +381,6 @@ export type UserUpdateManyMutationInput = {
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
-  commonLocation?: Prisma.StringFieldUpdateOperationsInput | string
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
@@ -411,7 +393,6 @@ export type UserUncheckedUpdateManyInput = {
   initTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   defaultGroupId?: Prisma.IntFieldUpdateOperationsInput | number
-  commonLocation?: Prisma.StringFieldUpdateOperationsInput | string
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
@@ -424,7 +405,6 @@ export type UserCountOrderByAggregateInput = {
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
-  commonLocation?: Prisma.SortOrder
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
@@ -443,7 +423,6 @@ export type UserMaxOrderByAggregateInput = {
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
-  commonLocation?: Prisma.SortOrder
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
@@ -456,7 +435,6 @@ export type UserMinOrderByAggregateInput = {
   initTime?: Prisma.SortOrder
   theme?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
-  commonLocation?: Prisma.SortOrder
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
@@ -485,7 +463,6 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
-  commonLocation?: boolean
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
@@ -498,7 +475,6 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
-  commonLocation?: boolean
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
@@ -511,7 +487,6 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
-  commonLocation?: boolean
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
@@ -524,13 +499,12 @@ export type UserSelectScalar = {
   initTime?: boolean
   theme?: boolean
   defaultGroupId?: boolean
-  commonLocation?: boolean
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "initTime" | "theme" | "defaultGroupId" | "commonLocation" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "initTime" | "theme" | "defaultGroupId" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -542,7 +516,6 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     initTime: Date
     theme: string
     defaultGroupId: number
-    commonLocation: string
     totpSecret: string
     createPwdAlphabet: string
     createPwdLength: number
@@ -975,7 +948,6 @@ export interface UserFieldRefs {
   readonly initTime: Prisma.FieldRef<"User", 'DateTime'>
   readonly theme: Prisma.FieldRef<"User", 'String'>
   readonly defaultGroupId: Prisma.FieldRef<"User", 'Int'>
-  readonly commonLocation: Prisma.FieldRef<"User", 'String'>
   readonly totpSecret: Prisma.FieldRef<"User", 'String'>
   readonly createPwdAlphabet: Prisma.FieldRef<"User", 'String'>
   readonly createPwdLength: Prisma.FieldRef<"User", 'Int'>

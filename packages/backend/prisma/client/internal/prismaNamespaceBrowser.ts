@@ -101,7 +101,6 @@ export const UserScalarFieldEnum = {
   initTime: 'initTime',
   theme: 'theme',
   defaultGroupId: 'defaultGroupId',
-  commonLocation: 'commonLocation',
   totpSecret: 'totpSecret',
   createPwdAlphabet: 'createPwdAlphabet',
   createPwdLength: 'createPwdLength'

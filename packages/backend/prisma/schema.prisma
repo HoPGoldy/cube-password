@@ -38,7 +38,6 @@ model User {
   initTime          DateTime @default(now())
   theme             String   @default("light")
   defaultGroupId    Int      @default(0)
-  commonLocation    String   @default("")
   totpSecret        String   @default("")
   createPwdAlphabet String   @default("")
   createPwdLength   Int      @default(16)

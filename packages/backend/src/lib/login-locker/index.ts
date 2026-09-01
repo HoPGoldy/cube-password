@@ -5,7 +5,6 @@ const MAX_FAIL_COUNT = 3;
 export interface LoginFailRecord {
   ip: string;
   date: number;
-  location: string;
 }
 
 export interface LockDetail {
@@ -17,8 +16,8 @@ export interface LockDetail {
 export class LoginLocker {
   private failRecords: LoginFailRecord[] = [];
 
-  recordLoginFail(ip: string, location: string): LockDetail {
-    this.failRecords.push({ ip, date: Date.now(), location });
+  recordLoginFail(ip: string): LockDetail {
+    this.failRecords.push({ ip, date: Date.now() });
     return this.getLockDetail();
   }
 

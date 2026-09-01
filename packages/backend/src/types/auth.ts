@@ -5,7 +5,6 @@ import { Type } from "typebox";
 export const SchemaLoginFailRecord = Type.Object({
   ip: Type.String(),
   date: Type.Number(),
-  location: Type.String(),
 });
 
 // ========== Challenge ==========
@@ -47,9 +46,6 @@ export type SchemaAuthInitResponseType = Type.Static<
 
 export const SchemaAuthLoginBody = Type.Object({
   hash: Type.String({ description: "SHA512(passwordHash + challengeCode)" }),
-  code: Type.Optional(
-    Type.String({ description: "TOTP code for remote login" }),
-  ),
 });
 export type SchemaAuthLoginBodyType = Type.Static<typeof SchemaAuthLoginBody>;
 

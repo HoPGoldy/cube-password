@@ -21,13 +21,10 @@ interface LoginPageProps {
 export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
   usePageTitle("登录");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [codeVisible, setCodeVisible] = useState(false);
   const [lockDetail, setLockDetail] = useState<LockDetail | undefined>(
     initialLockDetail,
   );
   const passwordInputRef = useRef<InputRef>(null);
-  const codeInputRef = useRef<InputRef>(null);
   const { mutateAsync: postLogin, isPending: isLogin } = useLogin();
   const setMainPwd = useSetAtom(stateMainPwd);
   const salt = useAtomValue(statePasswordSalt);
@@ -53,17 +50,7 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
     // hash = SHA512(SHA512(salt + password) + challengeCode)
     const hash = sha512(sha512(salt + password) + challengeCode);
 
-    const resp = await postLogin({
-      hash,
-      code: code || undefined,
-    });
-
-    if (resp?.code === 40103) {
-      // need TOTP code
-      setCodeVisible(true);
-      setTimeout(() => codeInputRef.current?.focus(), 100);
-      return;
-    }
+    const resp = await postLogin({ hash });
 
     if (resp?.code !== 200) {
       // 登录失败，更新锁定信息
@@ -95,7 +82,7 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
     const message =
       dayjs(item.date).format("YYYY-MM-DD HH:mm:ss") +
       " 于 " +
-      item.location +
+      item.ip +
       " 登录失败";
     return (
       <Col span={24} key={item.date}>
@@ -137,20 +124,6 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
           onKeyUp={onPasswordInputKeyUp}
           data-testid="login-password-input"
         />
-
-        {codeVisible && (
-          <Input
-            size="large"
-            className="mb-2"
-            ref={codeInputRef}
-            placeholder="请输入动态验证码"
-            prefix={<KeyOutlined />}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            onKeyUp={onPasswordInputKeyUp}
-            data-testid="login-code-input"
-          />
-        )}
 
         <Button
           size="large"

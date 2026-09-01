@@ -5,14 +5,8 @@ import { LoginLocker } from "@/lib/login-locker";
 import { NotificationService } from "@/modules/notification/service";
 import { NoticeType } from "@/types/notification";
 import { sha512, getAesMeta, aesEncrypt, aesDecrypt } from "@/lib/crypto";
-import { queryIp, isSameLocation, formatLocation } from "@/lib/ip-location";
-import { verifySync, generateSync } from "otplib";
-import {
-  ErrorAuthFailed,
-  ErrorBanned,
-  ErrorNeedLogin,
-  ErrorNeedTotpCode,
-} from "./error";
+import { generateSync } from "otplib";
+import { ErrorAuthFailed, ErrorBanned, ErrorNeedLogin } from "./error";
 import {
   ErrorBadRequest,
   ErrorForbidden,
@@ -83,7 +77,7 @@ export class AuthService {
     }
   }
 
-  async login(hash: string, ip: string, code?: string) {
+  async login(hash: string, ip: string) {
     // 验证 challenge（服务端自行 pop，无需客户端回传）
     const challengeCode = this.challengeManager.popLastChallenge();
     if (!challengeCode) {
@@ -107,55 +101,13 @@ export class AuthService {
       throw new ErrorAuthFailed();
     }
 
-    const currentLocation = queryIp(ip);
-
-    // 异地登录检测
-    if (
-      user.commonLocation &&
-      !isSameLocation(user.commonLocation, currentLocation)
-    ) {
-      if (!user.totpSecret) {
-        // 没有绑定 TOTP，记录安全通知
-        await this.notificationService.createNotice(
-          "异地登录",
-          `${ip}（${formatLocation(currentLocation)}）进行了一次异地登录，上次登录地为${formatLocation(user.commonLocation)}，请检查是否为本人操作。`,
-          NoticeType.Warning,
-        );
-      } else {
-        // 绑定了 TOTP，需要验证码
-        if (!code) {
-          throw new ErrorNeedTotpCode();
-        }
-        const isValid = verifySync({
-          token: code,
-          secret: user.totpSecret,
-        }).valid;
-        if (!isValid) {
-          const lockDetail = this.loginLocker.recordLoginFail(
-            ip,
-            formatLocation(currentLocation),
-          );
-          const error = new ErrorBadRequest(
-            lockDetail.isBanned
-              ? "动态验证码错误，账号已被锁定"
-              : `动态验证码错误，将在 ${lockDetail.retryNumber} 次后锁定登录`,
-          );
-          error.data = lockDetail;
-          throw error;
-        }
-      }
-    }
-
     // 验证密码: hash = SHA512(passwordHash + challengeCode)
     const expectedHash = sha512(user.passwordHash + challengeCode);
     if (hash !== expectedHash) {
-      const lockDetail = this.loginLocker.recordLoginFail(
-        ip,
-        formatLocation(currentLocation),
-      );
+      const lockDetail = this.loginLocker.recordLoginFail(ip);
       await this.notificationService.createNotice(
         "密码错误",
-        `${ip}（${formatLocation(currentLocation)}）在登录时输入了错误的密码，请检查是否为本人操作。`,
+        `${ip} 在登录时输入了错误的密码，请检查是否为本人操作。`,
         NoticeType.Warning,
       );
       const error = new ErrorAuthFailed();
@@ -177,14 +129,6 @@ export class AuthService {
       if (group.lockType === "None") {
         this.sessionManager.addUnlockedGroup(group.id);
       }
-    }
-
-    // 更新常用登录地
-    if (currentLocation) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { commonLocation: currentLocation },
-      });
     }
 
     const hasNotice = await this.notificationService.hasUnread();

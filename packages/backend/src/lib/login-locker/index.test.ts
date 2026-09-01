@@ -14,24 +14,24 @@ describe("LoginLocker", () => {
 
   describe("isLocked", () => {
     it("locks an IP after 3 failures from the same IP in one day", () => {
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
       expect(locker.isLocked("1.1.1.1")).toBe(false);
 
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
       expect(locker.isLocked("1.1.1.1")).toBe(true);
     });
 
     it("does not lock with only 2 failures", () => {
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
       expect(locker.isLocked("1.1.1.1")).toBe(false);
     });
 
     it("failures from different IPs do not lock each other", () => {
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
       expect(locker.isLocked("1.1.1.1")).toBe(true);
       expect(locker.isLocked("2.2.2.2")).toBe(false);
     });
@@ -39,9 +39,9 @@ describe("LoginLocker", () => {
 
   describe("getFailCount", () => {
     it("counts only records for the same IP on the same day", () => {
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("2.2.2.2", "loc-b");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("2.2.2.2");
 
       expect(locker.getFailCount("1.1.1.1")).toBe(2);
       expect(locker.getFailCount("2.2.2.2")).toBe(1);
@@ -52,8 +52,8 @@ describe("LoginLocker", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-01-01T12:00:00Z"));
 
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
       expect(locker.getFailCount("1.1.1.1")).toBe(2);
 
       // days later: the previous records fall out of the daily window
@@ -65,8 +65,8 @@ describe("LoginLocker", () => {
 
   describe("getLockDetail", () => {
     it("exposes retryNumber and isBanned reflecting remaining attempts", () => {
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
 
       const detail = locker.getLockDetail();
       expect(detail.retryNumber).toBe(1);
@@ -75,9 +75,9 @@ describe("LoginLocker", () => {
     });
 
     it("marks banned with 0 retries after MAX_FAIL_COUNT failures", () => {
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
 
       const detail = locker.getLockDetail();
       expect(detail.retryNumber).toBe(0);
@@ -99,9 +99,9 @@ describe("LoginLocker", () => {
       // compares local-time days, so avoid times that collide in local tz)
       vi.setSystemTime(new Date("2026-01-01T12:00:00Z"));
 
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
-      locker.recordLoginFail("1.1.1.1", "loc-a");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
+      locker.recordLoginFail("1.1.1.1");
       expect(locker.isLocked("1.1.1.1")).toBe(true);
 
       // minutes later, still same day -> still locked
