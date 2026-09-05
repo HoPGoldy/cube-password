@@ -75,8 +75,15 @@ export const registerGroupController = (options: RegisterOptions) => {
       },
     },
     async (request) => {
-      const { id, lockType, passwordHash, passwordSalt } = request.body;
-      await groupService.updateConfig(id, lockType, passwordHash, passwordSalt);
+      const { id, lockType, passwordHash, passwordSalt, kdfParams } =
+        request.body;
+      await groupService.updateConfig(
+        id,
+        lockType,
+        passwordHash,
+        passwordSalt,
+        kdfParams,
+      );
       return {};
     },
   );

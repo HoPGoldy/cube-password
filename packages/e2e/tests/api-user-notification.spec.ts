@@ -5,10 +5,9 @@ test.describe("User API", () => {
     request,
     session,
   }) => {
-    const url = "api/user/statistic";
     const resp = await request.post(`${BASE}/user/statistic`, {
       data: {},
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
@@ -19,17 +18,16 @@ test.describe("User API", () => {
   });
 
   test("POST /api/user/set-theme 设置主题", async ({ request, session }) => {
-    const url = "api/user/set-theme";
     const resp = await request.post(`${BASE}/user/set-theme`, {
       data: { theme: "dark" },
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
     // Reset back to light
     await request.post(`${BASE}/user/set-theme`, {
       data: { theme: "light" },
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
   });
 
@@ -37,10 +35,9 @@ test.describe("User API", () => {
     request,
     session,
   }) => {
-    const url = "api/user/create-pwd-setting";
     const resp = await request.post(`${BASE}/user/create-pwd-setting`, {
       data: { createPwdAlphabet: "abc123", createPwdLength: 12 },
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
@@ -51,7 +48,7 @@ test.describe("User API", () => {
           "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*",
         createPwdLength: 16,
       },
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
   });
 });
@@ -61,10 +58,9 @@ test.describe("Notification API", () => {
     request,
     session,
   }) => {
-    const url = "api/notification/list";
     const resp = await request.post(`${BASE}/notification/list`, {
       data: { page: 1, pageSize: 10 },
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
@@ -78,10 +74,9 @@ test.describe("Notification API", () => {
     request,
     session,
   }) => {
-    const url = "api/notification/read-all";
     const resp = await request.post(`${BASE}/notification/read-all`, {
       data: {},
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
   });
@@ -90,10 +85,9 @@ test.describe("Notification API", () => {
     request,
     session,
   }) => {
-    const url = "api/notification/remove-all";
     const resp = await request.post(`${BASE}/notification/remove-all`, {
       data: {},
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
   });

@@ -2,7 +2,9 @@ import { PrismaService } from "@/modules/prisma";
 import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
 import { sha512 } from "@/lib/crypto";
+import { parseGroupKdfParams } from "@/lib/kdf-params";
 import { verifySync } from "otplib";
+import { ErrorBadRequest } from "@/types/error";
 import { ErrorGroupNotFound, ErrorGroupUnlockFailed } from "./error";
 
 interface GroupServiceDeps {
@@ -27,6 +29,7 @@ export class GroupService {
     lockType?: string;
     passwordHash?: string;
     passwordSalt?: string;
+    kdfParams?: string;
   }) {
     const maxOrder = await this.prisma.group.aggregate({
       _max: { order: true },
@@ -37,6 +40,7 @@ export class GroupService {
         lockType: data.lockType ?? "None",
         passwordHash: data.passwordHash,
         passwordSalt: data.passwordSalt,
+        kdfParams: data.kdfParams ?? "",
         order: (maxOrder._max.order ?? -1) + 1,
       },
     });
@@ -49,22 +53,34 @@ export class GroupService {
     return { newId: newGroup.id, newList: newList.items };
   }
 
+  /** 列表单项 → 下发结构（Password 锁下发 salt + kdfParams，解锁派生用） */
+  private toListItem(g: {
+    id: number;
+    name: string;
+    lockType: string;
+    order: number;
+    passwordSalt: string | null;
+    kdfParams: string;
+    _count: { certificates: number };
+  }) {
+    return {
+      id: g.id,
+      name: g.name,
+      lockType: g.lockType,
+      certificateCount: g._count.certificates,
+      order: g.order,
+      salt: g.passwordSalt || undefined,
+      kdfParams: g.kdfParams || undefined,
+    };
+  }
+
   async listGroups() {
     const groups = await this.prisma.group.findMany({
       orderBy: { order: "asc" },
       include: { _count: { select: { certificates: true } } },
     });
 
-    return {
-      items: groups.map((g) => ({
-        id: g.id,
-        name: g.name,
-        lockType: g.lockType,
-        certificateCount: g._count.certificates,
-        order: g.order,
-        salt: g.passwordSalt || undefined,
-      })),
-    };
+    return { items: groups.map((g) => this.toListItem(g)) };
   }
 
   async updateName(id: number, name: string): Promise<void> {
@@ -78,6 +94,7 @@ export class GroupService {
     lockType: string,
     passwordHash?: string,
     passwordSalt?: string,
+    kdfParams?: string,
   ): Promise<void> {
     const group = await this.prisma.group.findUnique({ where: { id } });
     if (!group) throw new ErrorGroupNotFound();
@@ -87,6 +104,7 @@ export class GroupService {
         lockType,
         passwordHash: passwordHash ?? null,
         passwordSalt: passwordSalt ?? null,
+        kdfParams: kdfParams ?? "",
       },
     });
   }
@@ -116,6 +134,26 @@ export class GroupService {
       }
       if (!group.passwordHash) throw new ErrorGroupUnlockFailed();
 
+      // 旧格式判定：kdfParams 为空串即 v1 遗留（sha512(salt+pwd)），
+      // 无法在此校验，显式报错引导重新设置（正式升级走 T05 迁移脚本）
+      if (!group.kdfParams) {
+        throw new ErrorBadRequest("旧版锁密码，请重新设置分组锁密码");
+      }
+
+      // 参数非法同样视为不可用的旧数据，拒绝解锁（禁止静默回落默认值，
+      // 否则会派生出与库内 V 不一致的密钥）
+      try {
+        parseGroupKdfParams(group.kdfParams);
+      } catch (err) {
+        throw new ErrorBadRequest(
+          `分组锁密码参数非法，请重新设置分组锁密码（${
+            err instanceof Error ? err.message : String(err)
+          }）`,
+        );
+      }
+
+      // hash = SHA512(hex(V) + challenge)，V = argon2id(password, salt, kdfParams)
+      // 输出后 32 字节，派生由前端完成，服务端只比对
       const expectedHash = sha512(group.passwordHash + challengeCode);
       if (options.hash !== expectedHash) {
         throw new ErrorGroupUnlockFailed();

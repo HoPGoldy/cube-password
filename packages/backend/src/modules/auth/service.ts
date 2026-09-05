@@ -145,7 +145,6 @@ export class AuthService {
 
     return {
       token: session.token,
-      replayAttackSecret: session.replayAttackSecret,
       theme: user.theme,
       initTime: user.initTime.toISOString(),
       defaultGroupId: user.defaultGroupId,
@@ -161,6 +160,7 @@ export class AuthService {
         name: g.name,
         lockType: g.lockType,
         salt: g.passwordSalt || undefined,
+        kdfParams: g.kdfParams || undefined,
       })),
     };
   }
@@ -171,6 +171,7 @@ export class AuthService {
 
   async changePassword(data: {
     verifier: string;
+    hash: string;
     salt: string;
     keyBlob: string;
     totp?: string;
@@ -184,6 +185,13 @@ export class AuthService {
     const challengeCode = this.challengeManager.popLastChallenge();
     if (!challengeCode) {
       throw new ErrorUnauthorized("挑战码无效或已过期");
+    }
+
+    // 验证旧密码证明：hash = SHA512(hex(V_old) + challengeCode)，与 login 同构；
+    // 失败从简：仅拒绝，不走锁定/通知
+    const expectedHash = sha512(user.passwordHash + challengeCode);
+    if (data.hash !== expectedHash) {
+      throw new ErrorUnauthorized("旧密码验证失败");
     }
 
     // TOTP 校验（如启用）

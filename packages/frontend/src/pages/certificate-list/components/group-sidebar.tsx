@@ -38,6 +38,7 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
     lockType: string;
     passwordHash?: string;
     passwordSalt?: string;
+    kdfParams?: string;
   }) => {
     const resp = await addGroup(data);
     if (resp?.code !== 200) return;
@@ -51,6 +52,7 @@ export const GroupSidebar: FC<Props> = ({ selectedGroupId, onSelectGroup }) => {
           lockType: g.lockType || "None",
           unlocked: g.lockType === "None",
           salt: g.salt,
+          kdfParams: g.kdfParams,
         })),
       );
       onSelectGroup(resp.data.newId);

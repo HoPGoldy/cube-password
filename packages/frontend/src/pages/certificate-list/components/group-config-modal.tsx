@@ -11,8 +11,13 @@ import {
   Result,
 } from "antd";
 import { DeleteOutlined, WarningOutlined } from "@ant-design/icons";
-import { nanoid } from "nanoid";
-import { sha512 } from "@/utils/crypto";
+import {
+  DEFAULT_KDF_PARAMS,
+  deriveMasterKey,
+  randomBytes,
+  SALT_LENGTH,
+} from "@/lib/e2ee";
+import { bytesToHex } from "@/lib/e2ee/format";
 import { messageSuccess, messageWarning } from "@/utils/message";
 import {
   useDeleteGroup,
@@ -119,10 +124,19 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
 
     let passwordHash: string | undefined;
     let passwordSalt: string | undefined;
+    let kdfParams: string | undefined;
     if (values.password) {
-      const salt = nanoid(128);
-      passwordHash = sha512(salt + values.password);
-      passwordSalt = salt;
+      // v2：argon2id(password, salt, kdfParams) → 64B，前 32B KEK（分组场景丢弃）
+      // + 后 32B V；存 passwordHash = hex(V)，与主密码同构
+      const salt = randomBytes(SALT_LENGTH);
+      const { verifier } = await deriveMasterKey(
+        values.password,
+        salt,
+        DEFAULT_KDF_PARAMS,
+      );
+      passwordHash = bytesToHex(verifier);
+      passwordSalt = bytesToHex(salt);
+      kdfParams = JSON.stringify(DEFAULT_KDF_PARAMS);
     }
 
     const resp = await runUpdateConfig({
@@ -130,13 +144,14 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
       lockType: values.lockType,
       passwordHash,
       passwordSalt,
+      kdfParams,
     });
     if (resp.code !== 200) return;
 
     messageSuccess("保存成功");
     onCancelModal();
 
-    // Update group lockType in store
+    // Update group lockType in store（同时更新 salt/kdfParams，保证设锁后可立即解锁）
     setGroupList((prev) =>
       prev.map((g) =>
         g.id === group.id
@@ -144,6 +159,8 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
               ...g,
               lockType: values.lockType,
               unlocked: values.lockType === "None",
+              salt: passwordSalt,
+              kdfParams: kdfParams,
             }
           : g,
       ),

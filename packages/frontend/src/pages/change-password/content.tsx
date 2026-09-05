@@ -7,6 +7,7 @@ import { messageError, messageWarning, messageSuccess } from "@/utils/message";
 import { useIsMobile } from "@hopgoldy/cube-ui";
 import { SettingContainerProps } from "@/components/setting-container";
 import { bytesToHex, hexToBytes } from "@/lib/e2ee/format";
+import { sha512 } from "@/utils/crypto";
 import {
   deriveMasterKey,
   unwrapDek,
@@ -42,10 +43,12 @@ export const Content: FC<SettingContainerProps> = (props) => {
     }
 
     // ① 本地验旧密码：argon2id(旧密码, salt) → oldKEK → 解 keyBlob
-    //    AEAD tag 校验通过即旧密码正确（无需后端参与）
+    //    AEAD tag 校验通过即旧密码正确（无需后端参与）；
+    //    旧 verifier (oldV) 一并保留，用于提交时的旧密码证明 hash
     let oldKek: Uint8Array;
+    let oldVerifier: Uint8Array;
     try {
-      ({ kek: oldKek } = await deriveMasterKey(
+      ({ kek: oldKek, verifier: oldVerifier } = await deriveMasterKey(
         oldPassword,
         hexToBytes(vault.salt),
         vault.kdfParams,
@@ -84,6 +87,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
     const resp = await postChangePassword({
       verifier: bytesToHex(newVerifier),
+      hash: sha512(bytesToHex(oldVerifier) + challengeResp.data!.code),
       salt: bytesToHex(newSalt),
       keyBlob: newKeyBlob,
       totp: totp || undefined,
@@ -93,6 +97,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
     // 保持登录：覆写旧 KEK 后仅更新内存中的 keyBlob/salt（KEK 不留，DEK 不变）；
     // kdfParams 不变（re-wrap 语义），仍是 vault 里的当前值
     oldKek.fill(0);
+    oldVerifier.fill(0);
     setVault({
       dek: vault.dek,
       keyBlob: newKeyBlob,

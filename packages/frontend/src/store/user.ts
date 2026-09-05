@@ -20,13 +20,12 @@ export interface GroupInfo {
   lockType: string;
   unlocked: boolean;
   salt?: string;
+  /** 分组锁密码 KDF 参数（JSON 原文）；空/缺省 = 旧版 v1 锁密码，解锁前须重新设置 */
+  kdfParams?: string;
 }
 
 /** session token (in-memory only, not persisted) */
 export const stateSessionToken = atom(undefined as string | undefined);
-
-/** replay attack secret */
-export const stateReplayAttackSecret = atom(undefined as string | undefined);
 
 /** user info */
 export const stateUser = atom(undefined as UserInfo | undefined);
@@ -78,17 +77,15 @@ export const logout = () => {
   const store = getDefaultStore();
   store.set(stateVault, (prev) => clearVault(prev));
   store.set(stateSessionToken, undefined);
-  store.set(stateReplayAttackSecret, undefined);
   store.set(stateUser, undefined);
   store.set(stateGroupList, []);
 };
 
 export const login = (payload: SchemaAuthLoginResponseType) => {
-  const { token, replayAttackSecret, groups, salt, ...userInfo } = payload;
+  const { token, groups, salt, ...userInfo } = payload;
   const store = getDefaultStore();
 
   store.set(stateSessionToken, token);
-  store.set(stateReplayAttackSecret, replayAttackSecret);
   store.set(stateKdfMeta, { salt, kdfParamsRaw: payload.kdfParams });
   store.set(stateUser, {
     ...userInfo,
@@ -100,6 +97,7 @@ export const login = (payload: SchemaAuthLoginResponseType) => {
       ...g,
       unlocked: g.lockType === "None",
       salt: g.salt,
+      kdfParams: g.kdfParams,
     })),
   );
 

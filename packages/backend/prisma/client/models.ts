@@ -9,7 +9,6 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/AppConfig'
-export type * from './models/AccessToken'
 export type * from './models/User'
 export type * from './models/Group'
 export type * from './models/Certificate'

@@ -31,7 +31,9 @@ const sha512 = (str: string): string => {
 /**
  * 改密码 API（O(1) re-wrap，与前端 change-password/content.tsx 语义一致）：
  * 验旧密码用登录下发的 kdfParams 派生旧 KEK（AEAD tag 即认证）；
- * 新密码沿用会话实际 kdfParams 派生，重包同一个 DEK → 提交 { verifier, salt, keyBlob }
+ * 新密码沿用会话实际 kdfParams 派生，重包同一个 DEK；
+ * 提交 { verifier, hash, salt, keyBlob }，其中 hash = SHA512(hex(V_old) + challengeCode)
+ * 为旧密码证明（与 login 同构，后端 popLastChallenge 后比对库存 V）
  */
 const changePasswordViaApi = async (
   request: import("@playwright/test").APIRequestContext,
@@ -39,17 +41,14 @@ const changePasswordViaApi = async (
   oldPassword: string,
   newPassword: string,
 ) => {
-  // 1. 本地验旧密码：旧 KEK（登录下发的 kdfParams 派生）解 keyBlob 成功且 DEK 一致 = 旧密码正确
-  const dek = await unwrapDek(
-    (
-      await deriveMasterKey(
-        oldPassword,
-        hexToBytes(session.salt),
-        session.kdfParams,
-      )
-    ).kek,
-    session.keyBlob,
+  // 1. 本地验旧密码：旧 KEK（登录下发的 kdfParams 派生）解 keyBlob 成功且 DEK 一致 = 旧密码正确；
+  //    同一次派生的 verifier (V_old) 用于旧密码证明 hash
+  const { kek: oldKek, verifier: oldVerifier } = await deriveMasterKey(
+    oldPassword,
+    hexToBytes(session.salt),
+    session.kdfParams,
   );
+  const dek = await unwrapDek(oldKek, session.keyBlob);
   expect(Buffer.from(dek).equals(Buffer.from(session.dek))).toBe(true);
 
   // 2. 新 salt → 新 (KEK, V) → 重包裹同一个 DEK（凭证零改动；
@@ -62,16 +61,18 @@ const changePasswordViaApi = async (
   );
   const newKeyBlob = await wrapDek(newKek, dek);
 
-  // 3. challenge 必须是 change-password 前最后一次请求（后端 popLastChallenge）
-  await request.get(`${BASE}/auth/challenge`);
-  const url = "api/auth/change-password";
+  // 3. challenge 必须是 change-password 前最后一次请求（后端 popLastChallenge），
+  //    旧密码证明 hash = SHA512(hex(V_old) + challengeCode)
+  const challengeResp = await request.get(`${BASE}/auth/challenge`);
+  const challengeCode = (await challengeResp.json()).data.code as string;
   const resp = await request.post(`${BASE}/auth/change-password`, {
     data: {
       verifier: bytesToHex(newVerifier),
+      hash: sha512(bytesToHex(oldVerifier) + challengeCode),
       salt: bytesToHex(newSalt),
       keyBlob: newKeyBlob,
     },
-    headers: authHeaders(session, url),
+    headers: authHeaders(session),
   });
   const body = await resp.json();
   expect(body.success).toBe(true);
@@ -84,6 +85,76 @@ test.describe("Change Password API（v2 re-wrap）", () => {
   const DEFAULT_PASSWORD = "admin"; // E2E_LOGIN_PASSWORD 默认值，收尾恢复用
   let dekBefore: Buffer;
   let kdfParamsBefore: KdfParams;
+
+  test("缺少 hash 的 change-password 请求被拒绝（旧密码证明缺失）", async ({
+    request,
+    session,
+  }) => {
+    const newSalt = randomBytes(32);
+    const { kek: newKek, verifier: newVerifier } = await deriveMasterKey(
+      NEW_PASSWORD,
+      newSalt,
+      session.kdfParams,
+    );
+    const newKeyBlob = await wrapDek(newKek, session.dek);
+
+    // challenge 照常取（本次用例重点在 body 缺 hash）
+    await request.get(`${BASE}/auth/challenge`);
+    const resp = await request.post(`${BASE}/auth/change-password`, {
+      data: {
+        verifier: bytesToHex(newVerifier),
+        salt: bytesToHex(newSalt),
+        keyBlob: newKeyBlob,
+      },
+      headers: authHeaders(session),
+    });
+    // 缺 hash 走不到 service 的比对逻辑：Fastify schema 校验先拒绝
+    // （FST_ERR_VALIDATION，经 unify-response 兼容层包装，历史行为即 500）；
+    // 无论落在哪个状态码，核心断言是请求被拒且密码未被修改
+    expect([400, 401, 403, 500]).toContain(resp.status());
+    expect((await resp.json()).success).toBe(false);
+
+    // 密码未被修改：默认密码仍可登录（session fixture 依赖）
+    const restored = await loginWithPassword(request, DEFAULT_PASSWORD);
+    expect(restored.token.length).toBeGreaterThan(0);
+  });
+
+  test("携带错误 hash 的 change-password 请求被拒绝（401）", async ({
+    request,
+    session,
+  }) => {
+    const newSalt = randomBytes(32);
+    const { kek: newKek, verifier: newVerifier } = await deriveMasterKey(
+      NEW_PASSWORD,
+      newSalt,
+      session.kdfParams,
+    );
+    const newKeyBlob = await wrapDek(newKek, session.dek);
+
+    // hash 用错误密码派生的 V_old 计算：旧密码证明不成立
+    const { verifier: wrongVerifier } = await deriveMasterKey(
+      "wrong-password",
+      hexToBytes(session.salt),
+      session.kdfParams,
+    );
+    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeCode = (await challengeResp.json()).data.code as string;
+    const resp = await request.post(`${BASE}/auth/change-password`, {
+      data: {
+        verifier: bytesToHex(newVerifier),
+        hash: sha512(bytesToHex(wrongVerifier) + challengeCode),
+        salt: bytesToHex(newSalt),
+        keyBlob: newKeyBlob,
+      },
+      headers: authHeaders(session),
+    });
+    expect(resp.status()).toBe(401);
+    expect((await resp.json()).success).toBe(false);
+
+    // 密码未被修改：默认密码仍可登录（session fixture 依赖）
+    const restored = await loginWithPassword(request, DEFAULT_PASSWORD);
+    expect(restored.token.length).toBeGreaterThan(0);
+  });
 
   test("改密码后旧 session 保持有效且 re-wrap 结构正确", async ({
     request,
@@ -102,10 +173,9 @@ test.describe("Change Password API（v2 re-wrap）", () => {
     expect(newKeyBlob).toMatch(/^v2:aes-256-gcm:/);
 
     // 后端不销毁 session：改完密码后旧 session 仍可调用受保护接口
-    const url = "api/user/statistic";
     const resp = await request.post(`${BASE}/user/statistic`, {
       data: {},
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
     expect((await resp.json()).success).toBe(true);

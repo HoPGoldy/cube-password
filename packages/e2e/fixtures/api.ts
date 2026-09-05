@@ -1,7 +1,6 @@
 import { test as base, expect, type APIRequestContext } from "@playwright/test";
 import { argon2id } from "hash-wasm";
 import crypto from "crypto";
-import { nanoid } from "nanoid";
 import {
   buildV2,
   bytesToHex,
@@ -108,23 +107,8 @@ export async function encryptContent(
   );
 }
 
-/**
- * 生成防重放攻击请求头
- */
-export function createReplayHeaders(url: string, secretKey: string) {
-  const nonce = nanoid();
-  const timestamp = Date.now();
-  const signature = sha512(`${url}${nonce}${timestamp}${secretKey}`);
-  return {
-    "X-Nonce": nonce,
-    "X-Timestamp": String(timestamp),
-    "X-Signature": signature,
-  };
-}
-
 interface SessionInfo {
   token: string;
-  replayAttackSecret: string;
   /** 登录解开 keyBlob 后的全局 DEK（凭证加密用） */
   dek: Uint8Array;
   /** 当前 KDF salt（hex） */
@@ -180,7 +164,6 @@ export async function loginWithPassword(
 
   return {
     token: body.data.token,
-    replayAttackSecret: body.data.replayAttackSecret,
     dek,
     salt,
     keyBlob: body.data.keyBlob,
@@ -210,15 +193,11 @@ export async function getLoginFailureCount(
 }
 
 /**
- * 构建认证 header (session token + replay attack headers)
+ * 构建认证 header (session token)
  */
-export function authHeaders(
-  session: SessionInfo,
-  url: string,
-): Record<string, string> {
+export function authHeaders(session: SessionInfo): Record<string, string> {
   return {
     "X-Session-Token": session.token,
-    ...createReplayHeaders(url, session.replayAttackSecret),
   };
 }
 

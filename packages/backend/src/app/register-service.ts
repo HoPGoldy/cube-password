@@ -5,8 +5,6 @@ import { registerController as registerAppConfigController } from "@/modules/app
 import { AppConfigService } from "@/modules/app-config/service";
 import { registerUnifyResponse } from "@/lib/unify-response";
 import type { AppInstance } from "@/types";
-import { AccessTokenService } from "@/modules/access-token/service";
-import { registerAccessTokenController } from "@/modules/access-token/controller";
 import { registerRemoveAdditionalProperties } from "@/lib/security";
 
 import { SessionManager } from "@/lib/session";
@@ -40,7 +38,6 @@ export const registerService = async (instance: AppInstance) => {
 
   // Service 层实例
   const appConfigService = new AppConfigService({ prisma });
-  const accessTokenService = new AccessTokenService({ prisma });
   const notificationService = new NotificationService({ prisma });
 
   const authService = new AuthService({
@@ -72,11 +69,6 @@ export const registerService = async (instance: AppInstance) => {
 
     registerAuthController({ server, authService });
     registerAppConfigController({ appConfigService, server });
-    registerAccessTokenController({
-      server,
-      accessTokenService,
-      sessionManager,
-    });
     registerNotificationController({ server, notificationService });
     registerUserController({ server, userService });
     registerGroupController({ server, groupService });

@@ -7,6 +7,12 @@ import { queryChallenge } from "@/services/auth";
 import { messageError, messageSuccess } from "@/utils/message";
 import { GroupInfo, stateGroupList } from "@/store/user";
 import { useSetAtom } from "jotai";
+import {
+  deriveMasterKey,
+  parseKdfParams,
+  ErrorInvalidKdfParams,
+} from "@/lib/e2ee";
+import { bytesToHex, hexToBytes } from "@/lib/e2ee/format";
 
 interface Props {
   group: GroupInfo;
@@ -30,10 +36,45 @@ export const GroupUnlock: FC<Props> = ({ group }) => {
     } = { id: group.id };
 
     if (group.lockType === "Password") {
+      // 旧格式判定：kdfParams 空/缺省即 v1 遗留（sha512(salt+pwd)），
+      // 无法用新链路解锁，显式提示重新设置（存量升级走迁移脚本）
+      if (!group.salt || !group.kdfParams) {
+        messageError("旧版锁密码，请重新设置分组锁密码");
+        return;
+      }
+      // 解析并校验 kdfParams（JSON 非法 / 算法或版本不识别时显式报错，
+      // 禁止静默回落默认值，否则会派生出与库内 V 不一致的密钥）
+      let params;
+      try {
+        params = parseKdfParams(group.kdfParams);
+      } catch (err) {
+        const detail =
+          err instanceof ErrorInvalidKdfParams
+            ? err.message
+            : `未知错误：${err instanceof Error ? err.message : String(err)}`;
+        messageError(`分组锁密码参数非法，请重新设置分组锁密码：${detail}`);
+        return;
+      }
+
+      // v2：argon2id(password, salt, kdfParams) → 64B，前 32B KEK（丢弃）
+      // + 后 32B V，约 0.5s；unlock hash = SHA512(hex(V) + challenge)
       const challengeResp = await queryChallenge();
       if (!challengeResp.success) return;
       const challengeCode = challengeResp.data!.code;
-      unlockData.hash = sha512(sha512(group.salt + code) + challengeCode);
+      let verifier: Uint8Array;
+      try {
+        ({ verifier } = await deriveMasterKey(
+          code,
+          hexToBytes(group.salt),
+          params,
+        ));
+      } catch (err) {
+        messageError(
+          `密钥派生失败：${err instanceof Error ? err.message : String(err)}`,
+        );
+        return;
+      }
+      unlockData.hash = sha512(bytesToHex(verifier) + challengeCode);
     } else if (group.lockType === "Totp") {
       unlockData.totpCode = code;
     }

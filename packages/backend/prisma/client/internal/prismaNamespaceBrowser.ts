@@ -52,7 +52,6 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   AppConfig: 'AppConfig',
-  AccessToken: 'AccessToken',
   User: 'User',
   Group: 'Group',
   Certificate: 'Certificate',
@@ -82,18 +81,6 @@ export const AppConfigScalarFieldEnum = {
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
-export const AccessTokenScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  tokenHash: 'tokenHash',
-  tokenPrefix: 'tokenPrefix',
-  createdAt: 'createdAt',
-  lastUsedAt: 'lastUsedAt'
-} as const
-
-export type AccessTokenScalarFieldEnum = (typeof AccessTokenScalarFieldEnum)[keyof typeof AccessTokenScalarFieldEnum]
-
-
 export const UserScalarFieldEnum = {
   id: 'id',
   passwordHash: 'passwordHash',
@@ -119,6 +106,7 @@ export const GroupScalarFieldEnum = {
   passwordHash: 'passwordHash',
   passwordSalt: 'passwordSalt',
   keyBlob: 'keyBlob',
+  kdfParams: 'kdfParams',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

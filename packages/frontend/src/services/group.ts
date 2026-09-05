@@ -68,6 +68,7 @@ export const useUpdateGroupConfig = () => {
       lockType: string;
       passwordHash?: string;
       passwordSalt?: string;
+      kdfParams?: string;
     }) => {
       return requestPost("group/update-config", data);
     },

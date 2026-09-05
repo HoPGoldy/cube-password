@@ -67,7 +67,6 @@ rawTest.describe("Auth API - 公开接口", () => {
     const body = await resp.json();
     expect(body.success).toBe(true);
     expect(typeof body.data.token).toBe("string");
-    expect(typeof body.data.replayAttackSecret).toBe("string");
     expect(body.data.token.length).toBeGreaterThan(0);
     // v2：响应必须携带 keyBlob，且为 v2 自描述格式
     expect(typeof body.data.keyBlob).toBe("string");
@@ -114,10 +113,9 @@ rawTest.describe("Auth API - 公开接口", () => {
 
 test.describe("Auth API - 需认证接口", () => {
   test("POST /api/auth/logout 登出成功", async ({ request, session }) => {
-    const url = "api/auth/logout";
     const resp = await request.post(`${BASE}/auth/logout`, {
       data: {},
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
   });

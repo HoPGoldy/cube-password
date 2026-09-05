@@ -22,6 +22,7 @@ export const Sidebar: FC = () => {
     lockType: string;
     passwordHash?: string;
     passwordSalt?: string;
+    kdfParams?: string;
   }) => {
     const resp = await addGroup(data);
     if (resp?.code !== 200) return;
@@ -35,6 +36,7 @@ export const Sidebar: FC = () => {
           lockType: g.lockType || "None",
           unlocked: g.lockType === "None",
           salt: g.salt,
+          kdfParams: g.kdfParams,
         })),
       );
     }

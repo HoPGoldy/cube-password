@@ -14,10 +14,12 @@ export const registerSwagger = async (server: FastifyInstance) => {
       },
       components: {
         securitySchemes: {
-          bearerAuth: {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT",
+          sessionTokenAuth: {
+            type: "apiKey",
+            in: "header",
+            name: "x-session-token",
+            description:
+              "登录后下发的会话令牌，通过 X-Session-Token header 携带",
           },
         },
       },

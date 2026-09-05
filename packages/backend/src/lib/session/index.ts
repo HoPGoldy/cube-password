@@ -4,7 +4,6 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 分钟
 
 export interface UserSession {
   token: string;
-  replayAttackSecret: string;
   unlockedGroupIds: Set<number>;
   lastActiveTime: number;
 }
@@ -18,7 +17,6 @@ export class SessionManager {
 
     this.session = {
       token: nanoid(32),
-      replayAttackSecret: nanoid(32),
       unlockedGroupIds: new Set(),
       lastActiveTime: Date.now(),
     };

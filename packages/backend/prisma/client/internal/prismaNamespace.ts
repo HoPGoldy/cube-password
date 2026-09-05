@@ -385,7 +385,6 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   AppConfig: 'AppConfig',
-  AccessToken: 'AccessToken',
   User: 'User',
   Group: 'Group',
   Certificate: 'Certificate',
@@ -405,7 +404,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "appConfig" | "accessToken" | "user" | "group" | "certificate" | "notification"
+    modelProps: "appConfig" | "user" | "group" | "certificate" | "notification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -480,80 +479,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AppConfigCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AppConfigCountAggregateOutputType> | number
-        }
-      }
-    }
-    AccessToken: {
-      payload: Prisma.$AccessTokenPayload<ExtArgs>
-      fields: Prisma.AccessTokenFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AccessTokenFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AccessTokenFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>
-        }
-        findFirst: {
-          args: Prisma.AccessTokenFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AccessTokenFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>
-        }
-        findMany: {
-          args: Prisma.AccessTokenFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>[]
-        }
-        create: {
-          args: Prisma.AccessTokenCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>
-        }
-        createMany: {
-          args: Prisma.AccessTokenCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AccessTokenCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>[]
-        }
-        delete: {
-          args: Prisma.AccessTokenDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>
-        }
-        update: {
-          args: Prisma.AccessTokenUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>
-        }
-        deleteMany: {
-          args: Prisma.AccessTokenDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AccessTokenUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AccessTokenUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>[]
-        }
-        upsert: {
-          args: Prisma.AccessTokenUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AccessTokenPayload>
-        }
-        aggregate: {
-          args: Prisma.AccessTokenAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAccessToken>
-        }
-        groupBy: {
-          args: Prisma.AccessTokenGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AccessTokenGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AccessTokenCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AccessTokenCountAggregateOutputType> | number
         }
       }
     }
@@ -899,18 +824,6 @@ export const AppConfigScalarFieldEnum = {
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
-export const AccessTokenScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  tokenHash: 'tokenHash',
-  tokenPrefix: 'tokenPrefix',
-  createdAt: 'createdAt',
-  lastUsedAt: 'lastUsedAt'
-} as const
-
-export type AccessTokenScalarFieldEnum = (typeof AccessTokenScalarFieldEnum)[keyof typeof AccessTokenScalarFieldEnum]
-
-
 export const UserScalarFieldEnum = {
   id: 'id',
   passwordHash: 'passwordHash',
@@ -936,6 +849,7 @@ export const GroupScalarFieldEnum = {
   passwordHash: 'passwordHash',
   passwordSalt: 'passwordSalt',
   keyBlob: 'keyBlob',
+  kdfParams: 'kdfParams',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1099,7 +1013,6 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   appConfig?: Prisma.AppConfigOmit
-  accessToken?: Prisma.AccessTokenOmit
   user?: Prisma.UserOmit
   group?: Prisma.GroupOmit
   certificate?: Prisma.CertificateOmit

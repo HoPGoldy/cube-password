@@ -1,11 +1,6 @@
 import { AppResponse } from "@/types/global";
-import {
-  logout,
-  stateSessionToken,
-  stateReplayAttackSecret,
-} from "@/store/user";
+import { logout, stateSessionToken } from "@/store/user";
 import { showGlobalMessage } from "../utils/message";
-import { createReplayAttackHeaders } from "@/utils/crypto";
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 import { QueryClient } from "@tanstack/react-query";
@@ -23,19 +18,9 @@ export const axiosInstance = axios.create({ baseURL: "api/" });
 axiosInstance.interceptors.request.use((config) => {
   const store = getDefaultStore();
   const token = store.get(stateSessionToken);
-  const replayAttackSecret = store.get(stateReplayAttackSecret);
 
   // 附加 session token header
   if (token) config.headers["X-Session-Token"] = token;
-
-  // 附加防重放攻击 header
-  if (replayAttackSecret) {
-    const raHeaders = createReplayAttackHeaders(
-      `${config.baseURL}${config.url}`,
-      replayAttackSecret,
-    );
-    Object.assign(config.headers, raHeaders);
-  }
 
   return config;
 });

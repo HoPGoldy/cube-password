@@ -61,7 +61,6 @@ export type SchemaAuthLoginBodyType = Type.Static<typeof SchemaAuthLoginBody>;
 
 export const SchemaAuthLoginResponse = Type.Object({
   token: Type.String(),
-  replayAttackSecret: Type.String(),
   theme: Type.String(),
   initTime: Type.String(),
   defaultGroupId: Type.Number(),
@@ -80,6 +79,12 @@ export const SchemaAuthLoginResponse = Type.Object({
       name: Type.String(),
       lockType: Type.String(),
       salt: Type.Optional(Type.String()),
+      kdfParams: Type.Optional(
+        Type.String({
+          description:
+            "JSON: 分组锁密码派生参数（空串/缺省 = 旧版 v1 锁密码，解锁时拒绝）",
+        }),
+      ),
     }),
   ),
 });
@@ -91,6 +96,10 @@ export type SchemaAuthLoginResponseType = Type.Static<
 
 export const SchemaAuthChangePasswordBody = Type.Object({
   verifier: Type.String({ description: "hex(newV)，新密码的 argon2id 验证者" }),
+  hash: Type.String({
+    description:
+      "旧密码证明：SHA512(hex(V_old) + challengeCode)，V_old 为旧密码派生的验证者",
+  }),
   salt: Type.String({ description: "hex(newKDF salt)，前端生成（32 字节）" }),
   keyBlob: Type.String({ description: "v2 格式：新 KEK 重包衷后的 DEK" }),
   totp: Type.Optional(

@@ -1,8 +1,13 @@
 import { FC, useEffect } from "react";
 import { Form, Row, Col, Input, Modal, Segmented } from "antd";
 import { useAtomValue } from "jotai";
-import { nanoid } from "nanoid";
-import { sha512 } from "@/utils/crypto";
+import {
+  DEFAULT_KDF_PARAMS,
+  deriveMasterKey,
+  randomBytes,
+  SALT_LENGTH,
+} from "@/lib/e2ee";
+import { bytesToHex } from "@/lib/e2ee/format";
 import { stateUser } from "@/store/user";
 
 const useLockTypeOptions = () => {
@@ -25,6 +30,7 @@ interface AddGroupModalProps {
     lockType: string;
     passwordHash?: string;
     passwordSalt?: string;
+    kdfParams?: string;
   }) => void;
   onCancel: () => void;
 }
@@ -50,10 +56,19 @@ export const AddGroupModal: FC<AddGroupModalProps> = ({
 
     let passwordHash: string | undefined;
     let passwordSalt: string | undefined;
+    let kdfParams: string | undefined;
     if (values.lockType === "Password" && values.password) {
-      const salt = nanoid(128);
-      passwordHash = sha512(salt + values.password);
-      passwordSalt = salt;
+      // v2：argon2id(password, salt, kdfParams) → 64B，前 32B KEK（分组场景丢弃）
+      // + 后 32B V；存 passwordHash = hex(V)，与主密码同构
+      const salt = randomBytes(SALT_LENGTH);
+      const { verifier } = await deriveMasterKey(
+        values.password,
+        salt,
+        DEFAULT_KDF_PARAMS,
+      );
+      passwordHash = bytesToHex(verifier);
+      passwordSalt = bytesToHex(salt);
+      kdfParams = JSON.stringify(DEFAULT_KDF_PARAMS);
     }
 
     onOk({
@@ -61,6 +76,7 @@ export const AddGroupModal: FC<AddGroupModalProps> = ({
       lockType: values.lockType,
       passwordHash,
       passwordSalt,
+      kdfParams,
     });
   };
 

@@ -8,6 +8,12 @@ export const SchemaGroupItem = Type.Object({
   certificateCount: Type.Number(),
   order: Type.Number(),
   salt: Type.Optional(Type.String()),
+  kdfParams: Type.Optional(
+    Type.String({
+      description:
+        "JSON: 分组锁密码派生参数（空串/缺省 = 旧版 v1 锁密码，解锁时拒绝）",
+    }),
+  ),
 });
 
 export type SchemaGroupItemType = Type.Static<typeof SchemaGroupItem>;
@@ -16,8 +22,18 @@ export type SchemaGroupItemType = Type.Static<typeof SchemaGroupItem>;
 export const SchemaGroupAddBody = Type.Object({
   name: Type.String(),
   lockType: Type.Optional(Type.String({ default: "None" })),
-  passwordHash: Type.Optional(Type.String()),
-  passwordSalt: Type.Optional(Type.String()),
+  passwordHash: Type.Optional(
+    Type.String({ description: "hex(V)，V = argon2id 输出后 32 字节" }),
+  ),
+  passwordSalt: Type.Optional(
+    Type.String({ description: "hex(KDF salt)，前端生成（32 字节）" }),
+  ),
+  kdfParams: Type.Optional(
+    Type.String({
+      description:
+        'JSON: {"algorithm":"argon2id","m":65536,"t":2,"p":1,"version":1}',
+    }),
+  ),
 });
 export type SchemaGroupAddBodyType = Type.Static<typeof SchemaGroupAddBody>;
 
@@ -44,8 +60,18 @@ export const SchemaGroupUpdateNameBody = Type.Object({
 export const SchemaGroupUpdateConfigBody = Type.Object({
   id: Type.Number(),
   lockType: Type.String(),
-  passwordHash: Type.Optional(Type.String()),
-  passwordSalt: Type.Optional(Type.String()),
+  passwordHash: Type.Optional(
+    Type.String({ description: "hex(V)，V = argon2id 输出后 32 字节" }),
+  ),
+  passwordSalt: Type.Optional(
+    Type.String({ description: "hex(KDF salt)，前端生成（32 字节）" }),
+  ),
+  kdfParams: Type.Optional(
+    Type.String({
+      description:
+        'JSON: {"algorithm":"argon2id","m":65536,"t":2,"p":1,"version":1}',
+    }),
+  ),
 });
 
 export type SchemaGroupUpdateConfigBodyType = Type.Static<
@@ -57,7 +83,8 @@ export const SchemaGroupUnlockBody = Type.Object({
   id: Type.Number(),
   hash: Type.Optional(
     Type.String({
-      description: "SHA512(SHA512(groupSalt + password) + challenge)",
+      description:
+        "SHA512(hex(V) + challenge)，V = argon2id(password, salt, kdfParams) 输出后 32 字节",
     }),
   ),
   totpCode: Type.Optional(Type.String()),

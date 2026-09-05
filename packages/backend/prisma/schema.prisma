@@ -20,16 +20,6 @@ model AppConfig {
   updatedAt DateTime @updatedAt
 }
 
-// MCP 访问令牌
-model AccessToken {
-  id          String    @id @default(uuid())
-  name        String
-  tokenHash   String    @unique
-  tokenPrefix String // 明文前8位，仅用于展示
-  createdAt   DateTime  @default(now())
-  lastUsedAt  DateTime?
-}
-
 // 单用户表
 model User {
   id                Int      @id @default(autoincrement())
@@ -51,9 +41,10 @@ model Group {
   name         String
   order        Int           @default(0)
   lockType     String        @default("None") // None | Password | Totp
-  passwordHash String?
+  passwordHash String? // v2 格式：hex(V)，V = argon2id(password, salt, kdfParams) 输出后 32 字节
   passwordSalt String?
-  keyBlob      String? // 预留：二期方案 B，AES-256-GCM(KEK, 组DEK)
+  keyBlob      String? // 预留：分组独立加密（规划中）
+  kdfParams    String        @default("") // JSON: 与 User.kdfParams 同构；空串 = 旧版（v1）锁密码，解锁时拒绝并提示重新设置
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   certificates Certificate[]

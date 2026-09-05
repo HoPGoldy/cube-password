@@ -3,9 +3,8 @@ import { test as rawTest } from "@playwright/test";
 
 test.describe("Config API", () => {
   test("GET /api/config/version 获取版本信息", async ({ request, session }) => {
-    const url = "api/config/version";
     const resp = await request.get(`${BASE}/config/version`, {
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
@@ -17,10 +16,9 @@ test.describe("Config API", () => {
   });
 
   test("POST /api/config 获取配置列表", async ({ request, session }) => {
-    const url = "api/config";
     const resp = await request.post(`${BASE}/config`, {
       data: {},
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
@@ -30,10 +28,9 @@ test.describe("Config API", () => {
   });
 
   test("POST /api/config/update 更新配置", async ({ request, session }) => {
-    const url = "api/config/update";
     const resp = await request.post(`${BASE}/config/update`, {
       data: { e2eTestKey: "e2e-test-value" },
-      headers: authHeaders(session, url),
+      headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
 
@@ -42,16 +39,14 @@ test.describe("Config API", () => {
   });
 
   test("更新后配置值生效", async ({ request, session }) => {
-    const updateUrl = "api/config/update";
     await request.post(`${BASE}/config/update`, {
       data: { e2eVerifyKey: "verify-value" },
-      headers: authHeaders(session, updateUrl),
+      headers: authHeaders(session),
     });
 
-    const readUrl = "api/config";
     const resp = await request.post(`${BASE}/config`, {
       data: {},
-      headers: authHeaders(session, readUrl),
+      headers: authHeaders(session),
     });
     const body = await resp.json();
     expect(body.data.e2eVerifyKey).toBe("verify-value");
