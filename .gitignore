@@ -36,6 +36,8 @@ coverage
 !.vscode/extensions.json
 
 # dotenv environment variable files
+# `**/.env` 仅精确匹配 .env 文件名，不会误伤 .env.example
+**/.env
 .env.development.local
 .env.test.local
 .env.production.local
@@ -58,3 +60,5 @@ storage
 !**/storage/ip2region.xdb
 
 .playwright-mcp
+# frontend 的 .env 无 secret，保持追踪（显式豁免）
+!packages/frontend/.env

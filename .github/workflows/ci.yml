@@ -23,6 +23,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm --filter backend test
+      - run: pnpm --filter frontend test
       - run: pnpm --filter backend build
       - run: pnpm --filter frontend build
 

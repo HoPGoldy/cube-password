@@ -11,15 +11,6 @@ export const sha512 = (str: string) => {
 };
 
 /**
- * 获取 sha512 hash (带盐)
- * 与旧版实现保持一致：盐哈希为小写 hex，最终输出大写 hex
- */
-export const shaWithSalt = (str: string, saltValue: string) => {
-  const salt = bytesToHex(nobleSha512(utf8ToBytes(saltValue)));
-  return sha512(salt + str);
-};
-
-/**
  * 生成防重放攻击 header
  */
 export const createReplayAttackHeaders = (url: string, secretKey: string) => {

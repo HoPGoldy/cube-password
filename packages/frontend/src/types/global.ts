@@ -7,21 +7,3 @@ export type AppResponse<T = any> = {
   success: boolean;
   data?: T;
 };
-
-export type AppListResponse<T = any> = {
-  total: number;
-  items: T[];
-};
-
-/**
- * 通用的表格筛选条件
- */
-export interface CommonListQueryDto {
-  page?: number;
-  size?: number;
-  keyword?: string;
-}
-
-export interface CommonIdQueryDto {
-  id: string;
-}

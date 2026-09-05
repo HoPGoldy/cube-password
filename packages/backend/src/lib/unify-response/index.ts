@@ -45,7 +45,7 @@ export const createErrorResponse = (error: Error): ErrorResponse => {
  */
 export const registerUnifyResponse = (server: FastifyInstance) => {
   server.setErrorHandler((error, request, reply) => {
-    console.error(error);
+    request.log.error(error);
 
     if (error instanceof PrismaClientKnownRequestError) {
       const feedback =

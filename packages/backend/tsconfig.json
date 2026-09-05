@@ -9,7 +9,7 @@
     "baseUrl": "./",
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "paths": {
       "@/*": ["./src/*"],
       "@db/*": ["./prisma/client/*"]

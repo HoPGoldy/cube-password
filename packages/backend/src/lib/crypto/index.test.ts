@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { sha512, shaWithSalt, validateReplayAttack } from "./index";
+import { sha512, validateReplayAttack } from "./index";
 
 const nodeSha512Hex = (input: string) =>
   createHash("sha512").update(input).digest("hex");
@@ -21,34 +21,6 @@ describe("sha512", () => {
 
   it("output is a 128-char uppercase hex string", () => {
     expect(sha512("anything")).toMatch(/^[0-9A-F]{128}$/);
-  });
-});
-
-describe("shaWithSalt", () => {
-  it("double-hashes the salt before concatenating with the message", () => {
-    const str = "my-password";
-    const saltValue = "some-salt";
-
-    // reference computation: SHA512(SHA512(saltValue).hex + str), uppercase
-    const saltHex = nodeSha512Hex(saltValue);
-    const expected = nodeSha512Hex(saltHex + str).toUpperCase();
-
-    expect(shaWithSalt(str, saltValue)).toBe(expected);
-    // must NOT be the raw-salt variant
-    expect(shaWithSalt(str, saltValue)).not.toBe(
-      nodeSha512Hex(saltValue + str).toUpperCase(),
-    );
-    // salt change changes the hash
-    expect(shaWithSalt(str, saltValue)).not.toBe(
-      shaWithSalt(str, "other-salt"),
-    );
-  });
-
-  it("handles empty salt and empty str", () => {
-    // SHA512(SHA512("").hex + "") = SHA512 of the 128-char empty-salt hex
-    expect(shaWithSalt("", "")).toBe(
-      nodeSha512Hex(nodeSha512Hex("")).toUpperCase(),
-    );
   });
 });
 

@@ -123,7 +123,7 @@ export const AppContainer = () => {
       about={{
         name: appVersion?.name ?? "",
         version: appVersion?.version,
-        repository: appVersion?.repository,
+        repository: appVersion?.repository ?? undefined,
         description: (
           <>
             安全可靠的自托管密码管理器。

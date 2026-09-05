@@ -36,7 +36,6 @@ cube-diary 是基于 nodejs 开发的全栈项目，致力于为个人打造轻�
 ## cube-diary docker 容器使用
 
 - `FRONTEND_BASE_URL` 参数用于指定应用部署到的路径，例如想要部署到 `https://your-domain/my-sso/`，那么该参数就需要配置为 `/my-sso/`。
-- `BACKEND_JWT_SECRET` 参数用于指定应用的 jwt 密钥，不配置的话，每次重启应用都会生成一个新的密钥。
 
 ```
 docker run -d \
@@ -44,7 +43,6 @@ docker run -d \
   -p 9736:3499 \
   -v cube-diary-storage:/app/packages/backend/storage \
   -e FRONTEND_BASE_URL=/cube-diary/ \
-  -e BACKEND_JWT_SECRET=V1StGXR8_Z5jdHi6B-myT \
   hopgoldy/cube-diary:0.1.1
 ```
 

@@ -8,18 +8,6 @@ export const sha512 = (str: string) => {
 };
 
 /**
- * 获取带盐的 sha512 hash（兼容旧接口）
- */
-export const shaWithSalt = (str: string, saltValue: string) => {
-  const salt = createHash("sha512").update(saltValue, "utf8").digest("hex");
-  const saltedMessage = salt + str;
-  return createHash("sha512")
-    .update(saltedMessage, "utf8")
-    .digest("hex")
-    .toUpperCase();
-};
-
-/**
  * 验证防重放攻击 header
  */
 export const validateReplayAttack = (

@@ -1,4 +1,3 @@
-import NodeCache from "@cacheable/node-cache";
 import { PrismaClient } from "@db/client";
 import { SchemaAppConfigType } from "@/types/app-config";
 
@@ -9,8 +8,6 @@ interface ServiceOptions {
 export class AppConfigService {
   constructor(private options: ServiceOptions) {}
 
-  private cache = new NodeCache<string>({ stdTTL: 300, checkperiod: 60 });
-
   async findByKey(key: string) {
     return this.options.prisma.appConfig.findUnique({
       where: { key },
@@ -18,24 +15,18 @@ export class AppConfigService {
   }
 
   async getAll(): Promise<SchemaAppConfigType> {
-    const cachedConfigs = this.cache.get("allConfigs");
-    if (cachedConfigs) {
-      return JSON.parse(cachedConfigs);
-    }
-
     const configList = await this.options.prisma.appConfig.findMany({
       orderBy: {
         key: "asc",
       },
     });
 
-    const configs = {};
+    const configs: Record<string, string> = {};
     configList.forEach((config) => {
       configs[config.key] = config.value;
     });
 
-    this.cache.set("allConfigs", JSON.stringify(configs));
-    return configs as SchemaAppConfigType;
+    return configs;
   }
 
   async setConfigValues(configs: Record<string, string>) {
@@ -53,7 +44,6 @@ export class AppConfigService {
       ),
     );
 
-    this.cache.del("allConfigs");
     return result;
   }
 }

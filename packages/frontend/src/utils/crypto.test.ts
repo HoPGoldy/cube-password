@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
-import { sha512, shaWithSalt } from "./crypto";
+import { sha512 } from "./crypto";
 
 /**
  * 跨实现对拍：前端 @noble/hashes 与后端 node:crypto 的 SHA512 输出必须一致
@@ -26,20 +26,5 @@ describe("sha512", () => {
   it("returns uppercase 128-char hex", () => {
     const out = sha512("cube-password");
     expect(out).toMatch(/^[0-9A-F]{128}$/);
-  });
-});
-
-describe("shaWithSalt", () => {
-  it("matches the legacy salted-hash composition SHA512(SHA512(salt) + str)", () => {
-    // 旧实现：salt = SHA512(saltValue) 小写 hex，再取 SHA512(salt + str) 大写
-    const legacy = (str: string, saltValue: string) =>
-      nodeSha512Upper(nodeSha512Upper(saltValue).toLowerCase() + str);
-    const vectors = [
-      ["password123", "salt-value"],
-      ["中文密码", "nanoid-like-salt-128"],
-    ];
-    for (const [str, saltValue] of vectors) {
-      expect(shaWithSalt(str, saltValue)).toBe(legacy(str, saltValue));
-    }
   });
 });
