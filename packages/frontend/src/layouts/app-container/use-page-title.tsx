@@ -1,9 +1,9 @@
-import { FC, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "antd";
 import { useLocation, useParams } from "react-router-dom";
-import { useAtom, useAtomValue } from "jotai";
-import { stateGroupList, GroupInfo } from "@/store/user";
-import { useUpdateGroupName } from "@/services/group";
+import { useAtomValue } from "jotai";
+import { stateUnlockedGroupIds } from "@/store/user";
+import { useGroupList, useUpdateGroupName } from "@/services/group";
 
 const pageTitle: Record<string, string> = {
   "/search": "搜索凭证",
@@ -13,8 +13,10 @@ export const useHeaderPageTitle = () => {
   const { pathname } = useLocation();
   const params = useParams();
   const groupId = Number(params.groupId);
-  const [groupList, setGroupList] = useAtom(stateGroupList);
+  const { data: groupListResp } = useGroupList();
+  const groupList = groupListResp?.data?.items ?? [];
   const group = groupList.find((g) => g.id === groupId);
+  const unlockedGroupIds = useAtomValue(stateUnlockedGroupIds);
   const [groupTitle, setGroupTitle] = useState<string>();
   const { mutateAsync: runSaveName, isPending: isSaving } =
     useUpdateGroupName();
@@ -40,11 +42,7 @@ export const useHeaderPageTitle = () => {
     const resp = await runSaveName({ id: groupId, name: groupTitle });
     if (resp.code !== 200) return;
 
-    setGroupList((prev) =>
-      prev.map((g) =>
-        g.id === groupId ? { ...g, name: groupTitle } : { ...g },
-      ),
-    );
+    // 列表由 useUpdateGroupName 的 invalidate 自动刷新
   };
 
   const renderTitle = () => {
@@ -59,7 +57,11 @@ export const useHeaderPageTitle = () => {
           onKeyUp={(e) => {
             if (e.key === "Enter") (e.target as HTMLElement).blur();
           }}
-          disabled={isSaving || !group?.unlocked}
+          disabled={
+            isSaving ||
+            !group ||
+            !(group.lockType === "None" || unlockedGroupIds.has(group.id))
+          }
         />
       );
     }

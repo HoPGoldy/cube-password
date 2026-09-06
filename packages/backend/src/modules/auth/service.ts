@@ -6,7 +6,7 @@ import { NotificationService } from "@/modules/notification/service";
 import { NoticeType } from "@/types/notification";
 import { sha512 } from "@/lib/crypto";
 import { verifySync } from "otplib";
-import { ErrorAuthFailed, ErrorBanned, ErrorNeedLogin } from "./error";
+import { ErrorAuthFailed, ErrorNeedLogin } from "./error";
 import {
   ErrorBadRequest,
   ErrorForbidden,
@@ -87,23 +87,18 @@ export class AuthService {
     }
   }
 
-  async login(hash: string, ip: string) {
-    // 验证 challenge（服务端自行 pop，无需客户端回传）
-    const challengeCode = this.challengeManager.popLastChallenge();
-    if (!challengeCode) {
-      await this.notificationService.createNotice(
-        "非法登录",
-        "未授权状态下进行登录操作，已被拦截。",
-        NoticeType.Danger,
-      );
-      throw new ErrorUnauthorized("挑战码无效或已过期");
-    }
-
-    // 检查 IP 锁定
-    if (this.loginLocker.isLocked(ip)) {
+  async login(hash: string, notifyIp?: string) {
+    // 检查全局锁定（先查锁再 pop：锁定期间的垃圾请求不烧码、不翻新码）
+    if (this.loginLocker.isLocked()) {
       const error = new ErrorForbidden("登录失败次数过多，请一天后再试");
       error.data = this.loginLocker.getLockDetail();
       throw error;
+    }
+
+    // 验证 challenge（服务端自行 pop，无需客户端回传）；失败静默拒绝：仅 401，不通知不计数
+    const challengeCode = this.challengeManager.popLastChallenge();
+    if (!challengeCode) {
+      throw new ErrorUnauthorized("挑战码无效或已过期");
     }
 
     const user = await this.prisma.user.findFirst();
@@ -114,10 +109,10 @@ export class AuthService {
     // 验证密码: hash = SHA512(hex(V) + challengeCode)，V 存于 passwordHash
     const expectedHash = sha512(user.passwordHash + challengeCode);
     if (hash !== expectedHash) {
-      const lockDetail = this.loginLocker.recordLoginFail(ip);
+      const lockDetail = this.loginLocker.recordLoginFail();
       await this.notificationService.createNotice(
         "密码错误",
-        `${ip} 在登录时输入了错误的密码，请检查是否为本人操作。`,
+        `${notifyIp ?? "未知来源"} 在登录时输入了错误的密码，请检查是否为本人操作。`,
         NoticeType.Warning,
       );
       const error = new ErrorAuthFailed();

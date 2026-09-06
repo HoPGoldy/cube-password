@@ -25,7 +25,7 @@ describe("ChallengeManager", () => {
     expect(manager.validateChallenge("does-not-exist")).toBe(false);
   });
 
-  it("popLastChallenge returns most recently generated challenge and pops it", () => {
+  it("generateChallenge overwrites the single slot with the new code", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-05T10:00:00Z"));
     const first = manager.generateChallenge();
@@ -33,8 +33,9 @@ describe("ChallengeManager", () => {
     vi.setSystemTime(new Date("2026-01-05T10:00:01Z"));
     const second = manager.generateChallenge();
 
+    // single slot: old code is overwritten and no longer valid
+    expect(manager.validateChallenge(first)).toBe(false);
     expect(manager.popLastChallenge()).toBe(second);
-    expect(manager.popLastChallenge()).toBe(first);
     expect(manager.popLastChallenge()).toBeUndefined();
   });
 
@@ -84,14 +85,15 @@ describe("ChallengeManager", () => {
     expect(manager.popLastChallenge()).toBeUndefined();
   });
 
-  it("cleans up expired entries on the next generate (no stale pops)", () => {
+  it("pops are cleared: after pop the slot is empty until a new challenge is generated", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-05T10:00:00Z"));
 
-    manager.generateChallenge();
-    vi.setSystemTime(new Date("2026-01-05T10:06:00Z"));
+    const code = manager.generateChallenge();
+    expect(manager.popLastChallenge()).toBe(code);
+    expect(manager.popLastChallenge()).toBeUndefined();
 
-    // generate triggers cleanup, then adds a new challenge
+    // a fresh generate re-fills the single slot
     const fresh = manager.generateChallenge();
     expect(manager.popLastChallenge()).toBe(fresh);
     expect(manager.popLastChallenge()).toBeUndefined();

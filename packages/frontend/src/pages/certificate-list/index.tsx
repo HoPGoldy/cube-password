@@ -1,7 +1,8 @@
 import { FC, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useAtom } from "jotai";
-import { stateGroupList } from "@/store/user";
+import { useAtomValue } from "jotai";
+import { stateUnlockedGroupIds } from "@/store/user";
+import { useGroupList } from "@/services/group";
 import {
   useCertificateList,
   useMoveCertificate,
@@ -28,7 +29,9 @@ const CertificateListPage: FC = () => {
   const isMobile = useIsMobile();
   const { groupId: groupIdStr } = useParams();
   const groupId = Number(groupIdStr);
-  const [groupList] = useAtom(stateGroupList);
+  const { data: groupListResp, isLoading: isGroupListLoading } = useGroupList();
+  const groupList = groupListResp?.data?.items ?? [];
+  const unlockedGroupIds = useAtomValue(stateUnlockedGroupIds);
   const [detailId, setDetailId] = useState<number | undefined>();
   const [showGroupConfig, setShowGroupConfig] = useState(false);
   /** 移动凭证选择模式 */
@@ -53,7 +56,9 @@ const CertificateListPage: FC = () => {
   >([]);
 
   const currentGroup = groupList.find((g) => g.id === groupId);
-  const isUnlocked = currentGroup?.unlocked ?? false;
+  const isUnlocked =
+    !!currentGroup &&
+    (currentGroup.lockType === "None" || unlockedGroupIds.has(currentGroup.id));
 
   const { data: certListResp, isLoading } = useCertificateList(
     groupId,
@@ -106,6 +111,15 @@ const CertificateListPage: FC = () => {
     });
     setSelectedItems(newSelected);
   };
+
+  // 分组列表还在拉取时不能下结论，只有加载完仍找不到该组才算「未知分组」
+  if (isGroupListLoading) {
+    return (
+      <div className="flex justify-center mt-[20vh]">
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   if (!groupId || !currentGroup) {
     return (

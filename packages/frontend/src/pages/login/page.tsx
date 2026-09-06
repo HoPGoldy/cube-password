@@ -19,19 +19,22 @@ import {
   ErrorDecryptionFailed,
   ErrorInvalidV2Format,
 } from "@/lib/e2ee";
-import type { LockDetail, LoginFailRecord } from "@/types/auth";
+import type {
+  SchemaLockDetailType,
+  SchemaLoginFailRecordType,
+} from "@shared-types/auth";
 import dayjs from "dayjs";
 
 interface LoginPageProps {
-  initialLockDetail?: LockDetail;
+  initialLockDetail?: SchemaLockDetailType;
 }
 
 export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
   usePageTitle("登录");
   const [password, setPassword] = useState("");
-  const [lockDetail, setLockDetail] = useState<LockDetail | undefined>(
-    initialLockDetail,
-  );
+  const [lockDetail, setLockDetail] = useState<
+    SchemaLockDetailType | undefined
+  >(initialLockDetail);
   const [deriving, setDeriving] = useState(false);
   const passwordInputRef = useRef<InputRef>(null);
   const { mutateAsync: postLogin, isPending: isLogin } = useLogin();
@@ -180,12 +183,9 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
   const appTitle = APP_NAME;
   const appSubTitle = APP_SUBTITLE;
 
-  const renderLoginFailure = (item: LoginFailRecord) => {
+  const renderLoginFailure = (item: SchemaLoginFailRecordType) => {
     const message =
-      dayjs(item.date).format("YYYY-MM-DD HH:mm:ss") +
-      " 于 " +
-      item.ip +
-      " 登录失败";
+      dayjs(item.date).format("YYYY-MM-DD HH:mm:ss") + " 登录失败";
     return (
       <Col span={24} key={item.date}>
         <Alert message={message} type="error" showIcon />

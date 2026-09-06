@@ -8,9 +8,9 @@ import type {
   SchemaAuthChangePasswordBodyType,
   SchemaChallengeResponseType,
   SchemaGlobalResponseType,
+  SchemaLockDetailType,
 } from "@shared-types/auth";
 import type { AppResponse } from "@/types/global";
-import type { LockDetail } from "@/types/auth";
 
 /** 获取全局状态（是否已初始化） */
 export const queryGlobal = () => {
@@ -33,7 +33,7 @@ export const useInit = () => {
 
 /** 登录响应类型（成功或失败都走这里） */
 export type LoginResult = AppResponse<SchemaAuthLoginResponseType> & {
-  lockDetail?: LockDetail;
+  lockDetail?: SchemaLockDetailType;
 };
 
 /** 登录 */

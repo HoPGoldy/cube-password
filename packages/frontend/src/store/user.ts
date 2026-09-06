@@ -1,6 +1,7 @@
 import { atom, getDefaultStore } from "jotai";
-import { localTheme } from "./lcoal";
+import { localTheme } from "./local";
 import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
+import { queryClient } from "../services/base";
 
 export type AppTheme = "light" | "dark";
 
@@ -14,16 +15,6 @@ export interface UserInfo {
   createPwdLength: number;
 }
 
-export interface GroupInfo {
-  id: number;
-  name: string;
-  lockType: string;
-  unlocked: boolean;
-  salt?: string;
-  /** 分组锁密码 KDF 参数（JSON 原文）；空/缺省 = 旧版 v1 锁密码，解锁前须重新设置 */
-  kdfParams?: string;
-}
-
 /** session token (in-memory only, not persisted) */
 export const stateSessionToken = atom(undefined as string | undefined);
 
@@ -33,8 +24,12 @@ export const stateUser = atom(undefined as UserInfo | undefined);
 /** is logged in */
 export const stateIsLoggedIn = atom<boolean>((get) => !!get(stateSessionToken));
 
-/** group list */
-export const stateGroupList = atom<GroupInfo[]>([]);
+/**
+ * 已解锁（无锁或已通过密码/验证码解锁）的分组 id 集合（client state）
+ * - 分组服务端数据（名称/锁类型等）由 react-query 的 groupList 管理，不在此处
+ * - lockType === "None" 的组登录时加入；unlock 成功加入；登出清空
+ */
+export const stateUnlockedGroupIds = atom<Set<number>>(new Set<number>());
 
 /**
  * 登录前 KDF 元数据（登录成功后以 login 响应为准写入 stateVault）
@@ -78,7 +73,7 @@ export const logout = () => {
   store.set(stateVault, (prev) => clearVault(prev));
   store.set(stateSessionToken, undefined);
   store.set(stateUser, undefined);
-  store.set(stateGroupList, []);
+  store.set(stateUnlockedGroupIds, new Set());
 };
 
 export const login = (payload: SchemaAuthLoginResponseType) => {
@@ -91,15 +86,14 @@ export const login = (payload: SchemaAuthLoginResponseType) => {
     ...userInfo,
     theme: (userInfo.theme as AppTheme) || "light",
   });
+  // 无锁分组登录即解锁
   store.set(
-    stateGroupList,
-    groups.map((g) => ({
-      ...g,
-      unlocked: g.lockType === "None",
-      salt: g.salt,
-      kdfParams: g.kdfParams,
-    })),
+    stateUnlockedGroupIds,
+    new Set(groups.filter((g) => g.lockType === "None").map((g) => g.id)),
   );
+
+  // 分组服务端数据改由 react-query 管理，登录后拉取最新列表
+  queryClient.invalidateQueries({ queryKey: ["groupList"] });
 
   localTheme.set(userInfo.theme || "light");
 };

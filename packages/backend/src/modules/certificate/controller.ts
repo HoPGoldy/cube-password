@@ -15,7 +15,113 @@ import {
 } from "@/types/certificate";
 import { CertificateService } from "./service";
 
-import Mock from "mockjs";
+/** 常见英文名词表，用于随机用户名生成 */
+const FIRST_NAMES = [
+  "James",
+  "Mary",
+  "Robert",
+  "Patricia",
+  "John",
+  "Jennifer",
+  "Michael",
+  "Linda",
+  "David",
+  "Elizabeth",
+  "William",
+  "Barbara",
+  "Richard",
+  "Susan",
+  "Joseph",
+  "Jessica",
+  "Thomas",
+  "Sarah",
+  "Christopher",
+  "Karen",
+  "Charles",
+  "Lisa",
+  "Daniel",
+  "Nancy",
+  "Matthew",
+  "Betty",
+  "Anthony",
+  "Margaret",
+  "Mark",
+  "Sandra",
+  "Donald",
+  "Ashley",
+  "Steven",
+  "Kimberly",
+  "Paul",
+  "Emily",
+  "Andrew",
+  "Donna",
+  "Joshua",
+  "Michelle",
+  "Kenneth",
+  "Carol",
+  "Kevin",
+  "Amanda",
+  "Brian",
+  "Dorothy",
+  "George",
+  "Melissa",
+  "Timothy",
+  "Deborah",
+];
+
+/** 常见英文名词表，用于随机用户名生成 */
+const LAST_NAMES = [
+  "Smith",
+  "Johnson",
+  "Williams",
+  "Brown",
+  "Jones",
+  "Garcia",
+  "Miller",
+  "Davis",
+  "Rodriguez",
+  "Martinez",
+  "Hernandez",
+  "Lopez",
+  "Gonzalez",
+  "Wilson",
+  "Anderson",
+  "Thomas",
+  "Taylor",
+  "Moore",
+  "Jackson",
+  "Martin",
+  "Lee",
+  "Perez",
+  "Thompson",
+  "White",
+  "Harris",
+  "Sanchez",
+  "Clark",
+  "Ramirez",
+  "Lewis",
+  "Robinson",
+  "Walker",
+  "Young",
+  "Allen",
+  "King",
+  "Wright",
+  "Scott",
+  "Torres",
+  "Nguyen",
+  "Hill",
+  "Flores",
+  "Green",
+  "Adams",
+  "Nelson",
+  "Baker",
+  "Hall",
+  "Rivera",
+  "Campbell",
+  "Mitchell",
+  "Carter",
+  "Roberts",
+];
 
 interface RegisterOptions {
   server: AppInstance;
@@ -34,7 +140,11 @@ export const registerCertificateController = (options: RegisterOptions) => {
       },
     },
     async () => {
-      return { data: (Mock.Random.name(true) as string).replace(/ /g, "") };
+      const firstName =
+        FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+      const lastName =
+        LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+      return { data: firstName + lastName };
     },
   );
 

@@ -102,8 +102,9 @@ export const registerAuthController = (options: RegisterOptions) => {
     },
     async (request) => {
       const { hash } = request.body;
-      const ip = request.ip;
-      return await authService.login(hash, ip);
+      // 仅用作密码错误通知文案（尽力而为的诊断信息）
+      const notifyIp = request.ip;
+      return await authService.login(hash, notifyIp);
     },
   );
 

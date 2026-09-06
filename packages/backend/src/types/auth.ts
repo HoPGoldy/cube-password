@@ -3,9 +3,21 @@ import { Type } from "typebox";
 // ========== Login Fail Record ==========
 
 export const SchemaLoginFailRecord = Type.Object({
-  ip: Type.String(),
   date: Type.Number(),
 });
+export type SchemaLoginFailRecordType = Type.Static<
+  typeof SchemaLoginFailRecord
+>;
+
+// ========== Lock Detail ==========
+
+/** 登录锁定详情（全局锁定语义，与 LoginLocker.getLockDetail 同构） */
+export const SchemaLockDetail = Type.Object({
+  loginFailure: Type.Array(SchemaLoginFailRecord),
+  retryNumber: Type.Number(),
+  isBanned: Type.Boolean(),
+});
+export type SchemaLockDetailType = Type.Static<typeof SchemaLockDetail>;
 
 // ========== Challenge ==========
 

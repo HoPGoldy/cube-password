@@ -14,9 +14,6 @@ export const registerController = (options: RegisterOptions) => {
   server.post(
     "/config",
     {
-      config: {
-        requireAdmin: true,
-      },
       schema: {
         description: "获取所有配置列表",
         tags: ["config"],
@@ -33,9 +30,6 @@ export const registerController = (options: RegisterOptions) => {
   server.post(
     "/config/update",
     {
-      config: {
-        requireAdmin: true,
-      },
       schema: {
         description: "更新配置",
         tags: ["config"],

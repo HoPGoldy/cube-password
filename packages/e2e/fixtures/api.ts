@@ -177,11 +177,11 @@ async function loginViaApi(request: APIRequestContext): Promise<SessionInfo> {
 }
 
 /**
- * 当前 IP 的登录失败计数（今日，来自 GET /auth/global）
+ * 全局登录失败计数（今日，来自 GET /auth/global）
  *
- * 后端锁定规则：同一 IP 当日失败 ≥ 3 次后，该 IP 的**所有**登录（含正确密码）
- * 都被拒绝。需要真实失败登录用例时，必须先用本函数检查计数，≥ 2 时跳过真实尝试，
- * 避免同日重复跑 e2e 时把 IP 锁死导致整个套件崩溃。
+ * 后端锁定规则：全局当日失败 ≥ 3 次后，**所有**登录（含正确密码）都被拒绝。
+ * 需要真实失败登录用例时，必须先用本函数检查计数，≥ 2 时跳过真实尝试，
+ * 避免同日重复跑 e2e 时把登录锁死导致整个套件崩溃。
  */
 export async function getLoginFailureCount(
   request: APIRequestContext,

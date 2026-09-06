@@ -8,11 +8,12 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "skipLibCheck": true,
-    "strictNullChecks": true,
+    "strict": true,
     "noImplicitAny": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@db/*": ["./prisma/client/*"]
+      "@db/*": ["./prisma/client/*"],
+      "@cube-password/shared/*": ["../shared/src/*"]
     }
   }
 }

@@ -7,23 +7,25 @@ interface ChallengeEntry {
   createdAt: number;
 }
 
+/**
+ * 全局单槽位挑战码：同一时刻只存在一个有效挑战码。
+ * generateChallenge 生成即覆盖旧值；pop/validate 取走后槽位置空（一次性消费）。
+ */
 export class ChallengeManager {
-  private challenges: Map<string, ChallengeEntry> = new Map();
+  private challenge: ChallengeEntry | undefined;
 
   generateChallenge(): string {
-    this.cleanup();
-
     const code = nanoid(32);
-    this.challenges.set(code, { code, createdAt: Date.now() });
+    this.challenge = { code, createdAt: Date.now() };
     return code;
   }
 
   validateChallenge(code: string): boolean {
-    const entry = this.challenges.get(code);
-    if (!entry) return false;
+    const entry = this.challenge;
+    if (!entry || entry.code !== code) return false;
 
     // 一次性消费
-    this.challenges.delete(code);
+    this.challenge = undefined;
 
     // 检查是否过期
     if (Date.now() - entry.createdAt > CHALLENGE_TIMEOUT_MS) {
@@ -33,35 +35,15 @@ export class ChallengeManager {
     return true;
   }
 
-  /** 弹出最近生成的挑战码（用于修改密码等场景） */
+  /** 弹出当前挑战码（用于登录/修改密码等场景），取走后槽位置空 */
   popLastChallenge(): string | undefined {
-    let latest: ChallengeEntry | undefined;
-    let latestKey: string | undefined;
+    const entry = this.challenge;
+    if (!entry) return undefined;
 
-    for (const [key, entry] of Array.from(this.challenges.entries())) {
-      if (!latest || entry.createdAt > latest.createdAt) {
-        latest = entry;
-        latestKey = key;
-      }
+    this.challenge = undefined;
+    if (Date.now() - entry.createdAt > CHALLENGE_TIMEOUT_MS) {
+      return undefined;
     }
-
-    if (latestKey) {
-      this.challenges.delete(latestKey);
-      if (Date.now() - latest!.createdAt > CHALLENGE_TIMEOUT_MS) {
-        return undefined;
-      }
-      return latest!.code;
-    }
-
-    return undefined;
-  }
-
-  private cleanup(): void {
-    const now = Date.now();
-    for (const [key, entry] of Array.from(this.challenges.entries())) {
-      if (now - entry.createdAt > CHALLENGE_TIMEOUT_MS) {
-        this.challenges.delete(key);
-      }
-    }
+    return entry.code;
   }
 }

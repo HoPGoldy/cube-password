@@ -5,7 +5,8 @@ import { useUnlockGroup } from "@/services/group";
 import { sha512 } from "@/utils/crypto";
 import { queryChallenge } from "@/services/auth";
 import { messageError, messageSuccess } from "@/utils/message";
-import { GroupInfo, stateGroupList } from "@/store/user";
+import type { SchemaGroupItemType } from "@shared-types/group";
+import { stateUnlockedGroupIds } from "@/store/user";
 import { useSetAtom } from "jotai";
 import {
   deriveMasterKey,
@@ -15,13 +16,13 @@ import {
 import { bytesToHex, hexToBytes } from "@/lib/e2ee/format";
 
 interface Props {
-  group: GroupInfo;
+  group: SchemaGroupItemType;
 }
 
 export const GroupUnlock: FC<Props> = ({ group }) => {
   const [code, setCode] = useState("");
   const { mutateAsync: unlock, isPending } = useUnlockGroup();
-  const setGroupList = useSetAtom(stateGroupList);
+  const setUnlockedGroupIds = useSetAtom(stateUnlockedGroupIds);
 
   const onUnlock = async () => {
     if (!code) {
@@ -83,9 +84,7 @@ export const GroupUnlock: FC<Props> = ({ group }) => {
     if (resp?.code !== 200) return;
 
     messageSuccess("分组已解锁");
-    setGroupList((prev) =>
-      prev.map((g) => (g.id === group.id ? { ...g, unlocked: true } : g)),
-    );
+    setUnlockedGroupIds((prev: Set<number>) => new Set(prev).add(group.id));
     setCode("");
   };
 

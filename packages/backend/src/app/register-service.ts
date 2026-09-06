@@ -4,6 +4,7 @@ import { AuthService } from "@/modules/auth/service";
 import { registerController as registerAppConfigController } from "@/modules/app-config/controller";
 import { AppConfigService } from "@/modules/app-config/service";
 import { registerUnifyResponse } from "@/lib/unify-response";
+import type { FastifyInstance } from "fastify";
 import type { AppInstance } from "@/types";
 import { registerRemoveAdditionalProperties } from "@/lib/security";
 
@@ -63,17 +64,19 @@ export const registerService = async (instance: AppInstance) => {
 
   const otpService = new OtpService({ prisma, challengeManager });
 
-  const appControllerPlugin = async (server: AppInstance) => {
+  const appControllerPlugin = async (server: FastifyInstance) => {
+    const app = server as unknown as AppInstance;
+
     registerRemoveAdditionalProperties(server);
     registerUnifyResponse(server);
 
-    registerAuthController({ server, authService });
-    registerAppConfigController({ appConfigService, server });
-    registerNotificationController({ server, notificationService });
-    registerUserController({ server, userService });
-    registerGroupController({ server, groupService });
-    registerCertificateController({ server, certificateService });
-    registerOtpController({ server, otpService });
+    registerAuthController({ server: app, authService });
+    registerAppConfigController({ appConfigService, server: app });
+    registerNotificationController({ server: app, notificationService });
+    registerUserController({ server: app, userService });
+    registerGroupController({ server: app, groupService });
+    registerCertificateController({ server: app, certificateService });
+    registerOtpController({ server: app, otpService });
   };
 
   await instance.register(appControllerPlugin, {

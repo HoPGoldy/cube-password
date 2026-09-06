@@ -3,7 +3,7 @@ import {
   DEFAULT_KDF_PARAMS,
   ErrorInvalidKdfParams,
   parseKdfParams,
-} from "./kdf";
+} from "../src/kdf-params";
 
 describe("parseKdfParams", () => {
   it("parses a valid kdfParams JSON string", () => {

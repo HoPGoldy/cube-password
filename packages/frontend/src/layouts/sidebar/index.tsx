@@ -2,20 +2,23 @@ import { FC, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { RightOutlined, PlusOutlined, LockOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import { useAtom } from "jotai";
-import { stateGroupList, GroupInfo } from "@/store/user";
-import { useAddGroup, useUpdateGroupSort } from "@/services/group";
+import { useAtomValue } from "jotai";
+import { stateUnlockedGroupIds } from "@/store/user";
+import { useAddGroup, useGroupList } from "@/services/group";
+import type { SchemaGroupItemType } from "@shared-types/group";
 import { messageSuccess } from "@/utils/message";
 import { APP_NAME } from "@/config";
 import { AddGroupModal } from "@/components/add-group-modal";
 import s from "./styles.module.css";
 
 export const Sidebar: FC = () => {
-  const [groups, setGroups] = useAtom(stateGroupList);
+  const { data: groupListResp } = useGroupList();
+  const unlockedGroupIds = useAtomValue(stateUnlockedGroupIds);
   const { groupId } = useParams();
   const { mutateAsync: addGroup, isPending: addingGroup } = useAddGroup();
-  const { mutateAsync: updateGroupSort } = useUpdateGroupSort();
   const [addModalOpen, setAddModalOpen] = useState(false);
+
+  const groups = groupListResp?.data?.items ?? [];
 
   const onAddGroup = async (data: {
     name: string;
@@ -28,21 +31,9 @@ export const Sidebar: FC = () => {
     if (resp?.code !== 200) return;
     messageSuccess("分组已创建");
     setAddModalOpen(false);
-    if (resp.data?.newList) {
-      setGroups(
-        resp.data.newList.map((g) => ({
-          id: g.id,
-          name: g.name,
-          lockType: g.lockType || "None",
-          unlocked: g.lockType === "None",
-          salt: g.salt,
-          kdfParams: g.kdfParams,
-        })),
-      );
-    }
   };
 
-  const renderGroupItem = (item: GroupInfo) => {
+  const renderGroupItem = (item: SchemaGroupItemType) => {
     const className = [s.menuItem];
     if (groupId && +groupId === item.id) className.push(s.menuItemActive);
 
@@ -55,7 +46,11 @@ export const Sidebar: FC = () => {
             data-testid={`sidebar-group-${item.id}`}
           >
             <span className="truncate">{item.name}</span>
-            {item.unlocked ? <RightOutlined /> : <LockOutlined />}
+            {item.lockType === "None" || unlockedGroupIds.has(item.id) ? (
+              <RightOutlined />
+            ) : (
+              <LockOutlined />
+            )}
           </div>
         </Link>
       </div>

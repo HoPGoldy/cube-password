@@ -1,10 +1,10 @@
-import { AppInstance } from "@/types";
+import type { FastifyInstance } from "fastify";
 
 /**
  * 当路由中定义了 schema，但没有显式指定 additionalProperties 时，默认设置为 false
  * 用来防止多余参数的传入
  */
-export const registerRemoveAdditionalProperties = (server: AppInstance) => {
+export const registerRemoveAdditionalProperties = (server: FastifyInstance) => {
   server.addHook("onRoute", (routeOptions) => {
     const schema = routeOptions.schema;
     if (!schema) {

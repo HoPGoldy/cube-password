@@ -25,7 +25,8 @@
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"],
-      "@shared-types/*": ["../../backend/src/types/*"]
+      "@shared-types/*": ["../../backend/src/types/*"],
+      "@cube-password/shared/*": ["../../shared/src/*"]
     }
   },
   "include": ["src"]

@@ -24,7 +24,8 @@ import {
   useSetDefaultGroup,
   useUpdateGroupConfig,
 } from "@/services/group";
-import { GroupInfo, stateGroupList, stateUser } from "@/store/user";
+import type { SchemaGroupItemType } from "@shared-types/group";
+import { stateUnlockedGroupIds, stateUser } from "@/store/user";
 import { useAtom, useSetAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 
@@ -42,7 +43,7 @@ const useLockTypeOptions = () => {
 
 interface GroupConfigModalProps {
   open: boolean;
-  group: GroupInfo;
+  group: SchemaGroupItemType;
   onClose: () => void;
 }
 
@@ -54,7 +55,7 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useAtom(stateUser);
-  const setGroupList = useSetAtom(stateGroupList);
+  const setUnlockedGroupIds = useSetAtom(stateUnlockedGroupIds);
   const { mutateAsync: runDeleteGroup, isPending: deleting } = useDeleteGroup();
   const { mutateAsync: runSetDefault, isPending: settingDefault } =
     useSetDefaultGroup();
@@ -109,8 +110,7 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
     onCancelModal();
     messageSuccess("分组删除成功");
 
-    // Remove group from list and navigate to default
-    setGroupList((prev) => prev.filter((g) => g.id !== group.id));
+    // 列表由 useDeleteGroup 的 invalidate 自动刷新，这里只需导航到默认分组
     const newDefault = userInfo?.defaultGroupId;
     if (newDefault && newDefault !== group.id) {
       navigate(`/group/${newDefault}`);
@@ -151,20 +151,16 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
     messageSuccess("保存成功");
     onCancelModal();
 
-    // Update group lockType in store（同时更新 salt/kdfParams，保证设锁后可立即解锁）
-    setGroupList((prev) =>
-      prev.map((g) =>
-        g.id === group.id
-          ? {
-              ...g,
-              lockType: values.lockType,
-              unlocked: values.lockType === "None",
-              salt: passwordSalt,
-              kdfParams: kdfParams,
-            }
-          : g,
-      ),
-    );
+    // 列表（含 lockType/salt/kdfParams）由 useUpdateGroupConfig 的 invalidate 自动刷新；
+    // 解锁态双向同步：lockType 变为 "None" 自动解锁（派生条件命中即可，集合中没有也无关）；
+    // 给组设上 Password/Totp 锁则立即上锁（把该组移出解锁集，本 session 须重新输入密码解锁）
+    if (values.lockType !== "None") {
+      setUnlockedGroupIds((prev: Set<number>) => {
+        const next = new Set(prev);
+        next.delete(group.id);
+        return next;
+      });
+    }
   };
 
   return (

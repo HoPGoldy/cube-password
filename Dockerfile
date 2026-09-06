@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/backend/package.json ./packages/backend/
 COPY packages/frontend/package.json ./packages/frontend/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN apk add --no-cache python3 make g++ && \
   npm install -g pnpm && \
@@ -25,6 +26,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/backend/package.json ./packages/backend/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN apk add --no-cache gosu python3 make g++ && \
   npm install -g pnpm && \

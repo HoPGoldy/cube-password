@@ -82,8 +82,8 @@ rawTest.describe("Auth API - 公开接口", () => {
   });
 
   rawTest("POST /api/auth/login 错误密码返回 401", async ({ request }) => {
-    // 锁定保护：同 IP 当日失败 ≥2 时跳过真实尝试（否则会把计数推到 3 触发
-    // IP 锁定，导致后续所有登录 403）；计数 <2 时仅消耗 1 次，安全
+    // 锁定保护：全局当日失败 ≥2 时跳过真实尝试（否则会把计数推到 3 触发
+    // 全局锁定，导致后续所有登录 403）；计数 <2 时仅消耗 1 次，安全
     if ((await getLoginFailureCount(request)) >= 2) {
       rawTest.skip();
       return;
@@ -96,7 +96,7 @@ rawTest.describe("Auth API - 公开接口", () => {
     const globalBody = await globalResp.json();
     const salt = globalBody.data.salt as string;
 
-    // v2 流程但用错误密码派生（仅本次失败，不连续触发以避免 3 次 IP 锁定）
+    // v2 流程但用错误密码派生（仅本次失败，不连续触发以避免 3 次全局锁定）
     const kdfParams = parseKdfParams(globalBody.data.kdfParams);
     const { verifier } = await deriveMasterKey(
       "wrong-password",

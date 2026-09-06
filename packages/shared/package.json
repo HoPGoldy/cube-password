@@ -1,0 +1,16 @@
+{
+  "name": "@cube-password/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./kdf-params": "./src/kdf-params.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.7"
+  }
+}

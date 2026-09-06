@@ -44,6 +44,12 @@ export class SessionManager {
     this.session = null;
   }
 
+  removeUnlockedGroup(groupId: number): void {
+    if (this.session) {
+      this.session.unlockedGroupIds.delete(groupId);
+    }
+  }
+
   addUnlockedGroup(groupId: number): void {
     if (this.session) {
       this.session.unlockedGroupIds.add(groupId);

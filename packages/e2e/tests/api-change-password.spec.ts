@@ -191,8 +191,8 @@ test.describe("Change Password API（v2 re-wrap）", () => {
     // re-wrap 不改变 KDF 参数：改密码后 login/global 下发的 kdfParams 与改前一致
     expect(newSession.kdfParams).toEqual(kdfParamsBefore);
 
-    // 旧密码登录失败（真实 401）。锁定保护：同 IP 当日失败 ≥2 时跳过真实尝试
-    // （再失败 1 次即达 3 次触发 IP 锁定，后续所有登录都会 403）；
+    // 旧密码登录失败（真实 401）。锁定保护：全局当日失败 ≥2 时跳过真实尝试
+    // （再失败 1 次即达 3 次触发全局锁定，后续所有登录都会 403）；
     // 401 的后端路径已由 api-auth.spec 的负向用例在低计数时覆盖
     if ((await getLoginFailureCount(request)) < 2) {
       const globalResp = await request.get(`${BASE}/auth/global`);

@@ -5,14 +5,15 @@ import { LoginPage } from "./page";
 import { PageLoading } from "@hopgoldy/cube-ui";
 import { queryGlobal } from "@/services/auth";
 import { Navigate } from "react-router-dom";
-import type { LockDetail } from "@/types/auth";
+import type { SchemaLockDetailType } from "@shared-types/auth";
 
 const Login = () => {
   const isLoggedIn = useAtomValue(stateIsLoggedIn);
   const [checking, setChecking] = useState(true);
   const [isInitialized, setIsInitialized] = useState(true);
   const setKdfMeta = useSetAtom(stateKdfMeta);
-  const [initialLockDetail, setInitialLockDetail] = useState<LockDetail>();
+  const [initialLockDetail, setInitialLockDetail] =
+    useState<SchemaLockDetailType>();
 
   useEffect(() => {
     const checkGlobal = async () => {

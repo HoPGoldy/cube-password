@@ -1,6 +1,7 @@
 import { AppResponse } from "@/types/global";
 import { logout, stateSessionToken } from "@/store/user";
 import { showGlobalMessage } from "../utils/message";
+import { mergeUrl } from "../utils/path";
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 import { QueryClient } from "@tanstack/react-query";
@@ -56,7 +57,7 @@ axiosInstance.interceptors.response.use(
     }
 
     if (status === 403) {
-      window.location.href = "/e403";
+      window.location.href = mergeUrl(APP_CONFIG.PATH_BASENAME, "e403");
       return Promise.reject(resp);
     }
 
@@ -86,14 +87,6 @@ export const requestPost = async <T = any, D = any>(
   config?: AxiosRequestConfig<D>,
 ) => {
   const resp = await axiosInstance.post<AppResponse<T>>(url, data, config);
-  return resp.data;
-};
-
-export const requestDelete = async <T = any>(
-  url: string,
-  config?: AxiosRequestConfig,
-) => {
-  const resp = await axiosInstance.delete<AppResponse<T>>(url, config);
   return resp.data;
 };
 

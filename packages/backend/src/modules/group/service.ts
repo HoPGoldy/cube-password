@@ -2,7 +2,7 @@ import { PrismaService } from "@/modules/prisma";
 import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
 import { sha512 } from "@/lib/crypto";
-import { parseGroupKdfParams } from "@/lib/kdf-params";
+import { parseKdfParams } from "@cube-password/shared/kdf-params";
 import { verifySync } from "otplib";
 import { ErrorBadRequest } from "@/types/error";
 import { ErrorGroupNotFound, ErrorGroupUnlockFailed } from "./error";
@@ -49,8 +49,7 @@ export class GroupService {
       this.sessionManager.addUnlockedGroup(newGroup.id);
     }
 
-    const newList = await this.listGroups();
-    return { newId: newGroup.id, newList: newList.items };
+    return { newId: newGroup.id };
   }
 
   /** 列表单项 → 下发结构（Password 锁下发 salt + kdfParams，解锁派生用） */
@@ -107,6 +106,11 @@ export class GroupService {
         kdfParams: kdfParams ?? "",
       },
     });
+
+    // 设锁立即生效：从当前 session 解锁集移除（变 None 则无需处理，登录即解锁）
+    if (lockType !== "None") {
+      this.sessionManager.removeUnlockedGroup(id);
+    }
   }
 
   async unlock(
@@ -143,7 +147,7 @@ export class GroupService {
       // 参数非法同样视为不可用的旧数据，拒绝解锁（禁止静默回落默认值，
       // 否则会派生出与库内 V 不一致的密钥）
       try {
-        parseGroupKdfParams(group.kdfParams);
+        parseKdfParams(group.kdfParams);
       } catch (err) {
         throw new ErrorBadRequest(
           `分组锁密码参数非法，请重新设置分组锁密码（${
@@ -183,7 +187,7 @@ export class GroupService {
   }
 
   async sort(ids: number[]): Promise<void> {
-    await Promise.all(
+    await this.prisma.$transaction(
       ids.map((id, index) =>
         this.prisma.group.update({ where: { id }, data: { order: index } }),
       ),

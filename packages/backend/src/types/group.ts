@@ -39,7 +39,6 @@ export type SchemaGroupAddBodyType = Type.Static<typeof SchemaGroupAddBody>;
 
 export const SchemaGroupAddResponse = Type.Object({
   newId: Type.Number(),
-  newList: Type.Array(SchemaGroupItem),
 });
 export type SchemaGroupAddResponseType = Type.Static<
   typeof SchemaGroupAddResponse

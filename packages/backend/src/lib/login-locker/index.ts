@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 const MAX_FAIL_COUNT = 3;
 
 export interface LoginFailRecord {
-  ip: string;
   date: number;
 }
 
@@ -16,20 +15,18 @@ export interface LockDetail {
 export class LoginLocker {
   private failRecords: LoginFailRecord[] = [];
 
-  recordLoginFail(ip: string): LockDetail {
-    this.failRecords.push({ ip, date: Date.now() });
+  recordLoginFail(): LockDetail {
+    this.failRecords.push({ date: Date.now() });
     return this.getLockDetail();
   }
 
-  isLocked(ip: string): boolean {
-    return this.getFailCount(ip) >= MAX_FAIL_COUNT;
+  isLocked(): boolean {
+    return this.getFailCount() >= MAX_FAIL_COUNT;
   }
 
-  getFailCount(ip: string): number {
+  getFailCount(): number {
     this.cleanup();
-    return this.failRecords.filter(
-      (r) => r.ip === ip && dayjs(r.date).isSame(dayjs(), "day"),
-    ).length;
+    return this.failRecords.length;
   }
 
   getLockDetail(): LockDetail {

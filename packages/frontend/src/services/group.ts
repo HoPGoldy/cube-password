@@ -86,12 +86,3 @@ export const useSetDefaultGroup = () => {
     },
   });
 };
-
-/** 更新排序 */
-export const useUpdateGroupSort = () => {
-  return useMutation({
-    mutationFn: (ids: number[]) => {
-      return requestPost("group/sort", { ids });
-    },
-  });
-};
