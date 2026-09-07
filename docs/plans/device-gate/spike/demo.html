@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WebCrypto 非导出设备钥匙 Demo</title>
+    <style>
+      body { font-family: monospace; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      button { margin: 0.5rem 0; padding: 0.5rem 1rem; cursor: pointer; }
+      pre { background: #f5f5f5; padding: 1rem; white-space: pre-wrap; word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <h2>WebCrypto 非导出设备钥匙 Demo</h2>
+    <p>
+      模拟设备门的三步：① 生成钥匙（等价 ssh-keygen）② 静默签名 challenge（等价每次登录过门）
+      ③ 红队视角：试图偷私钥（应当被浏览器拒绝）
+    </p>
+    <button id="gen">① 生成设备钥匙</button>
+    <button id="sign">② 静默签名 challenge</button>
+    <button id="steal">③ 试图偷私钥（应当失败）</button>
+    <pre id="log"></pre>
+
+    <script type="module">
+      const $log = document.getElementById("log");
+      const log = (s = "") => ($log.textContent += s + "\n");
+      const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const b64url = (s) => s.replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+
+      /* ---------- IndexedDB 极简封装：CryptoKey 句柄可被 structured clone 直接入库 ---------- */
+
+      const DB_NAME = "device-keys", STORE = "keys";
+      const idbOpen = () =>
+        new Promise((res, rej) => {
+          const r = indexedDB.open(DB_NAME, 1);
+          r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+          r.onsuccess = () => res(r.result);
+          r.onerror = () => rej(r.error);
+        });
+      const idbPut = async (k, v) => {
+        const db = await idbOpen();
+        return new Promise((res, rej) => {
+          const tx = db.transaction(STORE, "readwrite");
+          tx.objectStore(STORE).put(v, k);
+          tx.oncomplete = res;
+          tx.onerror = () => rej(tx.error);
+        });
+      };
+      const idbGet = async (k) => {
+        const db = await idbOpen();
+        return new Promise((res, rej) => {
+          const q = db.transaction(STORE, "readonly").objectStore(STORE).get(k);
+          q.onsuccess = () => res(q.result);
+          q.onerror = () => rej(q.error);
+        });
+      };
+
+      /* ---------- ① 生成：整个设备门方案的核心三行 ---------- */
+
+      document.getElementById("gen").onclick = async () => {
+        log("=== ① 生成设备钥匙 ===");
+
+        // generateKey(alg, extractable, usages)
+        // extractable: false 只作用于【私钥】——spec 规定生成的公钥永远可导出，
+        // 所以我们仍能 exportKey('spki', publicKey) 拿到公钥字节发给服务端
+        const pair = await crypto.subtle.generateKey(
+          { name: "ECDSA", namedCurve: "P-256" },
+          false, // ★ 私钥不可导出：任何 JS（包括注入进来的）都拿不到字节
+          ["sign"],
+        );
+
+        // 公钥导出为 SPKI（SubjectPublicKeyInfo）标准格式，服务端可直接验签
+        const spki = await crypto.subtle.exportKey("spki", pair.publicKey);
+        const publicKeyB64 = b64(spki);
+
+        // 存入 IndexedDB 的不是密钥字节，是「句柄」——材料本体在浏览器内部密钥库
+        await idbPut("demo-key", {
+          name: "My Device",
+          privateKey: pair.privateKey, // structured clone 保留 non-extractable 属性
+          publicKeyB64,
+          createdAt: new Date().toISOString(),
+        });
+
+        log("私钥句柄已存 IndexedDB（字节本体在浏览器密钥库，页面拿不到）");
+        log("");
+        log("设备钥匙串（等价 authorized_keys 的一行，拿去已授权设备录入）：");
+        log(
+          "cube-device-key:v1:" +
+            b64url(
+              b64(
+                new TextEncoder().encode(
+                  JSON.stringify({ name: "My Device", publicKey: publicKeyB64 }),
+                ),
+              ),
+            ),
+        );
+      };
+
+      /* ---------- ② 每次登录的静默过门：challenge → 签名 → 上送 ---------- */
+
+      document.getElementById("sign").onclick = async () => {
+        log("");
+        log("=== ② 静默签名（真实场景中这三步发生在页面加载时，用户零感知） ===");
+
+        const rec = await idbGet("demo-key");
+        if (!rec) return log("请先点 ① 生成钥匙");
+
+        // 1. 取 challenge（真实场景: POST /device/challenge 从服务端拿；demo 本地随机）
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+        // 2. 用句柄直接签名——注意：全程没有弹窗、没有点击、没有生物识别
+        const sig = await crypto.subtle.sign(
+          { name: "ECDSA", hash: "SHA-256" },
+          rec.privateKey,
+          challenge,
+        );
+
+        // 3. 上送（真实场景: POST /device/verify { assertion } → 拿 gate token）
+        log("challenge  (b64): " + b64(challenge));
+        log("signature  (b64): " + b64(sig)); // 64B raw r||s 格式
+        log("publicKey  (b64): " + rec.publicKeyB64);
+        log("");
+        log("↑ 复制这三行，跑: node verify-demo.mjs <challenge> <signature> <publicKey>");
+      };
+
+      /* ---------- ③ 红队视角：同源脚本试图导出私钥字节 ---------- */
+
+      document.getElementById("steal").onclick = async () => {
+        log("");
+        log("=== ③ 试图偷私钥 ===");
+        const rec = await idbGet("demo-key");
+        if (!rec) return log("请先点 ① 生成钥匙");
+        try {
+          await crypto.subtle.exportKey("pkcs8", rec.privateKey);
+          log("？？？导出成功了——这不应该发生");
+        } catch (e) {
+          log("被浏览器拒绝: " + e.name);
+          log("这就是 non-extractable 的保证：XSS 能让这把钥匙签名，但偷不走它。");
+        }
+        try {
+          // 就算把它序列化/JSON 化也拿不到材料：
+          log("structuredClone(privateKey) 只会得到另一个句柄，不含字节。");
+        } catch {}
+      };
+    </script>
+  </body>
+</html>

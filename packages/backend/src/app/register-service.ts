@@ -11,9 +11,14 @@ import { registerRemoveAdditionalProperties } from "@/lib/security";
 import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
 import { LoginLocker } from "@/lib/login-locker";
+import { GateTokenManager } from "@/lib/gate-token";
+import { isGateEnabled } from "@/lib/device-store";
 
 import { NotificationService } from "@/modules/notification/service";
 import { registerNotificationController } from "@/modules/notification/controller";
+import { DeviceService } from "@/modules/device/service";
+import { registerDeviceController } from "@/modules/device/controller";
+import { ErrorDeviceGate } from "@/modules/device/error";
 import { UserService } from "@/modules/user/service";
 import { registerUserController } from "@/modules/user/controller";
 import { GroupService } from "@/modules/group/service";
@@ -44,6 +49,9 @@ export const registerService = async (
   const sessionManager = new SessionManager();
   const challengeManager = new ChallengeManager();
   const loginLocker = new LoginLocker();
+  // 设备挑战码与门禁令牌：独立实例，与服务端登录挑战码/session 语义分离
+  const deviceChallengeManager = new ChallengeManager();
+  const gateTokenManager = new GateTokenManager();
 
   // Service 层实例
   const appConfigService = new AppConfigService({ prisma });
@@ -72,6 +80,37 @@ export const registerService = async (
 
   const otpService = new OtpService({ prisma, challengeManager });
 
+  const deviceService = new DeviceService({
+    deviceChallengeManager,
+    gateTokenManager,
+    notificationService,
+  });
+
+  /** 设备门豁免的登录走廊路由（config.url 为含 /api 前缀的完整路径，见 context.md 3.5） */
+  const GATE_EXEMPT_ROUTES = new Set([
+    "/api/device/challenge",
+    "/api/device/verify",
+  ]);
+
+  /**
+   * 设备门禁 hook：注册顺序在 auth controller 的 session hook 之前。
+   * 门激活时，预登录路由（disableAuth: true）必须携带有效 X-Gate-Token，
+   * 仅 /device/challenge|/device/verify 豁免；session 保护的常规路由
+   * 不要求 gate token（gate 只守登录走廊，session 守房间）。
+   * 未命中任何路由的请求（404）以及 swagger /docs（dev-only）经其 onRoute hook 标记 disableAuth，门激活时同样要求 gate token（比直觉更严格，方向安全）。
+   */
+  const app = instance as AppInstance;
+  app.addHook("preHandler", async (request) => {
+    const { url, disableAuth } = request.routeOptions.config;
+    if (!disableAuth || !isGateEnabled()) return;
+    if (typeof url === "string" && GATE_EXEMPT_ROUTES.has(url)) return;
+
+    const token = request.headers["x-gate-token"] as string | undefined;
+    if (!token || !gateTokenManager.validateToken(token)) {
+      throw new ErrorDeviceGate();
+    }
+  });
+
   const appControllerPlugin = async (server: FastifyInstance) => {
     const app = server as unknown as AppInstance;
 
@@ -85,6 +124,7 @@ export const registerService = async (
     registerGroupController({ server: app, groupService });
     registerCertificateController({ server: app, certificateService });
     registerOtpController({ server: app, otpService });
+    registerDeviceController({ server: app, deviceService });
   };
 
   await instance.register(appControllerPlugin, {

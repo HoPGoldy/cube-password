@@ -1,5 +1,6 @@
 import { argon2id } from "hash-wasm";
 import crypto from "crypto";
+import { existsSync, rmSync } from "node:fs";
 import {
   bytesToHex,
   hexToBytes,
@@ -188,5 +189,22 @@ async function ensureInitialized() {
 }
 
 export default async function globalSetup() {
+  resetTrustedDevices();
   await ensureInitialized();
 }
+
+/**
+ * 重置设备门：删除 trusted-devices.json（文件不存在即门未激活）。
+ * dev 后端 PATH_ROOT = packages/backend/storage/；上一轮 e2e / 手工实验可能
+ * 留下激活态，不清会使全部旧用例在登录走廊拿到 403（ErrorDeviceGate）。
+ * device-gate.spec.ts 在用例层会再显式写/删此文件切换门状态（workers=1，无并发竞争）。
+ */
+const resetTrustedDevices = () => {
+  const path = `${import.meta.dirname}/../backend/storage/trusted-devices.json`;
+  if (existsSync(path)) {
+    rmSync(path);
+    console.log(
+      "[global-setup] 已清理 trusted-devices.json（设备门重置为未激活）",
+    );
+  }
+};

@@ -1,6 +1,14 @@
-import { useRef, useState } from "react";
-import { Alert, Button, Input, InputRef, Row, Col } from "antd";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Button, Input, InputRef, Row, Col, Spin } from "antd";
 import { useInit } from "@/services/auth";
+import {
+  passGate,
+  probeGate,
+  setGateToken,
+  toGateDenial,
+} from "@/services/device-gate";
+import { DeviceGatePage } from "@/pages/login/device-gate";
+import type { GateDenial } from "@/services/device-gate";
 import { messageError, messageSuccess } from "@/utils/message";
 import { usePageTitle } from "@/store/global";
 import { bytesToHex } from "@/lib/e2ee/format";
@@ -23,6 +31,37 @@ const viewWidth = getViewWidth();
 
 const Init = () => {
   usePageTitle("应用初始化");
+
+  /** 门禁状态（见 docs/plans/device-gate/tasks/04-login-gate-flow.md）：
+   * 门激活时未授权设备不应看到初始化表单（auth/init 也会 403），
+   * probeGate 失败同样渲染未授权页（与登录页复用组件） */
+  const [gateChecking, setGateChecking] = useState(true);
+  const [gateDenial, setGateDenial] = useState<GateDenial | undefined>();
+
+  const runGateFlow = useCallback(async () => {
+    setGateChecking(true);
+    setGateDenial(undefined);
+    try {
+      const probe = await probeGate();
+      if (!probe.success) {
+        setGateDenial({ kind: "unavailable", detail: probe.message });
+        return false;
+      }
+      if (!probe.data!.gateEnabled) return true;
+      const { gateToken } = await passGate(probe.data!.challenge);
+      setGateToken(gateToken);
+      return true;
+    } catch (err) {
+      setGateDenial(toGateDenial(err));
+      return false;
+    } finally {
+      setGateChecking(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void runGateFlow();
+  }, [runGateFlow]);
 
   const [swiperIndex, setSwiperIndex] = useState(0);
   const [password, setPassword] = useState("");
@@ -91,6 +130,18 @@ const Init = () => {
     verticalAlign: "top",
     opacity: swiperIndex === index ? 1 : 0,
   });
+
+  if (gateChecking) {
+    return (
+      <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col justify-center items-center">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (gateDenial) {
+    return <DeviceGatePage denial={gateDenial} onRetry={runGateFlow} />;
+  }
 
   return (
     <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col flex-nowrap items-center dark:text-gray-100">

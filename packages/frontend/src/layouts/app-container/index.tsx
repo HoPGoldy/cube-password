@@ -11,6 +11,7 @@ import {
   LockOutlined,
   FormOutlined,
   DatabaseOutlined,
+  SafetyOutlined,
   SnippetsOutlined,
   HighlightOutlined,
 } from "@ant-design/icons";
@@ -28,6 +29,7 @@ import useChangePassword from "@/pages/change-password";
 import useOtpConfig from "@/pages/otp-config";
 import useCreatePwdSetting from "@/pages/create-pwd-setting";
 import useSecureLog from "@/pages/security-log";
+import useDeviceManage from "@/pages/device-manage";
 
 export const AppContainer = () => {
   const navigate = useNavigate();
@@ -39,6 +41,7 @@ export const AppContainer = () => {
   const otpConfig = useOtpConfig();
   const createPwd = useCreatePwdSetting();
   const secureLog = useSecureLog();
+  const deviceManage = useDeviceManage();
 
   const { mutateAsync: fetchStatistic, data: statResp } = useStatistic();
   const { mutateAsync: setAppTheme } = useSetTheme();
@@ -102,6 +105,12 @@ export const AppContainer = () => {
       onClick: secureLog.showModal,
     },
     {
+      key: "device-manage",
+      label: "设备管理",
+      icon: <SafetyOutlined />,
+      onClick: deviceManage.showModal,
+    },
+    {
       key: "theme",
       // 点击按钮或 Switch 都会触发 onClick 切换主题
       label: (
@@ -156,6 +165,7 @@ export const AppContainer = () => {
       {otpConfig.renderModal()}
       {createPwd.renderModal()}
       {secureLog.renderModal()}
+      {deviceManage.renderModal()}
     </CubeApp>
   );
 };
