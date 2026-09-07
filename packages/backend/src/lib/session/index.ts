@@ -62,6 +62,12 @@ export class SessionManager {
     return this.session?.unlockedGroupIds.has(groupId) ?? false;
   }
 
+  /** 已解锁分组 id 集合快照（登出/超时后为空数组） */
+  getUnlockedGroupIds(): number[] {
+    if (!this.session) return [];
+    return Array.from(this.session.unlockedGroupIds);
+  }
+
   getCurrentSession(): UserSession | null {
     if (!this.session) return null;
     return this.isAlive(this.session) ? this.session : null;

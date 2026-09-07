@@ -155,6 +155,8 @@ export class AuthService {
       salt: user.passwordSalt,
       keyBlob: user.keyBlob,
       kdfParams: user.kdfParams,
+      /** 凭证名称加密迁移标志：1=明文（前端登录后应提示迁移），2=已加密 */
+      metadataVersion: user.metadataVersion,
       groups: groups.map((g) => ({
         id: g.id,
         name: g.name,

@@ -33,6 +33,13 @@ export const useUnlockGroup = () => {
     mutationFn: (data: { id: number; hash?: string; totpCode?: string }) => {
       return requestPost("group/unlock", data);
     },
+    onSuccess: () => {
+      // 解锁后新变为可达的凭证需进入名称索引与列表缓存，
+      // 否则列表显示“解密失败”占位、搜索漏新可达凭证（search 页 staleTime: Infinity）
+      queryClient.invalidateQueries({ queryKey: ["groupList"] });
+      queryClient.invalidateQueries({ queryKey: ["certificateIndex"] });
+      queryClient.invalidateQueries({ queryKey: ["certificateList"] });
+    },
   });
 };
 
@@ -44,6 +51,9 @@ export const useDeleteGroup = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groupList"] });
+      // 级联删除的凭证需从名称索引与列表缓存移除（否则搜索出现幽灵结果）
+      queryClient.invalidateQueries({ queryKey: ["certificateIndex"] });
+      queryClient.invalidateQueries({ queryKey: ["certificateList"] });
     },
   });
 };
@@ -74,6 +84,9 @@ export const useUpdateGroupConfig = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groupList"] });
+      // 设锁立即从解锁集移除：可达凭证范围变化，索引与列表同步失效
+      queryClient.invalidateQueries({ queryKey: ["certificateIndex"] });
+      queryClient.invalidateQueries({ queryKey: ["certificateList"] });
     },
   });
 };

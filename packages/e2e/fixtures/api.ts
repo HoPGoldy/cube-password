@@ -7,6 +7,7 @@ import {
   hexToBytes,
   randomBytes,
   unwrapDek,
+  decryptContent,
   V2_ALG_AES_256_GCM,
   parseKdfParams,
   DEFAULT_KDF_PARAMS,
@@ -223,4 +224,4 @@ export const test = base.extend<ApiFixtures>({
   },
 });
 
-export { expect, BASE, randomBytes, hexToBytes, bytesToHex };
+export { expect, BASE, randomBytes, hexToBytes, bytesToHex, decryptContent };

@@ -30,12 +30,14 @@ export type UserAvgAggregateOutputType = {
   id: number | null
   defaultGroupId: number | null
   createPwdLength: number | null
+  metadataVersion: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
   defaultGroupId: number | null
   createPwdLength: number | null
+  metadataVersion: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -50,6 +52,7 @@ export type UserMinAggregateOutputType = {
   totpSecret: string | null
   createPwdAlphabet: string | null
   createPwdLength: number | null
+  metadataVersion: number | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -64,6 +67,7 @@ export type UserMaxAggregateOutputType = {
   totpSecret: string | null
   createPwdAlphabet: string | null
   createPwdLength: number | null
+  metadataVersion: number | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -78,6 +82,7 @@ export type UserCountAggregateOutputType = {
   totpSecret: number
   createPwdAlphabet: number
   createPwdLength: number
+  metadataVersion: number
   _all: number
 }
 
@@ -86,12 +91,14 @@ export type UserAvgAggregateInputType = {
   id?: true
   defaultGroupId?: true
   createPwdLength?: true
+  metadataVersion?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
   defaultGroupId?: true
   createPwdLength?: true
+  metadataVersion?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -106,6 +113,7 @@ export type UserMinAggregateInputType = {
   totpSecret?: true
   createPwdAlphabet?: true
   createPwdLength?: true
+  metadataVersion?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -120,6 +128,7 @@ export type UserMaxAggregateInputType = {
   totpSecret?: true
   createPwdAlphabet?: true
   createPwdLength?: true
+  metadataVersion?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -134,6 +143,7 @@ export type UserCountAggregateInputType = {
   totpSecret?: true
   createPwdAlphabet?: true
   createPwdLength?: true
+  metadataVersion?: true
   _all?: true
 }
 
@@ -235,6 +245,7 @@ export type UserGroupByOutputType = {
   totpSecret: string
   createPwdAlphabet: string
   createPwdLength: number
+  metadataVersion: number
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -272,6 +283,7 @@ export type UserWhereInput = {
   totpSecret?: Prisma.StringFilter<"User"> | string
   createPwdAlphabet?: Prisma.StringFilter<"User"> | string
   createPwdLength?: Prisma.IntFilter<"User"> | number
+  metadataVersion?: Prisma.IntFilter<"User"> | number
 }
 
 export type UserOrderByWithRelationInput = {
@@ -286,6 +298,7 @@ export type UserOrderByWithRelationInput = {
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -303,6 +316,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   totpSecret?: Prisma.StringFilter<"User"> | string
   createPwdAlphabet?: Prisma.StringFilter<"User"> | string
   createPwdLength?: Prisma.IntFilter<"User"> | number
+  metadataVersion?: Prisma.IntFilter<"User"> | number
 }, "id">
 
 export type UserOrderByWithAggregationInput = {
@@ -317,6 +331,7 @@ export type UserOrderByWithAggregationInput = {
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -339,6 +354,7 @@ export type UserScalarWhereWithAggregatesInput = {
   totpSecret?: Prisma.StringWithAggregatesFilter<"User"> | string
   createPwdAlphabet?: Prisma.StringWithAggregatesFilter<"User"> | string
   createPwdLength?: Prisma.IntWithAggregatesFilter<"User"> | number
+  metadataVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
 }
 
 export type UserCreateInput = {
@@ -352,6 +368,7 @@ export type UserCreateInput = {
   totpSecret?: string
   createPwdAlphabet?: string
   createPwdLength?: number
+  metadataVersion?: number
 }
 
 export type UserUncheckedCreateInput = {
@@ -366,6 +383,7 @@ export type UserUncheckedCreateInput = {
   totpSecret?: string
   createPwdAlphabet?: string
   createPwdLength?: number
+  metadataVersion?: number
 }
 
 export type UserUpdateInput = {
@@ -379,6 +397,7 @@ export type UserUpdateInput = {
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
+  metadataVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UserUncheckedUpdateInput = {
@@ -393,6 +412,7 @@ export type UserUncheckedUpdateInput = {
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
+  metadataVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UserCreateManyInput = {
@@ -407,6 +427,7 @@ export type UserCreateManyInput = {
   totpSecret?: string
   createPwdAlphabet?: string
   createPwdLength?: number
+  metadataVersion?: number
 }
 
 export type UserUpdateManyMutationInput = {
@@ -420,6 +441,7 @@ export type UserUpdateManyMutationInput = {
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
+  metadataVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -434,6 +456,7 @@ export type UserUncheckedUpdateManyInput = {
   totpSecret?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdAlphabet?: Prisma.StringFieldUpdateOperationsInput | string
   createPwdLength?: Prisma.IntFieldUpdateOperationsInput | number
+  metadataVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -448,12 +471,14 @@ export type UserCountOrderByAggregateInput = {
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -468,6 +493,7 @@ export type UserMaxOrderByAggregateInput = {
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -482,12 +508,14 @@ export type UserMinOrderByAggregateInput = {
   totpSecret?: Prisma.SortOrder
   createPwdAlphabet?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   defaultGroupId?: Prisma.SortOrder
   createPwdLength?: Prisma.SortOrder
+  metadataVersion?: Prisma.SortOrder
 }
 
 export type IntFieldUpdateOperationsInput = {
@@ -512,6 +540,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
+  metadataVersion?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -526,6 +555,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
+  metadataVersion?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -540,6 +570,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
+  metadataVersion?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -554,9 +585,10 @@ export type UserSelectScalar = {
   totpSecret?: boolean
   createPwdAlphabet?: boolean
   createPwdLength?: boolean
+  metadataVersion?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "keyBlob" | "kdfParams" | "initTime" | "theme" | "defaultGroupId" | "totpSecret" | "createPwdAlphabet" | "createPwdLength", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "passwordHash" | "passwordSalt" | "keyBlob" | "kdfParams" | "initTime" | "theme" | "defaultGroupId" | "totpSecret" | "createPwdAlphabet" | "createPwdLength" | "metadataVersion", ExtArgs["result"]["user"]>
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -573,6 +605,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     totpSecret: string
     createPwdAlphabet: string
     createPwdLength: number
+    metadataVersion: number
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1007,6 +1040,7 @@ export interface UserFieldRefs {
   readonly totpSecret: Prisma.FieldRef<"User", 'String'>
   readonly createPwdAlphabet: Prisma.FieldRef<"User", 'String'>
   readonly createPwdLength: Prisma.FieldRef<"User", 'Int'>
+  readonly metadataVersion: Prisma.FieldRef<"User", 'Int'>
 }
     
 

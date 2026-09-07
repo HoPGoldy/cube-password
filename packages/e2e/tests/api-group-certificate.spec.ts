@@ -4,6 +4,7 @@ import {
   authHeaders,
   BASE,
   encryptContent,
+  decryptContent,
   sha512,
   deriveMasterKey,
   bytesToHex,
@@ -274,21 +275,23 @@ test.describe("Certificate API", () => {
     groupId = body.data.newId;
   });
 
-  // v2：凭证 content 用登录时解出的全局 DEK 加密（v2 自描述格式），
-  // 在「创建凭证」测试中生成（certContent 同时用于 detail 的回读比对）
+  // 元数据加密：新前端只传 nameEnc（v2 密文），不再传明文 name
   const certPlaintext = JSON.stringify([
     { label: "网址", value: "https://example.com" },
     { label: "用户名", value: "e2e-user" },
     { label: "密码", value: "e2e-pass" },
   ]);
+  const certName = "e2e-cert";
   let certContent: string;
+  let certNameEnc: string;
 
   test("POST /api/certificate/add 创建凭证", async ({ request, session }) => {
     certContent = await encryptContent(session.dek, certPlaintext);
+    certNameEnc = await encryptContent(session.dek, certName);
     const resp = await request.post(`${BASE}/certificate/add`, {
       data: {
         groupId,
-        name: "e2e-cert",
+        nameEnc: certNameEnc,
         icon: "",
         markColor: "#ff0000",
         content: certContent,
@@ -303,7 +306,7 @@ test.describe("Certificate API", () => {
     certId = body.data.id;
   });
 
-  test("POST /api/certificate/list 列表包含凭证", async ({
+  test("POST /api/certificate/list 列表包含凭证且名称走 nameEnc", async ({
     request,
     session,
   }) => {
@@ -319,7 +322,10 @@ test.describe("Certificate API", () => {
 
     const found = body.data.items.find((c: { id: number }) => c.id === certId);
     expect(found).toBeDefined();
-    expect(found.name).toBe("e2e-cert");
+    // 新建后明文 name 列为空串（停止业务写入），名称密文可解回原文
+    expect(found.name).toBe("");
+    expect(found.nameEnc).toMatch(/^v2:aes-256-gcm:/);
+    expect(await decryptContent(session.dek, found.nameEnc)).toBe(certName);
   });
 
   test("POST /api/certificate/detail 获取凭证详情", async ({
@@ -334,19 +340,40 @@ test.describe("Certificate API", () => {
 
     const body = await resp.json();
     expect(body.success).toBe(true);
-    expect(body.data.name).toBe("e2e-cert");
+    expect(await decryptContent(session.dek, body.data.nameEnc)).toBe(certName);
     expect(body.data.content).toBe(certContent);
   });
 
-  test("POST /api/certificate/update 更新凭证", async ({
+  test("POST /api/certificate/index 全量索引（含 nameEnc/groupId，无明文名）", async ({
     request,
     session,
   }) => {
+    const resp = await request.post(`${BASE}/certificate/index`, {
+      data: {},
+      headers: authHeaders(session),
+    });
+    expect(resp.status()).toBe(200);
+
+    const body = await resp.json();
+    expect(body.success).toBe(true);
+    const found = body.data.items.find((c: { id: number }) => c.id === certId);
+    expect(found).toBeDefined();
+    expect(found.groupId).toBe(groupId);
+    expect(await decryptContent(session.dek, found.nameEnc)).toBe(certName);
+    expect(found.name).toBeUndefined();
+    expect(found.content).toBeUndefined();
+  });
+
+  test("POST /api/certificate/update 更新凭证（改名走 nameEnc）", async ({
+    request,
+    session,
+  }) => {
+    const newNameEnc = await encryptContent(session.dek, "e2e-cert-updated");
     const resp = await request.post(`${BASE}/certificate/update`, {
       data: {
         id: certId,
         groupId,
-        name: "e2e-cert-updated",
+        nameEnc: newNameEnc,
         icon: "",
         markColor: "#00ff00",
         content: await encryptContent(
@@ -361,9 +388,20 @@ test.describe("Certificate API", () => {
       headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);
+
+    // 回读：改名后的 nameEnc 可解回新名，明文 name 仍为空串
+    const detailResp = await request.post(`${BASE}/certificate/detail`, {
+      data: { id: certId },
+      headers: authHeaders(session),
+    });
+    const detail = (await detailResp.json()).data;
+    expect(detail.name).toBe("");
+    expect(await decryptContent(session.dek, detail.nameEnc)).toBe(
+      "e2e-cert-updated",
+    );
   });
 
-  test("POST /api/certificate/search 搜索凭证", async ({
+  test("POST /api/certificate/search 接口已删除（404）", async ({
     request,
     session,
   }) => {
@@ -371,11 +409,7 @@ test.describe("Certificate API", () => {
       data: { keyword: "e2e-cert", page: 1, pageSize: 10 },
       headers: authHeaders(session),
     });
-    expect(resp.status()).toBe(200);
-
-    const body = await resp.json();
-    expect(body.success).toBe(true);
-    expect(body.data.total).toBeGreaterThanOrEqual(1);
+    expect(resp.status()).toBe(404);
   });
 
   test("POST /api/certificate/delete 删除凭证", async ({

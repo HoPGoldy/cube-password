@@ -162,12 +162,16 @@ export const CertificateDetailModal: FC<Props> = ({
   useEffect(() => {
     if (!detailResp?.data || !vault.dek) return;
 
-    const { content, name, markColor, icon } = detailResp.data;
-    decryptContent(vault.dek, content)
-      .then((plain) => {
-        const fields = JSON.parse(plain);
+    const { nameEnc, content, markColor, icon } = detailResp.data;
+    // 元数据加密：标题与内容都需 DEK 解密
+    Promise.all([
+      nameEnc ? decryptContent(vault.dek, nameEnc) : Promise.resolve(""),
+      decryptContent(vault.dek, content),
+    ])
+      .then(([plainName, plainContent]) => {
+        const fields = JSON.parse(plainContent);
         form.setFieldsValue({
-          title: name,
+          title: plainName || "未命名凭证",
           icon: icon || "fa-solid fa-key",
           markColor: markColor || "",
           fields,
@@ -194,10 +198,12 @@ export const CertificateDetailModal: FC<Props> = ({
       vault.dek,
       JSON.stringify(values.fields),
     );
+    // 元数据加密：名称以 nameEnc 提交，不再传明文 name
+    const nameEnc = await encryptContent(vault.dek, values.title);
 
     if (isAdd) {
       await addCertificate({
-        name: values.title,
+        nameEnc,
         groupId,
         content,
         markColor: values.markColor || undefined,
@@ -206,7 +212,7 @@ export const CertificateDetailModal: FC<Props> = ({
     } else {
       await updateCertificate({
         id: detailId!,
-        name: values.title,
+        nameEnc,
         groupId,
         content,
         markColor: values.markColor || null,

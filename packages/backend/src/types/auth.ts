@@ -89,6 +89,9 @@ export const SchemaAuthLoginResponse = Type.Object({
     description: "v2 格式：AES-256-GCM(KEK, DEK)，前端用 KEK 解出 DEK",
   }),
   kdfParams: Type.String({ description: "JSON: 登录派生所需的 KDF 参数" }),
+  metadataVersion: Type.Number({
+    description: "凭证名称加密迁移标志：1=明文，2=已加密（nameEnc）",
+  }),
   groups: Type.Array(
     Type.Object({
       id: Type.Number(),

@@ -4,7 +4,8 @@ import dayjs from "dayjs";
 
 interface CertificateItem {
   id: number;
-  name: string;
+  /** 明文名称（来自内存索引；解密失败时为占位符） */
+  displayName: string;
   markColor: string | null;
   icon: string | null;
   updatedAt: string;
@@ -24,7 +25,7 @@ export const CertificateListItem: FC<Props> = ({
   selected,
   dragging,
 }) => {
-  const { name, markColor, icon, updatedAt } = detail;
+  const { displayName, markColor, icon, updatedAt } = detail;
 
   return (
     <div
@@ -50,7 +51,7 @@ export const CertificateListItem: FC<Props> = ({
               className="font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden"
               data-testid="certificate-item-name"
             >
-              {name}
+              {displayName}
             </div>
             <div className="text-gray-600 dark:text-gray-400">
               {dayjs(updatedAt).format("YYYY-MM-DD HH:mm:ss")}

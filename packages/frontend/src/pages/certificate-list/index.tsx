@@ -1,6 +1,10 @@
 import { FC, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAtomValue } from "jotai";
+import {
+  stateCertNameIndex,
+  NAME_DECRYPT_FAILED,
+} from "@/store/state-cert-name-index";
 import { stateUnlockedGroupIds } from "@/store/user";
 import { useGroupList } from "@/services/group";
 import {
@@ -44,11 +48,10 @@ const CertificateListPage: FC = () => {
   const [dragging, setDragging] = useState(false);
   /** 移动端账号抽屉 */
   const [accountSheetVisible, setAccountSheetVisible] = useState(false);
-  /** 本地可排序的凭证列表 */
+  /** 本地可排序的凭证列表（名称由索引提供，不来自服务端响应） */
   const [certificateList, setCertificateList] = useState<
     {
       id: number;
-      name: string;
       markColor: string | null;
       icon: string | null;
       updatedAt: string;
@@ -70,7 +73,14 @@ const CertificateListPage: FC = () => {
     setCertificateList(certListResp.data.items);
   }, [certListResp?.data?.items]);
 
-  const items = certificateList;
+  // 元数据加密：响应不含明文名，显示时读内存索引（未命中显示占位符）
+  const certNameIndex = useAtomValue(stateCertNameIndex);
+  const itemsWithNames = certificateList.map((item) => ({
+    ...item,
+    displayName: certNameIndex.get(item.id) ?? NAME_DECRYPT_FAILED,
+  }));
+
+  const items = itemsWithNames;
 
   const closeSelectMode = () => {
     setSelectMode(false);

@@ -1,5 +1,6 @@
 import { atom, getDefaultStore } from "jotai";
 import { localTheme } from "./local";
+import { clearCertNameIndex } from "./state-cert-name-index";
 import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
 import { queryClient } from "../services/base";
 
@@ -13,6 +14,8 @@ export interface UserInfo {
   withTotp: boolean;
   createPwdAlphabet: string;
   createPwdLength: number;
+  /** 凭证名称加密迁移标志：1=明文（需迁移），2=已加密（nameEnc） */
+  metadataVersion: number;
 }
 
 /** session token (in-memory only, not persisted) */
@@ -77,6 +80,8 @@ export const clearVault = (vault?: VaultState) => {
 export const logout = () => {
   const store = getDefaultStore();
   store.set(stateVault, (prev) => clearVault(prev));
+  // 明文名称索引与 DEK 同生命周期：先于会话状态清空，防止下一个账号读到上一个账号的数据
+  clearCertNameIndex();
   store.set(stateSessionToken, undefined);
   store.set(stateSessionExpiresAt, undefined);
   store.set(stateUser, undefined);

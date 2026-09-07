@@ -41,6 +41,7 @@ export type CertificateSumAggregateOutputType = {
 export type CertificateMinAggregateOutputType = {
   id: number | null
   name: string | null
+  nameEnc: string | null
   groupId: number | null
   content: string | null
   order: number | null
@@ -53,6 +54,7 @@ export type CertificateMinAggregateOutputType = {
 export type CertificateMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  nameEnc: string | null
   groupId: number | null
   content: string | null
   order: number | null
@@ -65,6 +67,7 @@ export type CertificateMaxAggregateOutputType = {
 export type CertificateCountAggregateOutputType = {
   id: number
   name: number
+  nameEnc: number
   groupId: number
   content: number
   order: number
@@ -91,6 +94,7 @@ export type CertificateSumAggregateInputType = {
 export type CertificateMinAggregateInputType = {
   id?: true
   name?: true
+  nameEnc?: true
   groupId?: true
   content?: true
   order?: true
@@ -103,6 +107,7 @@ export type CertificateMinAggregateInputType = {
 export type CertificateMaxAggregateInputType = {
   id?: true
   name?: true
+  nameEnc?: true
   groupId?: true
   content?: true
   order?: true
@@ -115,6 +120,7 @@ export type CertificateMaxAggregateInputType = {
 export type CertificateCountAggregateInputType = {
   id?: true
   name?: true
+  nameEnc?: true
   groupId?: true
   content?: true
   order?: true
@@ -214,6 +220,7 @@ export type CertificateGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type CertificateGroupByOutputType = {
   id: number
   name: string
+  nameEnc: string
   groupId: number
   content: string
   order: number
@@ -249,6 +256,7 @@ export type CertificateWhereInput = {
   NOT?: Prisma.CertificateWhereInput | Prisma.CertificateWhereInput[]
   id?: Prisma.IntFilter<"Certificate"> | number
   name?: Prisma.StringFilter<"Certificate"> | string
+  nameEnc?: Prisma.StringFilter<"Certificate"> | string
   groupId?: Prisma.IntFilter<"Certificate"> | number
   content?: Prisma.StringFilter<"Certificate"> | string
   order?: Prisma.IntFilter<"Certificate"> | number
@@ -262,6 +270,7 @@ export type CertificateWhereInput = {
 export type CertificateOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameEnc?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -278,6 +287,7 @@ export type CertificateWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.CertificateWhereInput[]
   NOT?: Prisma.CertificateWhereInput | Prisma.CertificateWhereInput[]
   name?: Prisma.StringFilter<"Certificate"> | string
+  nameEnc?: Prisma.StringFilter<"Certificate"> | string
   groupId?: Prisma.IntFilter<"Certificate"> | number
   content?: Prisma.StringFilter<"Certificate"> | string
   order?: Prisma.IntFilter<"Certificate"> | number
@@ -291,6 +301,7 @@ export type CertificateWhereUniqueInput = Prisma.AtLeast<{
 export type CertificateOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameEnc?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -311,6 +322,7 @@ export type CertificateScalarWhereWithAggregatesInput = {
   NOT?: Prisma.CertificateScalarWhereWithAggregatesInput | Prisma.CertificateScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Certificate"> | number
   name?: Prisma.StringWithAggregatesFilter<"Certificate"> | string
+  nameEnc?: Prisma.StringWithAggregatesFilter<"Certificate"> | string
   groupId?: Prisma.IntWithAggregatesFilter<"Certificate"> | number
   content?: Prisma.StringWithAggregatesFilter<"Certificate"> | string
   order?: Prisma.IntWithAggregatesFilter<"Certificate"> | number
@@ -322,6 +334,7 @@ export type CertificateScalarWhereWithAggregatesInput = {
 
 export type CertificateCreateInput = {
   name: string
+  nameEnc?: string
   content?: string
   order?: number
   markColor?: string | null
@@ -334,6 +347,7 @@ export type CertificateCreateInput = {
 export type CertificateUncheckedCreateInput = {
   id?: number
   name: string
+  nameEnc?: string
   groupId: number
   content?: string
   order?: number
@@ -345,6 +359,7 @@ export type CertificateUncheckedCreateInput = {
 
 export type CertificateUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   markColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -357,6 +372,7 @@ export type CertificateUpdateInput = {
 export type CertificateUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   groupId?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -369,6 +385,7 @@ export type CertificateUncheckedUpdateInput = {
 export type CertificateCreateManyInput = {
   id?: number
   name: string
+  nameEnc?: string
   groupId: number
   content?: string
   order?: number
@@ -380,6 +397,7 @@ export type CertificateCreateManyInput = {
 
 export type CertificateUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   markColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -391,6 +409,7 @@ export type CertificateUpdateManyMutationInput = {
 export type CertificateUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   groupId?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -413,6 +432,7 @@ export type CertificateOrderByRelationAggregateInput = {
 export type CertificateCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameEnc?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -431,6 +451,7 @@ export type CertificateAvgOrderByAggregateInput = {
 export type CertificateMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameEnc?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -443,6 +464,7 @@ export type CertificateMaxOrderByAggregateInput = {
 export type CertificateMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameEnc?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -502,6 +524,7 @@ export type CertificateUncheckedUpdateManyWithoutGroupNestedInput = {
 
 export type CertificateCreateWithoutGroupInput = {
   name: string
+  nameEnc?: string
   content?: string
   order?: number
   markColor?: string | null
@@ -513,6 +536,7 @@ export type CertificateCreateWithoutGroupInput = {
 export type CertificateUncheckedCreateWithoutGroupInput = {
   id?: number
   name: string
+  nameEnc?: string
   content?: string
   order?: number
   markColor?: string | null
@@ -552,6 +576,7 @@ export type CertificateScalarWhereInput = {
   NOT?: Prisma.CertificateScalarWhereInput | Prisma.CertificateScalarWhereInput[]
   id?: Prisma.IntFilter<"Certificate"> | number
   name?: Prisma.StringFilter<"Certificate"> | string
+  nameEnc?: Prisma.StringFilter<"Certificate"> | string
   groupId?: Prisma.IntFilter<"Certificate"> | number
   content?: Prisma.StringFilter<"Certificate"> | string
   order?: Prisma.IntFilter<"Certificate"> | number
@@ -564,6 +589,7 @@ export type CertificateScalarWhereInput = {
 export type CertificateCreateManyGroupInput = {
   id?: number
   name: string
+  nameEnc?: string
   content?: string
   order?: number
   markColor?: string | null
@@ -574,6 +600,7 @@ export type CertificateCreateManyGroupInput = {
 
 export type CertificateUpdateWithoutGroupInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   markColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -585,6 +612,7 @@ export type CertificateUpdateWithoutGroupInput = {
 export type CertificateUncheckedUpdateWithoutGroupInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   markColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -596,6 +624,7 @@ export type CertificateUncheckedUpdateWithoutGroupInput = {
 export type CertificateUncheckedUpdateManyWithoutGroupInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEnc?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   markColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -609,6 +638,7 @@ export type CertificateUncheckedUpdateManyWithoutGroupInput = {
 export type CertificateSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameEnc?: boolean
   groupId?: boolean
   content?: boolean
   order?: boolean
@@ -622,6 +652,7 @@ export type CertificateSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 export type CertificateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameEnc?: boolean
   groupId?: boolean
   content?: boolean
   order?: boolean
@@ -635,6 +666,7 @@ export type CertificateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type CertificateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameEnc?: boolean
   groupId?: boolean
   content?: boolean
   order?: boolean
@@ -648,6 +680,7 @@ export type CertificateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type CertificateSelectScalar = {
   id?: boolean
   name?: boolean
+  nameEnc?: boolean
   groupId?: boolean
   content?: boolean
   order?: boolean
@@ -657,7 +690,7 @@ export type CertificateSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CertificateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "groupId" | "content" | "order" | "markColor" | "icon" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
+export type CertificateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "nameEnc" | "groupId" | "content" | "order" | "markColor" | "icon" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
 export type CertificateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   group?: boolean | Prisma.GroupDefaultArgs<ExtArgs>
 }
@@ -676,6 +709,7 @@ export type $CertificatePayload<ExtArgs extends runtime.Types.Extensions.Interna
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
+    nameEnc: string
     groupId: number
     content: string
     order: number
@@ -1109,6 +1143,7 @@ export interface Prisma__CertificateClient<T, Null = never, ExtArgs extends runt
 export interface CertificateFieldRefs {
   readonly id: Prisma.FieldRef<"Certificate", 'Int'>
   readonly name: Prisma.FieldRef<"Certificate", 'String'>
+  readonly nameEnc: Prisma.FieldRef<"Certificate", 'String'>
   readonly groupId: Prisma.FieldRef<"Certificate", 'Int'>
   readonly content: Prisma.FieldRef<"Certificate", 'String'>
   readonly order: Prisma.FieldRef<"Certificate", 'Int'>

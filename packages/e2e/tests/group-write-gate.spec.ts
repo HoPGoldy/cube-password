@@ -5,6 +5,7 @@ import {
   authHeaders,
   BASE,
   encryptContent,
+  decryptContent,
   sha512,
   deriveMasterKey,
   bytesToHex,
@@ -15,9 +16,9 @@ import {
 import { parseKdfParams, DEFAULT_KDF_PARAMS } from "@frontend/lib/e2ee";
 
 /**
- * 锁定分组的写操作门禁（PRD T02）：
- * CertificateService 的 add/update/delete/move/sort 对未解锁分组一律 403 拒绝；
- * search 为跨组分页读接口，明确不加门禁。
+ * 锁定分组的写操作门禁（PRD T02）+ 元数据加密后续（T02 metadata-encryption）：
+ * CertificateService 的 add/update/delete/move/sort/migrate-metadata 对未解锁分组
+ * 一律 403 拒绝；certificate/search 接口已随元数据加密整体删除。
  *
  * fixtures 的 session fixture 为每个用例独立的新登录会话：
  * 登录时仅 lockType==='None' 的分组进入解锁集合，Password 锁分组处于锁定态。
@@ -100,7 +101,7 @@ test.describe("Certificate group write gate", () => {
     const addResp = await request.post(`${BASE}/certificate/add`, {
       data: {
         groupId: lockedGroupId,
-        name: "write-gate-cert",
+        nameEnc: await encryptContent(session.dek, "write-gate-cert"),
         content: await encryptContent(session.dek, '{"k":"v"}'),
       },
       headers: authHeaders(session),
@@ -114,7 +115,7 @@ test.describe("Certificate group write gate", () => {
     session,
   }) => {
     const resp = await request.post(`${BASE}/certificate/add`, {
-      data: { groupId: lockedGroupId, name: "should-fail" },
+      data: { groupId: lockedGroupId, nameEnc: "should-fail" },
       headers: authHeaders(session),
     });
     expect(resp.status()).toBe(403);
@@ -130,7 +131,7 @@ test.describe("Certificate group write gate", () => {
       data: {
         id: certId,
         groupId: lockedGroupId,
-        name: "should-fail-update",
+        nameEnc: "should-fail-update",
       },
       headers: authHeaders(session),
     });
@@ -149,7 +150,7 @@ test.describe("Certificate group write gate", () => {
       data: {
         id: certId,
         groupId: unlockedGroupId,
-        name: "should-fail-escape",
+        nameEnc: "should-fail-escape",
       },
       headers: authHeaders(session),
     });
@@ -172,7 +173,10 @@ test.describe("Certificate group write gate", () => {
   }) => {
     // 在已解锁分组建一个凭证，与锁定组凭证一起传入 delete
     const addResp = await request.post(`${BASE}/certificate/add`, {
-      data: { groupId: unlockedGroupId, name: "cross-group-cert" },
+      data: {
+        groupId: unlockedGroupId,
+        nameEnc: await encryptContent(session.dek, "cross-group-cert"),
+      },
       headers: authHeaders(session),
     });
     expect(addResp.status()).toBe(200);
@@ -186,17 +190,17 @@ test.describe("Certificate group write gate", () => {
     const body = await resp.json();
     expect(body.success).toBe(false);
 
-    // 副作用断言：已解锁组内那个凭证也未被执行删除（整体拒绝，search 仍可查到）
-    const searchResp = await request.post(`${BASE}/certificate/search`, {
-      data: { keyword: "cross-group-cert", page: 1, pageSize: 10 },
+    // 副作用断言：已解锁组内那个凭证也未被执行删除（detail 仍可访问，
+    // 且名称密文可解回原文——search 接口已随元数据加密删除）
+    const detailResp = await request.post(`${BASE}/certificate/detail`, {
+      data: { id: unlockedCertId },
       headers: authHeaders(session),
     });
-    expect(searchResp.status()).toBe(200);
-    const searchBody = await searchResp.json();
-    const found = searchBody.data.items.find(
-      (c: { id: number }) => c.id === unlockedCertId,
+    expect(detailResp.status()).toBe(200);
+    const detail = (await detailResp.json()).data;
+    expect(await decryptContent(session.dek, detail.nameEnc)).toBe(
+      "cross-group-cert",
     );
-    expect(found).toBeDefined();
 
     // 清理（所在组已解锁，可删）
     const delResp = await request.post(`${BASE}/certificate/delete`, {
@@ -245,7 +249,10 @@ test.describe("Certificate group write gate", () => {
   }) => {
     // 在已解锁分组建一个凭证，再尝试移动到未解锁的 lockedGroupId
     const addResp = await request.post(`${BASE}/certificate/add`, {
-      data: { groupId: unlockedGroupId, name: "move-source-cert" },
+      data: {
+        groupId: unlockedGroupId,
+        nameEnc: await encryptContent(session.dek, "move-source-cert"),
+      },
       headers: authHeaders(session),
     });
     expect(addResp.status()).toBe(200);
@@ -288,20 +295,32 @@ test.describe("Certificate group write gate", () => {
     expect(body.success).toBe(false);
   });
 
-  test("POST /api/certificate/search 跨组搜索不加门禁（结果含锁定分组凭证）", async ({
+  test("POST /api/certificate/migrate-metadata 锁定组未解锁时被 403 拒绝（写门禁）", async ({
     request,
     session,
   }) => {
-    const resp = await request.post(`${BASE}/certificate/search`, {
-      data: { keyword: "write-gate-cert", page: 1, pageSize: 10 },
+    const resp = await request.post(`${BASE}/certificate/migrate-metadata`, {
+      data: {
+        items: [{ id: certId, nameEnc: "v2:aes-256-gcm:e2e-gate" }],
+      },
       headers: authHeaders(session),
     });
-    expect(resp.status()).toBe(200);
+    expect(resp.status()).toBe(403);
     const body = await resp.json();
-    expect(body.success).toBe(true);
-    const found = body.data.items.find((c: { id: number }) => c.id === certId);
-    expect(found).toBeDefined();
-    expect(found.groupId).toBe(lockedGroupId);
+    expect(body.success).toBe(false);
+
+    // 副作用断言：锁定组凭证的 nameEnc 保持 add 时的原值，未被本次请求写入
+    await unlockLockedGroup(request, session);
+    const detailResp = await request.post(`${BASE}/certificate/detail`, {
+      data: { id: certId },
+      headers: authHeaders(session),
+    });
+    expect(detailResp.status()).toBe(200);
+    const detail = (await detailResp.json()).data;
+    expect(detail.nameEnc).not.toBe("v2:aes-256-gcm:e2e-gate");
+    expect(await decryptContent(session.dek, detail.nameEnc)).toBe(
+      "write-gate-cert",
+    );
   });
 
   test("解锁后 add/update/sort/move/delete 全部成功", async ({
@@ -310,20 +329,23 @@ test.describe("Certificate group write gate", () => {
   }) => {
     await unlockLockedGroup(request, session);
 
-    // add（锁定分组）
+    // add（锁定分组，名称走 nameEnc）
     const addResp = await request.post(`${BASE}/certificate/add`, {
-      data: { groupId: lockedGroupId, name: "unlocked-add-cert" },
+      data: {
+        groupId: lockedGroupId,
+        nameEnc: await encryptContent(session.dek, "unlocked-add-cert"),
+      },
       headers: authHeaders(session),
     });
     expect(addResp.status()).toBe(200);
     const addedCertId = (await addResp.json()).data.id;
 
-    // update（锁定分组）
+    // update（锁定分组，改名走 nameEnc）
     const updateResp = await request.post(`${BASE}/certificate/update`, {
       data: {
         id: addedCertId,
         groupId: lockedGroupId,
-        name: "unlocked-add-cert-renamed",
+        nameEnc: await encryptContent(session.dek, "unlocked-add-cert-renamed"),
       },
       headers: authHeaders(session),
     });

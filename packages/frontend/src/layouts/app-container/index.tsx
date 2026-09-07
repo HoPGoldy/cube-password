@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { Switch } from "antd";
 import {
   CubeApp,
@@ -23,6 +23,7 @@ import { stateUser, changeTheme, logout, type AppTheme } from "@/store/user";
 import { useSetTheme, useStatistic } from "@/services/user";
 import { useLogout } from "@/services/auth";
 import { useAppVersion } from "@/services/app-config";
+import { MetadataMigrationModal } from "@/components/metadata-migration-modal";
 import useChangePassword from "@/pages/change-password";
 import useOtpConfig from "@/pages/otp-config";
 import useCreatePwdSetting from "@/pages/create-pwd-setting";
@@ -30,6 +31,7 @@ import useSecureLog from "@/pages/security-log";
 
 export const AppContainer = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const renderTitle = useHeaderPageTitle();
   const userInfo = useAtomValue(stateUser);
 
@@ -139,6 +141,17 @@ export const AppContainer = () => {
       }}
     >
       <Outlet />
+      {/* 存量元数据迁移（metadataVersion===1 时登录后弹出） */}
+      <MetadataMigrationModal
+        onFinish={() =>
+          navigate(
+            searchParams.get("redirect")
+              ? decodeURIComponent(searchParams.get("redirect")!)
+              : "/",
+            { replace: true },
+          )
+        }
+      />
       {changePassword.renderModal()}
       {otpConfig.renderModal()}
       {createPwd.renderModal()}

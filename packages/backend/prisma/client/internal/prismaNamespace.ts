@@ -835,7 +835,8 @@ export const UserScalarFieldEnum = {
   defaultGroupId: 'defaultGroupId',
   totpSecret: 'totpSecret',
   createPwdAlphabet: 'createPwdAlphabet',
-  createPwdLength: 'createPwdLength'
+  createPwdLength: 'createPwdLength',
+  metadataVersion: 'metadataVersion'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -860,6 +861,7 @@ export type GroupScalarFieldEnum = (typeof GroupScalarFieldEnum)[keyof typeof Gr
 export const CertificateScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nameEnc: 'nameEnc',
   groupId: 'groupId',
   content: 'content',
   order: 'order',

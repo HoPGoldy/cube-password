@@ -33,6 +33,7 @@ model User {
   totpSecret        String   @default("")
   createPwdAlphabet String   @default("")
   createPwdLength   Int      @default(16)
+  metadataVersion   Int      @default(1) // 1=凭证名称明文，2=凭证名称已加密（nameEnc）
 }
 
 // 凭证分组
@@ -53,7 +54,8 @@ model Group {
 // 凭证（密码条目）
 model Certificate {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String // 旧明文列：迁移期只读不写，下个大版本删除
+  nameEnc   String   @default("") // 凭证名称密文（v2 格式：DEK 加密），空串 = 未迁移
   groupId   Int
   content   String   @default("")
   order     Int      @default(-1)

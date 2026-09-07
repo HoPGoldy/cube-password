@@ -2,6 +2,7 @@ import { AppInstance } from "@/types";
 import {
   SchemaCertificateListByGroupBody,
   SchemaCertificateListByGroupResponse,
+  SchemaCertificateIndexResponse,
   SchemaCertificateAddBody,
   SchemaCertificateAddResponse,
   SchemaCertificateDetailBody,
@@ -10,8 +11,8 @@ import {
   SchemaCertificateDeleteBody,
   SchemaCertificateMoveBody,
   SchemaCertificateSortBody,
-  SchemaCertificateSearchBody,
-  SchemaCertificateSearchResponse,
+  SchemaCertificateMigrateMetadataBody,
+  SchemaCertificateMigrateMetadataResponse,
 } from "@/types/certificate";
 import { CertificateService } from "./service";
 
@@ -35,6 +36,21 @@ export const registerCertificateController = (options: RegisterOptions) => {
     },
     async (request) => {
       return await certificateService.listByGroup(request.body.groupId);
+    },
+  );
+
+  server.post(
+    "/certificate/index",
+    {
+      schema: {
+        description:
+          "全量凭证索引（元数据加密）：仅索引字段，供前端解密 nameEnc 构建内存明文索引；限可达分组",
+        tags: ["certificate"],
+        response: { 200: SchemaCertificateIndexResponse },
+      },
+    },
+    async () => {
+      return await certificateService.listAll();
     },
   );
 
@@ -129,17 +145,18 @@ export const registerCertificateController = (options: RegisterOptions) => {
   );
 
   server.post(
-    "/certificate/search",
+    "/certificate/migrate-metadata",
     {
       schema: {
-        description: "搜索凭证",
+        description:
+          "迁移凭证名称为密文（单事务批量写 nameEnc；finish=true 时同事务收尾 metadataVersion=2）",
         tags: ["certificate"],
-        body: SchemaCertificateSearchBody,
-        response: { 200: SchemaCertificateSearchResponse },
+        body: SchemaCertificateMigrateMetadataBody,
+        response: { 200: SchemaCertificateMigrateMetadataResponse },
       },
     },
     async (request) => {
-      return await certificateService.search(request.body);
+      return await certificateService.migrateMetadata(request.body);
     },
   );
 };
