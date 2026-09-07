@@ -438,6 +438,7 @@ export const CertificateDetailModal: FC<Props> = ({
         open={!!detailId}
         onCancel={onClose}
         closable={false}
+        destroyOnClose
         title={renderTitle()}
         footer={renderFooter()}
       >

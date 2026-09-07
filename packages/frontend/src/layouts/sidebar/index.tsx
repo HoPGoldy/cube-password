@@ -5,7 +5,10 @@ import { Button } from "antd";
 import { useAtomValue } from "jotai";
 import { stateUnlockedGroupIds } from "@/store/user";
 import { useAddGroup, useGroupList } from "@/services/group";
-import type { SchemaGroupItemType } from "@shared-types/group";
+import type {
+  SchemaGroupItemType,
+  SchemaGroupAddBodyType,
+} from "@shared-types/group";
 import { messageSuccess } from "@/utils/message";
 import { APP_NAME } from "@/config";
 import { AddGroupModal } from "@/components/add-group-modal";
@@ -20,13 +23,7 @@ export const Sidebar: FC = () => {
 
   const groups = groupListResp?.data?.items ?? [];
 
-  const onAddGroup = async (data: {
-    name: string;
-    lockType: string;
-    passwordHash?: string;
-    passwordSalt?: string;
-    kdfParams?: string;
-  }) => {
+  const onAddGroup = async (data: SchemaGroupAddBodyType) => {
     const resp = await addGroup(data);
     if (resp?.code !== 200) return;
     messageSuccess("分组已创建");

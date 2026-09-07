@@ -73,6 +73,10 @@ export type SchemaAuthLoginBodyType = Type.Static<typeof SchemaAuthLoginBody>;
 
 export const SchemaAuthLoginResponse = Type.Object({
   token: Type.String(),
+  /** 会话绝对过期时刻（ISO 8601），前端倒计时以此为准 */
+  expiresAt: Type.String({
+    description: "会话绝对过期时刻（ISO 8601），任何活跃操作都不续期",
+  }),
   theme: Type.String(),
   initTime: Type.String(),
   defaultGroupId: Type.Number(),

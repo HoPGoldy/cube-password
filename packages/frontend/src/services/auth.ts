@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { requestGet, requestPost } from "./base";
+import { requestPost } from "./base";
 import type {
   SchemaAuthLoginBodyType,
   SchemaAuthLoginResponseType,
@@ -14,12 +14,12 @@ import type { AppResponse } from "@/types/global";
 
 /** 获取全局状态（是否已初始化） */
 export const queryGlobal = () => {
-  return requestGet<SchemaGlobalResponseType>("auth/global");
+  return requestPost<SchemaGlobalResponseType>("auth/global");
 };
 
 /** 获取 challenge code */
 export const queryChallenge = () => {
-  return requestGet<SchemaChallengeResponseType>("auth/challenge");
+  return requestPost<SchemaChallengeResponseType>("auth/challenge");
 };
 
 /** 初始化（首次设置主密码） */

@@ -1,6 +1,6 @@
 import { PrismaService } from "@/modules/prisma";
 import { ChallengeManager } from "@/lib/challenge";
-import { sha512 } from "@/lib/crypto";
+import { sha512, timingSafeEqual } from "@/lib/crypto";
 import { generateSecret, verifySync, TOTP } from "otplib";
 import {
   ErrorOtpVerifyFailed,
@@ -82,7 +82,7 @@ export class OtpService {
 
     // 验证密码
     const expectedHash = sha512(user.passwordHash + challengeCode);
-    if (hash !== expectedHash) {
+    if (!timingSafeEqual(hash, expectedHash)) {
       throw new ErrorBadRequest("密码错误");
     }
 

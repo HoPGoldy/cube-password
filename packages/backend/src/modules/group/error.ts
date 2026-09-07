@@ -13,3 +13,10 @@ export class ErrorGroupUnlockFailed extends ErrorBadRequest {
     this.code = 40021;
   }
 }
+
+export class ErrorGroupLockTypeUnknown extends ErrorBadRequest {
+  constructor(lockType: string) {
+    super(`未知的分组锁类型: ${lockType}`);
+    this.code = 40022;
+  }
+}

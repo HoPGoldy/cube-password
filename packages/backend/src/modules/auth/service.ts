@@ -1,10 +1,10 @@
 import { PrismaService } from "@/modules/prisma";
-import { SessionManager } from "@/lib/session";
+import { SESSION_ABSOLUTE_TIMEOUT_MS, SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
 import { LoginLocker } from "@/lib/login-locker";
 import { NotificationService } from "@/modules/notification/service";
 import { NoticeType } from "@/types/notification";
-import { sha512 } from "@/lib/crypto";
+import { sha512, timingSafeEqual } from "@/lib/crypto";
 import { verifySync } from "otplib";
 import { ErrorAuthFailed, ErrorNeedLogin } from "./error";
 import {
@@ -108,7 +108,7 @@ export class AuthService {
 
     // 验证密码: hash = SHA512(hex(V) + challengeCode)，V 存于 passwordHash
     const expectedHash = sha512(user.passwordHash + challengeCode);
-    if (hash !== expectedHash) {
+    if (!timingSafeEqual(hash, expectedHash)) {
       const lockDetail = this.loginLocker.recordLoginFail();
       await this.notificationService.createNotice(
         "密码错误",
@@ -125,6 +125,9 @@ export class AuthService {
 
     // 创建 session
     const session = this.sessionManager.createSession();
+    const expiresAt = new Date(
+      session.createdAt + SESSION_ABSOLUTE_TIMEOUT_MS,
+    ).toISOString();
 
     // 自动解锁无锁分组
     const groups = await this.prisma.group.findMany({
@@ -140,6 +143,8 @@ export class AuthService {
 
     return {
       token: session.token,
+      /** 会话绝对过期时刻，前端倒计时以此为准（不依赖本地时钟校准） */
+      expiresAt,
       theme: user.theme,
       initTime: user.initTime.toISOString(),
       defaultGroupId: user.defaultGroupId,
@@ -185,7 +190,7 @@ export class AuthService {
     // 验证旧密码证明：hash = SHA512(hex(V_old) + challengeCode)，与 login 同构；
     // 失败从简：仅拒绝，不走锁定/通知
     const expectedHash = sha512(user.passwordHash + challengeCode);
-    if (data.hash !== expectedHash) {
+    if (!timingSafeEqual(data.hash, expectedHash)) {
       throw new ErrorUnauthorized("旧密码验证失败");
     }
 

@@ -33,6 +33,31 @@ docker run -d \
 
 首次启动后访问应用，按引导设置主密码完成初始化。
 
+### nginx 子路径部署
+
+前端 API 请求为相对路径，依赖反向代理「吞掉子路径前缀」的语义：`proxy_pass` 末尾**带斜杠**时，nginx 会去掉 `location` 匹配的前缀再转发；不带斜杠则原样转发，后端会收到 `/cube-password/api/*` 导致 404。
+
+```nginx
+# 子路径部署：注意 proxy_pass 末尾的斜杠（吞掉 /cube-password/ 前缀）
+location /cube-password/ {
+    proxy_pass http://127.0.0.1:3499/;
+}
+```
+
+根路径部署则无需关心斜杠：
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3499;
+}
+```
+
+若通过 https 对外提供服务，建议在 nginx 侧追加 HSTS 头承担协议升级（应用自身不下发 UIR/HSTS，以兼容 http 直连部署）：
+
+```nginx
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+```
+
 ## 本地开发
 
 1、安装依赖：

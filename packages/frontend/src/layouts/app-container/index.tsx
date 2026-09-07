@@ -16,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import { useAtomValue } from "jotai";
 import { Sidebar } from "../sidebar";
+import { SessionCountdown } from "./session-countdown";
 import { useHeaderPageTitle } from "./use-page-title";
 import { THEME_PRIMARY_COLOR } from "@/config";
 import { stateUser, changeTheme, logout, type AppTheme } from "@/store/user";
@@ -116,6 +117,7 @@ export const AppContainer = () => {
       primaryColor={THEME_PRIMARY_COLOR}
       sidebarList={<Sidebar />}
       headerLeft={renderTitle()}
+      headerRight={<SessionCountdown />}
       onHeaderSearchBtnClick={() => navigate("/search")}
       accountMenuStats={accountMenuStats}
       accountMenuItems={accountMenuItems}

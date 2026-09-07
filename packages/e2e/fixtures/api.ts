@@ -131,9 +131,11 @@ export async function loginWithPassword(
   request: APIRequestContext,
   password: string,
 ): Promise<SessionInfo> {
-  // 1. Get salt + kdfParams（GET /auth/global 不消费 challenge，可在 login 前任意顺序发起；
+  // 1. Get salt + kdfParams（POST /auth/global 不消费 challenge，可在 login 前任意顺序发起；
   //    kdfParams 未初始化时缺省，回落默认参数）
-  const globalResp = await request.get(`${BASE}/auth/global`);
+  const globalResp = await request.post(`${BASE}/auth/global`, {
+    data: {},
+  });
   const globalBody = await globalResp.json();
   expect(globalBody.success).toBe(true);
   const salt: string = globalBody.data.salt;
@@ -141,7 +143,9 @@ export async function loginWithPassword(
 
   // 2. Get challenge code
   //    后端 login 服务端自行 popLastChallenge，challenge 请求必须保持为 login 前最后一次发起的请求
-  const challengeResp = await request.get(`${BASE}/auth/challenge`);
+  const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+    data: {},
+  });
   const challengeBody = await challengeResp.json();
   expect(challengeBody.success).toBe(true);
   const challengeCode = challengeBody.data.code;
@@ -177,7 +181,7 @@ async function loginViaApi(request: APIRequestContext): Promise<SessionInfo> {
 }
 
 /**
- * 全局登录失败计数（今日，来自 GET /auth/global）
+ * 全局登录失败计数（今日，来自 POST /auth/global）
  *
  * 后端锁定规则：全局当日失败 ≥ 3 次后，**所有**登录（含正确密码）都被拒绝。
  * 需要真实失败登录用例时，必须先用本函数检查计数，≥ 2 时跳过真实尝试，
@@ -186,7 +190,9 @@ async function loginViaApi(request: APIRequestContext): Promise<SessionInfo> {
 export async function getLoginFailureCount(
   request: APIRequestContext,
 ): Promise<number> {
-  const resp = await request.get(`${BASE}/auth/global`);
+  const resp = await request.post(`${BASE}/auth/global`, {
+    data: {},
+  });
   const body = await resp.json();
   expect(body.success).toBe(true);
   return body.data.loginFailure.length as number;

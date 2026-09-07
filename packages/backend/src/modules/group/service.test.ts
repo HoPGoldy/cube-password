@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { GroupService } from "@/modules/group/service";
 import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
-
 /**
  * 构造仅覆盖 unlock Password 分支所需字段的最小分组记录
  * （service 内 unlock 只读这些字段，Prisma 行为不在单测范围内）
@@ -147,5 +146,48 @@ describe("GroupService.unlock - Password 锁 kdfParams 校验", () => {
       "分组解锁失败",
     );
     expect(sessionManager.isGroupUnlocked(1)).toBe(false);
+  });
+
+  it("lockType 为未知值（如 banana）的存量脏数据时抛错不放行", async () => {
+    const sessionManager = new SessionManager();
+    sessionManager.createSession();
+    const challengeManager = new ChallengeManager();
+    const svc = makeService(
+      makeGroup({ lockType: "banana" }),
+      sessionManager,
+      challengeManager,
+    );
+
+    // 即使携带了合法格式的 hash 也不得放行（禁止 fall-through 到 addUnlockedGroup）
+    await expect(svc.unlock(1, { hash: "X".repeat(128) })).rejects.toThrow(
+      "未知的分组锁类型: banana",
+    );
+    expect(sessionManager.isGroupUnlocked(1)).toBe(false);
+  });
+
+  it("lockType 为未知值且不带任何凭证时同样抛错不放行", async () => {
+    const sessionManager = new SessionManager();
+    sessionManager.createSession();
+    const svc = makeService(
+      makeGroup({ lockType: "banana" }),
+      sessionManager,
+      new ChallengeManager(),
+    );
+
+    await expect(svc.unlock(1, {})).rejects.toThrow("未知的分组锁类型");
+    expect(sessionManager.isGroupUnlocked(1)).toBe(false);
+  });
+
+  it("lockType=None 时直接解锁成功（确认 else 分支未影响 None 路径）", async () => {
+    const sessionManager = new SessionManager();
+    sessionManager.createSession();
+    const svc = makeService(
+      makeGroup({ lockType: "None" }),
+      sessionManager,
+      new ChallengeManager(),
+    );
+
+    await expect(svc.unlock(1, {})).resolves.toBeUndefined();
+    expect(sessionManager.isGroupUnlocked(1)).toBe(true);
   });
 });

@@ -73,14 +73,6 @@ axiosInstance.interceptors.response.use(
   },
 );
 
-export const requestGet = async <T = any>(
-  url: string,
-  config?: AxiosRequestConfig,
-) => {
-  const resp = await axiosInstance.get<AppResponse<T>>(url, config);
-  return resp.data;
-};
-
 export const requestPost = async <T = any, D = any>(
   url: string,
   data?: D,

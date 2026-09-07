@@ -18,6 +18,12 @@ export interface UserInfo {
 /** session token (in-memory only, not persisted) */
 export const stateSessionToken = atom(undefined as string | undefined);
 
+/**
+ * 会话绝对过期时刻（来自 login 响应的 ISO 字符串）
+ * - 服务端绝对超时不续期；倒计时以服务端下发的该值为准，不用本地时钟校准
+ */
+export const stateSessionExpiresAt = atom(undefined as string | undefined);
+
 /** user info */
 export const stateUser = atom(undefined as UserInfo | undefined);
 
@@ -72,8 +78,11 @@ export const logout = () => {
   const store = getDefaultStore();
   store.set(stateVault, (prev) => clearVault(prev));
   store.set(stateSessionToken, undefined);
+  store.set(stateSessionExpiresAt, undefined);
   store.set(stateUser, undefined);
   store.set(stateUnlockedGroupIds, new Set());
+  // 清空 react-query 缓存，防止换号登录后读到上一个账号的密文数据
+  queryClient.clear();
 };
 
 export const login = (payload: SchemaAuthLoginResponseType) => {
@@ -81,6 +90,7 @@ export const login = (payload: SchemaAuthLoginResponseType) => {
   const store = getDefaultStore();
 
   store.set(stateSessionToken, token);
+  store.set(stateSessionExpiresAt, payload.expiresAt);
   store.set(stateKdfMeta, { salt, kdfParamsRaw: payload.kdfParams });
   store.set(stateUser, {
     ...userInfo,

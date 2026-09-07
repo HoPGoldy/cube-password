@@ -37,8 +37,8 @@ export const registerAuthController = (options: RegisterOptions) => {
     authService.validateSession(token);
   });
 
-  // GET /api/auth/challenge — 获取挑战码
-  server.get(
+  // POST /api/auth/challenge — 获取挑战码
+  server.post(
     "/auth/challenge",
     {
       config: { disableAuth: true },
@@ -53,8 +53,8 @@ export const registerAuthController = (options: RegisterOptions) => {
     },
   );
 
-  // GET /api/auth/global — 获取初始化状态
-  server.get(
+  // POST /api/auth/global — 获取初始化状态
+  server.post(
     "/auth/global",
     {
       config: { disableAuth: true },

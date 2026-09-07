@@ -27,8 +27,16 @@ import { registerOtpController } from "@/modules/otp/controller";
  * 组装后端服务的主要业务功能
  * 这里手动进行了依赖注入，先创建 service，然后传递给 controller 使用
  */
-export const registerService = async (instance: AppInstance) => {
-  const prisma = new PrismaService();
+/** 组装选项：允许注入 PrismaService（测试用临时库），默认新建 */
+interface RegisterServiceOptions {
+  prisma?: PrismaService;
+}
+
+export const registerService = async (
+  instance: AppInstance,
+  opts: RegisterServiceOptions = {},
+) => {
+  const prisma = opts.prisma ?? new PrismaService();
 
   await prisma.seed();
 

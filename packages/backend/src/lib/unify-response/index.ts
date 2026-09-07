@@ -15,6 +15,10 @@ const PrismaErrorFeedback: Record<string, { status: number; msg: string }> = {
     status: 400,
     msg: "该资源已存在，请勿重复创建",
   },
+  P2003: {
+    status: 400,
+    msg: "访问的资源不存在",
+  },
   DEFAULT: {
     status: 500,
     msg: "数据库错误",
@@ -72,6 +76,14 @@ export const registerUnifyResponse = (server: FastifyInstance) => {
       };
 
       reply.status(500).send(resp);
+    } else if (
+      // Fastify schema 校验失败（例如 body 不满足 typebox schema），返回 400 而非 500
+      (error as { code?: unknown })?.code === "FST_ERR_VALIDATION" &&
+      typeof error.statusCode === "number"
+    ) {
+      const resp = createErrorResponse(error);
+      resp.code = error.statusCode;
+      reply.status(error.statusCode).send(resp);
     } else if (error instanceof ErrorHttp) {
       reply.status(error.statusCode);
       reply.send(createErrorResponse(error));

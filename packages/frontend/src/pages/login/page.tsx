@@ -98,19 +98,30 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
     let resp: Awaited<ReturnType<typeof postLogin>>;
     try {
       const challengeResp = await queryChallenge();
-      if (!challengeResp.success) return;
+      if (!challengeResp.success) {
+        kek.fill(0);
+        verifier.fill(0);
+        return;
+      }
 
       challengeCode = challengeResp.data!.code;
       // hash = SHA512(hex(V) + challengeCode)，与后端比对逻辑一致
       const hash = sha512(bytesToHex(verifier) + challengeCode);
 
       resp = await postLogin({ hash });
+    } catch (err) {
+      // 挑战/登录请求本身抛错（网络异常等）：清除已派生的密钥材料再上抛
+      kek.fill(0);
+      verifier.fill(0);
+      throw err;
     } finally {
       setDeriving(false);
     }
 
     if (resp?.code !== 200) {
-      // 登录失败，更新锁定信息
+      // 登录失败，清除已派生的密钥材料，更新锁定信息
+      kek.fill(0);
+      verifier.fill(0);
       if (resp?.lockDetail) {
         setLockDetail(resp.lockDetail);
       }
@@ -126,6 +137,7 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
       dek = await unwrapDek(kek, resp.data!.keyBlob);
     } catch (err) {
       kek.fill(0);
+      verifier.fill(0);
       if (
         err instanceof ErrorDecryptionFailed ||
         err instanceof ErrorInvalidV2Format
@@ -141,8 +153,9 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
       return;
     }
 
-    // KEK 已完成使命，覆写后丢弃，内存中只留 DEK
+    // KEK/verifier 已完成使命，覆写后丢弃，内存中只留 DEK
     kek.fill(0);
+    verifier.fill(0);
     // vault.kdfParams 以 login 响应为准（版本化闭环），
     // 响应中的参数必须与登录派生所用的参数一致，否则拒绝进入
     let loginKdfParams;

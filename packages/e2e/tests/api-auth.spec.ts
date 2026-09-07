@@ -18,8 +18,10 @@ import {
 const PASSWORD = process.env.E2E_LOGIN_PASSWORD ?? "admin";
 
 rawTest.describe("Auth API - 公开接口", () => {
-  rawTest("GET /api/auth/challenge 获取挑战码", async ({ request }) => {
-    const resp = await request.get(`${BASE}/auth/challenge`);
+  rawTest("POST /api/auth/challenge 获取挑战码", async ({ request }) => {
+    const resp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     expect(resp.status()).toBe(200);
 
     const body = await resp.json();
@@ -28,8 +30,10 @@ rawTest.describe("Auth API - 公开接口", () => {
     expect(body.data.code.length).toBeGreaterThan(0);
   });
 
-  rawTest("GET /api/auth/global 获取全局状态", async ({ request }) => {
-    const resp = await request.get(`${BASE}/auth/global`);
+  rawTest("POST /api/auth/global 获取全局状态", async ({ request }) => {
+    const resp = await request.post(`${BASE}/auth/global`, {
+      data: {},
+    });
     expect(resp.status()).toBe(200);
 
     const body = await resp.json();
@@ -44,10 +48,14 @@ rawTest.describe("Auth API - 公开接口", () => {
   });
 
   rawTest("POST /api/auth/login 正确密码登录成功", async ({ request }) => {
-    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const challengeCode = (await challengeResp.json()).data.code;
 
-    const globalResp = await request.get(`${BASE}/auth/global`);
+    const globalResp = await request.post(`${BASE}/auth/global`, {
+      data: {},
+    });
     const globalBody = await globalResp.json();
     const salt = globalBody.data.salt as string;
 
@@ -89,10 +97,14 @@ rawTest.describe("Auth API - 公开接口", () => {
       return;
     }
 
-    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const challengeCode = (await challengeResp.json()).data.code;
 
-    const globalResp = await request.get(`${BASE}/auth/global`);
+    const globalResp = await request.post(`${BASE}/auth/global`, {
+      data: {},
+    });
     const globalBody = await globalResp.json();
     const salt = globalBody.data.salt as string;
 

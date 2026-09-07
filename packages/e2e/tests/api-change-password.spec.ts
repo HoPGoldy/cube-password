@@ -63,7 +63,9 @@ const changePasswordViaApi = async (
 
   // 3. challenge 必须是 change-password 前最后一次请求（后端 popLastChallenge），
   //    旧密码证明 hash = SHA512(hex(V_old) + challengeCode)
-  const challengeResp = await request.get(`${BASE}/auth/challenge`);
+  const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+    data: {},
+  });
   const challengeCode = (await challengeResp.json()).data.code as string;
   const resp = await request.post(`${BASE}/auth/change-password`, {
     data: {
@@ -99,7 +101,9 @@ test.describe("Change Password API（v2 re-wrap）", () => {
     const newKeyBlob = await wrapDek(newKek, session.dek);
 
     // challenge 照常取（本次用例重点在 body 缺 hash）
-    await request.get(`${BASE}/auth/challenge`);
+    await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const resp = await request.post(`${BASE}/auth/change-password`, {
       data: {
         verifier: bytesToHex(newVerifier),
@@ -137,7 +141,9 @@ test.describe("Change Password API（v2 re-wrap）", () => {
       hexToBytes(session.salt),
       session.kdfParams,
     );
-    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const challengeCode = (await challengeResp.json()).data.code as string;
     const resp = await request.post(`${BASE}/auth/change-password`, {
       data: {
@@ -195,10 +201,14 @@ test.describe("Change Password API（v2 re-wrap）", () => {
     // （再失败 1 次即达 3 次触发全局锁定，后续所有登录都会 403）；
     // 401 的后端路径已由 api-auth.spec 的负向用例在低计数时覆盖
     if ((await getLoginFailureCount(request)) < 2) {
-      const globalResp = await request.get(`${BASE}/auth/global`);
+      const globalResp = await request.post(`${BASE}/auth/global`, {
+        data: {},
+      });
       const globalBody = await globalResp.json();
       const salt = globalBody.data.salt as string;
-      const challengeResp = await request.get(`${BASE}/auth/challenge`);
+      const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+        data: {},
+      });
       const challengeCode = (await challengeResp.json()).data.code as string;
       const { verifier } = await deriveMasterKey(
         DEFAULT_PASSWORD,

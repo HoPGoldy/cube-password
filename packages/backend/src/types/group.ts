@@ -1,5 +1,11 @@
 import { Type } from "typebox";
 
+// 分组锁类型（新增/更新配置时强校验，非法值 400）
+export const SchemaLockType = Type.Union(
+  [Type.Literal("None"), Type.Literal("Password"), Type.Literal("Totp")],
+  { default: "None" },
+);
+
 // 分组列表响应中的单项（含凭证数）
 export const SchemaGroupItem = Type.Object({
   id: Type.Number(),
@@ -21,7 +27,7 @@ export type SchemaGroupItemType = Type.Static<typeof SchemaGroupItem>;
 // 添加分组
 export const SchemaGroupAddBody = Type.Object({
   name: Type.String(),
-  lockType: Type.Optional(Type.String({ default: "None" })),
+  lockType: Type.Optional(SchemaLockType),
   passwordHash: Type.Optional(
     Type.String({ description: "hex(V)，V = argon2id 输出后 32 字节" }),
   ),
@@ -58,7 +64,7 @@ export const SchemaGroupUpdateNameBody = Type.Object({
 // 更新锁定配置
 export const SchemaGroupUpdateConfigBody = Type.Object({
   id: Type.Number(),
-  lockType: Type.String(),
+  lockType: SchemaLockType,
   passwordHash: Type.Optional(
     Type.String({ description: "hex(V)，V = argon2id 输出后 32 字节" }),
   ),

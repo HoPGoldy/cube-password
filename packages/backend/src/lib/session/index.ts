@@ -1,43 +1,45 @@
 import { nanoid } from "nanoid";
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 分钟
+/** 会话绝对超时：距创建 10 分钟后无论是否活跃都过期 */
+export const SESSION_ABSOLUTE_TIMEOUT_MS = 10 * 60 * 1000;
 
 export interface UserSession {
   token: string;
   unlockedGroupIds: Set<number>;
-  lastActiveTime: number;
+  /** 创建时刻（绝对超时的唯一判定基准，活跃不续期） */
+  createdAt: number;
 }
 
 export class SessionManager {
   private session: UserSession | null = null;
 
+  /** 单用户单 session，登录即销毁旧会话 */
   createSession(): UserSession {
-    // 单用户单 session，先销毁旧的
     this.destroySession();
 
     this.session = {
       token: nanoid(32),
       unlockedGroupIds: new Set(),
-      lastActiveTime: Date.now(),
+      createdAt: Date.now(),
     };
 
     return this.session;
+  }
+
+  /** 绝对超时判定：过期则就地销毁并返回 false */
+  private isAlive(session: UserSession): boolean {
+    if (Date.now() - session.createdAt > SESSION_ABSOLUTE_TIMEOUT_MS) {
+      this.destroySession();
+      return false;
+    }
+    return true;
   }
 
   getSession(token: string): UserSession | null {
     if (!this.session || this.session.token !== token) {
       return null;
     }
-
-    // 检查是否超时
-    if (Date.now() - this.session.lastActiveTime > SESSION_TIMEOUT_MS) {
-      this.destroySession();
-      return null;
-    }
-
-    // 续期
-    this.session.lastActiveTime = Date.now();
-    return this.session;
+    return this.isAlive(this.session) ? this.session : null;
   }
 
   destroySession(): void {
@@ -62,10 +64,6 @@ export class SessionManager {
 
   getCurrentSession(): UserSession | null {
     if (!this.session) return null;
-    if (Date.now() - this.session.lastActiveTime > SESSION_TIMEOUT_MS) {
-      this.destroySession();
-      return null;
-    }
-    return this.session;
+    return this.isAlive(this.session) ? this.session : null;
   }
 }

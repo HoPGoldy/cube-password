@@ -1,11 +1,15 @@
 import { PrismaService } from "@/modules/prisma";
 import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
-import { sha512 } from "@/lib/crypto";
+import { sha512, timingSafeEqual } from "@/lib/crypto";
 import { parseKdfParams } from "@cube-password/shared/kdf-params";
 import { verifySync } from "otplib";
 import { ErrorBadRequest } from "@/types/error";
-import { ErrorGroupNotFound, ErrorGroupUnlockFailed } from "./error";
+import {
+  ErrorGroupLockTypeUnknown,
+  ErrorGroupNotFound,
+  ErrorGroupUnlockFailed,
+} from "./error";
 
 interface GroupServiceDeps {
   prisma: PrismaService;
@@ -159,7 +163,7 @@ export class GroupService {
       // hash = SHA512(hex(V) + challenge)，V = argon2id(password, salt, kdfParams)
       // 输出后 32 字节，派生由前端完成，服务端只比对
       const expectedHash = sha512(group.passwordHash + challengeCode);
-      if (options.hash !== expectedHash) {
+      if (!timingSafeEqual(options.hash, expectedHash)) {
         throw new ErrorGroupUnlockFailed();
       }
     }
@@ -175,6 +179,10 @@ export class GroupService {
         secret: user.totpSecret,
       }).valid;
       if (!isValid) throw new ErrorGroupUnlockFailed();
+    } else if (group.lockType !== "Password") {
+      // 存量脏数据可能存在未知 lockType：必须报错而不是静默放行，
+      // 否则非法锁类型等同于一碰就开的假锁
+      throw new ErrorGroupLockTypeUnknown(group.lockType);
     }
 
     this.sessionManager.addUnlockedGroup(id);

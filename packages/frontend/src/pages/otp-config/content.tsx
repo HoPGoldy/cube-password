@@ -68,24 +68,30 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
     // hash = SHA512(hex(V) + challengeCode)，V = argon2id(主密码, salt) 后 32B
     const challengeCode = challengeResp.data!.code;
-    const { verifier } = await deriveMasterKey(
-      values.password,
-      hexToBytes(vault.salt),
-      vault.kdfParams,
-    );
-    const hash = sha512(bytesToHex(verifier) + challengeCode);
+    let verifier: Uint8Array | undefined;
+    try {
+      ({ verifier } = await deriveMasterKey(
+        values.password,
+        hexToBytes(vault.salt),
+        vault.kdfParams,
+      ));
+      const hash = sha512(bytesToHex(verifier) + challengeCode);
 
-    const resp = await removeOtp({
-      hash,
-      challengeCode,
-      code: values.removeCode,
-    });
-    if (resp.code !== 200) return;
+      const resp = await removeOtp({
+        hash,
+        challengeCode,
+        code: values.removeCode,
+      });
+      if (resp.code !== 200) return;
 
-    clearState();
-    refetchOtpInfo();
-    setUserInfo((prev) => (prev ? { ...prev, withTotp: false } : prev));
-    messageSuccess("解除绑定成功");
+      clearState();
+      refetchOtpInfo();
+      setUserInfo((prev) => (prev ? { ...prev, withTotp: false } : prev));
+      messageSuccess("解除绑定成功");
+    } finally {
+      // 无论成功失败，派生出的 verifier 用完即覆写，不留堆内存残留
+      verifier?.fill(0);
+    }
   };
 
   const onCloseRemoveModal = () => {

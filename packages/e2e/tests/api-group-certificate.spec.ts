@@ -150,7 +150,9 @@ test.describe("Group Password Lock (argon2id v2)", () => {
     const params = parseKdfParams(found.kdfParams);
 
     // challenge 必须是 unlock 前紧邻的最后一次请求
-    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const challengeCode = (await challengeResp.json()).data.code;
 
     const { verifier } = await deriveMasterKey(
@@ -183,7 +185,9 @@ test.describe("Group Password Lock (argon2id v2)", () => {
     );
     const params = parseKdfParams(found.kdfParams);
 
-    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const challengeCode = (await challengeResp.json()).data.code;
 
     const { verifier } = await deriveMasterKey(
@@ -224,7 +228,9 @@ test.describe("Group Password Lock (argon2id v2)", () => {
 
     try {
       // challenge 必须是 unlock 前紧邻的最后一次请求
-      const challengeResp = await request.get(`${BASE}/auth/challenge`);
+      const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+        data: {},
+      });
       const challengeCode = (await challengeResp.json()).data.code;
 
       const unlockResp = await request.post(`${BASE}/group/unlock`, {

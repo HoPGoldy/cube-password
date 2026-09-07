@@ -42,7 +42,7 @@ export const registerController = (options: RegisterOptions) => {
     },
   );
 
-  server.get(
+  server.post(
     "/config/version",
     {
       schema: {

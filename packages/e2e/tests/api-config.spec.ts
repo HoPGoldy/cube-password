@@ -1,9 +1,12 @@
 import { test, expect, authHeaders, BASE } from "../fixtures/api";
-import { test as rawTest } from "@playwright/test";
 
 test.describe("Config API", () => {
-  test("GET /api/config/version 获取版本信息", async ({ request, session }) => {
-    const resp = await request.get(`${BASE}/config/version`, {
+  test("POST /api/config/version 获取版本信息", async ({
+    request,
+    session,
+  }) => {
+    const resp = await request.post(`${BASE}/config/version`, {
+      data: {},
       headers: authHeaders(session),
     });
     expect(resp.status()).toBe(200);

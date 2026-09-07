@@ -9,6 +9,7 @@ import {
 } from "@/lib/e2ee";
 import { bytesToHex } from "@/lib/e2ee/format";
 import { stateUser } from "@/store/user";
+import type { SchemaGroupAddBodyType } from "@shared-types/group";
 
 const useLockTypeOptions = () => {
   const userInfo = useAtomValue(stateUser);
@@ -25,13 +26,7 @@ const useLockTypeOptions = () => {
 interface AddGroupModalProps {
   open: boolean;
   loading?: boolean;
-  onOk: (data: {
-    name: string;
-    lockType: string;
-    passwordHash?: string;
-    passwordSalt?: string;
-    kdfParams?: string;
-  }) => void;
+  onOk: (data: SchemaGroupAddBodyType) => void;
   onCancel: () => void;
 }
 

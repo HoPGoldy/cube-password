@@ -1,4 +1,4 @@
-import { queryClient, requestGet, requestPost } from "./base";
+import { queryClient, requestPost } from "./base";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   SchemaAppConfigType,
@@ -31,7 +31,7 @@ export const useUpdateAppConfig = () => {
 export const useAppVersion = () => {
   const result = useQuery({
     queryKey: ["app-config/version"],
-    queryFn: () => requestGet<SchemaAppVersionResponseType>("config/version"),
+    queryFn: () => requestPost<SchemaAppVersionResponseType>("config/version"),
   });
 
   return {

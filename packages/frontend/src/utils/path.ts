@@ -9,12 +9,3 @@ export const mergeUrl = (...path: string[]) => {
     return pre + cur;
   });
 };
-
-/** 在 url 前追加前端静态资源目录的路径前缀 */
-export const withFrontend = (...urls: string[]) => {
-  const prefix = mergeUrl(location.origin, APP_CONFIG.PATH_BASENAME);
-
-  if (!urls || !urls.length) return prefix;
-  if (urls[0].startsWith("http")) return urls[0];
-  return mergeUrl(prefix, ...urls);
-};

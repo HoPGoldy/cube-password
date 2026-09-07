@@ -11,10 +11,13 @@ import {
 } from "@frontend/lib/e2ee";
 
 /**
- * 后端直连地址（baseURL 是前端 3500，setup 阶段必须使用后端的绝对地址）。
- * 可通过环境变量 E2E_BACKEND_URL 覆盖（CI 等场景）。
+ * 后端直连地址（baseURL 是前端开发服务器，setup 阶段必须使用后端的绝对地址）。
+ * 可通过环境变量 E2E_BACKEND_URL 覆盖（CI 等场景）；端口与 playwright.config
+ * 的 E2E_BACKEND_PORT 同源。
  */
-const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://127.0.0.1:3499";
+const BACKEND_URL =
+  process.env.E2E_BACKEND_URL ??
+  `http://127.0.0.1:${process.env.E2E_BACKEND_PORT ?? 3499}`;
 
 /** 登录密码，与 packages/e2e/.env 的 E2E_LOGIN_PASSWORD 一致 */
 const LOGIN_PASSWORD = process.env.E2E_LOGIN_PASSWORD ?? "admin";
@@ -80,7 +83,9 @@ async function probeLogin(
   kdfParams?: string,
 ): Promise<{ ok: boolean; body?: unknown }> {
   try {
-    const challengeResp = await fetch(`${BACKEND_URL}/api/auth/challenge`);
+    const challengeResp = await fetch(`${BACKEND_URL}/api/auth/challenge`, {
+      method: "POST",
+    });
     const challengeBody = await challengeResp.json();
     const code = challengeBody?.data?.code as string | undefined;
     if (!code) {
@@ -109,7 +114,9 @@ async function probeLogin(
 }
 
 async function ensureInitialized() {
-  const globalResp = await fetch(`${BACKEND_URL}/api/auth/global`);
+  const globalResp = await fetch(`${BACKEND_URL}/api/auth/global`, {
+    method: "POST",
+  });
   if (!globalResp.ok) {
     throw new Error(
       `无法访问后端 ${BACKEND_URL}/api/auth/global（HTTP ${globalResp.status}），请先启动后端服务。`,
@@ -118,7 +125,7 @@ async function ensureInitialized() {
   const globalBody = (await globalResp.json()) as GlobalResponse;
   if (!globalBody.success) {
     throw new Error(
-      `GET /api/auth/global 返回失败：${JSON.stringify(globalBody)}`,
+      `POST /api/auth/global 返回失败：${JSON.stringify(globalBody)}`,
     );
   }
 

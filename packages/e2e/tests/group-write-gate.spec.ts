@@ -42,7 +42,9 @@ test.describe("Certificate group write gate", () => {
     );
     const params = parseKdfParams(found.kdfParams);
 
-    const challengeResp = await request.get(`${BASE}/auth/challenge`);
+    const challengeResp = await request.post(`${BASE}/auth/challenge`, {
+      data: {},
+    });
     const challengeCode = (await challengeResp.json()).data.code;
 
     const { verifier } = await deriveMasterKey(

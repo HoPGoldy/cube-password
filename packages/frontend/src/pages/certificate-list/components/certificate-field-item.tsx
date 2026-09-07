@@ -7,7 +7,7 @@ import { openNewTab } from "@/utils/common";
 import { useAtomValue } from "jotai";
 import { stateUser } from "@/store/user";
 import { customAlphabet } from "nanoid";
-import { getRandName } from "@/services/certificate";
+import { generateRandName } from "@/utils/random-name";
 import copy from "copy-to-clipboard";
 
 const DEFAULT_PASSWORD_ALPHABET =
@@ -65,11 +65,10 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
     messageApi.success({ key: COPY_MESSAGE_KEY, content: "新密码已复制" });
   };
 
-  const onCreateUsername = async () => {
-    const resp = await getRandName();
-    if (resp.code !== 200) return;
-    onValueChange(resp.data || "");
-    copy(resp.data || "");
+  const onCreateUsername = () => {
+    const newName = generateRandName();
+    onValueChange(newName);
+    copy(newName);
     messageApi.success({ key: COPY_MESSAGE_KEY, content: "新名称已复制" });
   };
 

@@ -8,7 +8,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "start:dev": "vite --host --port 3500",
+    "start:dev": "vite --host --port ${FRONTEND_PORT:-3500}",
     "build": "tsc && vite build",
     "test": "vitest run"
   },
@@ -19,7 +19,6 @@
     "@hopgoldy/cube-ui": "^0.1.1",
     "@noble/hashes": "^2.4.0",
     "@tanstack/react-query": "^5.83.0",
-    "ahooks": "^3.9.0",
     "antd": "^5.3.2",
     "axios": "^1.3.3",
     "copy-to-clipboard": "^3.3.2",
@@ -31,28 +30,24 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.5",
-    "react-sortablejs": "^6.1.4",
     "sortablejs": "^1.15.6"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.182",
     "@types/node": "^20.10.0",
-    "@types/qs": "^6.9.7",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
-    "@types/sortablejs": "^1.15.8",
+    "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-react": "^4.3.1",
     "@zxcvbn-ts/core": "^4.2.0",
     "@zxcvbn-ts/language-common": "^4.1.3",
     "autoprefixer": "^10.4.19",
-    "cross-env": "^7.0.3",
     "less": "^4.1.3",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "typescript": "5.7.3",
     "vite": "^5.4.16",
     "vite-plugin-compression": "^0.5.1",
-    "vite-plugin-svgr": "^4.5.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.7"
   },
@@ -62,5 +57,5 @@
       "tailwindcss": {}
     }
   },
-  "license": "MIT"
+  "license": "GPL-3.0-only"
 }
