@@ -62,3 +62,4 @@ storage
 .playwright-mcp
 # frontend 的 .env 无 secret，保持追踪（显式豁免）
 !packages/frontend/.env
+storage.bak-dev/
