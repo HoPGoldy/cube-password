@@ -17,10 +17,18 @@ const loadChecker = async () => {
     checkerPromise = Promise.all([
       import("@zxcvbn-ts/core"),
       import("@zxcvbn-ts/language-common"),
-    ]).then(([core, common]) => {
+    ]).then(([core, commonModule]) => {
+      // 注意 interop 差异：浏览器 ESM 下该包是纯 named export（无 default），
+      // 而 vitest/node 的 CJS interop 会挂 default —— 取前先归一，两端一致
+      const dictPack =
+        (
+          commonModule as unknown as {
+            default?: typeof commonModule;
+          }
+        ).default ?? commonModule;
       const factory = new core.ZxcvbnFactory({
-        dictionary: common.default.dictionary,
-        graphs: common.default.adjacencyGraphs,
+        dictionary: dictPack.dictionary,
+        graphs: dictPack.adjacencyGraphs,
       });
       return (password: string) => factory.check(password);
     });
