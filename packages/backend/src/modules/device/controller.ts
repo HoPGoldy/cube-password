@@ -5,7 +5,6 @@ import {
   SchemaDeviceVerifyResponse,
   SchemaDeviceAddBody,
   SchemaDeviceAddResponse,
-  SchemaDeviceListBody,
   SchemaDeviceListResponse,
   SchemaDeviceRevokeBody,
   SchemaDeviceRevokeResponse,
@@ -74,13 +73,15 @@ export const registerDeviceController = (options: RegisterOptions) => {
   );
 
   // POST /api/device/list — 设备列表（session 保护）
+  // 不声明 body schema——部分客户端（axios 走 vite proxy 时）对无 body 请求
+  // 不发送 Content-Type，声明 body schema 会触发 fastify content-type 校验 400
+  // （与 /device/challenge 同坑，见 T04 说明）
   server.post(
     "/device/list",
     {
       schema: {
         description: "受信设备列表（含最近过门时间）",
         tags: ["device"],
-        body: SchemaDeviceListBody,
         response: { 200: SchemaDeviceListResponse },
       },
     },

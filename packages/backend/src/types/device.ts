@@ -78,8 +78,6 @@ export type SchemaDeviceAddResponseType = Type.Static<
 >;
 
 /** POST /device/list 请求 */
-export const SchemaDeviceListBody = Type.Object({});
-export type SchemaDeviceListBodyType = Type.Static<typeof SchemaDeviceListBody>;
 
 export const SchemaDeviceListResponse = Type.Object({
   items: Type.Array(SchemaDeviceItem),
