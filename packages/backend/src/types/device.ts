@@ -44,7 +44,7 @@ export type SchemaDeviceVerifyBodyType = Type.Static<
 export const SchemaDeviceVerifyResponse = Type.Object({
   gateToken: Type.String({
     description:
-      "门禁令牌（内存态，10 分钟 TTL），通过 X-Gate-Token header 携带以访问登录走廊",
+      "门禁令牌（内存态，3 分钟 TTL 防御性上限，即取即用），通过 X-Gate-Token header 携带以访问登录走廊",
   }),
 });
 export type SchemaDeviceVerifyResponseType = Type.Static<

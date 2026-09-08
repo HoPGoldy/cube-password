@@ -24,12 +24,10 @@ vi.mock("@/lib/device-key", async (importOriginal) => {
 import {
   ErrorGateDenied,
   ErrorGateUnavailable,
-  clearGateToken,
-  getValidGateToken,
   isDeviceGateRejection,
   passGate,
-  setGateToken,
   toGateDenial,
+  withGateToken,
 } from "./device-gate";
 import { ErrorNoLocalDeviceKey } from "@/lib/device-key";
 
@@ -42,32 +40,12 @@ const httpGateError = () => {
   return err;
 };
 
+const CHALLENGE = "challenge-abc";
+
 beforeEach(() => {
   requestPostMock.mockReset();
   listLocalDeviceKeysMock.mockReset();
   silentVerifyMock.mockReset();
-  clearGateToken();
-});
-
-describe("gate token 内存态", () => {
-  it("setGateToken 后 getValidGateToken 返回令牌，clearGateToken 后清空", () => {
-    expect(getValidGateToken()).toBeUndefined();
-    setGateToken("token-1");
-    expect(getValidGateToken()).toBe("token-1");
-    clearGateToken();
-    expect(getValidGateToken()).toBeUndefined();
-  });
-
-  it("超过 10 分钟有效期后视为过期并丢弃", () => {
-    setGateToken("token-old");
-    vi.useFakeTimers();
-    try {
-      vi.advanceTimersByTime(10 * 60 * 1000 + 1);
-      expect(getValidGateToken()).toBeUndefined();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
 });
 
 describe("isDeviceGateRejection", () => {
@@ -87,8 +65,121 @@ describe("isDeviceGateRejection", () => {
   });
 });
 
+describe("withGateToken", () => {
+  const passGateHappyPath = () => {
+    listLocalDeviceKeysMock.mockResolvedValue([localKeyTemplate("device-1")]);
+    silentVerifyMock.mockResolvedValue("sig");
+    requestPostMock.mockImplementation(async (url: string) => {
+      if (url === "device/challenge") {
+        return {
+          success: true,
+          code: 200,
+          data: { challenge: CHALLENGE, gateEnabled: true },
+        };
+      }
+      return { success: true, code: 200, data: { gateToken: "gate-token-1" } };
+    });
+  };
+
+  const localKeyTemplate = (deviceId?: string) => ({
+    deviceId,
+    name: "Chrome on macOS",
+    publicKey: "MFkw...==",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    privateKey: {} as CryptoKey,
+  });
+
+  it("跑一遍过门并把 token 传给 fn，返回 fn 结果", async () => {
+    passGateHappyPath();
+    const fn = vi.fn(async (token: string | undefined) => ({ used: token }));
+
+    const result = await withGateToken(fn);
+
+    expect(result).toEqual({ used: "gate-token-1" });
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith("gate-token-1");
+    // 完整过门三步：探针拿挑战码 → verify 换 token
+    expect(requestPostMock).toHaveBeenNthCalledWith(1, "device/challenge");
+    expect(requestPostMock).toHaveBeenNthCalledWith(2, "device/verify", {
+      deviceId: "device-1",
+      challenge: CHALLENGE,
+      signature: "sig",
+    });
+  });
+
+  it("fn 内部错误原样上抛，不被包装成门禁错误", async () => {
+    passGateHappyPath();
+    const boom = new Error("fn boom");
+
+    await expect(withGateToken(() => Promise.reject(boom))).rejects.toThrow(
+      boom,
+    );
+  });
+
+  it("过门失败（ErrorGateDenied）时 fn 不被调用", async () => {
+    requestPostMock.mockImplementation(async (url: string) => {
+      if (url === "device/challenge") {
+        return {
+          success: true,
+          code: 200,
+          data: { challenge: CHALLENGE, gateEnabled: true },
+        };
+      }
+      throw httpGateError();
+    });
+    listLocalDeviceKeysMock.mockResolvedValue([localKeyTemplate("device-1")]);
+    silentVerifyMock.mockResolvedValue("bad-sig");
+    const fn = vi.fn();
+
+    await expect(withGateToken(fn)).rejects.toThrowError(ErrorGateDenied);
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("探针失败（success=false）→ ErrorGateUnavailable，fn 不被调用", async () => {
+    requestPostMock.mockResolvedValue({ success: false, code: 500 });
+    const fn = vi.fn();
+
+    await expect(withGateToken(fn)).rejects.toThrowError(ErrorGateUnavailable);
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("门未激活时直接以 undefined 调 fn，不发起过门请求", async () => {
+    requestPostMock.mockImplementation(async (url: string) => {
+      if (url === "device/challenge") {
+        return {
+          success: true,
+          code: 200,
+          data: { challenge: CHALLENGE, gateEnabled: false },
+        };
+      }
+      return { success: true, code: 200, data: {} };
+    });
+    const fn = vi.fn(async (token: string | undefined) => ({ used: token }));
+
+    const result = await withGateToken(fn);
+
+    expect(result).toEqual({ used: undefined });
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith(undefined);
+    // 只有探针请求，无 verify（纯密码模式不需要 token）
+    expect(requestPostMock).toHaveBeenCalledTimes(1);
+    expect(requestPostMock).toHaveBeenCalledWith("device/challenge");
+  });
+
+  it("token 不逃逸出调用栈：模块级无状态可残留（重复调用各自现取）", async () => {
+    passGateHappyPath();
+
+    const first = await withGateToken(async (token) => token);
+    const second = await withGateToken(async (token) => token);
+
+    // 两次调用各自走完整过门流程，各拿各的 token，无跨调用共享
+    expect(first).toBe("gate-token-1");
+    expect(second).toBe("gate-token-1");
+    expect(requestPostMock).toHaveBeenCalledTimes(4);
+  });
+});
+
 describe("passGate", () => {
-  const CHALLENGE = "challenge-abc";
   const localKey = (deviceId?: string) => ({
     deviceId,
     name: "Chrome on macOS",

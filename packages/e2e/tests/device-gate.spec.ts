@@ -1,4 +1,4 @@
-import { test as rawTest, expect } from "@playwright/test";
+import { test as rawTest, expect, type Page } from "@playwright/test";
 import {
   gateTest,
   readTrustedDevices,
@@ -29,7 +29,9 @@ import { rmSync, mkdirSync, writeFileSync } from "node:fs";
  * 与 context.md 第 4 节）：
  * ①门未激活回归 → ②绑定首台设备 → ③登出后静默过门 → ④无钥匙拦截（API + 页面）
  * → ⑤敲门通知去重 → ⑥【T04 强制】吊销后 denied 稳定 → ⑦【T04 强制】pending 未录入
- * + 重新验证 → ⑧手工编辑 trusted-devices.json 即时生效。
+ * + 重新验证 → ⑧手工编辑 trusted-devices.json 即时生效 → ⑨⑩【T02 强制】即取即用
+ * 语义钉：停留后点登录仍成功（bootstrap + 提交各验签一次）与吊销后点登录渲染
+ * 未授权页且密码请求未发出（吊销即时生效）。
  *
  * 隔离约定（workers=1 串行，见 playwright.config.ts）：
  * - 门状态：fixtures/device-gate 在每条用例前后删除 trusted-devices.json；
@@ -500,6 +502,134 @@ gateTest.describe("设备门 - 手工编辑文件即时生效", () => {
       } finally {
         rmSync(`${STORAGE_DIR}/trusted-devices.json`, { force: true });
       }
+    },
+  );
+});
+
+// ---------- ⑨⑩【T02 强制】即取即用（ephemeral gate token）语义钉 ----------
+
+gateTest.describe("设备门 - 即取即用语义（T02）", () => {
+  /**
+   * 记录页面自身发出的 /api/* 请求路径（page.on('request') 只捕获页面上下文内的
+   * 请求；request fixture 发起的 API 调用不计入，恰好隔离出「前端真实行为」）
+   */
+  const recordPageApiRequests = (page: Page): string[] => {
+    const paths: string[] = [];
+    page.on("request", (req) => {
+      const { pathname } = new URL(req.url());
+      if (pathname.startsWith("/api/")) paths.push(pathname);
+    });
+    return paths;
+  };
+
+  gateTest(
+    "门开 + 停留后点登录仍成功：bootstrap 与提交各走一遍 device/verify",
+    async ({ gatePage, request }) => {
+      const apiPaths = recordPageApiRequests(gatePage);
+
+      // 1. 门未激活时首跳：浏览器生成本机钥匙（initScript）
+      await gatePage.addInitScript(browserGenerateKeyInitScript);
+      await gatePage.goto("/login");
+      const injected = await waitForInjectedKey(gatePage);
+
+      // 2. 注册为受信设备（服务端直读文件，门立即激活）
+      const session = await loginWithPassword(request, PASSWORD);
+      const addResp = await request.post(`${BASE}/device/add`, {
+        data: {
+          deviceKey: buildDeviceKeyString({
+            name: injected!.name,
+            publicKey: injected!.publicKey,
+          }),
+        },
+        headers: authHeaders(session),
+      });
+      expect(addResp.status()).toBe(200);
+      expect(readTrustedDevices()).toHaveLength(1);
+
+      // 3. 加载登录页 → 静默过门（bootstrap：device/verify 第 1 次）→ 密码表单直接出现
+      await gatePage.goto("/login");
+      await expect(gatePage.getByTestId("login-password-input")).toBeVisible();
+      await expect(gatePage.getByTestId("device-gate-denied")).toHaveCount(0);
+
+      // 4. 模拟停留：即取即用语义下 token 不跨流程存在，无过期概念，
+      //    停留任意时长后点登录都必须成功（旧「页面级缓存 10min TTL」时代的钉）
+      await gatePage.waitForTimeout(5000);
+
+      // 5. 输密码点登录 → 提交流程重新过门（device/verify 第 2 次）→ 登录成功进首页
+      await gatePage.getByTestId("login-password-input").fill(PASSWORD);
+      await gatePage.getByTestId("login-submit-btn").click();
+      await expect(gatePage).not.toHaveURL(/\/login/);
+      await expect(gatePage.getByTestId("sidebar")).toBeVisible();
+
+      // 核心断言：本轮 Network 恰好两次 device/verify（bootstrap 一次 + 提交一次），
+      // 且 auth/login 恰好一次（携带提交时现取的 token 通过门禁）
+      expect(
+        apiPaths.filter((path) => path.endsWith("/device/verify")),
+      ).toHaveLength(2);
+      expect(
+        apiPaths.filter((path) => path.endsWith("/auth/login")),
+      ).toHaveLength(1);
+    },
+  );
+
+  gateTest(
+    "吊销后不刷新点登录：渲染未授权页且密码请求未发出",
+    async ({ gatePage }) => {
+      const apiPaths = recordPageApiRequests(gatePage);
+
+      // 1. 门未激活时首跳：浏览器生成本机钥匙（后续作为「被吊销设备」）
+      await gatePage.addInitScript(browserGenerateKeyInitScript);
+      await gatePage.goto("/login");
+      const injected = await waitForInjectedKey(gatePage);
+
+      // 2. 写入受信设备：本机钥匙（即将吊销）+ 一把无关钥匙（吊销本机后门仍激活）
+      const stranger = await generateNodeSideKey();
+      writeTrustedDevices([
+        makeManualDevice({
+          id: "e2e-revoked-target",
+          publicKey: injected!.publicKey,
+        }),
+        makeManualDevice({
+          id: "e2e-still-trusted",
+          publicKey: stranger.publicKey,
+        }),
+      ]);
+
+      // 3. 加载登录页 → 静默过门成功（此时本机仍在名单内）→ 密码表单出现
+      await gatePage.goto("/login");
+      await expect(gatePage.getByTestId("login-password-input")).toBeVisible();
+      await expect(gatePage.getByTestId("device-gate-denied")).toHaveCount(0);
+
+      // 4. 期间吊销本机设备：手工改写 trusted-devices.json 删掉它（服务端直读文件，
+      //    即时生效、无需重启；保留陌生钥匙使门保持激活）
+      writeTrustedDevices([
+        makeManualDevice({
+          id: "e2e-still-trusted",
+          publicKey: stranger.publicKey,
+        }),
+      ]);
+
+      // 5. 不刷新页面直接输密码点登录 → 提交流程 passGate 验签被拒（40301）→
+      //    ErrorGateDenied 上报外层渲染未授权页，挑战码与密码请求均未发出
+      await gatePage.getByTestId("login-password-input").fill(PASSWORD);
+      await gatePage.getByTestId("login-submit-btn").click();
+      await expect(gatePage.getByTestId("device-gate-denied")).toBeVisible();
+      await expect(gatePage.getByTestId("device-gate-denied")).toContainText(
+        "此设备未授权",
+      );
+      await expect(gatePage.getByTestId("login-password-input")).toHaveCount(0);
+
+      // Network 断言：全程（含提交）无 auth/challenge、无 auth/login（密码未发出）；
+      // 提交触发的那次 verify 确实发出且被服务端拒绝（请求存在于 Network）
+      expect(
+        apiPaths.filter((path) => path.endsWith("/auth/login")),
+      ).toHaveLength(0);
+      expect(
+        apiPaths.filter((path) => path.endsWith("/auth/challenge")),
+      ).toHaveLength(0);
+      expect(
+        apiPaths.filter((path) => path.endsWith("/device/verify")),
+      ).toHaveLength(2);
     },
   );
 });

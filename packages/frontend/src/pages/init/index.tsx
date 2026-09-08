@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Input, InputRef, Row, Col, Spin } from "antd";
 import { useInit } from "@/services/auth";
 import {
+  ErrorGateDenied,
   passGate,
   probeGate,
-  setGateToken,
   toGateDenial,
+  withGateToken,
 } from "@/services/device-gate";
 import { DeviceGatePage } from "@/pages/login/device-gate";
 import type { GateDenial } from "@/services/device-gate";
@@ -48,8 +49,9 @@ const Init = () => {
         return false;
       }
       if (!probe.data!.gateEnabled) return true;
-      const { gateToken } = await passGate(probe.data!.challenge);
-      setGateToken(gateToken);
+      // 门激活：过门仅用于提前渲染未授权页（token 即取即用，不落模块级状态，
+      // 提交时会重新 passGate 现取新 token）
+      await passGate(probe.data!.challenge);
       return true;
     } catch (err) {
       setGateDenial(toGateDenial(err));
@@ -99,26 +101,39 @@ const Init = () => {
     if (submitting) return;
     setSubmitting(true);
     try {
-      // salt 前端生成 → argon2id 派生 (KEK, V) → 随机 DEK 用 KEK 包裹为 keyBlob
-      const salt = randomBytes(SALT_LENGTH);
-      const { kek, verifier } = await deriveMasterKey(
-        password,
-        salt,
-        DEFAULT_KDF_PARAMS,
-      );
-      const dek = randomBytes(32);
-      const keyBlob = await wrapDek(kek, dek);
+      // 门激活时先过门现取临时 token（即取即用，仅本次提交使用）。
+      // 统一用 withGateToken 编排：Denied → 未授权页；Unavailable → 可重试页；
+      // 门未激活 → fn(undefined) 直提交流程。消除手写双份编排与无反馈的错误路径
+      const resp = await withGateToken(async (gateToken) => {
+        // salt 前端生成 → argon2id 派生 (KEK, V) → 随机 DEK 用 KEK 包裹为 keyBlob
+        const salt = randomBytes(SALT_LENGTH);
+        const { kek, verifier } = await deriveMasterKey(
+          password,
+          salt,
+          DEFAULT_KDF_PARAMS,
+        );
+        const dek = randomBytes(32);
+        const keyBlob = await wrapDek(kek, dek);
 
-      const resp = await postInit({
-        verifier: bytesToHex(verifier),
-        salt: bytesToHex(salt),
-        keyBlob,
-        kdfParams: JSON.stringify(DEFAULT_KDF_PARAMS),
+        return postInit({
+          verifier: bytesToHex(verifier),
+          salt: bytesToHex(salt),
+          keyBlob,
+          kdfParams: JSON.stringify(DEFAULT_KDF_PARAMS),
+          gateToken,
+        });
       });
       if (resp?.code !== 200) return;
 
       messageSuccess("初始化完成");
       window.location.href = "/login";
+    } catch (err) {
+      if (err instanceof ErrorGateDenied) {
+        setGateDenial(toGateDenial(err));
+        return;
+      }
+      // 门禁不可用（网络/非安全上下文等）：渲染可重试页，与登录页处理标准一致
+      setGateDenial(toGateDenial(err));
     } finally {
       setSubmitting(false);
     }

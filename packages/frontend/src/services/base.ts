@@ -1,11 +1,6 @@
 import { AppResponse } from "@/types/global";
 import { logout, stateSessionToken } from "@/store/user";
-import {
-  clearGateToken,
-  getValidGateToken,
-  GATE_CORRIDOR_URLS,
-  ERROR_CODE_DEVICE_GATE,
-} from "./device-gate";
+import { ERROR_CODE_DEVICE_GATE } from "./device-gate";
 import { showGlobalMessage } from "../utils/message";
 import { mergeUrl } from "../utils/path";
 import axios from "axios";
@@ -28,12 +23,6 @@ axiosInstance.interceptors.request.use((config) => {
 
   // 附加 session token header
   if (token) config.headers["X-Session-Token"] = token;
-
-  // 登录走廊期间的请求附带设备门禁令牌（有值时；门未激活时恒为空）
-  if (config.url && GATE_CORRIDOR_URLS.has(config.url)) {
-    const gateToken = getValidGateToken();
-    if (gateToken) config.headers["X-Gate-Token"] = gateToken;
-  }
 
   return config;
 });
@@ -68,27 +57,15 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(resp);
     }
 
-    // 设备门拒绝（ErrorDeviceGate）：令牌可能已过期或被服务端重置，清空内存令牌。
-    // 门页（login/init）上：探针/过门请求由页面编排捕获渲染未授权页；但表单发起的
-    // 走廊请求（auth/challenge、auth/init）在 token 过期后也会收到 40301，表单代码
-    // 没有对应 catch —— 这里提示并自愈刷新（重跑完整门禁流程），避免零反馈死操作。
-    // 非门页收到门禁拒绝意味着“会话建立后门才被激活”等罕见场景，跳登录重跑门禁。
+    // 设备门拒绝（ErrorDeviceGate，40301）：在新设计下只可能意味着钥匙被拒 /
+    // 门态突变（token 即取即用，不存在客户端侧过期）。
+    // 门页（login/init）上：由页面流程 catch 渲染未授权页，这里不做任何事直接
+    // reject 透传；非门页意味着“会话建立后门才被激活”等罕见场景，跳登录重跑门禁。
     if (status === 403 && data?.code === ERROR_CODE_DEVICE_GATE) {
-      clearGateToken();
-      // 门禁编排自身的端点（device/challenge|verify）拒绝必须透传：
-      // 页面的 probeGate/passGate 编排靠 catch 渲染未授权页——若在这里 reload，
-      // 吊销钥匙/未录入钥匙的设备会无限重载（通往未授权页的必经请求就是 40301）
-      const isGateOrchestration =
-        config?.url === "device/challenge" || config?.url === "device/verify";
       const onGatePage =
         window.location.pathname.includes("/login") ||
         window.location.pathname.includes("/init");
-      if (onGatePage && !isGateOrchestration) {
-        // 表单发起的走廊请求（auth/challenge 等）token 过期：表单代码无对应
-        // catch，自愈刷新重跑完整门禁流程
-        showGlobalMessage("warning", "门禁验证已过期，正在重新验证…");
-        window.location.reload();
-      } else if (!onGatePage) {
+      if (!onGatePage) {
         window.location.href = mergeUrl(APP_CONFIG.PATH_BASENAME, "login");
       }
       return Promise.reject(resp);
@@ -100,7 +77,6 @@ axiosInstance.interceptors.response.use(
     }
 
     if (status === 401) {
-      clearGateToken();
       logout();
     }
 

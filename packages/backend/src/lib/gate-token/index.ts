@@ -1,7 +1,10 @@
 import { nanoid } from "nanoid";
 
-/** 门禁令牌有效期：10 分钟（仅用于登录走廊，见 context.md 决策 5） */
-export const GATE_TOKEN_TTL_MS = 10 * 60 * 1000;
+/**
+ * 门禁令牌有效期：3 分钟（防御性上限）。token 即取即用，单次登录流程秒级用完，
+ * TTL 仅作兜底防异常流程下长期残留（见 docs/plans/ephemeral-gate-token/context.md 决策 6）
+ */
+export const GATE_TOKEN_TTL_MS = 3 * 60 * 1000;
 
 interface GateTokenEntry {
   createdAt: number;

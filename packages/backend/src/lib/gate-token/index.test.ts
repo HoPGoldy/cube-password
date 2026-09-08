@@ -25,7 +25,7 @@ describe("GateTokenManager", () => {
     expect(manager.validateToken("")).toBe(false);
   });
 
-  it("rejects a token after the 10 minute TTL", () => {
+  it("rejects a token after the 3 minute TTL", () => {
     const manager = new GateTokenManager();
     const token = manager.createToken();
 

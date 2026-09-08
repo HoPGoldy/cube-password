@@ -4,6 +4,12 @@ import { useLogin, queryChallenge } from "../../services/auth";
 import { login, stateVault, stateKdfMeta } from "../../store/user";
 import { messageError } from "@/utils/message";
 import { showGlobalMessage } from "@/utils/message";
+import {
+  ErrorGateDenied,
+  toGateDenial,
+  withGateToken,
+} from "@/services/device-gate";
+import type { GateDenial } from "@/services/device-gate";
 import { KeyOutlined } from "@ant-design/icons";
 import { useLoginSuccess } from "./use-login-success";
 import { APP_NAME, APP_SUBTITLE, THEME_BUTTON_COLOR } from "@/config";
@@ -27,9 +33,14 @@ import dayjs from "dayjs";
 
 interface LoginPageProps {
   initialLockDetail?: SchemaLockDetailType;
+  /** 提交时过门被拒（如停留期间钥匙被吊销）：上报外层渲染未授权页（密码不发送） */
+  onGateDenied: (denial: GateDenial) => void;
 }
 
-export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
+export const LoginPage = ({
+  initialLockDetail,
+  onGateDenied,
+}: LoginPageProps) => {
   usePageTitle("登录");
   const [password, setPassword] = useState("");
   const [lockDetail, setLockDetail] = useState<
@@ -93,39 +104,51 @@ export const LoginPage = ({ initialLockDetail }: LoginPageProps) => {
       return;
     }
 
-    // 2. 取挑战码并计算登录 hash；finally 确保任何异常路径都会结束 deriving 状态
-    let challengeCode: string;
-    let resp: Awaited<ReturnType<typeof postLogin>>;
+    // 2. 过门现取临时 token（新挑战码新签名）→ 取挑战码并计算登录 hash → 登录，
+    // 全程在同一 withGateToken 调用栈内（token 用完即弃）；finally 确保任何异常
+    // 路径都会结束 deriving 状态，密钥材料在每条失败路径上清零（时序不得破坏）
+    let resp: Awaited<ReturnType<typeof postLogin>> | undefined;
     try {
-      const challengeResp = await queryChallenge();
-      if (!challengeResp.success) {
-        kek.fill(0);
-        verifier.fill(0);
-        return;
-      }
+      resp = await withGateToken(async (gateToken) => {
+        const challengeResp = await queryChallenge({ gateToken });
+        if (!challengeResp.success) {
+          kek.fill(0);
+          verifier.fill(0);
+          return undefined;
+        }
 
-      challengeCode = challengeResp.data!.code;
-      // hash = SHA512(hex(V) + challengeCode)，与后端比对逻辑一致
-      const hash = sha512(bytesToHex(verifier) + challengeCode);
+        const challengeCode = challengeResp.data!.code;
+        // hash = SHA512(hex(V) + challengeCode)，与后端比对逻辑一致
+        const hash = sha512(bytesToHex(verifier) + challengeCode);
 
-      resp = await postLogin({ hash });
+        return postLogin({ hash, gateToken });
+      });
     } catch (err) {
-      // 挑战/登录请求本身抛错（网络异常等）：清除已派生的密钥材料再上抛
+      // 过门/挑战/登录请求抛错（钥匙被吊销、网络异常等）：清除已派生的密钥材料
       kek.fill(0);
       verifier.fill(0);
+      // 过门被拒（ErrorGateDenied）：上报外层渲染未授权页，
+      // 密码请求未发出（挑战/登录未执行）
+      if (err instanceof ErrorGateDenied) {
+        onGateDenied(toGateDenial(err));
+        return;
+      }
       throw err;
     } finally {
       setDeriving(false);
     }
 
-    if (resp?.code !== 200) {
+    // 挑战码申请失败（success=false，如账号被锁）：静默中止，密钥材料已清零
+    if (!resp) return;
+
+    if (resp.code !== 200) {
       // 登录失败，清除已派生的密钥材料，更新锁定信息
       kek.fill(0);
       verifier.fill(0);
-      if (resp?.lockDetail) {
+      if (resp.lockDetail) {
         setLockDetail(resp.lockDetail);
       }
-      if (resp?.message) {
+      if (resp.message) {
         showGlobalMessage("warning", resp.message);
       }
       return;

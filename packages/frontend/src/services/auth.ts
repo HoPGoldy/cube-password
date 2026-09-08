@@ -12,21 +12,35 @@ import type {
 } from "@shared-types/auth";
 import type { AppResponse } from "@/types/global";
 
+/** 登录走廊请求的公共入参：门激活时必须携带刚过门换来的临时 gate token（即取即用） */
+interface GateTokenConfig {
+  gateToken?: string;
+}
+
 /** 获取全局状态（是否已初始化） */
-export const queryGlobal = () => {
-  return requestPost<SchemaGlobalResponseType>("auth/global");
+export const queryGlobal = ({ gateToken }: GateTokenConfig = {}) => {
+  return requestPost<SchemaGlobalResponseType>("auth/global", undefined, {
+    headers: gateToken ? { "X-Gate-Token": gateToken } : undefined,
+  });
 };
 
 /** 获取 challenge code */
-export const queryChallenge = () => {
-  return requestPost<SchemaChallengeResponseType>("auth/challenge");
+export const queryChallenge = ({ gateToken }: GateTokenConfig = {}) => {
+  return requestPost<SchemaChallengeResponseType>("auth/challenge", undefined, {
+    headers: gateToken ? { "X-Gate-Token": gateToken } : undefined,
+  });
 };
 
 /** 初始化（首次设置主密码） */
 export const useInit = () => {
   return useMutation({
-    mutationFn: (data: SchemaAuthInitBodyType) => {
-      return requestPost<SchemaAuthInitResponseType>("auth/init", data);
+    mutationFn: ({
+      gateToken,
+      ...data
+    }: SchemaAuthInitBodyType & GateTokenConfig) => {
+      return requestPost<SchemaAuthInitResponseType>("auth/init", data, {
+        headers: gateToken ? { "X-Gate-Token": gateToken } : undefined,
+      });
     },
   });
 };
@@ -39,11 +53,17 @@ export type LoginResult = AppResponse<SchemaAuthLoginResponseType> & {
 /** 登录 */
 export const useLogin = () => {
   return useMutation({
-    mutationFn: async (data: SchemaAuthLoginBodyType): Promise<LoginResult> => {
+    mutationFn: async ({
+      gateToken,
+      ...data
+    }: SchemaAuthLoginBodyType & GateTokenConfig): Promise<LoginResult> => {
       try {
         return await requestPost<SchemaAuthLoginResponseType>(
           "auth/login",
           data,
+          {
+            headers: gateToken ? { "X-Gate-Token": gateToken } : undefined,
+          },
         );
       } catch (err: any) {
         // 登录失败时从 axios error 中提取响应数据

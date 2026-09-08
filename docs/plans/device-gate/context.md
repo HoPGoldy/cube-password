@@ -1,3 +1,7 @@
+> **注（2026-09-08）**：本计划决策 5 的「gate token 内存态、10 分钟 TTL」已被后续批次
+> [`docs/plans/ephemeral-gate-token/`](../ephemeral-gate-token/) 取代——token 改为每次登录
+> 流程现取现用（TTL 3 分钟仅防御性上限），不再页面级缓存。本文其余内容仍有效。
+
 # 设备门 (Device Gate)
 
 ## 1. 背景与目标

@@ -1,11 +1,12 @@
 /**
- * 设备门禁（device gate）前端流程（见 docs/plans/device-gate/context.md 3.3/3.4、T04）
+ * 设备门禁（device gate）前端流程（见 docs/plans/device-gate/context.md 3.3/3.4、T04
+ * 与 docs/plans/ephemeral-gate-token/context.md 第 2 节 D-passgate/D-corridor）
  *
  * - probeGate：POST /device/challenge，登录页唯一探针（gateEnabled 回报门是否激活）
  * - passGate：IndexedDB 取本机钥匙（含 pending）→ silentVerify 签名挑战码 →
  *   POST /device/verify 换 gate token；任何一步失败抛类型化错误
- * - gateToken 只存内存模块级变量（10 分钟 TTL，与服务端 GateTokenManager 对齐），
- *   不进 localStorage；由 services/base 的拦截器在登录走廊四个请求上自动附带
+ * - gate token 即取即用（ephemeral）：不落任何模块级状态，由 withGateToken 在单次
+ *   调用栈内签发并消费，调用方经返回值使用后自然弃置，永不跨请求/跨页面持久
  */
 import { requestPost } from "./base";
 import {
@@ -21,45 +22,6 @@ import type { AppResponse } from "@/types/global";
 
 /** 后端 ErrorDeviceGate 的业务错误码（403 + code 40301） */
 export const ERROR_CODE_DEVICE_GATE = 40301;
-
-/** gate token 客户端侧有效期，与服务端 GATE_TOKEN_TTL_MS（10 分钟）对齐 */
-const GATE_TOKEN_TTL_MS = 10 * 60 * 1000;
-
-/** 登录走廊路由（相对 baseURL 的 url），拦截器仅在这些请求上附带 gate token */
-export const GATE_CORRIDOR_URLS = new Set([
-  "auth/challenge",
-  "auth/global",
-  "auth/login",
-  "auth/init",
-]);
-
-interface GateTokenState {
-  token: string;
-  expiresAt: number;
-}
-
-/** gate token 内存态（模块级变量，不落 localStorage） */
-let gateTokenState: GateTokenState | undefined;
-
-/** 过门成功后记录 gate token（起算 10 分钟客户端侧有效期） */
-export const setGateToken = (token: string): void => {
-  gateTokenState = { token, expiresAt: Date.now() + GATE_TOKEN_TTL_MS };
-};
-
-/** 丢弃 gate token（收到 40301 / 登录成功进入应用时调用） */
-export const clearGateToken = (): void => {
-  gateTokenState = undefined;
-};
-
-/** 取仍在有效期内的 gate token；已过期即丢弃 */
-export const getValidGateToken = (): string | undefined => {
-  if (!gateTokenState) return undefined;
-  if (Date.now() >= gateTokenState.expiresAt) {
-    gateTokenState = undefined;
-    return undefined;
-  }
-  return gateTokenState.token;
-};
 
 /**
  * 判断 axios 错误是否为服务端设备门拒绝（HTTP 403 + ErrorDeviceGate 的 40301）
@@ -162,13 +124,38 @@ export const passGate = async (
   return { gateToken: resp.data.gateToken };
 };
 
+/**
+ * 即取即用门禁执行器：探针确认门态 → 门激活时跑一遍完整过门（签名验签换临时
+ * token），把 token 作为参数传给 fn 并返回其结果；门未激活时直接以 undefined
+ * 调用 fn（纯密码模式，无需 token）。token 只存活于本次调用栈，不写入任何
+ * 模块级状态——本函数返回即消亡。
+ * 过门阶段失败（ErrorGateDenied / ErrorGateUnavailable）原样上抛，由调用方决定
+ * 渲染；fn 自身抛出的错误不经包装直接透传。
+ */
+export const withGateToken = async <T>(
+  fn: (gateToken: string | undefined) => Promise<T>,
+): Promise<T> => {
+  let probe: Awaited<ReturnType<typeof probeGate>>;
+  try {
+    probe = await probeGate();
+  } catch (err) {
+    throw new ErrorGateUnavailable(`门禁探针失败：${errorDetail(err)}`);
+  }
+  if (!probe.success) {
+    throw new ErrorGateUnavailable(probe.message!);
+  }
+  if (!probe.data!.gateEnabled) return fn(undefined);
+  const { gateToken } = await passGate(probe.data!.challenge);
+  return fn(gateToken);
+};
+
 /** 门禁失败的可渲染信息：kind 区分「未授权」（走重绑指引）与「暂时不可用」（可重试） */
 export interface GateDenial {
   kind: "unauthorized" | "unavailable";
   detail?: string;
 }
 
-/** 把 passGate/probeGate 抛出的错误归一化为页面可渲染的门禁失败信息 */
+/** 把 passGate/probeGate/withGateToken 抛出的错误归一化为页面可渲染的门禁失败信息 */
 export const toGateDenial = (err: unknown): GateDenial => {
   if (err instanceof ErrorGateDenied) {
     return { kind: "unauthorized", detail: err.message };
