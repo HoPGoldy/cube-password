@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Outlet, useNavigate, useSearchParams } from "react-router-dom";
-import { Switch } from "antd";
 import {
   CubeApp,
   type AccountMenuItem,
@@ -20,8 +19,8 @@ import { Sidebar } from "../sidebar";
 import { SessionCountdown } from "./session-countdown";
 import { useHeaderPageTitle } from "./use-page-title";
 import { THEME_PRIMARY_COLOR } from "@/config";
-import { stateUser, changeTheme, logout, type AppTheme } from "@/store/user";
-import { useSetTheme, useStatistic } from "@/services/user";
+import { stateUser, logout } from "@/store/user";
+import { useStatistic } from "@/services/user";
 import { useLogout } from "@/services/auth";
 import { useAppVersion } from "@/services/app-config";
 import { MetadataMigrationModal } from "@/components/metadata-migration-modal";
@@ -44,7 +43,6 @@ export const AppContainer = () => {
   const deviceManage = useDeviceManage();
 
   const { mutateAsync: fetchStatistic, data: statResp } = useStatistic();
-  const { mutateAsync: setAppTheme } = useSetTheme();
   const { mutateAsync: postLogout } = useLogout();
   const { appVersion } = useAppVersion();
 
@@ -52,12 +50,6 @@ export const AppContainer = () => {
   useMemo(() => {
     fetchStatistic();
   }, []);
-
-  const onSwitchTheme = () => {
-    const newTheme: AppTheme = userInfo?.theme === "dark" ? "light" : "dark";
-    setAppTheme({ theme: newTheme });
-    changeTheme(newTheme);
-  };
 
   const onLogout = async () => {
     await postLogout();
@@ -109,17 +101,6 @@ export const AppContainer = () => {
       label: "设备管理",
       icon: <SafetyOutlined />,
       onClick: deviceManage.showModal,
-    },
-    {
-      key: "theme",
-      // 点击按钮或 Switch 都会触发 onClick 切换主题
-      label: (
-        <span className="flex justify-between items-center w-full">
-          黑夜模式
-          <Switch size="small" checked={userInfo?.theme === "dark"} />
-        </span>
-      ),
-      onClick: onSwitchTheme,
     },
   ];
 
