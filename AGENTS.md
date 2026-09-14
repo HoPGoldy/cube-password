@@ -16,7 +16,7 @@
 
 ### 设备门 (Device Gate)
 
-基于 WebCrypto 非导出密钥的设备准入门禁，等价 ssh 的 authorized_keys。`storage/trusted-devices.json` 为唯一 source of truth（不进 SQLite/Prisma）：文件非空即门生效，为空或不存在则门未激活（纯密码模式）。每次验证直读文件，手工编辑无需重启。门生效时，未过门禁的请求只能访问 `/device/challenge`、`/device/verify`，其余路由（含 auth/global、auth/challenge、auth/login、auth/init）一律 403。
+基于 WebCrypto 非导出密钥的设备准入门禁，等价 ssh 的 authorized_keys。门的开闭唯一开关是 AppConfig `deviceGateEnabled`（开关经 `/device/gate-config-update` 写入（读走 `/device/gate-config`），缺省/脏值视为关）；`storage/trusted-devices.json` 仅为受信设备清单，手工编辑文件增删设备即时生效，但门的开闭只由开关决定（清单非空不再等于门开）。设备清单与开关均每次直读，手工改动无需重启。门生效时，未过门禁的请求只能访问 `/device/challenge`、`/device/verify`，其余路由（含 auth/global、auth/challenge、auth/login、auth/init）一律 403；单条件 fail-closed：门开 + 清单为空 = 拦截一切（无人能过门，恢复方式 = 关闭开关）。
 
 ### 设备钥匙 (Device Key)
 

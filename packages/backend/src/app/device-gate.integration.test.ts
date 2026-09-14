@@ -11,8 +11,9 @@ import { generateKeyPairSync, sign as nodeSign } from "node:crypto";
  * device 模块 + 门禁 preHandler 的完整 HTTP 栈验收（走 buildApp + inject）。
  *
  * 注意：真实后端进程从 packages/backend/storage 读写 trusted-devices.json；
- * 本测试通过 vi.mock 把 PATH_ROOT 指向临时目录，既不触碰真实存储，
- * 也顺便验证 isGateEnabled 在 preHandler 中按请求实时求值（门随文件即时开关）。
+ * 本测试通过 vi.mock 把 PATH_ROOT 指向临时目录，既不触碰真实存储。
+ * 门激活态 =「写设备文件 + 置 AppConfig.deviceGateEnabled=true」两步构造
+ * （新语义：开关与设备清单解耦，判定每次直查 AppConfig，按请求实时生效）。
  * vi.mock 工厂会被提升，路径字面量必须内联；其余路径导出保持真实值。
  */
 const TEST_DIR = "/tmp/cube-password-test/device-gate-integration";
@@ -32,6 +33,7 @@ import { sha512 } from "@/lib/crypto";
 import { PATH_TRUSTED_DEVICES } from "@/lib/device-store";
 import { serializeDeviceKey } from "@/lib/device-key";
 import { NoticeType } from "@/types/notification";
+import { APP_CONFIG_KEY_DEVICE_GATE_ENABLED } from "@/types/app-config";
 import type { AppInstance } from "@/types";
 
 const require = createRequire(import.meta.url);
@@ -87,6 +89,30 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
       expect(verifyRes.statusCode).toBe(200);
       return verifyRes.json().data.gateToken;
     };
+
+    /** 登录拿 session token（供 session 保护接口的用例使用） */
+    const login = async (): Promise<string> => {
+      const challengeRes = await api("/auth/challenge");
+      const code = challengeRes.json().data.code;
+      const salt = "A".repeat(64);
+      const verifier = sha512(salt + "test-pwd-123");
+      const loginRes = await api("/auth/login", {
+        hash: sha512(verifier + code),
+      });
+      expect(loginRes.statusCode).toBe(200);
+      return loginRes.json().data.token;
+    };
+
+    /** 直写临时库的 AppConfig（单元层构造，配合 writeFileSync 构造门激活态） */
+    const setGateEnabled = (enabled: boolean) =>
+      prisma.appConfig.upsert({
+        where: { key: APP_CONFIG_KEY_DEVICE_GATE_ENABLED },
+        create: {
+          key: APP_CONFIG_KEY_DEVICE_GATE_ENABLED,
+          value: String(enabled),
+        },
+        update: { value: String(enabled) },
+      });
 
     beforeAll(async () => {
       mkdirSync(TEST_DIR, { recursive: true });
@@ -156,7 +182,7 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
       rmSync(TEST_DIR, { recursive: true, force: true });
     });
 
-    it("门未激活：auth/global 照常 200，/device/challenge 探针回报 gateEnabled=false", async () => {
+    it("门未开启（AppConfig 缺省）：auth/global 照常 200，/device/challenge 探针回报 gateEnabled=false", async () => {
       const globalRes = await api("/auth/global");
       expect(globalRes.statusCode).toBe(200);
 
@@ -166,13 +192,14 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
       expect(probe.json().data.challenge).toEqual(expect.any(String));
     });
 
-    it("门激活：无 gate token 访问 auth/global|challenge|login 全部 403 ErrorDeviceGate", async () => {
+    it("门激活（写文件 + 置 AppConfig）：无 gate token 访问 auth/global|challenge|login 全部 403 ErrorDeviceGate（fail-closed）", async () => {
       const { publicKey, privateKey } = generateKeyPairSync("ec", {
         namedCurve: "P-256",
       });
       const spki = publicKey
         .export({ format: "der", type: "spki" })
         .toString("base64");
+      // 门激活态两步构造：设备文件 + 开关（缺一不激活）
       writeFileSync(
         PATH_TRUSTED_DEVICES,
         JSON.stringify({
@@ -188,6 +215,7 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
         }),
         "utf8",
       );
+      await setGateEnabled(true);
       // 保存私钥供后续用例过门
       testPrivateKey = privateKey;
 
@@ -270,8 +298,60 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
       expect(res.json().code).toBe(40301);
     });
 
-    it("手工清空文件即门失效：所有路由恢复放行（无需重启）", async () => {
+    it("门开 + 设备文件空 → 预登录路由 403（fail-closed：拦截一切，无人能过门）", async () => {
+      // 沿用上一格的门开状态，仅清空设备文件
       writeFileSync(PATH_TRUSTED_DEVICES, '{"devices":[]}', "utf8");
+
+      const globalRes = await api("/auth/global");
+      expect(globalRes.statusCode).toBe(403);
+      expect(globalRes.json()).toMatchObject({ success: false, code: 40301 });
+      const probe = await api("/device/challenge");
+      expect(probe.json().data.gateEnabled).toBe(true);
+
+      // 恢复门关，后续用例回到基线
+      await setGateEnabled(false);
+    });
+
+    it("门关 + 设备文件有设备 → 放行（设备清单保留，开关独立于清单）", async () => {
+      // 此格状态：AppConfig 为 false（上格已置），设备文件重写回含 dev-1 的清单
+      // （上格 fail-closed 验证时被清空）——名副其实地覆盖"文件有设备"维度
+      const { publicKey } = generateKeyPairSync("ec", {
+        namedCurve: "P-256",
+      });
+      const spki = publicKey
+        .export({ format: "der", type: "spki" })
+        .toString("base64");
+      writeFileSync(
+        PATH_TRUSTED_DEVICES,
+        JSON.stringify({
+          devices: [
+            {
+              id: "dev-1",
+              name: "TestDevice",
+              publicKey: spki,
+              createdAt: "2026-02-10T08:00:00.000Z",
+              lastSeenAt: "2026-02-10T08:00:00.000Z",
+            },
+          ],
+        }),
+        "utf8",
+      );
+      const listRes = await api(
+        "/device/list",
+        {},
+        { "x-session-token": "irrelevant-before-login" },
+      );
+      // 未登录：session 401，但探针已足够断言门关
+      expect(listRes.statusCode).toBe(401);
+      const probe = await api("/device/challenge");
+      expect(probe.json().data.gateEnabled).toBe(false);
+      const globalRes = await api("/auth/global");
+      expect(globalRes.statusCode).toBe(200);
+    });
+
+    it("手工关开关即门失效：所有路由恢复放行（无需重启）", async () => {
+      // AppConfig=false（上格已置）；设备文件含 dev-1 不动，验证清单保留
+      await setGateEnabled(false);
 
       const globalRes = await api("/auth/global");
       expect(globalRes.statusCode).toBe(200);
@@ -370,6 +450,91 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
           .json()
           .data.items.find((i: { id: string }) => i.id === addedId),
       ).toBeUndefined();
+    });
+
+    it("gate-config 接口：空库默认 false/0，经 API 开启后读到新值，开启无设备 400，关闭后设备清单保留", async () => {
+      // 清空设备文件 + 确保开关关闭 → 空库基线
+      writeFileSync(PATH_TRUSTED_DEVICES, '{"devices":[]}', "utf8");
+      await setGateEnabled(false);
+
+      // 登录拿 session
+      const sessionToken = await login();
+
+      // 空库读数：enabled=false, deviceCount=0
+      const emptyRes = await api(
+        "/device/gate-config",
+        {},
+        { "x-session-token": sessionToken },
+      );
+      expect(emptyRes.statusCode).toBe(200);
+      expect(emptyRes.json().data).toEqual({ enabled: false, deviceCount: 0 });
+
+      // 无 session 401
+      const noSessionRes = await api("/device/gate-config");
+      expect(noSessionRes.statusCode).toBe(401);
+      expect(noSessionRes.json().code).toBe(40102);
+
+      // 开启且无设备 → 400 守卫
+      const enableRes = await api(
+        "/device/gate-config-update",
+        { enabled: true },
+        { "x-session-token": sessionToken },
+      );
+      expect(enableRes.statusCode).toBe(400);
+      expect(enableRes.json().message).toContain("请先绑定至少一台设备");
+
+      // 绑定一台设备后经 API 开启 → gate-config 读到新值；/device/add
+      // 在门关时即可用（预绑定语义，session 即可）
+      const { publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+      const spki = publicKey
+        .export({ format: "der", type: "spki" })
+        .toString("base64");
+      const addRes = await api(
+        "/device/add",
+        { deviceKey: serializeDeviceKey({ name: "GateApi", publicKey: spki }) },
+        { "x-session-token": sessionToken },
+      );
+      expect(addRes.statusCode).toBe(200);
+
+      const updateRes = await api(
+        "/device/gate-config-update",
+        { enabled: true },
+        { "x-session-token": sessionToken },
+      );
+      expect(updateRes.statusCode).toBe(200);
+
+      // 读回：enabled=true, deviceCount=1；探针同步
+      const afterRes = await api(
+        "/device/gate-config",
+        {},
+        { "x-session-token": sessionToken },
+      );
+      expect(afterRes.json().data).toEqual({ enabled: true, deviceCount: 1 });
+      const probe = await api("/device/challenge");
+      expect(probe.json().data.gateEnabled).toBe(true);
+
+      // 门开时未携 token 访问预登录路由 403（开关即时生效）
+      const blockedRes = await api("/auth/global");
+      expect(blockedRes.statusCode).toBe(403);
+
+      // 关闭：立即放行，设备清单保留（deviceCount 仍为 1）
+      const offRes = await api(
+        "/device/gate-config-update",
+        { enabled: false },
+        { "x-session-token": sessionToken },
+      );
+      expect(offRes.statusCode).toBe(200);
+      const offReadRes = await api(
+        "/device/gate-config",
+        {},
+        { "x-session-token": sessionToken },
+      );
+      expect(offReadRes.json().data).toEqual({
+        enabled: false,
+        deviceCount: 1,
+      });
+      const globalAfter = await api("/auth/global");
+      expect(globalAfter.statusCode).toBe(200);
     });
   },
 );

@@ -10,6 +10,13 @@ import {
   writeDeviceKeyToIdb,
   browserGenerateKeyInitScript,
   waitForInjectedKey,
+  setupGateEnabled,
+  addTrustedDeviceViaApi,
+  enableGateViaApi,
+  disableGateViaApi,
+  readGateConfigValue,
+  writeGateConfigValue,
+  resetGateConfig,
 } from "../fixtures/device-gate";
 import { buildDeviceKeyString } from "../fixtures/device-gate";
 import {
@@ -34,8 +41,10 @@ import { rmSync, mkdirSync, writeFileSync } from "node:fs";
  * 未授权页且密码请求未发出（吊销即时生效）。
  *
  * 隔离约定（workers=1 串行，见 playwright.config.ts）：
- * - 门状态：fixtures/device-gate 在每条用例前后删除 trusted-devices.json；
- *   需要门激活的用例自行写文件（服务端每次校验直读文件，即时生效、无需重启）
+ * - 门状态：fixtures/device-gate 在每条用例前后删除 trusted-devices.json 并清
+ *   AppConfig 的 deviceGateEnabled（gate-switch 新语义：清单与开关独立重置）；
+ *   需要门激活的用例走 enableGateViaApi / setupGateEnabled（开关只经 API 切换，
+ *   设备清单可直写文件模拟手工编辑，服务端均即时生效、无需重启）
  * - 浏览器态：gatePage fixture 每用例全新 context（IndexedDB / localStorage 互不相通）
  * - 登录失败计数：全文件不做真实失败登录（3 次触发全局锁定），成功登录仅必要处使用
  */
@@ -158,7 +167,7 @@ gateTest.describe("设备门 - 绑定首台设备", () => {
       expect(devices).toHaveLength(1);
       expect(devices[0]).toMatchObject({ id, publicKey: injected!.publicKey });
 
-      // 交叉验证：/device/list 与文件一致，探针回报门已激活
+      // 交叉验证：/device/list 与文件一致；此刻开关仍关，门未激活
       const listResp = await request.post(`${BASE}/device/list`, {
         data: {},
         headers: authHeaders(session),
@@ -168,6 +177,15 @@ gateTest.describe("设备门 - 绑定首台设备", () => {
         data: {},
       });
       expect((await probeResp.json()).data).toMatchObject({
+        gateEnabled: false,
+      });
+
+      // 开启开关（gate-switch：仅绑设备不激活门）→ 探针回报门已激活
+      await enableGateViaApi(request, session);
+      const probeAfter = await request.post(`${BASE}/device/challenge`, {
+        data: {},
+      });
+      expect((await probeAfter.json()).data).toMatchObject({
         gateEnabled: true,
       });
     },
@@ -191,19 +209,11 @@ gateTest.describe("设备门 - 静默过门", () => {
       await expect(gatePage.getByTestId("sidebar")).toBeVisible();
 
       // 2. 本机已随首次导航生成钥匙（initScript 首跳时已执行并写入 IDB），
-      //    注册为受信设备（等价管理页「生成 + 直接添加」）
+      //    注册为受信设备并开启开关（等价管理页「生成 + 保存并启用」）
       const injected = await waitForInjectedKey(gatePage);
       const session = await loginWithPassword(request, PASSWORD);
-      const addResp = await request.post(`${BASE}/device/add`, {
-        data: {
-          deviceKey: buildDeviceKeyString({
-            name: injected!.name,
-            publicKey: injected!.publicKey,
-          }),
-        },
-        headers: authHeaders(session),
-      });
-      expect(addResp.status()).toBe(200);
+      await addTrustedDeviceViaApi(request, session, injected!.publicKey);
+      await enableGateViaApi(request, session);
       expect(readTrustedDevices()).toHaveLength(1);
 
       // 3. 走 UI 登出（头像菜单 → 登出按钮），回到登录页
@@ -229,12 +239,9 @@ gateTest.describe("设备门 - 静默过门", () => {
 gateTest.describe("设备门 - 无钥匙拦截", () => {
   gateTest(
     "门激活时：全新 context 的 auth/global 返回 403 ErrorDeviceGate（API 级）",
-    async ({ browser }) => {
-      // Node 侧生成钥匙 + 写文件激活门（无浏览器参与）
-      const key = await generateNodeSideKey();
-      writeTrustedDevices([
-        makeManualDevice({ id: "e2e-api-device", publicKey: key.publicKey }),
-      ]);
+    async ({ browser, request }) => {
+      // 纯 API 构造门激活态：清单非空 + 开关开启（无浏览器参与）
+      await setupGateEnabled(request);
 
       // 全新 context 的隔离 request：不带任何 gate token
       const context = await browser.newContext();
@@ -249,11 +256,8 @@ gateTest.describe("设备门 - 无钥匙拦截", () => {
 
   gateTest(
     "门激活时：无钥匙浏览器访问登录页渲染「此设备未授权」页（无密码表单）",
-    async ({ gatePage }) => {
-      const key = await generateNodeSideKey();
-      writeTrustedDevices([
-        makeManualDevice({ id: "e2e-api-device", publicKey: key.publicKey }),
-      ]);
+    async ({ gatePage, request }) => {
+      await setupGateEnabled(request);
 
       await gatePage.goto("/login");
       // 未授权页：denied 卡片 + 重新验证按钮；密码表单不渲染
@@ -281,10 +285,10 @@ gateTest.describe("设备门 - 敲门通知去重", () => {
         headers: authHeaders(session),
       });
 
+      // 门激活态（清单非空 + 开关开启）；陌生设备对它敲门（错误签名）。
+      // setupGateEnabled 会再次登录互踢：通知断言改用其返回的新 session
+      const { session: gateSession } = await setupGateEnabled(request);
       const key = await generateNodeSideKey();
-      writeTrustedDevices([
-        makeManualDevice({ id: "e2e-knock-device", publicKey: key.publicKey }),
-      ]);
 
       // 陌生设备连续两次敲门（错误签名，门激活态）→ 两次都 403 ErrorDeviceGate
       for (let i = 0; i < 2; i += 1) {
@@ -306,7 +310,7 @@ gateTest.describe("设备门 - 敲门通知去重", () => {
       // 通知列表：Warning（type=2）恰好 1 条（全局 1 小时窗口去重）
       const listResp = await request.post(`${BASE}/notification/list`, {
         data: { page: 1, pageSize: 50, type: 2 },
-        headers: authHeaders(session),
+        headers: authHeaders(gateSession),
       });
       expect(listResp.status()).toBe(200);
       const body = await listResp.json();
@@ -327,16 +331,12 @@ gateTest.describe("设备门 - 吊销后 denied 稳定", () => {
       await gatePage.goto("/login");
       const injected = await waitForInjectedKey(gatePage);
       const session = await loginWithPassword(request, PASSWORD);
-      const addResp = await request.post(`${BASE}/device/add`, {
-        data: {
-          deviceKey: buildDeviceKeyString({
-            name: injected!.name,
-            publicKey: injected!.publicKey,
-          }),
-        },
-        headers: authHeaders(session),
-      });
-      const { id } = (await addResp.json()).data as { id: string };
+      const id = await addTrustedDeviceViaApi(
+        request,
+        session,
+        injected!.publicKey,
+      );
+      await enableGateViaApi(request, session);
       expect(readTrustedDevices()).toHaveLength(1);
 
       // 2. 吊销唯一受信设备（session 接口；devices 变空 = 门自动失效）
@@ -381,12 +381,20 @@ gateTest.describe("设备门 - 吊销后 denied 稳定", () => {
 gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
   gateTest(
     "清 IDB 后生成 pending 钥匙（服务端未录入）：重新验证停留未授权页，无循环",
-    async ({ gatePage }) => {
-      // 门激活：一把与浏览器无关的钥匙
+    async ({ gatePage, request }) => {
+      // 门激活：一把与浏览器无关的钥匙（清单非空 + 开关开启）
       const trusted = await generateNodeSideKey();
+      const { session } = await setupGateEnabled(request);
+      // 用例要求清单里只有这把「受信钥匙」：替换 setupGateEnabled 自带的设备
       writeTrustedDevices([
         makeManualDevice({ id: "e2e-trusted", publicKey: trusted.publicKey }),
       ]);
+      // 清单直改后 session 接口仍可用（门开 + session 有效，与清单内容无关）
+      const listResp = await request.post(`${BASE}/device/list`, {
+        data: {},
+        headers: authHeaders(session),
+      });
+      expect((await listResp.json()).data.items).toHaveLength(1);
 
       // 首次进入：本机无钥匙 → denied 页
       await gatePage.goto("/login");
@@ -440,28 +448,34 @@ gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
 
 gateTest.describe("设备门 - 手工编辑文件即时生效", () => {
   gateTest(
-    "运行中增删 trusted-devices.json：门即时开关，无需重启服务",
+    "运行中增删 trusted-devices.json：清单即时生效，门开闭仅随开关（无需重启服务）",
     async ({ gatePage, request }) => {
-      // 1. 初始：手工写空数组（门未激活），auth/global 200；趁门未激活先登录拿 session
-      //    （loginWithPassword 走 auth/login，门激活时会 403，必须在开门前完成）
+      // 1. 初始：手工写空数组（清单为空），门未激活，auth/global 200；
+      //    趁门未激活先登录拿 session（loginWithPassword 走 auth/login，
+      //    门激活时会被 403，必须在开门前完成）
       writeTrustedDevices([]);
       const global1 = await request.post(`${BASE}/auth/global`, { data: {} });
       expect(global1.status()).toBe(200);
       const session = await loginWithPassword(request, PASSWORD);
 
-      // 2. 运行中写入一台设备（Node 生成钥匙）→ 门立即激活
+      // 2. 运行中录入设备但开关仍关：auth/global 仍 200（新语义：清单非空 ≠ 门开）
       const device1 = await generateNodeSideKey();
       writeTrustedDevices([
         makeManualDevice({ id: "e2e-live-1", publicKey: device1.publicKey }),
       ]);
+      const globalMid = await request.post(`${BASE}/auth/global`, { data: {} });
+      expect(globalMid.status()).toBe(200);
+
+      // 3. 开启开关（API）→ 门立即激活：auth/global 403
+      await enableGateViaApi(request, session);
       const global2 = await request.post(`${BASE}/auth/global`, { data: {} });
       expect(global2.status()).toBe(403);
       expect(await global2.json()).toMatchObject({ code: 40301 });
 
-      // 3. 新写入的设备能立刻过门（challenge → sign → verify 走通）
+      // 4. 新写入清单的设备能立刻过门（challenge → sign → verify 走通）
       await knockGateViaApi(request, device1, "e2e-live-1");
 
-      // 4. 运行中再增一台 → list 反映为 2 台（session 在门未激活时已拿到，不受门状态影响）
+      // 5. 运行中再增一台 → list 反映为 2 台（清单直改即时生效）
       const device2 = await generateNodeSideKey();
       writeTrustedDevices([
         makeManualDevice({ id: "e2e-live-1", publicKey: device1.publicKey }),
@@ -477,9 +491,16 @@ gateTest.describe("设备门 - 手工编辑文件即时生效", () => {
         "e2e-live-2",
       ]);
 
-      // 5. 运行中删光设备 → 门立即失效：auth/global 恢复 200，
-      //    浏览器端登录页密码表单直接出现（无 denied 页）
+      // 6. 手工编辑清单（删光设备）不动开关：门仍激活（auth/global 仍 403）
       writeTrustedDevices([]);
+      const globalStill = await request.post(`${BASE}/auth/global`, {
+        data: {},
+      });
+      expect(globalStill.status()).toBe(403);
+
+      // 7. API 关闭开关 → 门立即失效：auth/global 恢复 200，
+      //    浏览器端登录页密码表单直接出现（无 denied 页）
+      await disableGateViaApi(request, session);
       const global3 = await request.post(`${BASE}/auth/global`, { data: {} });
       expect(global3.status()).toBe(200);
 
@@ -490,17 +511,31 @@ gateTest.describe("设备门 - 手工编辑文件即时生效", () => {
   );
 
   rawTest(
-    "手工坏文件不被静默降级：探针 500 显式暴露（测试自清理恢复）",
+    "手工坏文件不被静默降级：验签路径 500 显式暴露（测试自清理恢复）",
     async ({ request }) => {
       mkdirSync(STORAGE_DIR, { recursive: true });
       writeFileSync(`${STORAGE_DIR}/trusted-devices.json`, "{bad json", "utf8");
       try {
+        // 坏文件仅在真正解析清单的路径暴露：探针只读 AppConfig 不触文件（仍 200），
+        // updateGateConfig(true) 先走 hasDevices() 解析坏文件即炸 500（开关未写成）；随后 verify 在门 OFF 下无条件 listDevices() 同样炸 500（不静默降级为「无设备/门关」）
+        await request.post(`${BASE}/device/gate-config-update`, {
+          data: { enabled: true },
+          headers: authHeaders(await loginWithPassword(request, PASSWORD)),
+        });
         const probe = await request.post(`${BASE}/device/challenge`, {
           data: {},
         });
-        expect(probe.status()).toBe(500);
+        expect(probe.status()).toBe(200);
+        const { challenge } = (await probe.json()).data;
+        // 携带合法 challenge 打到「遍历清单验签」那一步 → 解析坏文件炸 500
+        const verify = await request.post(`${BASE}/device/verify`, {
+          data: { challenge, signature: "y" },
+        });
+        expect(verify.status()).toBe(500);
       } finally {
         rmSync(`${STORAGE_DIR}/trusted-devices.json`, { force: true });
+        // 开关兜底还原（清单已删，不还原会把 fail-closed 态泄漏给后续用例）
+        resetGateConfig();
       }
     },
   );
@@ -532,18 +567,10 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
       await gatePage.goto("/login");
       const injected = await waitForInjectedKey(gatePage);
 
-      // 2. 注册为受信设备（服务端直读文件，门立即激活）
+      // 2. 注册为受信设备并开启开关（门激活；服务端直读文件与 AppConfig）
       const session = await loginWithPassword(request, PASSWORD);
-      const addResp = await request.post(`${BASE}/device/add`, {
-        data: {
-          deviceKey: buildDeviceKeyString({
-            name: injected!.name,
-            publicKey: injected!.publicKey,
-          }),
-        },
-        headers: authHeaders(session),
-      });
-      expect(addResp.status()).toBe(200);
+      await addTrustedDeviceViaApi(request, session, injected!.publicKey);
+      await enableGateViaApi(request, session);
       expect(readTrustedDevices()).toHaveLength(1);
 
       // 3. 加载登录页 → 静默过门（bootstrap：device/verify 第 1 次）→ 密码表单直接出现
@@ -574,7 +601,7 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
 
   gateTest(
     "吊销后不刷新点登录：渲染未授权页且密码请求未发出",
-    async ({ gatePage }) => {
+    async ({ gatePage, request }) => {
       const apiPaths = recordPageApiRequests(gatePage);
 
       // 1. 门未激活时首跳：浏览器生成本机钥匙（后续作为「被吊销设备」）
@@ -582,7 +609,8 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
       await gatePage.goto("/login");
       const injected = await waitForInjectedKey(gatePage);
 
-      // 2. 写入受信设备：本机钥匙（即将吊销）+ 一把无关钥匙（吊销本机后门仍激活）
+      // 2. 写入受信设备：本机钥匙（即将吊销）+ 一把无关钥匙（吊销本机后门仍激活），
+      //    并开启开关（吊销用例的后半段依赖门保持激活）
       const stranger = await generateNodeSideKey();
       writeTrustedDevices([
         makeManualDevice({
@@ -594,6 +622,8 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
           publicKey: stranger.publicKey,
         }),
       ]);
+      const session = await loginWithPassword(request, PASSWORD);
+      await enableGateViaApi(request, session);
 
       // 3. 加载登录页 → 静默过门成功（此时本机仍在名单内）→ 密码表单出现
       await gatePage.goto("/login");
@@ -601,7 +631,7 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
       await expect(gatePage.getByTestId("device-gate-denied")).toHaveCount(0);
 
       // 4. 期间吊销本机设备：手工改写 trusted-devices.json 删掉它（服务端直读文件，
-      //    即时生效、无需重启；保留陌生钥匙使门保持激活）
+      //    即时生效、无需重启；保留陌生钥匙使清单非空，门开关仍开启、门保持激活）
       writeTrustedDevices([
         makeManualDevice({
           id: "e2e-still-trusted",
@@ -645,18 +675,10 @@ gateTest.describe("设备门 - 注入链路语义复核", () => {
       await gatePage.goto("/");
       const injected = await waitForInjectedKey(gatePage);
 
-      // 服务端只登记这把公钥（模拟「钥匙串已录入、本机尚不知 id」的跨设备场景）
+      // 服务端登记这把公钥并开启开关（模拟「钥匙串已录入、本机尚不知 id」的跨设备场景）
       const session = await loginWithPassword(request, PASSWORD);
-      const addResp = await request.post(`${BASE}/device/add`, {
-        data: {
-          deviceKey: buildDeviceKeyString({
-            name: injected!.name,
-            publicKey: injected!.publicKey,
-          }),
-        },
-        headers: authHeaders(session),
-      });
-      expect(addResp.status()).toBe(200);
+      await addTrustedDeviceViaApi(request, session, injected!.publicKey);
+      await enableGateViaApi(request, session);
 
       // 页面上下文内走完整静默过门（fetch 走 vite 代理，省略 deviceId）
       const gateToken = await browserSilentPassGate(gatePage);
@@ -675,6 +697,9 @@ gateTest.describe("设备门 - 注入链路语义复核", () => {
     "sanity：Node 侧 JWK 重导入浏览器后签名仍可过门（writeDeviceKeyToIdb 基建）",
     async ({ gatePage, request }) => {
       const key = await generateNodeSideKey();
+      await setupGateEnabled(request);
+      // 用例要求清单里只有这把重导入钥匙：替换 setupGateEnabled 自带的设备
+      // （开关保持开启，门激活态不变）
       writeTrustedDevices([
         makeManualDevice({ id: "e2e-reimport", publicKey: key.publicKey }),
       ]);
@@ -722,6 +747,206 @@ gateTest.describe("设备门 - 注入链路语义复核", () => {
         data: { hash: sha512(bytesToHex(verifier) + code) },
       });
       expect(loginResp.status()).toBe(200);
+    },
+  );
+});
+
+// ---------- 【T03 强制】开关生命周期（AppConfig deviceGateEnabled 唯一开关） ----------
+
+gateTest.describe("设备门 - 开关生命周期（T03）", () => {
+  /**
+   * 登录 → 打开账号菜单 → 设备管理（SettingContainer 弹窗）→ 等待 gate-config
+   * 加载完成并返回开关元素。桌面端容器是 antd Modal（渲染在 body portal 下）。
+   */
+  const openDeviceManage = async (page: Page) => {
+    await page.getByRole("button", { name: "打开用户菜单" }).click();
+    await page.getByRole("button", { name: "设备管理" }).click();
+    const gateSwitch = page.getByRole("switch");
+    await expect(gateSwitch).toBeVisible();
+    return gateSwitch;
+  };
+
+  gateTest(
+    "空库 UI 开关生命周期：OFF 无内容 → 引导绑定 → 保存并启用 → 探针 true",
+    async ({ gatePage, request }) => {
+      // 1. 登录进入应用（门未激活，全新空库默认开关 OFF）
+      await gatePage.goto("/login");
+      await gatePage.getByTestId("login-password-input").fill(PASSWORD);
+      await gatePage.getByTestId("login-submit-btn").click();
+      await expect(gatePage.getByTestId("sidebar")).toBeVisible();
+
+      // 2. 打开设备管理：仅 OFF 开关，下方无任何内容
+      const gateSwitch = await openDeviceManage(gatePage);
+      // aria-checked 由 antd Switch 的 checked 属性映射，是态判定最稳的锚点
+      await expect(gateSwitch).toHaveAttribute("aria-checked", "false");
+      // exact 匹配：开关描述文案含「受信设备」子串，必须 exact 排除
+      await expect(gatePage.getByText("受信设备", { exact: true })).toHaveCount(
+        0,
+      );
+      await expect(
+        gatePage.getByText("开启设备门", { exact: true }),
+      ).toHaveCount(0);
+
+      // 3. 首次开启（清单为空）→ 引导卡（不调 update，后端守卫未触发）
+      await gateSwitch.click();
+      const guideTitle = gatePage.getByText("开启设备门", { exact: true });
+      await expect(guideTitle).toBeVisible();
+
+      // 4. 生成本机钥匙串 → 保存并启用（两步调用：先 add 后 update）
+      await gatePage.getByRole("button", { name: /生\s*成/ }).click();
+      const saveBtn = gatePage.getByRole("button", { name: "保存并启用" });
+      await expect(saveBtn).toBeEnabled();
+      await saveBtn.click();
+
+      // 5. 服务端探针：门已激活（AppConfig 开关 + 浏览器生成的钥匙串已入库）
+      await expect
+        .poll(
+          async () => {
+            const probe = await request.post(`${BASE}/device/challenge`, {
+              data: {},
+            });
+            return (await probe.json()).data.gateEnabled as boolean;
+          },
+          { timeout: 10_000 },
+        )
+        .toBe(true);
+
+      // 清单与开关各就各位：文件 1 台设备 + AppConfig 值为 "true"
+      expect(readTrustedDevices()).toHaveLength(1);
+      expect(readGateConfigValue()).toBe("true");
+
+      // 6. 浏览器端复核：页面加载 /device/challenge 探针同样回报 true
+      //    （门开启 = 登录走廊已切到设备验证流程）
+      const pageProbe = await gatePage.evaluate(async () => {
+        const resp = await fetch("/api/device/challenge", { method: "POST" });
+        return (await resp.json()).data as { gateEnabled: boolean };
+      });
+      expect(pageProbe.gateEnabled).toBe(true);
+    },
+  );
+
+  gateTest(
+    "关闭开关：探针立即 false（清单保留），再开时 deviceCount>0 走 confirm 直开",
+    async ({ gatePage, request }) => {
+      // 1. 门激活（清单 1 台 + 开关开）
+      const { session } = await setupGateEnabled(request);
+
+      // 2. API 关闭开关 → 探针立即 false，设备清单原样保留（临时排查场景）
+      await disableGateViaApi(request, session);
+      const probe = await request.post(`${BASE}/device/challenge`, {
+        data: {},
+      });
+      expect((await probe.json()).data).toMatchObject({ gateEnabled: false });
+      expect(readTrustedDevices()).toHaveLength(1);
+
+      // 3. UI 再开：登录后打开设备管理（gate-config 已刷新为 OFF 态，
+      //    deviceCount=1 → 点击开关走 confirm 直开，不进引导卡）
+      await gatePage.goto("/login");
+      await gatePage.getByTestId("login-password-input").fill(PASSWORD);
+      await gatePage.getByTestId("login-submit-btn").click();
+      await expect(gatePage.getByTestId("sidebar")).toBeVisible();
+
+      const gateSwitch = await openDeviceManage(gatePage);
+      await expect(gateSwitch).toHaveAttribute("aria-checked", "false");
+      await expect(
+        gatePage.getByText("开启设备门", { exact: true }),
+      ).toHaveCount(0);
+
+      await gateSwitch.click();
+      await expect(gatePage.getByText("确定开启设备门？")).toBeVisible();
+      await gatePage.getByRole("button", { name: "开 启" }).click();
+
+      // 4. UI 复核：开关更新成功后 aria-checked 翻 true（react-query 失效重拉）
+      await expect(gateSwitch).toHaveAttribute("aria-checked", "true", {
+        timeout: 10_000,
+      });
+      // 5. 探针回报门再次激活，清单未被改动
+      const probeAgain = await request.post(`${BASE}/device/challenge`, {
+        data: {},
+      });
+      expect((await probeAgain.json()).data).toMatchObject({
+        gateEnabled: true,
+      });
+      expect(readTrustedDevices()).toHaveLength(1);
+    },
+  );
+
+  gateTest(
+    "门开吊销最后一台设备：探针仍 true + 无钥匙 context 访问 auth/global 403（fail-closed）",
+    async ({ browser, request }) => {
+      // 1. 门激活（唯一设备），吊销之（API revoke；设备清单清空，开关不动）
+      const { session, device } = await setupGateEnabled(request);
+      const revokeResp = await request.post(`${BASE}/device/revoke`, {
+        data: { id: device.id },
+        headers: authHeaders(session),
+      });
+      expect(revokeResp.status()).toBe(200);
+      expect(readTrustedDevices()).toHaveLength(0);
+
+      // 2. fail-closed 核心断言：开关仍开启 → 探针仍 true
+      const probe = await request.post(`${BASE}/device/challenge`, {
+        data: {},
+      });
+      expect((await probe.json()).data).toMatchObject({ gateEnabled: true });
+
+      // 3. 开关状态（gate-config，session 接口）回报一致：enabled=true + deviceCount=0
+      const configResp = await request.post(`${BASE}/device/gate-config`, {
+        data: {},
+        headers: authHeaders(session),
+      });
+      expect(await configResp.json()).toMatchObject({
+        success: true,
+        data: { enabled: true, deviceCount: 0 },
+      });
+
+      // 4. 无钥匙的全新 context：auth/global 403 ErrorDeviceGate（无人能过门）
+      const context = await browser.newContext();
+      const denied = await context.request.post(`${BASE}/auth/global`, {
+        data: {},
+      });
+      expect(denied.status()).toBe(403);
+      expect(await denied.json()).toMatchObject({ code: 40301 });
+      await context.close();
+
+      // 5. 自有 session 仍可用（门禁不拦 session 路由）：经 API 关门逃生
+      await disableGateViaApi(request, session);
+      const probeAfter = await request.post(`${BASE}/device/challenge`, {
+        data: {},
+      });
+      expect((await probeAfter.json()).data).toMatchObject({
+        gateEnabled: false,
+      });
+    },
+  );
+});
+
+// ---------- 【T03 强制】手工编辑数据库开关：AppConfig 为唯一判定源 ----------
+
+gateTest.describe("设备门 - 开关判定源钉（T03）", () => {
+  gateTest(
+    "手工写 AppConfig（不经 API）+ 清单非空：门开启；删行即关（缺省视为关）",
+    async ({ request }) => {
+      // 1. 清单非空 + 开关缺省（无行）→ 门关（缺省视为 false）
+      writeTrustedDevices([
+        makeManualDevice({ id: "e2e-db-device", publicKey: "not-a-real-key" }),
+      ]);
+      let probe = await request.post(`${BASE}/device/challenge`, { data: {} });
+      expect((await probe.json()).data).toMatchObject({ gateEnabled: false });
+
+      // 2. 手工插入 deviceGateEnabled='true' → 门开（清单无需任何变更）
+      writeGateConfigValue("true");
+      probe = await request.post(`${BASE}/device/challenge`, { data: {} });
+      expect((await probe.json()).data).toMatchObject({ gateEnabled: true });
+
+      // 3. 门开 + 篡改为脏值 '1' → 单条件判定 fail-closed：探针立即 false
+      writeGateConfigValue("1");
+      probe = await request.post(`${BASE}/device/challenge`, { data: {} });
+      expect((await probe.json()).data).toMatchObject({ gateEnabled: false });
+
+      // 4. 删行恢复缺省 → 门关；干净状态交还兜底 hook
+      writeGateConfigValue(null);
+      probe = await request.post(`${BASE}/device/challenge`, { data: {} });
+      expect((await probe.json()).data).toMatchObject({ gateEnabled: false });
     },
   );
 });

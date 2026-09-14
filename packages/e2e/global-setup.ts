@@ -190,8 +190,26 @@ async function ensureInitialized() {
 
 export default async function globalSetup() {
   resetTrustedDevices();
+  await resetGateConfig();
   await ensureInitialized();
 }
+
+/**
+ * 跨 run 兜底：清掉 AppConfig 里的设备门开关行（硬中断可能遗留 'true'，
+ * 会使排在前面的 spec 撞 fail-closed 403；与 fixtures 的 per-case 双清对称）。
+ */
+const resetGateConfig = async () => {
+  try {
+    const { DatabaseSync } = await import("node:sqlite");
+    const db = new DatabaseSync(
+      `${import.meta.dirname}/../backend/storage/main.db`,
+    );
+    db.exec("DELETE FROM AppConfig WHERE key = 'deviceGateEnabled'");
+    db.close();
+  } catch {
+    // 库不存在等：忽略（ensureInitialized 前库可能尚未建表，届时 per-case 兜底接管）
+  }
+};
 
 /**
  * 重置设备门：删除 trusted-devices.json（文件不存在即门未激活）。

@@ -8,6 +8,9 @@ import {
   SchemaDeviceListResponse,
   SchemaDeviceRevokeBody,
   SchemaDeviceRevokeResponse,
+  SchemaDeviceGateConfigResponse,
+  SchemaDeviceGateConfigUpdateBody,
+  SchemaDeviceGateConfigUpdateResponse,
 } from "./types";
 import { DeviceService } from "./service";
 
@@ -34,6 +37,41 @@ export const registerDeviceController = (options: RegisterOptions) => {
     },
     async () => {
       return deviceService.getChallenge();
+    },
+  );
+
+  // POST /api/device/gate-config — 设备门开关状态（session 保护）
+  // 不声明 body schema——与 /device/list 同坑（axios 无 body 不发 Content-Type，
+  // 声明 body schema 会触发 fastify content-type 校验 400）
+  server.post(
+    "/device/gate-config",
+    {
+      schema: {
+        description: "设备门开关状态（enabled）与受信设备数量（deviceCount）",
+        tags: ["device"],
+        response: { 200: SchemaDeviceGateConfigResponse },
+      },
+    },
+    async () => {
+      return deviceService.gateConfig();
+    },
+  );
+
+  // POST /api/device/gate-config-update — 切换设备门开关（session 保护）
+  // 只写 AppConfig，不动 trusted-devices.json；开启且无设备时 400
+  server.post(
+    "/device/gate-config-update",
+    {
+      schema: {
+        description: "切换设备门开关；开启前必须已绑定至少一台设备，否则 400",
+        tags: ["device"],
+        body: SchemaDeviceGateConfigUpdateBody,
+        response: { 200: SchemaDeviceGateConfigUpdateResponse },
+      },
+    },
+    async (request) => {
+      await deviceService.updateGateConfig(request.body.enabled);
+      return {};
     },
   );
 

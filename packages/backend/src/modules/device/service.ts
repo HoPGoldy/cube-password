@@ -4,13 +4,16 @@ import { GateTokenManager } from "@/lib/gate-token";
 import {
   addDevice,
   findDevice,
-  isGateEnabled,
+  hasDevices,
   listDevices,
   removeDevice,
   updateLastSeen,
 } from "@/lib/device-store";
 import { parseDeviceKey } from "@/lib/device-key";
 import { NotificationService } from "@/modules/notification/service";
+import { AppConfigService } from "@/modules/app-config/service";
+import { APP_CONFIG_KEY_DEVICE_GATE_ENABLED } from "@/types/app-config";
+import { ErrorBadRequest } from "@/types/error";
 import { NoticeType } from "@/types/notification";
 import { timingSafeEqual } from "@/lib/crypto";
 import { ErrorDeviceGate } from "./error";
@@ -19,21 +22,25 @@ interface DeviceServiceDeps {
   deviceChallengeManager: ChallengeManager;
   gateTokenManager: GateTokenManager;
   notificationService: NotificationService;
+  appConfigService: AppConfigService;
 }
 
 /** 敲门失败通知去重窗口：全局 1 小时 1 条（内存态，重启重置） */
 const KNOCK_DEDUPE_WINDOW_MS = 60 * 60 * 1000;
 
 /**
- * device 模块业务逻辑（见 docs/plans/device-gate/context.md 3.3）：
+ * device 模块业务逻辑（见 docs/plans/gate-switch/context.md 2 D-backend/D-switch-api）：
  * 挑战码用独立的 ChallengeManager 实例（与服务端登录挑战码分离，互不覆盖）；
  * verify = 查设备 → pop 挑战码（一次性，防重放）→ ieee-p1363 验签 →
  * 更新 lastSeenAt → 签发 gate token。
+ * 门的开闭唯一判定 = AppConfig.deviceGateEnabled === 'true'（缺省视为关），
+ * trusted-devices.json 只做设备清单；每次直查 AppConfig 不做缓存（无失效复杂度）。
  */
 export class DeviceService {
   private deviceChallengeManager: ChallengeManager;
   private gateTokenManager: GateTokenManager;
   private notificationService: NotificationService;
+  private appConfigService: AppConfigService;
   /** 上次敲门通知时刻（全局去重） */
   private lastKnockNoticeAt = 0;
 
@@ -41,13 +48,44 @@ export class DeviceService {
     this.deviceChallengeManager = deps.deviceChallengeManager;
     this.gateTokenManager = deps.gateTokenManager;
     this.notificationService = deps.notificationService;
+    this.appConfigService = deps.appConfigService;
   }
 
-  /** 设备挑战码（登录页唯一探针，同时回报门是否激活） */
-  getChallenge(): { challenge: string; gateEnabled: boolean } {
+  /**
+   * 门是否开启：AppConfig deviceGateEnabled === 'true'（单条件 fail-closed）。
+   * challenge 探针与门禁 hook 统一走这里，不出现第二处判定逻辑；
+   * 单人 SQLite 主键直查（无缓存），每请求一次可接受。
+   */
+  async isGateEnabled(): Promise<boolean> {
+    const record = await this.appConfigService.findByKey(
+      APP_CONFIG_KEY_DEVICE_GATE_ENABLED,
+    );
+    return record?.value === "true";
+  }
+
+  /** 开关状态 + 设备数（供前端管理页初始渲染） */
+  async gateConfig(): Promise<{ enabled: boolean; deviceCount: number }> {
+    return {
+      enabled: await this.isGateEnabled(),
+      deviceCount: listDevices().length,
+    };
+  }
+
+  /** 写开关（落 AppConfig，不动 trusted-devices.json）；开启前必须有设备 */
+  async updateGateConfig(enabled: boolean): Promise<void> {
+    if (enabled && !hasDevices()) {
+      throw new ErrorBadRequest("请先绑定至少一台设备");
+    }
+    await this.appConfigService.setConfigValues({
+      [APP_CONFIG_KEY_DEVICE_GATE_ENABLED]: enabled ? "true" : "false",
+    });
+  }
+
+  /** 设备挑战码（登录页唯一探针，同时回报门是否开启） */
+  async getChallenge(): Promise<{ challenge: string; gateEnabled: boolean }> {
     return {
       challenge: this.deviceChallengeManager.generateChallenge(),
-      gateEnabled: isGateEnabled(),
+      gateEnabled: await this.isGateEnabled(),
     };
   }
 

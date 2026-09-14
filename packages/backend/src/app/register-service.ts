@@ -12,7 +12,6 @@ import { SessionManager } from "@/lib/session";
 import { ChallengeManager } from "@/lib/challenge";
 import { LoginLocker } from "@/lib/login-locker";
 import { GateTokenManager } from "@/lib/gate-token";
-import { isGateEnabled } from "@/lib/device-store";
 
 import { NotificationService } from "@/modules/notification/service";
 import { registerNotificationController } from "@/modules/notification/controller";
@@ -84,6 +83,7 @@ export const registerService = async (
     deviceChallengeManager,
     gateTokenManager,
     notificationService,
+    appConfigService,
   });
 
   /** 设备门豁免的登录走廊路由（config.url 为含 /api 前缀的完整路径，见 context.md 3.5） */
@@ -94,15 +94,16 @@ export const registerService = async (
 
   /**
    * 设备门禁 hook：注册顺序在 auth controller 的 session hook 之前。
-   * 门激活时，预登录路由（disableAuth: true）必须携带有效 X-Gate-Token，
+   * 门开启时（唯一判定 = AppConfig deviceGateEnabled，每次直查无缓存），
+   * 预登录路由（disableAuth: true）必须携带有效 X-Gate-Token，
    * 仅 /device/challenge|/device/verify 豁免；session 保护的常规路由
    * 不要求 gate token（gate 只守登录走廊，session 守房间）。
-   * 未命中任何路由的请求（404）以及 swagger /docs（dev-only）经其 onRoute hook 标记 disableAuth，门激活时同样要求 gate token（比直觉更严格，方向安全）。
+   * 未命中任何路由的请求（404）以及 swagger /docs（dev-only）经其 onRoute hook 标记 disableAuth，门开启时同样要求 gate token（比直觉更严格，方向安全）。
    */
   const app = instance as AppInstance;
   app.addHook("preHandler", async (request) => {
     const { url, disableAuth } = request.routeOptions.config;
-    if (!disableAuth || !isGateEnabled()) return;
+    if (!disableAuth || !(await deviceService.isGateEnabled())) return;
     if (typeof url === "string" && GATE_EXEMPT_ROUTES.has(url)) return;
 
     const token = request.headers["x-gate-token"] as string | undefined;

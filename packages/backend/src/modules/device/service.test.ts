@@ -32,6 +32,23 @@ import { PATH_TRUSTED_DEVICES } from "@/lib/device-store";
 const generateP256 = () => generateKeyPairSync("ec", { namedCurve: "P-256" });
 type P256Pair = ReturnType<typeof generateP256>;
 
+/**
+ * AppConfigService 内存桩：与真实实现同构的 findKey/setConfigValues 语义
+ * （key-value 存储，deviceGateEnabled 缺省视为 false），不触 Prisma。
+ */
+const makeAppConfigStub = () => {
+  const store = new Map<string, string>();
+  return {
+    findByKey: async (key: string) =>
+      store.has(key) ? { key, value: store.get(key)! } : null,
+    setConfigValues: async (configs: Record<string, string>) => {
+      for (const [key, value] of Object.entries(configs)) {
+        store.set(key, value);
+      }
+    },
+  };
+};
+
 /** 按 WebCrypto 语义签名：hash 先行 + raw r||s 输出，等价浏览器 crypto.subtle.sign 的结果 */
 const webCryptoStyleSign = (privateKey: KeyObject, data: string): string => {
   return nodeSign("sha256", Buffer.from(data, "utf8"), {
@@ -53,6 +70,7 @@ const makeDeps = (
       },
       hasUnread: async () => false,
     },
+    appConfigService: makeAppConfigStub(),
   } as ConstructorParameters<typeof DeviceService>[0];
   return { deps, gateTokenManager, notices };
 };
@@ -107,7 +125,7 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     const service = new DeviceService(deps);
     const { privateKey, deviceId } = seedDevice();
 
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     const signature = webCryptoStyleSign(privateKey, challenge);
 
     const { gateToken } = service.verify({ deviceId, challenge, signature });
@@ -116,11 +134,11 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     expect(gateTokenManager.validateToken(gateToken)).toBe(true);
   });
 
-  it("rejects a tampered signature with 403 ErrorDeviceGate", () => {
+  it("rejects a tampered signature with 403 ErrorDeviceGate", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey, deviceId } = seedDevice();
 
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     const sigBuf = Buffer.from(
       webCryptoStyleSign(privateKey, challenge),
       "base64",
@@ -136,13 +154,13 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     ).toThrowError(ErrorDeviceGate);
   });
 
-  it("rejects a signature signed by a foreign key", () => {
+  it("rejects a signature signed by a foreign key", async () => {
     const service = new DeviceService(makeDeps().deps);
     seedDevice({ id: "device-1" });
 
     // 攻击者自己的钥匙（不在钥匙串中）
     const attacker = generateP256();
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     const signature = webCryptoStyleSign(attacker.privateKey, challenge);
 
     expect(() =>
@@ -150,11 +168,11 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     ).toThrowError(ErrorDeviceGate);
   });
 
-  it("updates lastSeenAt after a successful verify", () => {
+  it("updates lastSeenAt after a successful verify", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey, deviceId } = seedDevice();
 
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     // verify 时刻推进 2 分钟（在 5 分钟挑战码 TTL 内，且早于同一时刻的 lastSeenAt）
     vi.setSystemTime(new Date("2026-02-10T08:02:00Z"));
     service.verify({
@@ -172,11 +190,11 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
 });
 
 describe("DeviceService.verify - 挑战码一次性消费（防重放）", () => {
-  it("fails the second verify with the same challenge", () => {
+  it("fails the second verify with the same challenge", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey, deviceId } = seedDevice();
 
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     const signature = webCryptoStyleSign(privateKey, challenge);
 
     expect(
@@ -189,7 +207,7 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     ).toThrowError(ErrorDeviceGate);
   });
 
-  it("rejects a challenge that was never issued", () => {
+  it("rejects a challenge that was never issued", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey, deviceId } = seedDevice();
     expect(() =>
@@ -201,10 +219,10 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     ).toThrowError(ErrorDeviceGate);
   });
 
-  it("rejects an unknown deviceId", () => {
+  it("rejects an unknown deviceId", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey } = seedDevice();
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     expect(() =>
       service.verify({
         deviceId: "ghost",
@@ -214,12 +232,12 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     ).toThrowError(ErrorDeviceGate);
   });
 
-  it("deviceId omitted: verifies against all trusted devices (cross-device enrollment)", () => {
+  it("deviceId omitted: verifies against all trusted devices (cross-device enrollment)", async () => {
     const service = new DeviceService(makeDeps().deps);
     // 两台受信设备，签名若来自第二台的私钥
     seedDevice({ id: "device-a", name: "Device A" });
     const second = seedDevice({ id: "device-b", name: "Device B" });
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
 
     // 不携带 deviceId：服务端遍历全部设备验签，命中 device-b
     const { gateToken } = service.verify({
@@ -229,12 +247,12 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     expect(gateToken).toEqual(expect.any(String));
   });
 
-  it("deviceId omitted: no matching key among trusted devices still fails", () => {
+  it("deviceId omitted: no matching key among trusted devices still fails", async () => {
     const service = new DeviceService(makeDeps().deps);
     seedDevice();
     // 未受信的陌生钥签名
     const { privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     expect(() =>
       service.verify({
         challenge,
@@ -243,14 +261,14 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     ).toThrowError(ErrorDeviceGate);
   });
 
-  it("device challenge and login challenge managers are independent", () => {
+  it("device challenge and login challenge managers are independent", async () => {
     const { deps } = makeDeps();
     const service = new DeviceService(deps);
     const loginManager = new ChallengeManager();
 
     // 登录挑战码的消费不影响设备挑战码（独立实例，互不覆盖）
     loginManager.generateChallenge();
-    const { challenge: deviceChallenge } = service.getChallenge();
+    const { challenge: deviceChallenge } = await service.getChallenge();
     loginManager.popLastChallenge();
 
     const { privateKey, deviceId } = seedDevice();
@@ -310,7 +328,7 @@ describe("DeviceService.verify - 敲门失败通知去重", () => {
     const service = new DeviceService(deps);
     const { privateKey, deviceId } = seedDevice();
 
-    const { challenge } = service.getChallenge();
+    const { challenge } = await service.getChallenge();
     service.verify({
       deviceId,
       challenge,
@@ -321,7 +339,7 @@ describe("DeviceService.verify - 敲门失败通知去重", () => {
 });
 
 describe("DeviceService.add / list / revoke", () => {
-  it("add parses a device key and registers the device", () => {
+  it("add parses a device key and registers the device", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { publicKey } = generateP256();
     const spki = publicKey
@@ -337,7 +355,7 @@ describe("DeviceService.add / list / revoke", () => {
     expect(items[0]).toMatchObject({ id, name: "MacBook", publicKey: spki });
   });
 
-  it("add rejects a duplicated public key", () => {
+  it("add rejects a duplicated public key", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { publicKey } = generateP256();
     const spki = publicKey
@@ -351,7 +369,7 @@ describe("DeviceService.add / list / revoke", () => {
     ).toThrowError(/already exists/);
   });
 
-  it("revoke removes the device and the gate disarms when the file empties", () => {
+  it("revoke removes the device; the gate stays as configured (file only tracks devices)", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { publicKey } = generateP256();
     const spki = publicKey
@@ -361,14 +379,87 @@ describe("DeviceService.add / list / revoke", () => {
       serializeDeviceKey({ name: "Solo", publicKey: spki }),
     );
 
-    expect(service.getChallenge().gateEnabled).toBe(true);
+    // 门未开启时探针回报 false——即使文件已有设备（新语义）
+    expect((await service.getChallenge()).gateEnabled).toBe(false);
+
+    // 开启后吊销全部设备：门仍开（fail-closed），文件只做设备清单
+    await service.updateGateConfig(true);
+    expect((await service.getChallenge()).gateEnabled).toBe(true);
     service.revoke(id);
     expect(service.list().items).toHaveLength(0);
-    expect(service.getChallenge().gateEnabled).toBe(false);
+    expect((await service.getChallenge()).gateEnabled).toBe(true);
   });
 
   it("revoke rejects an unknown id", () => {
     const service = new DeviceService(makeDeps().deps);
     expect(() => service.revoke("ghost")).toThrowError(/not found/i);
+  });
+
+  it("gateConfig defaults to enabled=false with deviceCount=0 on a fresh store", async () => {
+    const service = new DeviceService(makeDeps().deps);
+    await expect(service.gateConfig()).resolves.toEqual({
+      enabled: false,
+      deviceCount: 0,
+    });
+  });
+
+  it("updateGateConfig round-trips the AppConfig value", async () => {
+    const service = new DeviceService(makeDeps().deps);
+    const { publicKey } = generateP256();
+    service.add(
+      serializeDeviceKey({
+        name: "Solo",
+        publicKey: publicKey
+          .export({ format: "der", type: "spki" })
+          .toString("base64"),
+      }),
+    );
+
+    await service.updateGateConfig(true);
+    await expect(service.gateConfig()).resolves.toMatchObject({
+      enabled: true,
+      deviceCount: 1,
+    });
+
+    // 关闭不动设备清单：deviceCount 保持 1
+    await service.updateGateConfig(false);
+    await expect(service.gateConfig()).resolves.toEqual({
+      enabled: false,
+      deviceCount: 1,
+    });
+  });
+
+  it("updateGateConfig rejects enabling with zero devices", async () => {
+    const service = new DeviceService(makeDeps().deps);
+    await expect(service.updateGateConfig(true)).rejects.toThrowError(
+      /请先绑定至少一台设备/,
+    );
+    // 守卫拒绝后开关保持关闭
+    await expect(service.gateConfig()).resolves.toMatchObject({
+      enabled: false,
+    });
+  });
+
+  it("updateGateConfig rejects enabling when the devices file exists but is empty", async () => {
+    const service = new DeviceService(makeDeps().deps);
+    writeFileSync(PATH_TRUSTED_DEVICES, '{"devices":[]}', "utf8");
+    await expect(service.updateGateConfig(true)).rejects.toThrowError(
+      /请先绑定至少一台设备/,
+    );
+  });
+
+  it("treats any AppConfig value other than 'true' as disabled", async () => {
+    const deps = makeDeps().deps;
+    // 缺省（无记录）与写 'false' 均为关；模拟历史脏值同理
+    const service = new DeviceService(deps);
+    await expect(service.isGateEnabled()).resolves.toBe(false);
+    await deps.appConfigService.setConfigValues({
+      deviceGateEnabled: "false",
+    });
+    await expect(service.isGateEnabled()).resolves.toBe(false);
+    await deps.appConfigService.setConfigValues({
+      deviceGateEnabled: "1",
+    });
+    await expect(service.isGateEnabled()).resolves.toBe(false);
   });
 });

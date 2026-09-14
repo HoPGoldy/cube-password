@@ -5,8 +5,9 @@ import { PATH_ROOT } from "@/config/path";
 import { ErrorBadRequest, ErrorInternalServer } from "@/types/error";
 
 /**
- * 设备门数据层（见 docs/plans/device-gate/context.md 3.2）：
- * trusted-devices.json 是唯一 source of truth，文件非空即门生效。
+ * 设备门数据层（见 docs/plans/gate-switch/context.md 2 D-backend）：
+ * trusted-devices.json 只做受信设备清单，门的开闭由 AppConfig.deviceGateEnabled
+ * 决定（判定入口 DeviceService.isGateEnabled），本模块保留纯文件原语。
  * 每次验证直读文件，手工编辑（增删设备）即时生效、无需重启；
  * 写入用 temp+rename 原子写，避免写入中途崩溃留下半截文件。
  */
@@ -26,8 +27,8 @@ interface TrustedDevicesFile {
 }
 
 /**
- * 解析 trusted-devices.json 原文。空 devices 数组视为门未激活。
- * 手工编辑产生的坏文件不支持静默降级（降级会静默关门/开门），
+ * 解析 trusted-devices.json 原文。空 devices 数组即无设备。
+ * 手工编辑产生的坏文件不支持静默降级（降级会静默丢设备），
  * 直接抛内部错误暴露问题，由使用者修复或删除文件。
  */
 const parseFile = (content: string): TrustedDevicesFile => {
@@ -96,8 +97,11 @@ export const listDevices = (): TrustedDevice[] => {
   return readDevicesFile().devices;
 };
 
-/** 门是否激活：文件不存在或 devices 为空即未激活 */
-export const isGateEnabled = (): boolean => {
+/**
+ * 文件清单里是否有设备（纯文件原语，供开启守卫与 UI 展示使用）。
+ * 门的开闭判定不在这里——唯一入口是 DeviceService.isGateEnabled（读 AppConfig）。
+ */
+export const hasDevices = (): boolean => {
   return listDevices().length > 0;
 };
 

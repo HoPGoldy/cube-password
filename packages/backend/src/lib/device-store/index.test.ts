@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addDevice,
   findDevice,
-  isGateEnabled,
+  hasDevices,
   listDevices,
   PATH_TRUSTED_DEVICES,
   removeDevice,
@@ -41,19 +41,19 @@ afterEach(() => {
 });
 
 describe("device-store", () => {
-  it("reports gate disabled when the file does not exist", () => {
+  it("reports no devices when the file does not exist", () => {
     expect(existsSync(PATH_TRUSTED_DEVICES)).toBe(false);
-    expect(isGateEnabled()).toBe(false);
+    expect(hasDevices()).toBe(false);
     expect(listDevices()).toEqual([]);
     expect(findDevice("whatever")).toBeUndefined();
   });
 
-  it("reports gate disabled for an empty file and for an empty devices array", () => {
+  it("reports no devices for an empty file and for an empty devices array", () => {
     writeFileSync(PATH_TRUSTED_DEVICES, "", "utf8");
-    expect(isGateEnabled()).toBe(false);
+    expect(hasDevices()).toBe(false);
 
     writeFileSync(PATH_TRUSTED_DEVICES, '{"devices":[]}', "utf8");
-    expect(isGateEnabled()).toBe(false);
+    expect(hasDevices()).toBe(false);
     expect(listDevices()).toEqual([]);
   });
 
@@ -148,12 +148,12 @@ describe("device-store", () => {
     expect(findDevice(a.id)).toBeUndefined();
     expect(findDevice(b.id)).toEqual(b);
     expect(listDevices()).toHaveLength(1);
-    // 还剩一台设备，门仍激活
-    expect(isGateEnabled()).toBe(true);
+    // 还剩一台设备，清单非空
+    expect(hasDevices()).toBe(true);
 
-    // devices 清空后门随之失效
+    // devices 清空后清单为空
     removeDevice(b.id);
-    expect(isGateEnabled()).toBe(false);
+    expect(hasDevices()).toBe(false);
   });
 
   it("updateLastSeen and removeDevice reject unknown ids", () => {
@@ -185,8 +185,8 @@ describe("device-store", () => {
     expect(findDevice(created.id)?.name).toBe("Renamed by hand");
   });
 
-  it("throws an internal error on a corrupted file instead of silently disabling the gate", () => {
+  it("throws an internal error on a corrupted file instead of silently dropping devices", () => {
     writeFileSync(PATH_TRUSTED_DEVICES, "{ not json", "utf8");
-    expect(() => isGateEnabled()).toThrowError(/not valid JSON/);
+    expect(() => hasDevices()).toThrowError(/not valid JSON/);
   });
 });

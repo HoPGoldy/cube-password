@@ -18,13 +18,17 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DatabaseSync } from "node:sqlite";
+import { authHeaders, BASE, loginWithPassword, type SessionInfo } from "./api";
 
 /**
  * 设备门（device gate）e2e 基建（见 docs/plans/device-gate/tasks/05-e2e-webcrypto.md）：
  *
- * - 服务端唯一 source of truth 是 packages/backend/storage/trusted-devices.json
+ * - 服务端的设备清单 source of truth 是 packages/backend/storage/trusted-devices.json
  *   （dev 模式 PATH_ROOT = packages/backend/storage/），本文件提供该文件的原子化
- *   读写 helper：每条用例前后用它显式切换门状态（文件非空即门激活）
+ *   读写 helper；门的开闭唯一开关是 AppConfig deviceGateEnabled（gate-switch 新语义），
+ *   激活态构造 = 清单非空 + 开关开启（双条件），统一走 enableGateViaApi /
+ *   setupGateEnabled，用例前后另有开关兜底重置（resetGateConfig）
  * - 钥匙注入方案（评估后二选一的结论：**方案 B，浏览器侧生成 + 主动上报**）：
  *   - 方案 A（Node 生成 → SPKI 注册 → 浏览器再生成会不一致）需要让浏览器
  *     importKey 一个 extractable:true 的私钥 JWK——它写进 IndexedDB 后与正式
@@ -65,7 +69,8 @@ export const readTrustedDevices = (): Array<Record<string, unknown>> => {
 
 /**
  * 整文件写入 devices（等价手工编辑 trusted-devices.json）。
- * 服务端每次校验都直读文件，写入后即时生效、无需重启。
+ * 服务端每次校验都直读文件，增删设备即时生效、无需重启。
+ * 注意：本 helper 只改设备清单，不影响门开关（gate-switch 新语义）。
  */
 export const writeTrustedDevices = (
   devices: Array<Record<string, unknown>>,
@@ -76,6 +81,126 @@ export const writeTrustedDevices = (
     JSON.stringify({ devices }, null, 2),
     "utf8",
   );
+};
+
+// ---------- 设备门开关构造（gate-switch：AppConfig deviceGateEnabled 为唯一开关） ----------
+
+/** dev 后端 SQLite（PATH_ROOT = packages/backend/storage，与设备清单同目录） */
+const GATE_DB_PATH = join(STORAGE_DIR, "main.db");
+
+const GATE_E2E_PASSWORD = process.env.E2E_LOGIN_PASSWORD ?? "admin";
+
+/**
+ * 直删 dev 库 AppConfig 的 deviceGateEnabled（门开关兜底重置）。
+ * 新语义下门开关独立于设备清单文件，仅删文件不再关门；用例内应优先用
+ * disableGateViaApi 走 API 恢复，此处只兜底「用例中途失败泄漏开关」的场景
+ * （每条用例前后调用）。库不存在（首跑未初始化）时静默跳过。
+ */
+export const resetGateConfig = (): void => {
+  let db: DatabaseSync | null = null;
+  try {
+    db = new DatabaseSync(GATE_DB_PATH);
+    db.exec("DELETE FROM AppConfig WHERE key = 'deviceGateEnabled'");
+  } catch {
+    // 库文件尚不存在或被占用：忽略（兜底路径，不应让 hook 崩溃）
+  } finally {
+    db?.close();
+  }
+};
+
+/**
+ * 直读 dev 库 AppConfig.deviceGateEnabled 原始值（用于钉「手工编辑数据库生效」）。
+ * 行缺失返回 null（后端缺省视为关）。
+ */
+export const readGateConfigValue = (): string | null => {
+  const db = new DatabaseSync(GATE_DB_PATH, { readOnly: true });
+  try {
+    const row = db
+      .prepare("SELECT value FROM AppConfig WHERE key = 'deviceGateEnabled'")
+      .get() as { value: string } | undefined;
+    return row?.value ?? null;
+  } finally {
+    db.close();
+  }
+};
+
+/** 手工直改 dev 库 AppConfig 的 deviceGateEnabled（等价绕过 API 改配置） */
+export const writeGateConfigValue = (value: string | null): void => {
+  const db = new DatabaseSync(GATE_DB_PATH);
+  try {
+    if (value === null) {
+      db.exec("DELETE FROM AppConfig WHERE key = 'deviceGateEnabled'");
+    } else {
+      db.prepare(
+        "INSERT INTO AppConfig (key, value, createdAt, updatedAt) VALUES ('deviceGateEnabled', ?, datetime('now'), datetime('now')) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updatedAt = datetime('now')",
+      ).run(value);
+    }
+  } finally {
+    db.close();
+  }
+};
+
+/**
+ * 录入一把受信设备（session 保护，门开关状态不限），返回服务端设备 id。
+ * publicKey 为 SPKI 标准 base64（generateNodeSideKey / 浏览器注入钥匙均可）。
+ */
+export const addTrustedDeviceViaApi = async (
+  request: APIRequestContext,
+  session: SessionInfo,
+  publicKey: string,
+  name = "e2e-gate-device",
+): Promise<string> => {
+  const addResp = await request.post(`${BASE}/device/add`, {
+    data: {
+      deviceKey: buildDeviceKeyString({ name, publicKey }),
+    },
+    headers: authHeaders(session),
+  });
+  expect(addResp.status()).toBe(200);
+  return ((await addResp.json()).data as { id: string }).id;
+};
+
+/** 开启设备门（session 保护；清单为空时后端 400 守卫拒绝） */
+export const enableGateViaApi = async (
+  request: APIRequestContext,
+  session: SessionInfo,
+): Promise<void> => {
+  const resp = await request.post(`${BASE}/device/gate-config-update`, {
+    data: { enabled: true },
+    headers: authHeaders(session),
+  });
+  expect(resp.status()).toBe(200);
+};
+
+/** 关闭设备门（session 保护；设备清单原样保留） */
+export const disableGateViaApi = async (
+  request: APIRequestContext,
+  session: SessionInfo,
+): Promise<void> => {
+  const resp = await request.post(`${BASE}/device/gate-config-update`, {
+    data: { enabled: false },
+    headers: authHeaders(session),
+  });
+  expect(resp.status()).toBe(200);
+};
+
+/**
+ * 一步构造「门激活态」（新语义 = 清单非空 + 开关开启，双条件）：
+ * 登录 → 录入一把新 Node 侧钥匙 → gate-config-update true。
+ * 返回 session 与录入设备——门开后 loginWithPassword 会被 403，
+ * 后续所有 session 接口必须复用这里返回的 session（互踢语义）。
+ */
+export const setupGateEnabled = async (
+  request: APIRequestContext,
+): Promise<{
+  session: SessionInfo;
+  device: { id: string; key: NodeSideKey };
+}> => {
+  const session = await loginWithPassword(request, GATE_E2E_PASSWORD);
+  const key = await generateNodeSideKey();
+  const id = await addTrustedDeviceViaApi(request, session, key.publicKey);
+  await enableGateViaApi(request, session);
+  return { session, device: { id, key } };
 };
 
 // ---------- 钥匙串组装（与前后端 cube-device-key:v1 格式一致） ----------
@@ -395,10 +520,13 @@ export const gateTest = base.extend<GatePageFixtures>({
   },
 });
 
-// 门状态兜底重置：即便个别用例中途失败，也不把激活态泄漏给后续 spec（每条用例层面再显式控制）
+// 门状态兜底重置：即便个别用例中途失败，也不把激活态（设备清单 + 门开关）
+// 泄漏给后续 spec（每条用例层面再显式控制）
 base.beforeEach(() => {
   resetTrustedDevicesFile();
+  resetGateConfig();
 });
 base.afterEach(() => {
   resetTrustedDevicesFile();
+  resetGateConfig();
 });

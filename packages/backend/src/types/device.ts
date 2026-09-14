@@ -16,7 +16,7 @@ export const SchemaDeviceChallengeResponse = Type.Object({
   }),
   gateEnabled: Type.Boolean({
     description:
-      "设备门是否激活（trusted-devices.json 非空）。false 时前端直接渲染密码表单",
+      "设备门是否开启（AppConfig deviceGateEnabled）。false 时前端直接渲染密码表单",
   }),
 });
 export type SchemaDeviceChallengeResponseType = Type.Static<
@@ -97,4 +97,38 @@ export type SchemaDeviceRevokeBodyType = Type.Static<
 export const SchemaDeviceRevokeResponse = Type.Object({});
 export type SchemaDeviceRevokeResponseType = Type.Static<
   typeof SchemaDeviceRevokeResponse
+>;
+
+// ========== 设备门开关（见 docs/plans/gate-switch/context.md 2 D-switch-api） ==========
+
+/** POST /device/gate-config 请求（开关状态 + 设备数，供管理页初始渲染） */
+export const SchemaDeviceGateConfigBody = Type.Object({});
+export type SchemaDeviceGateConfigBodyType = Type.Static<
+  typeof SchemaDeviceGateConfigBody
+>;
+
+export const SchemaDeviceGateConfigResponse = Type.Object({
+  enabled: Type.Boolean({
+    description:
+      "设备门是否开启（唯一判定 = AppConfig deviceGateEnabled，与 trusted-devices.json 无关）",
+  }),
+  deviceCount: Type.Number({
+    description: "受信设备清单数量（trusted-devices.json，供开启引导判定）",
+  }),
+});
+export type SchemaDeviceGateConfigResponseType = Type.Static<
+  typeof SchemaDeviceGateConfigResponse
+>;
+
+/** POST /device/gate-config-update 请求（写开关；开启时后端守卫要求已有设备） */
+export const SchemaDeviceGateConfigUpdateBody = Type.Object({
+  enabled: Type.Boolean({ description: "设备门目标状态" }),
+});
+export type SchemaDeviceGateConfigUpdateBodyType = Type.Static<
+  typeof SchemaDeviceGateConfigUpdateBody
+>;
+
+export const SchemaDeviceGateConfigUpdateResponse = Type.Object({});
+export type SchemaDeviceGateConfigUpdateResponseType = Type.Static<
+  typeof SchemaDeviceGateConfigUpdateResponse
 >;
