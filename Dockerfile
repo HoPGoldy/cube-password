@@ -8,7 +8,7 @@ COPY packages/frontend/package.json ./packages/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
 RUN apk add --no-cache python3 make g++ && \
-  npm install -g pnpm && \
+  npm install -g pnpm@10.19.0 && \
   pnpm install --frozen-lockfile
 
 COPY . .
@@ -29,7 +29,7 @@ COPY packages/backend/package.json ./packages/backend/
 COPY packages/shared/package.json ./packages/shared/
 
 RUN apk add --no-cache gosu python3 make g++ && \
-  npm install -g pnpm && \
+  npm install -g pnpm@10.19.0 && \
   cd /app/packages/backend && \
   pnpm install --frozen-lockfile --prod --filter backend
 
