@@ -20,6 +20,11 @@ export class LoginLocker {
     return this.getLockDetail();
   }
 
+  /** 登录成功后清零失败计数：只有密码验证通过（已证明身份）才可触达 */
+  reset(): void {
+    this.failRecords = [];
+  }
+
   isLocked(): boolean {
     return this.getFailCount() >= MAX_FAIL_COUNT;
   }

@@ -123,6 +123,10 @@ export class AuthService {
       throw error;
     }
 
+    // 密码验证通过 = 已证明身份，失败计数清零（否则输错两次后再登对，
+    // 要背着计数过一整天，直到跨天 cleanup）
+    this.loginLocker.reset();
+
     // 创建 session
     const session = this.sessionManager.createSession();
     const expiresAt = new Date(

@@ -1,9 +1,6 @@
 import { FC, useState } from "react";
 import { Alert, Button, Card, Input, Space, Spin, Typography } from "antd";
-import {
-  CopyOutlined,
-  SafetyOutlined,
-} from "@ant-design/icons";
+import { CopyOutlined, SafetyOutlined } from "@ant-design/icons";
 import copy from "copy-to-clipboard";
 import { generateDeviceKeyPair, suggestDeviceName } from "@/lib/device-key";
 import { messageError, messageSuccess } from "@/utils/message";

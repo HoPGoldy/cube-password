@@ -59,6 +59,28 @@ describe("LoginLocker", () => {
     });
   });
 
+  describe("reset", () => {
+    it("clears failure count after successful login", () => {
+      locker.recordLoginFail();
+      locker.recordLoginFail();
+
+      locker.reset();
+
+      expect(locker.getFailCount()).toBe(0);
+      expect(locker.isLocked()).toBe(false);
+    });
+
+    it("counting restarts from zero after reset (2 more fails still unlocked)", () => {
+      locker.recordLoginFail();
+      locker.recordLoginFail();
+      locker.reset();
+      locker.recordLoginFail();
+      locker.recordLoginFail();
+
+      expect(locker.isLocked()).toBe(false);
+    });
+  });
+
   describe("getLockDetail", () => {
     it("exposes retryNumber and isBanned reflecting remaining attempts", () => {
       locker.recordLoginFail();

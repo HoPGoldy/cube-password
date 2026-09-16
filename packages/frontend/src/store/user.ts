@@ -1,8 +1,8 @@
 import { atom, getDefaultStore } from "jotai";
 import { localTheme } from "./local";
 import { clearCertNameIndex } from "./state-cert-name-index";
-import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
 import { queryClient } from "../services/base";
+import type { SchemaAuthLoginResponseType } from "@shared-types/auth";
 
 export type AppTheme = "light" | "dark";
 
@@ -86,8 +86,9 @@ export const logout = () => {
   store.set(stateSessionExpiresAt, undefined);
   store.set(stateUser, undefined);
   store.set(stateUnlockedGroupIds, new Set());
-  // 清空 react-query 缓存，防止换号登录后读到上一个账号的密文数据
-  queryClient.clear();
+  // react-query 缓存不在登出时清：此刻组件树尚未卸载，clear 会让还挂着的
+  // observer（Sidebar 的 group/list、AppContainer 的 config/version 等）立即
+  // refetch，发出登出后的幽灵请求。清缓存移至登录页挂载时（组件已全卸载）
 };
 
 export const login = (payload: SchemaAuthLoginResponseType) => {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { stateIsLoggedIn, stateKdfMeta } from "@/store/user";
 import { useAtomValue, useSetAtom } from "jotai";
 import { LoginPage } from "./page";
@@ -21,10 +22,22 @@ import type { SchemaLockDetailType } from "@shared-types/auth";
  */
 const Login = () => {
   const isLoggedIn = useAtomValue(stateIsLoggedIn);
+  const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(true);
   const setKdfMeta = useSetAtom(stateKdfMeta);
   const [initialLockDetail, setInitialLockDetail] =
     useState<SchemaLockDetailType>();
+
+  /**
+   * 挂载即清 react-query 缓存：到达登录页 = 旧组件树已卸载（LoginAuth →
+   * Navigate 的提交时序保证），此刻缓存零 active observer，clear 是纯删数据、
+   * 零 refetch。所有进入登录页的路径（登出 / 会话到期 / 直链重定向）都过这里，
+   * 「换号不读上一个账号缓存」由此兜底——不可在 logout() 里 clear：那里组件
+   * 尚未卸载，observer 会因缓存消失而立即 refetch（登出瞬间的幽灵请求）。
+   */
+  useEffect(() => {
+    queryClient.clear();
+  }, []);
 
   /** 门禁状态：checking（探针中）→ off（纯密码模式）/ denied（未授权页）/ passed */
   const [gateChecking, setGateChecking] = useState(true);

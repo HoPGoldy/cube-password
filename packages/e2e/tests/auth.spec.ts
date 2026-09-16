@@ -35,4 +35,58 @@ test.describe("认证", () => {
     await page.getByTestId("login-submit-btn").click();
     await expect(page).not.toHaveURL(/\/login/);
   });
+
+  test("登出后不再发出任何 API 请求（缓存清理不在组件卸载前触发 refetch）", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+    await page.getByTestId("login-password-input").fill(PASSWORD);
+    await page.getByTestId("login-submit-btn").click();
+    await expect(page).not.toHaveURL(/\/login/);
+
+    // 回归钉：logout() 曾在组件树卸载前 queryClient.clear()，导致 Sidebar 的
+    // group/list 与 AppContainer 的 config/version 在卸载缝隙里 refetch。
+    // 登出后允许的请求仅限登录页自身 bootstrap（auth/logout、device/challenge、
+    // auth/global），任何来自旧组件树的数据查询都算回归
+    const allowedAfterLogout =
+      /\/api\/(auth\/logout|auth\/global|device\/challenge)/;
+    const strayRequests: string[] = [];
+    page.on("request", (req) => {
+      if (req.url().includes("/api/") && !allowedAfterLogout.test(req.url())) {
+        strayRequests.push(req.url());
+      }
+    });
+
+    await page.getByRole("button", { name: "打开用户菜单" }).click();
+    await page.getByRole("button", { name: "登出" }).click();
+    await expect(page).toHaveURL(/\/login/);
+    await page.waitForTimeout(500);
+
+    expect(strayRequests).toEqual([]);
+  });
+
+  test("登录失败计数在成功登录后清零（Locker reset）", async ({
+    page,
+    request,
+  }) => {
+    // 前置：真实输错一次密码（消耗一次失败计数）
+    await page.goto("/login");
+    await page.getByTestId("login-password-input").fill("definitely-wrong");
+    await page.getByTestId("login-submit-btn").click();
+    await expect(page.getByText(/账号或密码错误/)).toBeVisible();
+
+    // 随后正确登录：reset 应已清零，否则再错一次的锁死预告会显示「还剩 0 次」
+    await page.getByTestId("login-password-input").fill(PASSWORD);
+    await page.getByTestId("login-submit-btn").click();
+    await expect(page).not.toHaveURL(/\/login/);
+
+    // 登出后再输错一次：预告应为「还剩 2 次后锁定」（计数从头开始），
+    // 若 reset 缺失则为「还剩 0 次/已锁定」（残留 1+1=2 次记录，第三次即锁）
+    await page.getByRole("button", { name: "打开用户菜单" }).click();
+    await page.getByRole("button", { name: "登出" }).click();
+    await expect(page).toHaveURL(/\/login/);
+    await page.getByTestId("login-password-input").fill("wrong-again-456");
+    await page.getByTestId("login-submit-btn").click();
+    await expect(page.getByText(/2 次后锁定登录/)).toBeVisible();
+  });
 });
