@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.0](https://github.com/HoPGoldy/cube-password/compare/v2.2.1...v2.3.0) (2026-09-16)
+
+
+### Features
+
+* align search page with cube-ui CubeSearchPage ([6c36519](https://github.com/HoPGoldy/cube-password/commit/6c365193f9ba12175efea315978b91bb1b4d9eb4))
+* show failed-login IP and logout when the session timer ends ([805cb68](https://github.com/HoPGoldy/cube-password/commit/805cb68bb8348f7b9a055951d18e375975703f20))
+
+
+### Bug Fixes
+
+* decrypt list names from nameEnc instead of the search index ([4a91dbf](https://github.com/HoPGoldy/cube-password/commit/4a91dbf608bc8cd867543d61d9a627d64edd132a))
+
 ## [2.2.1](https://github.com/HoPGoldy/cube-password/compare/v2.2.0...v2.2.1) (2026-09-16)
 
 
