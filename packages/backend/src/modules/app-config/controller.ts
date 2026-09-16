@@ -1,47 +1,13 @@
 import { PATH_PACKAGE_JSON } from "@/config/path";
-import type { AppConfigService } from "./service";
 import type { AppInstance } from "@/types";
-import { SchemaAppConfig, SchemaAppVersionResponse } from "@/types/app-config";
+import { SchemaAppVersionResponse } from "@/types/app-config";
 
 interface RegisterOptions {
   server: AppInstance;
-  appConfigService: AppConfigService;
 }
 
 export const registerController = (options: RegisterOptions) => {
-  const { server, appConfigService } = options;
-
-  server.post(
-    "/config",
-    {
-      schema: {
-        description: "获取所有配置列表",
-        tags: ["config"],
-        response: {
-          200: SchemaAppConfig,
-        },
-      },
-    },
-    async () => {
-      return appConfigService.getAll();
-    },
-  );
-
-  server.post(
-    "/config/update",
-    {
-      schema: {
-        description: "更新配置",
-        tags: ["config"],
-        body: SchemaAppConfig,
-      },
-    },
-    async (request) => {
-      await appConfigService.setConfigValues(request.body);
-      return { success: true };
-    },
-  );
-
+  const { server } = options;
   server.post(
     "/config/version",
     {

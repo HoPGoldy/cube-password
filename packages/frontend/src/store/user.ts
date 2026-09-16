@@ -8,9 +8,7 @@ export type AppTheme = "light" | "dark";
 
 export interface UserInfo {
   theme: AppTheme;
-  initTime: string;
   defaultGroupId: number;
-  hasNotice: boolean;
   withTotp: boolean;
   createPwdAlphabet: string;
   createPwdLength: number;

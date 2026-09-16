@@ -52,13 +52,6 @@ export const PATH_LOG = ensurePathExists(join(PATH_ROOT, "logs"));
 export const PATH_DATABASE = join(PATH_ROOT, "main.db");
 
 /**
- * Prisma 迁移文件目录
- */
-export const PATH_MIGRATIONS = ENV_IS_PROD
-  ? join(__dirname, "../prisma/migrations")
-  : join(__dirname, "../../prisma/migrations");
-
-/**
  * package.json 文件路径
  */
 export const PATH_PACKAGE_JSON = ENV_IS_PROD

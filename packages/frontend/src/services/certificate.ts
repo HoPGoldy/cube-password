@@ -40,18 +40,14 @@ export const useCertificateList = (
 };
 
 /**
- * 全量凭证索引查询（元数据加密）
- *
- * 拉取全量索引字段（id/nameEnc/icon/markColor/updatedAt/groupId），
- * 用 DEK 批量解密 nameEnc 构建内存明文索引（store/state-cert-name-index）。
+ * 解析 certificate/index 响应并重建内存明文名称索引
+ * （登录后的 queryCertificateIndex 与迁移完成后的 rebuildCertIndex 共用）
  * - 单条解密失败以占位符写入，不阻塞其余条目
  * - react-query 缓存中只有密文，明文只存在 jotai 内存 atom（logout 清空）
- * - 凭证 add/update/delete/move 后 invalidate ["certificateIndex"] 重建
  */
-export const queryCertificateIndex = async () => {
-  const resp =
-    await requestPost<SchemaCertificateIndexResponseType>("certificate/index");
-  const items = resp.data?.items ?? [];
+export const applyCertIndexItems = async (
+  items: SchemaCertificateIndexResponseType["items"],
+) => {
   const dek = getDefaultStore().get(stateVault).dek;
 
   const names = new Map<number, string>();
@@ -75,7 +71,19 @@ export const queryCertificateIndex = async () => {
     }
   }
   setCertNameIndex(names, metas);
+};
 
+/**
+ * 全量凭证索引查询（元数据加密）
+ *
+ * 拉取全量索引字段（id/nameEnc/icon/markColor/updatedAt/groupId），
+ * 用 DEK 解密 nameEnc 构建内存明文索引（store/state-cert-name-index）。
+ * 凭证 add/update/delete/move 后 invalidate ["certificateIndex"] 重建
+ */
+export const queryCertificateIndex = async () => {
+  const resp =
+    await requestPost<SchemaCertificateIndexResponseType>("certificate/index");
+  await applyCertIndexItems(resp.data?.items ?? []);
   return resp;
 };
 

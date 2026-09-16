@@ -4,12 +4,7 @@ import { Type } from "typebox";
 // 全部设备接口 Schema 集中在此，模块内的 controller schema 从这里 re-export 组装；
 // 前端经 @shared-types/device 引用类型。
 
-/** POST /device/challenge 请求（门禁探针，豁免门禁与 session） */
-export const SchemaDeviceChallengeBody = Type.Object({});
-export type SchemaDeviceChallengeBodyType = Type.Static<
-  typeof SchemaDeviceChallengeBody
->;
-
+/** POST /device/challenge 请求（门禁探针，豁免门禁与 session）。空 body，schema 不下发（axios 无 body 时不发 content-type） */
 export const SchemaDeviceChallengeResponse = Type.Object({
   challenge: Type.String({
     description: "设备挑战码（base64url，32 字节熵，供设备私钥签名）",

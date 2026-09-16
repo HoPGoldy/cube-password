@@ -85,9 +85,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      dayjs:
-        specifier: ^1.11.13
-        version: 1.11.13
       dotenv-flow:
         specifier: ^4.1.0
         version: 4.1.0
@@ -149,18 +146,12 @@ importers:
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
-      dayjs:
-        specifier: ^1.11.4
-        version: 1.11.13
       dotenv-flow:
         specifier: ^4.1.0
         version: 4.1.0
       hash-wasm:
         specifier: ^4.12.0
         version: 4.12.0
-      nanoid:
-        specifier: ^5.1.6
-        version: 5.1.6
 
   packages/frontend:
     dependencies:
@@ -200,9 +191,6 @@ importers:
       jotai:
         specifier: ^2.2.3
         version: 2.12.2(@types/react@18.3.20)(react@18.3.1)
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       nanoid:
         specifier: 3.3.4
         version: 3.3.4
@@ -219,9 +207,6 @@ importers:
         specifier: ^1.15.6
         version: 1.15.6
     devDependencies:
-      '@types/lodash':
-        specifier: ^4.14.182
-        version: 4.17.16
       '@types/node':
         specifier: ^20.10.0
         version: 20.17.47
@@ -1584,9 +1569,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/lodash@4.17.16':
-    resolution: {integrity: sha512-HX7Em5NYQAXKW+1T+FiuG27NGwzJfCX3s1GjOa7ujxZa52kjJLOr4FUxT+giF6Tgxv1e+/czV/iTtBw27WTU9g==}
 
   '@types/minimist@1.2.5':
     resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
@@ -6072,8 +6054,6 @@ snapshots:
   '@types/estree@1.0.8': {}
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/lodash@4.17.16': {}
 
   '@types/minimist@1.2.5': {}
 

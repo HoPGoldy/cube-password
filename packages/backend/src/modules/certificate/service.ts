@@ -28,6 +28,24 @@ export class CertificateService {
     }
   }
 
+  /**
+   * 写操作门禁（按凭证 id）：查出各凭证所在分组后逐一校验均已解锁，
+   * 任一未解锁则整体拒绝；额外分组（如 move 的目标分组）一并校验
+   */
+  private async assertCertsUnlocked(
+    ids: number[],
+    extraGroupIds: number[] = [],
+  ) {
+    if (ids.length > 0) {
+      const certs = await this.prisma.certificate.findMany({
+        where: { id: { in: ids } },
+        select: { groupId: true },
+      });
+      extraGroupIds.push(...certs.map((cert) => cert.groupId));
+    }
+    this.assertGroupsUnlocked(extraGroupIds);
+  }
+
   async listByGroup(groupId: number) {
     if (!this.sessionManager.isGroupUnlocked(groupId)) {
       throw new ErrorForbidden("分组未解锁");
@@ -149,7 +167,7 @@ export class CertificateService {
     if (!cert) throw new ErrorNotFound("凭证不存在");
 
     // 写门禁：来源分组（凭证当前所在）与目标分组均须已解锁
-    this.assertGroupsUnlocked([cert.groupId, data.groupId]);
+    await this.assertCertsUnlocked([data.id], [data.groupId]);
 
     const updateData: Record<string, unknown> = {
       groupId: data.groupId,
@@ -171,25 +189,14 @@ export class CertificateService {
 
   async delete(ids: number[]): Promise<void> {
     // 写门禁：逐一校验被删凭证所在分组均已解锁
-    const certs = await this.prisma.certificate.findMany({
-      where: { id: { in: ids } },
-      select: { groupId: true },
-    });
-    this.assertGroupsUnlocked(certs.map((cert) => cert.groupId));
+    await this.assertCertsUnlocked(ids);
 
     await this.prisma.certificate.deleteMany({ where: { id: { in: ids } } });
   }
 
   async move(ids: number[], newGroupId: number): Promise<void> {
     // 写门禁：来源分组（凭证当前所在）与目标分组均须已解锁
-    const certs = await this.prisma.certificate.findMany({
-      where: { id: { in: ids } },
-      select: { groupId: true },
-    });
-    this.assertGroupsUnlocked([
-      ...certs.map((cert) => cert.groupId),
-      newGroupId,
-    ]);
+    await this.assertCertsUnlocked(ids, [newGroupId]);
 
     await this.prisma.certificate.updateMany({
       where: { id: { in: ids } },
@@ -199,11 +206,7 @@ export class CertificateService {
 
   async sort(ids: number[]): Promise<void> {
     // 写门禁：逐一校验涉及凭证所在分组均已解锁
-    const certs = await this.prisma.certificate.findMany({
-      where: { id: { in: ids } },
-      select: { groupId: true },
-    });
-    this.assertGroupsUnlocked(certs.map((cert) => cert.groupId));
+    await this.assertCertsUnlocked(ids);
 
     await this.prisma.$transaction(
       ids.map((id, index) =>
@@ -234,13 +237,7 @@ export class CertificateService {
 
     // 写门禁：迁移是写操作，与 add/update/delete/move/sort 同构 —— 涉及分组
     // 必须已解锁（锁定分组的明文名本就不可读，前端迁移流程应先解锁全部分组）
-    if (data.items.length > 0) {
-      const certs = await this.prisma.certificate.findMany({
-        where: { id: { in: data.items.map((item) => item.id) } },
-        select: { groupId: true },
-      });
-      this.assertGroupsUnlocked(certs.map((cert) => cert.groupId));
-    }
+    await this.assertCertsUnlocked(data.items.map((item) => item.id));
 
     const updated = await this.prisma.$transaction(async (tx) => {
       let count = 0;

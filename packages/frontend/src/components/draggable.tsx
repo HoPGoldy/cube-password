@@ -1,6 +1,5 @@
 import { ReactElement, useEffect, useRef } from "react";
 import Sortable from "sortablejs";
-import cloneDeep from "lodash/cloneDeep";
 
 interface DraggableProps<T> {
   value: T[];
@@ -39,7 +38,9 @@ export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (
     }
     if (oldIndex === newIndex) return;
 
-    const newValue = cloneDeep(value);
+    // 浅拷贝数组即可：排序只移动元素位置，元素内容（如 Form.List 的受控对象）
+    // 应保持引用不变，深拷贝反而会打断 antd Form 的内部状态关联
+    const newValue = [...value];
     const [removed] = newValue.splice(oldIndex || 0, 1);
     newValue.splice(newIndex || 0, 0, removed);
 

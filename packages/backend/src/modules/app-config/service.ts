@@ -1,5 +1,4 @@
 import { PrismaClient } from "@db/client";
-import { SchemaAppConfigType } from "@/types/app-config";
 
 interface ServiceOptions {
   prisma: PrismaClient;
@@ -12,21 +11,6 @@ export class AppConfigService {
     return this.options.prisma.appConfig.findUnique({
       where: { key },
     });
-  }
-
-  async getAll(): Promise<SchemaAppConfigType> {
-    const configList = await this.options.prisma.appConfig.findMany({
-      orderBy: {
-        key: "asc",
-      },
-    });
-
-    const configs: Record<string, string> = {};
-    configList.forEach((config) => {
-      configs[config.key] = config.value;
-    });
-
-    return configs;
   }
 
   async setConfigValues(configs: Record<string, string>) {

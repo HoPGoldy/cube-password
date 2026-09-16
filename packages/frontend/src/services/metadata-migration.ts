@@ -7,12 +7,8 @@ import type {
 } from "@shared-types/certificate";
 import type { SchemaGroupItemType } from "@shared-types/group";
 import { stateVault, stateUser } from "@/store/user";
-import {
-  setCertNameIndex,
-  NAME_DECRYPT_FAILED,
-  type CertIndexMeta,
-} from "@/store/state-cert-name-index";
-import { decryptContent, encryptContent } from "@/lib/e2ee";
+import { encryptContent } from "@/lib/e2ee";
+import { applyCertIndexItems } from "./certificate";
 
 /** 单批迁移条数上限（后端 migrate-metadata 校验同值） */
 export const MIGRATE_BATCH_SIZE = 100;
@@ -138,34 +134,12 @@ export const finishMigration = async (
 };
 
 /**
- * 迁移完成后重建内存索引（等效 queryCertificateIndex，但不经 react-query 缓存）
+ * 迁移完成后重建内存索引（拉全量索引并解密重建，逻辑与 queryCertificateIndex 共用）
  */
 export const rebuildCertIndex = async (): Promise<void> => {
   const resp =
     await requestPost<SchemaCertificateIndexResponseType>("certificate/index");
-  const items = resp.data?.items ?? [];
-  const dek = getDefaultStore().get(stateVault).dek;
-
-  const names = new Map<number, string>();
-  const metas = new Map<number, CertIndexMeta>();
-  for (const item of items) {
-    metas.set(item.id, {
-      icon: item.icon,
-      markColor: item.markColor,
-      updatedAt: item.updatedAt,
-      groupId: item.groupId,
-    });
-    if (!item.nameEnc || !dek) {
-      names.set(item.id, NAME_DECRYPT_FAILED);
-      continue;
-    }
-    try {
-      names.set(item.id, await decryptContent(dek, item.nameEnc));
-    } catch {
-      names.set(item.id, NAME_DECRYPT_FAILED);
-    }
-  }
-  setCertNameIndex(names, metas);
+  await applyCertIndexItems(resp.data?.items ?? []);
 };
 
 /**

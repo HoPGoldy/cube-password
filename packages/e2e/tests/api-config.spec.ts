@@ -18,40 +18,20 @@ test.describe("Config API", () => {
     expect(body.data.version).toMatch(/^\d+\.\d+\.\d+/);
   });
 
-  test("POST /api/config 获取配置列表", async ({ request, session }) => {
-    const resp = await request.post(`${BASE}/config`, {
+  test("通用配置接口已移除：/api/config 与 /api/config/update 返回 404（防止旁路写 deviceGateEnabled）", async ({
+    request,
+    session,
+  }) => {
+    const read = await request.post(`${BASE}/config`, {
       data: {},
       headers: authHeaders(session),
     });
-    expect(resp.status()).toBe(200);
+    expect(read.status()).toBe(404);
 
-    const body = await resp.json();
-    expect(body.success).toBe(true);
-    expect(typeof body.data).toBe("object");
-  });
-
-  test("POST /api/config/update 更新配置", async ({ request, session }) => {
-    const resp = await request.post(`${BASE}/config/update`, {
-      data: { e2eTestKey: "e2e-test-value" },
+    const write = await request.post(`${BASE}/config/update`, {
+      data: { deviceGateEnabled: "true" },
       headers: authHeaders(session),
     });
-    expect(resp.status()).toBe(200);
-
-    const body = await resp.json();
-    expect(body.success).toBe(true);
-  });
-
-  test("更新后配置值生效", async ({ request, session }) => {
-    await request.post(`${BASE}/config/update`, {
-      data: { e2eVerifyKey: "verify-value" },
-      headers: authHeaders(session),
-    });
-
-    const resp = await request.post(`${BASE}/config`, {
-      data: {},
-      headers: authHeaders(session),
-    });
-    const body = await resp.json();
-    expect(body.data.e2eVerifyKey).toBe("verify-value");
+    expect(write.status()).toBe(404);
   });
 });

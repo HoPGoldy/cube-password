@@ -1,6 +1,5 @@
 import { App, message as antdMessage } from "antd";
 import { MessageInstance, NoticeType } from "antd/es/message/interface";
-
 let messageInstance: MessageInstance = antdMessage;
 
 export const useInitMessage = () => {
@@ -22,10 +21,6 @@ export const messageError = (message: string) => {
 
 export const messageWarning = (message: string) => {
   return messageInstance.warning(message);
-};
-
-export const messageInfo = (message: string) => {
-  return messageInstance.info(message);
 };
 
 export const showGlobalMessage = (type: NoticeType, content: string) => {

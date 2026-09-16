@@ -119,7 +119,7 @@ export const registerService = async (
     registerUnifyResponse(server);
 
     registerAuthController({ server: app, authService });
-    registerAppConfigController({ appConfigService, server: app });
+    registerAppConfigController({ server: app });
     registerNotificationController({ server: app, notificationService });
     registerUserController({ server: app, userService });
     registerGroupController({ server: app, groupService });

@@ -1,6 +1,7 @@
-import dayjs from "dayjs";
-
 const MAX_FAIL_COUNT = 3;
+
+/** 本地时区下「自然日」的时间戳（跨天清零失败计数用），避免为一次同日判断引入 dayjs */
+const localDayKey = (ts: number) => new Date(ts).toDateString();
 
 export interface LoginFailRecord {
   date: number;
@@ -44,9 +45,9 @@ export class LoginLocker {
   }
 
   private cleanup(): void {
-    const today = dayjs();
-    this.failRecords = this.failRecords.filter((r) =>
-      dayjs(r.date).isSame(today, "day"),
+    const today = localDayKey(Date.now());
+    this.failRecords = this.failRecords.filter(
+      (r) => localDayKey(r.date) === today,
     );
   }
 }
