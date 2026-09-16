@@ -11,6 +11,7 @@ import {
 import { DeviceGatePage } from "@/pages/login/device-gate";
 import type { GateDenial } from "@/services/device-gate";
 import { messageError, messageSuccess } from "@/utils/message";
+import { mergeUrl } from "@/utils/path";
 import { usePageTitle } from "@/store/global";
 import { bytesToHex } from "@/lib/e2ee/format";
 import {
@@ -126,7 +127,8 @@ const Init = () => {
       if (resp?.code !== 200) return;
 
       messageSuccess("初始化完成");
-      window.location.href = "/login";
+      // 硬跳转须拼上部署 basename，否则子路径部署（如 /hpwd-v2/）会跳丢前缀
+      window.location.href = mergeUrl(APP_CONFIG.PATH_BASENAME, "login");
     } catch (err) {
       if (err instanceof ErrorGateDenied) {
         setGateDenial(toGateDenial(err));
