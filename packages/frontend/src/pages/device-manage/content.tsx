@@ -251,13 +251,6 @@ export const Content: FC<SettingContainerProps> = (props) => {
       <List
         className="mb-4"
         header={<Text strong>受信设备</Text>}
-        locale={{
-          emptyText: (
-            <div className="mt-4 mb-2">
-              暂无受信设备，可生成钥匙串或录入其他设备的钥匙串
-            </div>
-          ),
-        }}
         dataSource={devices}
         renderItem={(item) => (
           <List.Item
@@ -309,17 +302,19 @@ export const Content: FC<SettingContainerProps> = (props) => {
     </>
   );
 
-  /** 首次开启引导卡：一键「将本机设为受信设备并开启」 */
-  const renderFirstEnableGuide = () => (
-    <Card size="small" type="inner" title="开启设备验证" className="mb-4">
-      <Alert
-        className="mb-4"
-        type="warning"
-        showIcon
-        message="开启后仅授权设备可登录，当前还没有任何受信设备。点击下方按钮将本机设为第一台受信设备并开启验证。"
-      />
-      <Button type="primary" loading={isEnabling} onClick={onEnrollAndEnable}>
-        将本机设为受信设备并开启
+  /** 绑定本机引导卡：一键「将本机设为受信设备」 */
+  const renderEnrollGuide = () => (
+    <Card size="small" type="inner" title="受信设备" className="mb-4">
+      <div className="mb-3 text-slate-500 dark:text-slate-400 text-sm cursor-default">
+        当前还没有任何受信设备。将本机设为第一台受信设备后，即可开启「仅授权设备允许登录」。
+      </div>
+      <Button
+        type="primary"
+        block
+        loading={isEnabling}
+        onClick={onEnrollAndEnable}
+      >
+        将本机设为受信设备
       </Button>
     </Card>
   );
@@ -355,9 +350,11 @@ export const Content: FC<SettingContainerProps> = (props) => {
         loading={switchLoading}
         onChange={onSwitchChange}
       />
-      {/* OFF 态：开关下方无任何内容 */}
+      {/* OFF 态：开关下方无任何内容；清单为空时主动展示绑定引导（含吊销光设备后的重新绑定） */}
       {switchChecked &&
-        (pendingEnable ? renderFirstEnableGuide() : renderFullManage())}
+        (pendingEnable || devices.length === 0
+          ? renderEnrollGuide()
+          : renderFullManage())}
     </Spin>
   );
 

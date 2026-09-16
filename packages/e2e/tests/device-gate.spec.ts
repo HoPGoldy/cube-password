@@ -790,14 +790,14 @@ gateTest.describe("设备门 - 开关生命周期（T03）", () => {
         gatePage.getByText("开启设备验证", { exact: true }),
       ).toHaveCount(0);
 
-      // 3. 首次开启（清单为空）→ 引导卡（不调 update，后端守卫未触发）
+      // 3. 首次开启（清单为空）→ 绑定引导卡（不调 update，后端守卫未触发）
       await gateSwitch.click();
-      const guideTitle = gatePage.getByText("开启设备验证", { exact: true });
+      const guideTitle = gatePage.getByText("受信设备", { exact: true });
       await expect(guideTitle).toBeVisible();
 
       // 4. 一键「将本机设为受信设备并开启」（生成 → add → update 单按钮完成）
       const enrollBtn = gatePage.getByRole("button", {
-        name: "将本机设为受信设备并开启",
+        name: "将本机设为受信设备",
       });
       await expect(enrollBtn).toBeEnabled();
       await enrollBtn.click();
