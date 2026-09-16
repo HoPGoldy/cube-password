@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.2.0](https://github.com/HoPGoldy/cube-password/compare/v2.0.0...v2.2.0) (2026-09-16)
+
+
+### Features
+
+* certificate name E2EE with local search and legacy migration (v2.2) ([4a401f7](https://github.com/HoPGoldy/cube-password/commit/4a401f7f012a39c5a484cb70842e347a5b6796bf))
+* device gate - WebCrypto device admission for the login corridor (v2.3) ([68feee0](https://github.com/HoPGoldy/cube-password/commit/68feee02edd302b0fa1af1f00ba9911f06aa1867))
+* explicit device-gate switch backed by AppConfig (v2.4) ([4a4469c](https://github.com/HoPGoldy/cube-password/commit/4a4469c9b138c809479a35b59e2f19d9352701de))
+* re-architect to KDF/KEK/DEK key hierarchy (E2EE v2) ([10a8f93](https://github.com/HoPGoldy/cube-password/commit/10a8f93573cc3290b23364ebc985e3fc686752de))
+* remove dark-mode toggle from account menu ([3bc7cd8](https://github.com/HoPGoldy/cube-password/commit/3bc7cd85a00142f9a9a881d44c937beaff144beb))
+* security hardening batch v2.1.0 ([308e8ae](https://github.com/HoPGoldy/cube-password/commit/308e8ae6114aa0178d1a3efd6db2734225bd327b))
+* softer enroll guide - muted hint, block button, auto-show on empty roster ([d4c54f1](https://github.com/HoPGoldy/cube-password/commit/d4c54f1b19be09e0f52dd7c37a48f735cc486138))
+* UI polish batch - flat primary button, gate copy, tooltips, modal theming ([733359b](https://github.com/HoPGoldy/cube-password/commit/733359b8bd68523402f3342d94166dab86407b45))
+
+
+### Bug Fixes
+
+* drop body schema from /device/list (axios sends no content-type without body) ([0230b95](https://github.com/HoPGoldy/cube-password/commit/0230b95bde08a6be88886ecc1b5c9b7466f9dac1))
+* no stray refetch after logout; reset login locker on success ([a966a82](https://github.com/HoPGoldy/cube-password/commit/a966a82bb18fb97bbda3f4630b5d77e0c94c39ab))
+* passGate tries all local keys, survives stale IndexedDB records ([0ffd93c](https://github.com/HoPGoldy/cube-password/commit/0ffd93c50412eae40083c8de2d062c4afe9e63af))
+* rebuild key string from IndexedDB pending slot on save-and-enable ([3e26906](https://github.com/HoPGoldy/cube-password/commit/3e269067d0d6a6db0f35e80417d43278e77fe476))
+* zxcvbn language pack import breaks in browser ESM (no default export) ([8f1752e](https://github.com/HoPGoldy/cube-password/commit/8f1752edf938313aee7c4c7568f5488788f08f75))
+
 ## [2.0.0](https://github.com/HoPGoldy/cube-password/compare/v2.0.0-rc.6...v2.0.0) (2026-08-17)
 
 
