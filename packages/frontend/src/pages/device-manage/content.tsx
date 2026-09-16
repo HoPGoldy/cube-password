@@ -22,8 +22,10 @@ import dayjs from "dayjs";
 import { SettingContainerProps } from "@/components/setting-container";
 import { useIsMobile } from "@hopgoldy/cube-ui";
 import {
+  buildDeviceKey,
   ErrorInvalidDeviceKey,
   generateDeviceKeyPair,
+  getPendingDeviceKey,
   linkDeviceId,
   listLocalDeviceKeys,
   parseDeviceKey,
@@ -217,7 +219,19 @@ export const Content: FC<SettingContainerProps> = (props) => {
     try {
       let deviceId = addedDeviceId;
       if (!deviceId) {
-        const addResp = await addDevice({ deviceKey: generatedKey! });
+        // 以 IndexedDB pending 槽为唯一事实来源重建钥匙串，不信任组件 state——
+        // 重复点「生成」等场景下 state 与存储可能短暂不一致（state 旧/存储新），
+        // 提交旧公钥会让服务端登记与本地句柄错位，静默过门必然失败
+        const pending = await getPendingDeviceKey();
+        if (!pending) {
+          messageWarning("本机钥匙不存在，请先生成本机钥匙串");
+          return;
+        }
+        const deviceKey = buildDeviceKey({
+          name: pending.name,
+          publicKey: pending.publicKey,
+        });
+        const addResp = await addDevice({ deviceKey });
         // 录入失败：错误提示已由拦截器展示，留在引导态可重试
         if (addResp.code !== 200) return;
         deviceId = addResp.data!.id;
