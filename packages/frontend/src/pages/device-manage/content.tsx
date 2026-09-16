@@ -12,12 +12,7 @@ import {
   Tag,
   Typography,
 } from "antd";
-import {
-  CopyOutlined,
-  SafetyCertificateOutlined,
-  ThunderboltOutlined,
-} from "@ant-design/icons";
-import copy from "copy-to-clipboard";
+import { SafetyCertificateOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { SettingContainerProps } from "@/components/setting-container";
 import { useIsMobile } from "@hopgoldy/cube-ui";
@@ -61,41 +56,6 @@ const GateStatusAlert: FC<{ gateEnabled: boolean }> = ({ gateEnabled }) => (
   />
 );
 
-/** 钥匙串展示卡片：只读文本框 + 复制按钮（等价 authorized_keys 的一行） */
-const GeneratedKeyCard: FC<{
-  deviceKey: string;
-  title?: string;
-  onAdd?: () => void;
-  adding?: boolean;
-}> = ({ deviceKey, title, onAdd, adding }) => (
-  <Card
-    className="my-3"
-    size="small"
-    type="inner"
-    title={title ?? "本机钥匙串（请从已授权设备录入）"}
-  >
-    <Space.Compact className="w-full">
-      <Input readOnly value={deviceKey} />
-      <Button
-        icon={<CopyOutlined />}
-        onClick={() => {
-          copy(deviceKey);
-          messageSuccess("钥匙串已复制");
-        }}
-      >
-        复制
-      </Button>
-    </Space.Compact>
-    {onAdd && (
-      <div className="mt-3 flex flex-row-reverse">
-        <Button type="primary" loading={adding} onClick={onAdd}>
-          直接添加到服务端（本机即受信设备）
-        </Button>
-      </div>
-    )}
-  </Card>
-);
-
 /** 顶部设备验证开关卡片：标题 + 说明 + Switch */
 const GateSwitchCard: FC<{
   checked: boolean;
@@ -119,15 +79,11 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const { modal } = App.useApp();
   const isMobile = useIsMobile();
   const [inputKey, setInputKey] = useState("");
-  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   /** 本机 IndexedDB 中已关联服务端 id 的钥匙（用于标记列表中的「本机」设备） */
   const [localDeviceIds, setLocalDeviceIds] = useState<string[]>([]);
   /** 首次开启引导态：开关被点开但门尚未启用（设备数为 0，需先绑定设备） */
   const [pendingEnable, setPendingEnable] = useState(false);
-  /** 引导流程中设备已录入但门尚未启用（update 失败后的重试态） */
-  const [addedDeviceId, setAddedDeviceId] = useState<string | null>(null);
-  /** 「保存并启用」两步调用进行中 */
+  /** 「设为本机受信设备并开启」一键流程进行中 */
   const [isEnabling, setIsEnabling] = useState(false);
 
   const { data: gateConfigResp, isLoading: isGateConfigLoading } =
@@ -168,34 +124,6 @@ export const Content: FC<SettingContainerProps> = (props) => {
     refreshLocalDeviceIds();
   }, [devices.length]);
 
-  /** 生成本机钥匙：句柄暂存 IndexedDB pending 槽位，钥匙串展示给用户复制/录入 */
-  const onGenerate = async () => {
-    setIsGenerating(true);
-    try {
-      const { deviceKey } = await generateDeviceKeyPair(suggestDeviceName());
-      setGeneratedKey(deviceKey);
-      messageSuccess("本机钥匙已生成");
-    } catch (err) {
-      messageError(`钥匙生成失败：${(err as Error).message}`);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  /**
-   * 自我授权：本机生成 + 本机添加 = 把本机登记为受信设备。
-   * 语义上属于「已授权设备的管理页」操作（当前 session 已过门禁）；
-   * 门未激活时即预绑定设备。
-   */
-  const onAddGeneratedKey = async () => {
-    if (!generatedKey) return;
-    const resp = await addDevice({ deviceKey: generatedKey });
-    if (resp.code !== 200) return;
-    await linkLocalKey(resp.data!.id);
-    setGeneratedKey(null);
-    messageSuccess("已添加为本机受信设备，下次登录将自动静默过门");
-  };
-
   /** 录入成功后把 IndexedDB 中的 pending 句柄迁移到服务端设备 id 下（静默过门按 id 取句柄） */
   const linkLocalKey = async (deviceId: string) => {
     try {
@@ -212,40 +140,33 @@ export const Content: FC<SettingContainerProps> = (props) => {
    * （顺序不能反——后端开启守卫依赖设备已入库）。两步各自失败各自报错；
    * add 成功而 update 失败时设备已入库（无害），保留重试入口只补 update。
    */
-  const onSaveAndEnable = async () => {
+  /**
+   * 一键流程：生成钥匙（句柄落 pending）→ 从 pending 重建钥匙串（存储即事实，
+   * 无中间 state）→ 录入服务端 → 开启验证 → 句柄迁移到设备 id。
+   * 幂等可重试：重复点击时 generateKeyPair 覆盖 pending，重新走完整链路。
+   */
+  const onEnrollAndEnable = async () => {
     if (isEnabling) return;
-    if (!generatedKey && !addedDeviceId) return;
     setIsEnabling(true);
     try {
-      let deviceId = addedDeviceId;
-      if (!deviceId) {
-        // 以 IndexedDB pending 槽为唯一事实来源重建钥匙串，不信任组件 state——
-        // 重复点「生成」等场景下 state 与存储可能短暂不一致（state 旧/存储新），
-        // 提交旧公钥会让服务端登记与本地句柄错位，静默过门必然失败
-        const pending = await getPendingDeviceKey();
-        if (!pending) {
-          messageWarning("本机钥匙不存在，请先生成本机钥匙串");
-          return;
-        }
-        const deviceKey = buildDeviceKey({
-          name: pending.name,
-          publicKey: pending.publicKey,
-        });
-        const addResp = await addDevice({ deviceKey });
-        // 录入失败：错误提示已由拦截器展示，留在引导态可重试
-        if (addResp.code !== 200) return;
-        deviceId = addResp.data!.id;
-        setAddedDeviceId(deviceId);
-        // 钥匙串已入库，不再展示原始串；此后重试只补 update，不会重复录入
-        setGeneratedKey(null);
-        await linkLocalKey(deviceId);
-      }
-      const updateResp = await updateGateConfig({ enabled: true });
-      if (updateResp.code !== 200) {
-        messageWarning("设备已录入，但门开启失败，请重试「保存并启用」");
+      await generateDeviceKeyPair(suggestDeviceName());
+      const pending = await getPendingDeviceKey();
+      if (!pending) {
+        messageWarning("钥匙生成异常，请重试");
         return;
       }
-      setAddedDeviceId(null);
+      const deviceKey = buildDeviceKey({
+        name: pending.name,
+        publicKey: pending.publicKey,
+      });
+      const addResp = await addDevice({ deviceKey });
+      if (addResp.code !== 200) return;
+      await linkLocalKey(addResp.data!.id);
+      const updateResp = await updateGateConfig({ enabled: true });
+      if (updateResp.code !== 200) {
+        messageWarning("设备已录入，但开启失败，请重试");
+        return;
+      }
       setPendingEnable(false);
       messageSuccess("设备验证已开启，本机登录将自动静默过门");
     } catch (err) {
@@ -287,8 +208,6 @@ export const Content: FC<SettingContainerProps> = (props) => {
     if (!checked) {
       if (pendingEnable) {
         setPendingEnable(false);
-        setGeneratedKey(null);
-        setAddedDeviceId(null);
         return;
       }
       modal.confirm({
@@ -372,33 +291,6 @@ export const Content: FC<SettingContainerProps> = (props) => {
         )}
       />
 
-      {/* 本机钥匙：生成 → 展示钥匙串 → 复制去其他设备录入 / 直接添加。
-          本机已是受信设备时隐藏（生成用于绑定新设备，由对方设备操作） */}
-      {localDeviceIds.length === 0 && (
-        <Card size="small" type="inner" title="生成本机钥匙" className="mb-4">
-          <div className="mb-3 text-slate-500 dark:text-slate-400 cursor-default">
-            <ThunderboltOutlined className="mr-1" />
-            在本机浏览器内生成非导出私钥（私钥字节永不出浏览器密钥库）。把钥匙串录入到
-            任意一台已授权设备即可绑定本机；若服务端还没有任何设备（纯密码模式），可直接添加以绑定第一台设备。
-          </div>
-          <Button
-            type="primary"
-            loading={isGenerating}
-            onClick={onGenerate}
-            disabled={isAdding}
-          >
-            生成本机钥匙
-          </Button>
-          {generatedKey && (
-            <GeneratedKeyCard
-              deviceKey={generatedKey}
-              onAdd={onAddGeneratedKey}
-              adding={isAdding}
-            />
-          )}
-        </Card>
-      )}
-
       {/* 录入其他设备生成的钥匙串（在已授权设备上操作） */}
       <Card size="small" type="inner" title="录入设备钥匙串" className="mb-4">
         <Space.Compact className="w-full">
@@ -417,43 +309,17 @@ export const Content: FC<SettingContainerProps> = (props) => {
     </>
   );
 
-  /** 首次开启引导卡：① 生成本机钥匙串 ② 保存并启用（两步调用，add 在前） */
+  /** 首次开启引导卡：一键「将本机设为受信设备并开启」 */
   const renderFirstEnableGuide = () => (
     <Card size="small" type="inner" title="开启设备验证" className="mb-4">
       <Alert
         className="mb-4"
         type="warning"
         showIcon
-        message="当前还没有任何受信设备。请先生成本机钥匙串并绑定本机，再开启设备验证。"
+        message="开启后仅授权设备可登录，当前还没有任何受信设备。点击下方按钮将本机设为第一台受信设备并开启验证。"
       />
-      <div className="mb-2">
-        <Text strong>1. 生成本机钥匙串</Text>
-      </div>
-      <div className="mb-3 text-slate-500 dark:text-slate-400 text-sm cursor-default">
-        在本机浏览器内生成非导出私钥（私钥字节永不出浏览器密钥库）。
-      </div>
-      <Button type="primary" loading={isGenerating} onClick={onGenerate}>
-        生成本机钥匙串
-      </Button>
-      {generatedKey && (
-        <GeneratedKeyCard
-          deviceKey={generatedKey}
-          title="本机钥匙串（保存并启用后本机即受信设备）"
-        />
-      )}
-      <div className="mt-4 mb-2">
-        <Text strong>2. 保存并启用</Text>
-      </div>
-      <div className="mb-3 text-slate-500 dark:text-slate-400 text-sm cursor-default">
-        将本机登记为受信设备并开启设备验证，完成后本机登录可自动静默过门。
-      </div>
-      <Button
-        type="primary"
-        loading={isEnabling}
-        disabled={!generatedKey && !addedDeviceId}
-        onClick={onSaveAndEnable}
-      >
-        {addedDeviceId ? "重试启用" : "保存并启用"}
+      <Button type="primary" loading={isEnabling} onClick={onEnrollAndEnable}>
+        将本机设为受信设备并开启
       </Button>
     </Card>
   );

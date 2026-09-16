@@ -209,7 +209,7 @@ gateTest.describe("设备门 - 静默过门", () => {
       await expect(gatePage.getByTestId("sidebar")).toBeVisible();
 
       // 2. 本机已随首次导航生成钥匙（initScript 首跳时已执行并写入 IDB），
-      //    注册为受信设备并开启开关（等价管理页「生成 + 保存并启用」）
+      //    注册为受信设备并开启开关（等价管理页一键「设为受信设备并开启」）
       const injected = await waitForInjectedKey(gatePage);
       const session = await loginWithPassword(request, PASSWORD);
       await addTrustedDeviceViaApi(request, session, injected!.publicKey);
@@ -770,7 +770,7 @@ gateTest.describe("设备门 - 开关生命周期（T03）", () => {
   };
 
   gateTest(
-    "空库 UI 开关生命周期：OFF 无内容 → 引导绑定 → 保存并启用 → 探针 true",
+    "空库 UI 开关生命周期：OFF 无内容 → 引导一键绑定并开启 → 探针 true",
     async ({ gatePage, request }) => {
       // 1. 登录进入应用（门未激活，全新空库默认开关 OFF）
       await gatePage.goto("/login");
@@ -795,11 +795,12 @@ gateTest.describe("设备门 - 开关生命周期（T03）", () => {
       const guideTitle = gatePage.getByText("开启设备验证", { exact: true });
       await expect(guideTitle).toBeVisible();
 
-      // 4. 生成本机钥匙串 → 保存并启用（两步调用：先 add 后 update）
-      await gatePage.getByRole("button", { name: /生\s*成/ }).click();
-      const saveBtn = gatePage.getByRole("button", { name: "保存并启用" });
-      await expect(saveBtn).toBeEnabled();
-      await saveBtn.click();
+      // 4. 一键「将本机设为受信设备并开启」（生成 → add → update 单按钮完成）
+      const enrollBtn = gatePage.getByRole("button", {
+        name: "将本机设为受信设备并开启",
+      });
+      await expect(enrollBtn).toBeEnabled();
+      await enrollBtn.click();
 
       // 5. 服务端探针：门已激活（AppConfig 开关 + 浏览器生成的钥匙串已入库）
       await expect
