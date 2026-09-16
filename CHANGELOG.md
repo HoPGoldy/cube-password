@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.2.1](https://github.com/HoPGoldy/cube-password/compare/v2.2.0...v2.2.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* keep basename on post-init redirect for sub-path deployments ([66e5ff3](https://github.com/HoPGoldy/cube-password/commit/66e5ff35cc1dfb388410625ec3d2d7e84bdf0e23))
+
 ## [2.2.0](https://github.com/HoPGoldy/cube-password/compare/v2.0.0...v2.2.0) (2026-09-16)
 
 
