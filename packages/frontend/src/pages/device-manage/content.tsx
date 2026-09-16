@@ -17,14 +17,11 @@ import dayjs from "dayjs";
 import { SettingContainerProps } from "@/components/setting-container";
 import { useIsMobile } from "@hopgoldy/cube-ui";
 import {
-  buildDeviceKey,
+  clearLocalDeviceKey,
   ErrorInvalidDeviceKey,
   generateDeviceKeyPair,
-  getPendingDeviceKey,
-  linkDeviceId,
-  listLocalDeviceKeys,
+  getLocalDeviceKey,
   parseDeviceKey,
-  removeLocalDeviceKey,
   suggestDeviceName,
 } from "@/lib/device-key";
 import {
@@ -79,8 +76,8 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const { modal } = App.useApp();
   const isMobile = useIsMobile();
   const [inputKey, setInputKey] = useState("");
-  /** 本机 IndexedDB 中已关联服务端 id 的钥匙（用于标记列表中的「本机」设备） */
-  const [localDeviceIds, setLocalDeviceIds] = useState<string[]>([]);
+  /** 本机钥匙公钥（用于标记列表中的「本机」设备：公钥即身份） */
+  const [localPublicKey, setLocalPublicKey] = useState<string | null>(null);
   /** 首次开启引导态：开关被点开但门尚未启用（设备数为 0，需先绑定设备） */
   const [pendingEnable, setPendingEnable] = useState(false);
   /** 「设为本机受信设备并开启」一键流程进行中 */
@@ -108,32 +105,15 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const switchChecked = gateEnabled || pendingEnable;
   const switchLoading = isUpdatingGate || isEnabling || isGateConfigLoading;
 
-  const refreshLocalDeviceIds = () => {
-    listLocalDeviceKeys()
-      .then((keys) =>
-        setLocalDeviceIds(
-          keys
-            .map((key) => key.deviceId)
-            .filter((id): id is string => typeof id === "string"),
-        ),
-      )
-      .catch(() => setLocalDeviceIds([]));
+  const refreshLocalPublicKey = () => {
+    getLocalDeviceKey()
+      .then((key) => setLocalPublicKey(key?.publicKey ?? null))
+      .catch(() => setLocalPublicKey(null));
   };
 
   useEffect(() => {
-    refreshLocalDeviceIds();
-  }, [devices.length]);
-
-  /** 录入成功后把 IndexedDB 中的 pending 句柄迁移到服务端设备 id 下（静默过门按 id 取句柄） */
-  const linkLocalKey = async (deviceId: string) => {
-    try {
-      await linkDeviceId(deviceId);
-    } catch {
-      // 句柄迁移失败不阻断录入：钥匙串仍在，稍后可重新生成重绑
-      messageWarning("钥匙句柄关联失败，本机静默过门可能不可用");
-    }
-    refreshLocalDeviceIds();
-  };
+    refreshLocalPublicKey();
+  }, []);
 
   /**
    * 首次开启引导的「保存并启用」：先 /device/add 绑定设备，再 updateGateConfig(true)
@@ -141,27 +121,17 @@ export const Content: FC<SettingContainerProps> = (props) => {
    * add 成功而 update 失败时设备已入库（无害），保留重试入口只补 update。
    */
   /**
-   * 一键流程：生成钥匙（句柄落 pending）→ 从 pending 重建钥匙串（存储即事实，
-   * 无中间 state）→ 录入服务端 → 开启验证 → 句柄迁移到设备 id。
-   * 幂等可重试：重复点击时 generateKeyPair 覆盖 pending，重新走完整链路。
+   * 一键流程：生成钥匙（固定槽覆盖写）→ 组装钥匙串 → 录入服务端 → 开启验证。
+   * 幂等可重试：重复点击重新生成新钥匙覆盖旧槽，重新走完整链路。
    */
   const onEnrollAndEnable = async () => {
     if (isEnabling) return;
     setIsEnabling(true);
     try {
-      await generateDeviceKeyPair(suggestDeviceName());
-      const pending = await getPendingDeviceKey();
-      if (!pending) {
-        messageWarning("钥匙生成异常，请重试");
-        return;
-      }
-      const deviceKey = buildDeviceKey({
-        name: pending.name,
-        publicKey: pending.publicKey,
-      });
+      const { deviceKey } = await generateDeviceKeyPair(suggestDeviceName());
       const addResp = await addDevice({ deviceKey });
       if (addResp.code !== 200) return;
-      await linkLocalKey(addResp.data!.id);
+      refreshLocalPublicKey();
       const updateResp = await updateGateConfig({ enabled: true });
       if (updateResp.code !== 200) {
         messageWarning("设备已录入，但开启失败，请重试");
@@ -273,7 +243,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
               title={
                 <span>
                   {item.name}{" "}
-                  {localDeviceIds.includes(item.id) && (
+                  {item.publicKey === localPublicKey && (
                     <Tag color="green">本机</Tag>
                   )}
                 </span>
@@ -333,11 +303,12 @@ export const Content: FC<SettingContainerProps> = (props) => {
       onOk: async () => {
         const resp = await revokeDevice({ id });
         if (resp.code !== 200) return;
-        // 若吊销的是本机（本机存有该 id 的句柄），句柄一并清除，避免留下失效钥匙
-        if (localDeviceIds.includes(id)) {
-          await removeLocalDeviceKey(id).catch(() => undefined);
+        const target = devices.find((d) => d.id === id);
+        // 若吊销的是本机（公钥一致），本地钥匙一并清除，避免留下失效钥匙
+        if (target && target.publicKey === localPublicKey) {
+          await clearLocalDeviceKey().catch(() => undefined);
         }
-        refreshLocalDeviceIds();
+        refreshLocalPublicKey();
         messageSuccess(`已吊销设备「${name}」`);
       },
     });

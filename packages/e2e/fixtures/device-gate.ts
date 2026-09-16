@@ -35,10 +35,10 @@ import { authHeaders, BASE, loginWithPassword, type SessionInfo } from "./api";
  *     代码 generateDeviceKeyPair 的「非导出私钥」语义不一致，且多一次往返
  *   - 方案 B：addInitScript 在浏览器自己的 crypto.subtle 里生成非导出钥匙对
  *     （与正式 lib/device-key.ts 的 generateDeviceKeyPair 完全同语义），privateKey
- *     句柄入 IndexedDB（库名 device-keys / store keys / key "pending"），publicKey
- *     SPKI base64 挂到 window 上，测试进程轮询读到后再经 /device/add 注册。
- *     pending（无 deviceId）+「省略 deviceId 遍历验签」路径服务端已支持
- *     （T03 silentVerify 回退 pending 槽 + T02 verify 遍历语义）
+ *     句柄入 IndexedDB（库名 device-keys / store keys / 固定槽位 "local"，
+ *     一机一钥覆盖写），publicKey SPKI base64 挂到 window 上，测试进程轮询
+ *     读到后再经 /device/add 注册。verify 省略 deviceId，服务端对受信清单
+ *     遍历验签——本机无需知道自己的服务端 id
  * - signChallenge 提供与浏览器 silentVerify 同语义的 Node 侧签名
  *   （SHA-256 + raw r||s / ieee-p1363，base64），供纯 API 用例构造签名；
  *   writeDeviceKeyToIdb 把同一把 JWK 钥匙重导入浏览器句柄（仅测试基建需要），
@@ -329,8 +329,8 @@ export const DEVICE_KEY_IDB = { name: "device-keys", store: "keys" } as const;
 
 /**
  * 浏览器侧生成 ECDSA P-256 非导出钥匙对（pass 给 addInitScript 的自包含函数体）：
- * - privateKey 句柄写入 IndexedDB device-keys/keys 的 "pending" 槽位（与正式
- *   generateDeviceKeyPair 的暂存语义一致）；库内已有钥匙时幂等跳过、直接上报
+ * - privateKey 句柄写入 IndexedDB device-keys/keys 的固定槽位 "local"（与正式
+ *   generateDeviceKeyPair 的单槽覆盖语义一致）；库内已有钥匙时幂等跳过、直接上报
  * - 生成的 publicKey（SPKI base64）+ 元数据挂到 window.__e2eInjectedKey，
  *   供测试进程读取后走 /device/add 注册
  *
@@ -366,13 +366,13 @@ export function browserGenerateKeyInitScript(): void {
   openDb().then((db) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
     const store = tx.objectStore(STORE_NAME);
-    const getRequest = store.get("pending");
+    const getRequest = store.get("local");
     getRequest.onsuccess = () => {
       const existing = getRequest.result as
         | { name: string; publicKey: string; createdAt: string }
         | undefined;
       if (existing) {
-        // 幂等：本机已有 pending 钥匙（同一 context 二次导航），直接上报
+        // 幂等：本机已有钥匙（同一 context 二次导航），直接上报
         report(existing);
         return;
       }
@@ -391,7 +391,7 @@ export function browserGenerateKeyInitScript(): void {
             createdAt: new Date().toISOString(),
             privateKey: pair.privateKey,
           };
-          store.put(record, "pending");
+          store.put(record, "local");
           tx.oncomplete = () =>
             report({
               name: record.name,
@@ -427,19 +427,18 @@ export const waitForInjectedKey = async (
 };
 
 /**
- * 把 Node 侧生成的私钥 JWK 重导入浏览器 CryptoKey 句柄并写进 IndexedDB
- * （仅测试基建需要；正式代码从不导出私钥）。deviceId 缺省写入 pending 槽位，
- * 配合服务端「省略 deviceId 遍历验签」路径。
+ * 把 Node 侧生成的私钥 JWK 重导入浏览器 CryptoKey 句柄并写进 IndexedDB 固定槽位
+ * （仅测试基建需要；正式代码从不导出私钥）。verify 省略 deviceId，
+ * 服务端对受信清单遍历验签。
  */
 export const writeDeviceKeyToIdb = (
   page: Page,
   arg: {
     privateKeyJwk: JsonWebKey;
     name: string;
-    deviceId?: string;
   },
 ): Promise<string> => {
-  return page.evaluate(async ({ privateKeyJwk, name, deviceId }) => {
+  return page.evaluate(async ({ privateKeyJwk, name }) => {
     const privateKey = await crypto.subtle.importKey(
       "jwk",
       privateKeyJwk,
@@ -463,7 +462,6 @@ export const writeDeviceKeyToIdb = (
     const publicKey = btoa(binary);
 
     const record = {
-      ...(deviceId ? { deviceId } : {}),
       name,
       publicKey,
       createdAt: new Date().toISOString(),
@@ -477,7 +475,7 @@ export const writeDeviceKeyToIdb = (
     });
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction("keys", "readwrite");
-      tx.objectStore("keys").put(record, deviceId ?? "pending");
+      tx.objectStore("keys").put(record, "local");
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });

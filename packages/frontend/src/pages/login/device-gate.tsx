@@ -2,9 +2,7 @@ import { FC, useState } from "react";
 import { Alert, Button, Card, Input, Space, Spin, Typography } from "antd";
 import {
   CopyOutlined,
-  ReloadOutlined,
   SafetyOutlined,
-  StopOutlined,
 } from "@ant-design/icons";
 import copy from "copy-to-clipboard";
 import { generateDeviceKeyPair, suggestDeviceName } from "@/lib/device-key";
@@ -12,7 +10,7 @@ import { messageError, messageSuccess } from "@/utils/message";
 import type { GateDenial } from "@/services/device-gate";
 import { APP_NAME, APP_SUBTITLE } from "@/config";
 
-const { Text, Title, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 /**
  * 登录页门禁 UI（见 docs/plans/device-gate/tasks/04-login-gate-flow.md）：

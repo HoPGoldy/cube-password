@@ -35,7 +35,7 @@ import { rmSync, mkdirSync, writeFileSync } from "node:fs";
  * 设备门（device gate）端到端验收（见 docs/plans/device-gate/tasks/05-e2e-webcrypto.md
  * 与 context.md 第 4 节）：
  * ①门未激活回归 → ②绑定首台设备 → ③登出后静默过门 → ④无钥匙拦截（API + 页面）
- * → ⑤敲门通知去重 → ⑥【T04 强制】吊销后 denied 稳定 → ⑦【T04 强制】pending 未录入
+ * → ⑤敲门通知去重 → ⑥【T04 强制】吊销后 denied 稳定 → ⑦【T04 强制】本地钥匙未录入
  * + 重新验证 → ⑧手工编辑 trusted-devices.json 即时生效 → ⑨⑩【T02 强制】即取即用
  * 语义钉：停留后点登录仍成功（bootstrap + 提交各验签一次）与吊销后点登录渲染
  * 未授权页且密码请求未发出（吊销即时生效）。
@@ -67,17 +67,16 @@ const browserSilentPassGate = (page: {
         req.onerror = () => reject(req.error);
       });
     const db = await openDb();
-    const record = await new Promise<{
-      deviceId?: string;
-      privateKey: CryptoKey;
-    }>((resolve, reject) => {
-      const req = db
-        .transaction("keys", "readonly")
-        .objectStore("keys")
-        .get("pending");
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+    const record = await new Promise<{ privateKey: CryptoKey }>(
+      (resolve, reject) => {
+        const req = db
+          .transaction("keys", "readonly")
+          .objectStore("keys")
+          .get("local");
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      },
+    );
     db.close();
 
     const probe = await fetch("/api/device/challenge", { method: "POST" });
@@ -97,11 +96,7 @@ const browserSilentPassGate = (page: {
     const verify = await fetch("/api/device/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        deviceId: record.deviceId,
-        challenge,
-        signature: base64url,
-      }),
+      body: JSON.stringify({ challenge, signature: base64url }),
     });
     if (!verify.ok) throw new Error(`verify failed: ${verify.status}`);
     return ((await verify.json()).data as { gateToken: string }).gateToken;
@@ -198,7 +193,7 @@ gateTest.describe("设备门 - 静默过门", () => {
   gateTest(
     "登出后重新进入登录页：加载即静默过门，密码表单直接出现（零感知）",
     async ({ gatePage, request }) => {
-      // 0. 预挂注入脚本（幂等，只在本机无 pending 钥匙时生成；首次导航即生效）
+      // 0. 预挂注入脚本（幂等，只在本机无钥匙时生成；首次导航即生效）
       await gatePage.addInitScript(browserGenerateKeyInitScript);
 
       // 1. 门未激活时正常登录进入应用
@@ -378,11 +373,11 @@ gateTest.describe("设备门 - 吊销后 denied 稳定", () => {
   );
 });
 
-// ---------- ⑦ 【T04 强制】pending 未录入 + 重新验证 ----------
+// ---------- ⑦ 【T04 强制】本地钥匙未录入 + 重新验证 ----------
 
-gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
+gateTest.describe("设备门 - 本地钥匙未录入 + 重新验证", () => {
   gateTest(
-    "清 IDB 后生成 pending 钥匙（服务端未录入）：重新验证停留未授权页，无循环",
+    "清 IDB 后生成钥匙（服务端未录入）：重新验证停留未授权页，无循环",
     async ({ gatePage, request }) => {
       // 门激活：一把与浏览器无关的钥匙（清单非空 + 开关开启）
       const trusted = await generateNodeSideKey();
@@ -403,7 +398,7 @@ gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
       await expect(gatePage.getByTestId("device-gate-denied")).toBeVisible();
 
       // 在 denied 页用 UI 生成本机钥匙串（KeyGenCard → generateDeviceKeyPair：
-      // 句柄进 pending 槽位，服务端并不知道这把公钥）
+      // 句柄进本地固定槽位，服务端并不知道这把公钥）
       await gatePage
         .getByPlaceholder("设备名称，如 Chrome on macOS")
         .fill("e2e-pending-device");
@@ -411,7 +406,7 @@ gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
       await gatePage.getByRole("button", { name: /生\s*成/ }).click();
       await expect(gatePage.getByText("本机钥匙已生成")).toBeVisible();
 
-      // 刷新页面（文案指引的恢复方式）：pending 钥匙未在服务端录入 →
+      // 刷新页面（文案指引的恢复方式）：本地钥匙未在服务端录入 →
       // 验签必然失败 → 仍停留未授权页
       await gatePage.reload();
       await expect(gatePage.getByTestId("device-gate-denied")).toBeVisible();
@@ -423,7 +418,7 @@ gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
       expect(gatePage.url()).toBe(urlBefore);
       await expect(gatePage.getByTestId("login-password-input")).toHaveCount(0);
 
-      // IDB 里确实只留了 pending（未关联 deviceId）——本地态符合场景设定
+      // IDB 里确实只留了本地钥匙（未在服务端录入）——本地态符合场景设定
       const idbKeys = await gatePage.evaluate(async () => {
         const db = await new Promise<IDBDatabase>((resolve, reject) => {
           const req = indexedDB.open("device-keys", 1);
@@ -442,7 +437,7 @@ gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
         db.close();
         return keys;
       });
-      expect(idbKeys).toEqual(["pending"]);
+      expect(idbKeys).toEqual(["local"]);
     },
   );
 });
@@ -671,9 +666,9 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
 
 gateTest.describe("设备门 - 注入链路语义复核", () => {
   gateTest(
-    "浏览器 pending 钥匙：省略 deviceId 的 verify 也能过门，gate token 可用",
+    "浏览器钥匙（省略 deviceId）：verify 遍历验签也能过门，gate token 可用",
     async ({ gatePage, request }) => {
-      // 浏览器生成钥匙（pending，无服务端 id）
+      // 浏览器生成钥匙（固定槽位，不携带服务端 id）
       await gatePage.addInitScript(browserGenerateKeyInitScript);
       await gatePage.goto("/");
       const injected = await waitForInjectedKey(gatePage);
@@ -710,7 +705,7 @@ gateTest.describe("设备门 - 注入链路语义复核", () => {
       // 先导航拿到真实 origin（about:blank 下无 crypto.subtle 且 fetch 走不了）
       await gatePage.goto("/login");
 
-      // 重导入 Node 侧 JWK 到浏览器 IndexedDB（pending 槽位）
+      // 重导入 Node 侧 JWK 到浏览器 IndexedDB（固定槽位）
       const browserPublicKey = await writeDeviceKeyToIdb(gatePage, {
         privateKeyJwk: key.privateKeyJwk,
         name: "e2e-reimport-device",

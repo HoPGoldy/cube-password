@@ -10,13 +10,13 @@ vi.mock("./base", () => ({
   requestPost: (...args: unknown[]) => requestPostMock(...args),
 }));
 
-const listLocalDeviceKeysMock = vi.fn();
+const getLocalDeviceKeyMock = vi.fn();
 const silentVerifyMock = vi.fn();
 vi.mock("@/lib/device-key", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/device-key")>();
   return {
     ...original,
-    listLocalDeviceKeys: () => listLocalDeviceKeysMock(),
+    getLocalDeviceKey: () => getLocalDeviceKeyMock(),
     silentVerify: (...args: unknown[]) => silentVerifyMock(...args),
   };
 });
@@ -44,7 +44,7 @@ const CHALLENGE = "challenge-abc";
 
 beforeEach(() => {
   requestPostMock.mockReset();
-  listLocalDeviceKeysMock.mockReset();
+  getLocalDeviceKeyMock.mockReset();
   silentVerifyMock.mockReset();
 });
 
@@ -67,7 +67,7 @@ describe("isDeviceGateRejection", () => {
 
 describe("withGateToken", () => {
   const passGateHappyPath = () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKeyTemplate("device-1")]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockImplementation(async (url: string) => {
       if (url === "device/challenge") {
@@ -81,13 +81,7 @@ describe("withGateToken", () => {
     });
   };
 
-  const localKeyTemplate = (deviceId?: string) => ({
-    deviceId,
-    name: "Chrome on macOS",
-    publicKey: "MFkw...==",
-    createdAt: "2026-01-01T00:00:00.000Z",
-    privateKey: {} as CryptoKey,
-  });
+  const localKey = () => ({ name: "n", publicKey: "pk", createdAt: "t" });
 
   it("跑一遍过门并把 token 传给 fn，返回 fn 结果", async () => {
     passGateHappyPath();
@@ -126,7 +120,7 @@ describe("withGateToken", () => {
       }
       throw httpGateError();
     });
-    listLocalDeviceKeysMock.mockResolvedValue([localKeyTemplate("device-1")]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("bad-sig");
     const fn = vi.fn();
 
@@ -188,7 +182,7 @@ describe("passGate", () => {
   });
 
   it("成功：用已关联 deviceId 的钥匙签名并换 gate token", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("sig-bytes");
     requestPostMock.mockResolvedValue({
       success: true,
@@ -199,46 +193,25 @@ describe("passGate", () => {
     const { gateToken } = await passGate(CHALLENGE);
 
     expect(gateToken).toBe("gate-token-1");
-    expect(silentVerifyMock).toHaveBeenCalledWith("device-1", CHALLENGE);
+    expect(silentVerifyMock).toHaveBeenCalledWith(CHALLENGE);
     expect(requestPostMock).toHaveBeenCalledWith("device/verify", {
       challenge: CHALLENGE,
       signature: "sig-bytes",
     });
   });
 
-  it("多钥匙逐把尝试：第一把被拒后换下一把并重新取挑战码", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([
-      localKey("device-revoked"),
-      localKey("device-2"),
-    ]);
+  it("本机钥匙已被吊销（verify 403）→ ErrorGateDenied，不重试", async () => {
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("sig");
-    // 第一把被服务端拒（模拟已吊销设备），第二把过
-    // 调用序列（Once 队列按注册顺序消费）：
-    //   verify#1 403 拒（模拟已吊销设备）→ challenge 探针 → verify#2 过
-    requestPostMock
-      .mockRejectedValueOnce(
-        Object.assign(new Error("403"), {
-          response: { status: 403, data: { code: 40301 } },
-        }),
-      )
-      .mockImplementationOnce(async () => ({
-        success: true,
-        code: 200,
-        data: { challenge: "challenge-2" },
-      }))
-      .mockResolvedValueOnce({
-        success: true,
-        code: 200,
-        data: { gateToken: "t2" },
-      });
+    requestPostMock.mockRejectedValue(httpGateError());
 
-    const { gateToken } = await passGate(CHALLENGE);
-    expect(gateToken).toBe("t2");
-    expect(silentVerifyMock).toHaveBeenCalledWith("device-2", "challenge-2");
+    await expect(passGate(CHALLENGE)).rejects.toThrowError(ErrorGateDenied);
+    // 单槽单钥：一次 verify 失败即止
+    expect(requestPostMock).toHaveBeenCalledTimes(1);
   });
 
   it("pending 槽位记录（无 deviceId）也能参与逐把尝试", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKey(undefined)]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockResolvedValue({
       success: true,
@@ -255,13 +228,13 @@ describe("passGate", () => {
   });
 
   it("本机无任何钥匙 → ErrorGateDenied", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([]);
+    getLocalDeviceKeyMock.mockResolvedValue(undefined);
     await expect(passGate(CHALLENGE)).rejects.toThrowError(ErrorGateDenied);
     expect(requestPostMock).not.toHaveBeenCalled();
   });
 
   it("句柄缺失（ErrorNoLocalDeviceKey）且无其他钥匙 → ErrorGateDenied", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockRejectedValue(
       new ErrorNoLocalDeviceKey("no local device key: device-1"),
     );
@@ -269,7 +242,7 @@ describe("passGate", () => {
   });
 
   it("验签 403 ErrorDeviceGate → ErrorGateDenied（区分于其他网络错误）", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("bad-sig");
     requestPostMock.mockRejectedValue(httpGateError());
 
@@ -292,26 +265,28 @@ describe("passGate", () => {
   });
 
   it("IndexedDB 读取失败 → ErrorGateUnavailable", async () => {
-    listLocalDeviceKeysMock.mockRejectedValue(new Error("idb broken"));
+    getLocalDeviceKeyMock.mockRejectedValue(new Error("idb broken"));
     await expect(passGate(CHALLENGE)).rejects.toThrowError(
       new ErrorGateUnavailable("读取本机设备钥匙失败：idb broken"),
     );
   });
 
   it("verify 网络失败（非门禁拒绝）→ 原样上抛，不换钥匙重试", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockRejectedValue(new Error("network down"));
 
     await expect(passGate(CHALLENGE)).rejects.toThrowError("network down");
   });
 
-  it("verify 响应异常（success=false）→ 全部尝试后 ErrorGateDenied", async () => {
-    listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
+  it("verify 响应异常（success=false）→ ErrorGateUnavailable", async () => {
+    getLocalDeviceKeyMock.mockResolvedValue(localKey());
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockResolvedValue({ success: false, code: 200 });
 
-    await expect(passGate(CHALLENGE)).rejects.toThrowError(ErrorGateDenied);
+    await expect(passGate(CHALLENGE)).rejects.toThrowError(
+      ErrorGateUnavailable,
+    );
   });
 });
 

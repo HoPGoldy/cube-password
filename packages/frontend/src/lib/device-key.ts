@@ -4,8 +4,8 @@
  * - 生成：WebCrypto ECDSA P-256，extractable: false（私钥字节永不出浏览器密钥库），
  *   公钥导出 SPKI base64 组装进钥匙串
  * - 存储：私钥句柄（CryptoKey，structured clone 可直接入库）+ 元数据存 IndexedDB
- *   （库名 device-keys，store: keys），key 为服务端返回的设备 id；
- *   生成后尚未录入服务端时先暂存于 pending 槽位，录入成功后 linkDeviceId 回填迁移
+ *   （库名 device-keys，store: keys），固定单槽单条：一机一钥，重新生成即覆盖。
+ *   公钥即身份——「本机是哪台受信设备」由公钥比对得出，不在本地维护设备 id 映射
  * - 钥匙串格式：cube-device-key:v1:<base64url(JSON{ name, publicKey })>，
  *   与后端 packages/backend/src/lib/device-key 共同遵守
  * - 静默过门：silentVerify(deviceId, challenge) 用句柄签名挑战码，返回 base64url 签名
@@ -19,8 +19,8 @@ export const DEVICE_KEY_PREFIX = "cube-device-key:v1:";
 const DB_NAME = "device-keys";
 /** IndexedDB object store 名 */
 const STORE_NAME = "keys";
-/** 生成后尚未录入服务端的句柄暂存槽位（录入成功后由 linkDeviceId 迁移到服务端 id 下） */
-export const PENDING_DEVICE_KEY_SLOT = "pending";
+/** 本机钥匙唯一槽位：一机一钥，重新生成即覆盖（旧钥匙同时作废） */
+export const LOCAL_DEVICE_KEY_SLOT = "local";
 
 /** 钥匙串格式非法（前缀 / base64url / JSON / 字段结构任一校验不通过） */
 export class ErrorInvalidDeviceKey extends Error {
@@ -44,10 +44,8 @@ export interface DeviceKeyPayload {
   publicKey: string;
 }
 
-/** 本机钥匙记录（私钥句柄 + 元数据），存 IndexedDB */
+/** 本机钥匙记录（私钥句柄 + 元数据），存 IndexedDB 固定槽位 */
 export interface LocalDeviceKey {
-  /** 服务端设备 id（录入成功后由 linkDeviceId 回填；pending 槽位中的记录缺省） */
-  deviceId?: string;
   name: string;
   /** SPKI base64（标准 base64，与 trusted-devices.json 的 publicKey 一致） */
   publicKey: string;
@@ -192,24 +190,23 @@ const withStore = async <T>(
   }
 };
 
-const idbGet = (key: string) =>
+const idbGet = () =>
   withStore(
     "readonly",
-    (store) => store.get(key) as IDBRequest<LocalDeviceKey | undefined>,
+    (store) =>
+      store.get(LOCAL_DEVICE_KEY_SLOT) as IDBRequest<
+        LocalDeviceKey | undefined
+      >,
   );
 
-const idbGetAll = () =>
-  withStore(
-    "readonly",
-    (store) => store.getAll() as IDBRequest<LocalDeviceKey[]>,
+const idbPut = async (value: LocalDeviceKey): Promise<void> => {
+  await withStore("readwrite", (store) =>
+    store.put(value, LOCAL_DEVICE_KEY_SLOT),
   );
-
-const idbPut = async (key: string, value: LocalDeviceKey): Promise<void> => {
-  await withStore("readwrite", (store) => store.put(value, key));
 };
 
-const idbDelete = async (key: string): Promise<void> => {
-  await withStore("readwrite", (store) => store.delete(key));
+const idbDelete = async (): Promise<void> => {
+  await withStore("readwrite", (store) => store.delete(LOCAL_DEVICE_KEY_SLOT));
 };
 
 // ---------- 本机钥匙：生成 / 查询 / 关联 / 清除 ----------
@@ -222,8 +219,8 @@ export interface GeneratedDeviceKey extends DeviceKeyPayload {
 }
 
 /**
- * 生成本机设备钥匙：私钥句柄暂存 IndexedDB pending 槽位，
- * 公钥组装成钥匙串返回。录入服务端成功后调用 linkDeviceId 回填设备 id。
+ * 生成本机设备钥匙：写入固定槽位（覆盖旧钥匙，旧钥匙即时作废），
+ * 公钥组装成钥匙串返回。
  */
 export const generateDeviceKeyPair = async (
   name: string,
@@ -245,7 +242,7 @@ export const generateDeviceKeyPair = async (
   const publicKey = bytesToBase64(new Uint8Array(spki));
   const createdAt = new Date().toISOString();
 
-  await idbPut(PENDING_DEVICE_KEY_SLOT, {
+  await idbPut({
     name,
     publicKey,
     createdAt,
@@ -260,32 +257,12 @@ export const generateDeviceKeyPair = async (
   };
 };
 
-/** 查询本机全部钥匙记录（含 pending 与已关联设备 id 的） */
-export const listLocalDeviceKeys = (): Promise<LocalDeviceKey[]> => idbGetAll();
+/** 读取本机钥匙记录（固定槽位，无钥匙时 undefined） */
+export const getLocalDeviceKey = (): Promise<LocalDeviceKey | undefined> =>
+  idbGet();
 
-/** 查询暂存槽位中尚未录入服务端的钥匙记录 */
-export const getPendingDeviceKey = (): Promise<LocalDeviceKey | undefined> =>
-  idbGet(PENDING_DEVICE_KEY_SLOT);
-
-/** 按服务端设备 id 查询本机钥匙记录 */
-export const getLocalDeviceKey = (
-  deviceId: string,
-): Promise<LocalDeviceKey | undefined> => idbGet(deviceId);
-
-/**
- * 录入服务端成功后，把 pending 槽位的记录迁移到服务端设备 id 下
- * （此后静默过门按 deviceId 定位句柄）。pending 不存在时为空操作。
- */
-export const linkDeviceId = async (deviceId: string): Promise<void> => {
-  const pending = await getPendingDeviceKey();
-  if (!pending) return;
-  await idbDelete(PENDING_DEVICE_KEY_SLOT);
-  await idbPut(deviceId, { ...pending, deviceId });
-};
-
-/** 删除本机钥匙记录（key 为设备 id 或 pending 槽位名），用于吊销本机/重置 */
-export const removeLocalDeviceKey = (key: string): Promise<void> =>
-  idbDelete(key);
+/** 清除本机钥匙记录（吊销本机/重置） */
+export const clearLocalDeviceKey = (): Promise<void> => idbDelete();
 
 // ---------- 静默签名（每次登录的静默过门，用户零感知） ----------
 
@@ -293,22 +270,12 @@ export const removeLocalDeviceKey = (key: string): Promise<void> =>
  * 用本机句柄对服务端下发的设备挑战码签名，返回 base64url 签名
  * （raw r||s，64 字节，与后端 dsaEncoding: 'ieee-p1363' 验签对齐）。
  * T04 的静默过门流程用它组装 challenge → sign → verify 三步。
- * deviceId 可传 undefined：跨设备录入后源机器尚不知道自己的服务端 id，
- * 句柄仍在 pending 槽位，后端会对全部受信设备逐一验签。
+ * 服务端对全部受信设备逐一验签（省略 deviceId），本机无需知道自己的服务端 id。
  */
-export const silentVerify = async (
-  deviceId: string | undefined,
-  challenge: string,
-): Promise<string> => {
-  let record = deviceId ? await getLocalDeviceKey(deviceId) : null;
+export const silentVerify = async (challenge: string): Promise<string> => {
+  const record = await getLocalDeviceKey();
   if (!record) {
-    // 回退 pending 槽（自我授权未完成 / 跨设备录入后未链 id）
-    record = await getLocalDeviceKey(PENDING_DEVICE_KEY_SLOT);
-  }
-  if (!record) {
-    throw new ErrorNoLocalDeviceKey(
-      `no local device key: ${deviceId ?? PENDING_DEVICE_KEY_SLOT}`,
-    );
+    throw new ErrorNoLocalDeviceKey("no local device key");
   }
 
   // 挑战码按其字符串原文的 UTF-8 字节签名（与后端 Buffer.from(challenge, 'utf8') 对齐）
