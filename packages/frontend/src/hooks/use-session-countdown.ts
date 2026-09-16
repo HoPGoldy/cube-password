@@ -12,9 +12,8 @@ export const formatSessionCountdown = (remainingMs: number): string => {
 /**
  * 计算当前剩余时间。
  * @param expiresAt 服务端 login 响应下发的绝对过期时刻（ISO 字符串）
- * @param now 当前时刻；默认取本地时钟。注意：两端时钟偏差会 1:1 体现在
- *            剩余时间上（本机慢 → 显示偏长）；真实过期判定以服务端 401 为准，
- *            倒计时仅是提示 UI。
+ * @param now 当前时刻；默认取本地时钟。两端时钟偏差会 1:1 体现在
+ *            剩余时间上（本机慢 → 显示偏长，登出偏晚）。
  */
 export const getSessionRemainingMs = (
   expiresAt: string,

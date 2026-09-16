@@ -4,6 +4,7 @@ import { Type } from "typebox";
 
 export const SchemaLoginFailRecord = Type.Object({
   date: Type.Number(),
+  ip: Type.String(),
 });
 export type SchemaLoginFailRecordType = Type.Static<
   typeof SchemaLoginFailRecord

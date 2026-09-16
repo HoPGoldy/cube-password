@@ -21,7 +21,7 @@ export const stateSessionToken = atom(undefined as string | undefined);
 
 /**
  * 会话绝对过期时刻（来自 login 响应的 ISO 字符串）
- * - 服务端绝对超时不续期；倒计时以服务端下发的该值为准，不用本地时钟校准
+ * - 服务端绝对超时不续期；倒计时与到期登出均以该值为准
  */
 export const stateSessionExpiresAt = atom(undefined as string | undefined);
 

@@ -111,6 +111,18 @@ describe("LoginLocker", () => {
       expect(locker.getLockDetail().isBanned).toBe(true);
       expect(locker.isLocked()).toBe(true);
     });
+
+    it("stores the source ip on each failure for login-page display", () => {
+      locker.recordLoginFail("203.0.113.9");
+      expect(locker.getLockDetail().loginFailure[0]).toMatchObject({
+        ip: "203.0.113.9",
+      });
+    });
+
+    it("defaults missing ip to 未知来源", () => {
+      locker.recordLoginFail();
+      expect(locker.getLockDetail().loginFailure[0].ip).toBe("未知来源");
+    });
   });
 
   describe("daily cleanup", () => {

@@ -5,6 +5,8 @@ const localDayKey = (ts: number) => new Date(ts).toDateString();
 
 export interface LoginFailRecord {
   date: number;
+  /** 失败来源 IP，仅用于登录页展示，不参与锁定计数 */
+  ip: string;
 }
 
 export interface LockDetail {
@@ -16,8 +18,8 @@ export interface LockDetail {
 export class LoginLocker {
   private failRecords: LoginFailRecord[] = [];
 
-  recordLoginFail(): LockDetail {
-    this.failRecords.push({ date: Date.now() });
+  recordLoginFail(ip = "未知来源"): LockDetail {
+    this.failRecords.push({ date: Date.now(), ip });
     return this.getLockDetail();
   }
 

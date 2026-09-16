@@ -221,7 +221,10 @@ export const LoginPage = ({
 
   const renderLoginFailure = (item: SchemaLoginFailRecordType) => {
     const message =
-      dayjs(item.date).format("YYYY-MM-DD HH:mm:ss") + " 登录失败";
+      dayjs(item.date).format("YYYY-MM-DD HH:mm:ss") +
+      " 于 " +
+      item.ip +
+      " 登录失败";
     return (
       <Col span={24} key={item.date}>
         <Alert message={message} type="error" showIcon />

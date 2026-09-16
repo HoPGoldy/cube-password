@@ -109,10 +109,11 @@ export class AuthService {
     // 验证密码: hash = SHA512(hex(V) + challengeCode)，V 存于 passwordHash
     const expectedHash = sha512(user.passwordHash + challengeCode);
     if (!timingSafeEqual(hash, expectedHash)) {
-      const lockDetail = this.loginLocker.recordLoginFail();
+      const failIp = notifyIp ?? "未知来源";
+      const lockDetail = this.loginLocker.recordLoginFail(failIp);
       await this.notificationService.createNotice(
         "密码错误",
-        `${notifyIp ?? "未知来源"} 在登录时输入了错误的密码，请检查是否为本人操作。`,
+        `${failIp} 在登录时输入了错误的密码，请检查是否为本人操作。`,
         NoticeType.Warning,
       );
       const error = new ErrorAuthFailed();

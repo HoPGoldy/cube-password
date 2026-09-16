@@ -19,11 +19,12 @@ import { Sidebar } from "../sidebar";
 import { SessionCountdown } from "./session-countdown";
 import { useHeaderPageTitle } from "./use-page-title";
 import { THEME_PRIMARY_COLOR } from "@/config";
-import { stateUser, logout } from "@/store/user";
+import { stateUser, stateSessionExpiresAt, logout } from "@/store/user";
 import { useStatistic } from "@/services/user";
 import { useLogout } from "@/services/auth";
 import { useAppVersion } from "@/services/app-config";
 import { MetadataMigrationModal } from "@/components/metadata-migration-modal";
+import { useSessionExpireLogout } from "@/hooks/use-session-expire-logout";
 import useChangePassword from "@/pages/change-password";
 import useOtpConfig from "@/pages/otp-config";
 import useCreatePwdSetting from "@/pages/create-pwd-setting";
@@ -35,6 +36,7 @@ export const AppContainer = () => {
   const [searchParams] = useSearchParams();
   const renderTitle = useHeaderPageTitle();
   const userInfo = useAtomValue(stateUser);
+  const expiresAt = useAtomValue(stateSessionExpiresAt);
 
   const changePassword = useChangePassword();
   const otpConfig = useOtpConfig();
@@ -55,6 +57,8 @@ export const AppContainer = () => {
     await postLogout();
     logout();
   };
+
+  useSessionExpireLogout(expiresAt, logout);
 
   const accountMenuStats: AccountMenuStat[] = [
     {
