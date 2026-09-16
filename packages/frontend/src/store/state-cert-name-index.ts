@@ -1,7 +1,7 @@
 import { atom, getDefaultStore } from "jotai";
+import { NAME_DECRYPT_FAILED } from "@/lib/e2ee";
 
-/** 解密失败条目的名称占位符（单条密文损坏不阻塞整体索引） */
-export const NAME_DECRYPT_FAILED = "解密失败";
+export { NAME_DECRYPT_FAILED };
 
 /** 索引条目的非密文元数据（接口明文下发，仅内存保存） */
 export interface CertIndexMeta {

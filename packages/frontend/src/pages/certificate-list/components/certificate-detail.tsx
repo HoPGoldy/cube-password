@@ -19,7 +19,7 @@ import {
 import { useAtomValue } from "jotai";
 import { stateVault } from "@/store/user";
 import { messageError, messageSuccess, messageWarning } from "@/utils/message";
-import { encryptContent, decryptContent } from "@/lib/e2ee";
+import { encryptContent, decryptContent, decryptName } from "@/lib/e2ee";
 import copy from "copy-to-clipboard";
 import { Draggable } from "@/components/draggable";
 import {
@@ -166,7 +166,7 @@ export const CertificateDetailModal: FC<Props> = ({
     const { nameEnc, content, markColor, icon } = detailResp.data;
     // 元数据加密：标题与内容都需 DEK 解密
     Promise.all([
-      nameEnc ? decryptContent(vault.dek, nameEnc) : Promise.resolve(""),
+      decryptName(vault.dek, nameEnc),
       decryptContent(vault.dek, content),
     ])
       .then(([plainName, plainContent]) => {

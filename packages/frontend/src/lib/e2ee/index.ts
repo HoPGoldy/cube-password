@@ -10,3 +10,4 @@ export * from "./kdf";
 export * from "./cipher";
 export * from "./format";
 export * from "./random";
+export * from "./decrypt-name";

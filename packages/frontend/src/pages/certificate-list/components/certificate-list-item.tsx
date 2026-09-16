@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 
 interface CertificateItem {
   id: number;
-  /** 明文名称（来自内存索引；解密失败时为占位符） */
+  /** 明文名称（列表接口 nameEnc 解密；失败时为占位符） */
   displayName: string;
   markColor: string | null;
   icon: string | null;

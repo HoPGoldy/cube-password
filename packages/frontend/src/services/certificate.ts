@@ -11,10 +11,15 @@ import { getDefaultStore } from "jotai";
 import { stateVault } from "@/store/user";
 import {
   setCertNameIndex,
-  NAME_DECRYPT_FAILED,
   type CertIndexMeta,
 } from "@/store/state-cert-name-index";
-import { decryptContent } from "@/lib/e2ee";
+import { decryptNameForList } from "@/lib/e2ee";
+
+/** 分组列表项：接口密文字段 + 前端解密后的展示名 */
+export type CertificateListItemView =
+  SchemaCertificateListByGroupResponseType["items"][number] & {
+    displayName: string;
+  };
 
 /** 凭证写操作后需要失效重建的 query（分组列表 + 内存名称索引） */
 export const invalidateCertificateQueries = () => {
@@ -29,11 +34,20 @@ export const useCertificateList = (
 ) => {
   return useQuery({
     queryKey: ["certificateList", groupId],
-    queryFn: () =>
-      requestPost<SchemaCertificateListByGroupResponseType>(
+    queryFn: async () => {
+      const resp = await requestPost<SchemaCertificateListByGroupResponseType>(
         "certificate/list",
         { groupId },
-      ),
+      );
+      const dek = getDefaultStore().get(stateVault).dek;
+      const items: CertificateListItemView[] = await Promise.all(
+        (resp.data?.items ?? []).map(async (item) => ({
+          ...item,
+          displayName: await decryptNameForList(dek, item.nameEnc),
+        })),
+      );
+      return { ...resp, data: { items } };
+    },
     enabled: !!groupId && enabled,
     refetchOnWindowFocus: false,
   });
@@ -59,16 +73,7 @@ export const applyCertIndexItems = async (
       updatedAt: item.updatedAt,
       groupId: item.groupId,
     });
-    if (!item.nameEnc || !dek) {
-      names.set(item.id, NAME_DECRYPT_FAILED);
-      continue;
-    }
-    try {
-      names.set(item.id, await decryptContent(dek, item.nameEnc));
-    } catch {
-      // 单条密文损坏（或 DEK 不匹配）：占位显示，不阻塞整体索引
-      names.set(item.id, NAME_DECRYPT_FAILED);
-    }
+    names.set(item.id, await decryptNameForList(dek, item.nameEnc));
   }
   setCertNameIndex(names, metas);
 };

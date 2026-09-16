@@ -1,16 +1,13 @@
 import { FC, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAtomValue } from "jotai";
-import {
-  stateCertNameIndex,
-  NAME_DECRYPT_FAILED,
-} from "@/store/state-cert-name-index";
 import { stateUnlockedGroupIds } from "@/store/user";
 import { useGroupList } from "@/services/group";
 import {
   useCertificateList,
   useMoveCertificate,
   useUpdateCertificateSort,
+  type CertificateListItemView,
 } from "@/services/certificate";
 import { GroupUnlock } from "./components/group-unlock";
 import { CertificateDetailModal } from "./components/certificate-detail";
@@ -48,14 +45,9 @@ const CertificateListPage: FC = () => {
   const [dragging, setDragging] = useState(false);
   /** 移动端账号抽屉 */
   const [accountSheetVisible, setAccountSheetVisible] = useState(false);
-  /** 本地可排序的凭证列表（名称由索引提供，不来自服务端响应） */
+  /** 本地可排序的凭证列表（displayName 由列表接口 nameEnc 解密而来） */
   const [certificateList, setCertificateList] = useState<
-    {
-      id: number;
-      markColor: string | null;
-      icon: string | null;
-      updatedAt: string;
-    }[]
+    CertificateListItemView[]
   >([]);
 
   const currentGroup = groupList.find((g) => g.id === groupId);
@@ -73,14 +65,7 @@ const CertificateListPage: FC = () => {
     setCertificateList(certListResp.data.items);
   }, [certListResp?.data?.items]);
 
-  // 元数据加密：响应不含明文名，显示时读内存索引（未命中显示占位符）
-  const certNameIndex = useAtomValue(stateCertNameIndex);
-  const itemsWithNames = certificateList.map((item) => ({
-    ...item,
-    displayName: certNameIndex.get(item.id) ?? NAME_DECRYPT_FAILED,
-  }));
-
-  const items = itemsWithNames;
+  const items = certificateList;
 
   const closeSelectMode = () => {
     setSelectMode(false);
