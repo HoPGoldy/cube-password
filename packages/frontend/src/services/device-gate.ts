@@ -1,5 +1,5 @@
 /**
- * 设备门禁（device gate）前端流程（见 docs/plans/device-gate/context.md 3.3/3.4、T04
+ * 设备验证（device gate）前端流程（见 docs/plans/device-gate/context.md 3.3/3.4、T04
  * 与 docs/plans/ephemeral-gate-token/context.md 第 2 节 D-passgate/D-corridor）
  *
  * - probeGate：POST /device/challenge，登录页唯一探针（gateEnabled 回报门是否激活）
@@ -24,7 +24,7 @@ import type { AppResponse } from "@/types/global";
 export const ERROR_CODE_DEVICE_GATE = 40301;
 
 /**
- * 判断 axios 错误是否为服务端设备门拒绝（HTTP 403 + ErrorDeviceGate 的 40301）
+ * 判断 axios 错误是否为服务端设备验证拒绝（HTTP 403 + ErrorDeviceGate 的 40301）
  */
 export const isDeviceGateRejection = (err: unknown): boolean => {
   const response = (
@@ -75,7 +75,7 @@ export const passGate = async (
   // 签名依赖 WebCrypto，非安全上下文（非 HTTPS 且非 localhost）下明确报因
   if (typeof crypto === "undefined" || !crypto.subtle) {
     throw new ErrorGateUnavailable(
-      "WebCrypto 不可用：设备门需要安全上下文（HTTPS 或 localhost）",
+      "WebCrypto 不可用：设备验证需要安全上下文（HTTPS 或 localhost）",
     );
   }
 

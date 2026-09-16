@@ -89,17 +89,9 @@ const KeyGenCard: FC = () => {
 export interface DeviceGatePageProps {
   /** 门禁失败信息（kind 区分未授权 / 暂时不可用） */
   denial: GateDenial;
-  /** 重新验证：重跑门禁流程（探针 + 过门），成功后恢复密码表单 */
-  onRetry: () => void;
-  /** 重试进行中（父组件持锁，防止并发重跑） */
-  retrying?: boolean;
 }
 
-export const DeviceGatePage: FC<DeviceGatePageProps> = ({
-  denial,
-  onRetry,
-  retrying,
-}) => {
+export const DeviceGatePage: FC<DeviceGatePageProps> = ({ denial }) => {
   const unauthorized = denial.kind === "unauthorized";
 
   return (
@@ -113,65 +105,39 @@ export const DeviceGatePage: FC<DeviceGatePageProps> = ({
         </div>
       </header>
       <div className="w-[80%] md:w-[60%] lg:w-[45%] xl:w-[35%]">
-        <Card
-          data-testid="device-gate-denied"
-          title={
-            <span>
-              {unauthorized ? (
-                <StopOutlined className="mr-2 text-red-500" />
-              ) : (
-                <Spin size="small" className="mr-2" />
-              )}
-              {unauthorized ? "此设备未授权" : "门禁验证暂不可用"}
-            </span>
-          }
-        >
-          <Alert
-            className="mb-4"
-            type={unauthorized ? "warning" : "info"}
-            showIcon
-            icon={<SafetyOutlined />}
-            message={
-              unauthorized
-                ? "本机没有已授权的设备钥匙，无法进入登录页。"
-                : denial.detail || "门禁流程暂时无法完成，请稍后重试。"
-            }
-            description={
-              unauthorized ? (
+        {unauthorized ? (
+          <>
+            <Alert
+              data-testid="device-gate-denied"
+              className="mb-4"
+              type="warning"
+              showIcon
+              icon={<SafetyOutlined />}
+              message="本机没有已授权的设备钥匙，无法进入登录页。"
+              description={
                 <span>
-                  本服务已开启设备门禁，仅绑定钥匙的设备可以登录。如需授权本机：
+                  本服务仅允许绑定钥匙的设备登录。如需授权本机：
                   <br />
                   1. 在下方生成本机钥匙串；
                   <br />
                   2. 从任一<b>已授权设备</b>打开「设置 →
                   设备管理」页，录入该钥匙串；
                   <br />
-                  3. 或直接编辑服务器上的{" "}
-                  <Text code>storage/trusted-devices.json</Text>；
-                  <br />
-                  4. 完成后点击「重新验证」。
+                  3. 完成后刷新页面。
                 </span>
-              ) : undefined
-            }
+              }
+            />
+            <KeyGenCard />
+          </>
+        ) : (
+          <Alert
+            data-testid="device-gate-denied"
+            type="info"
+            showIcon
+            icon={<Spin size="small" />}
+            message={denial.detail || "设备验证暂时无法完成，请稍后刷新重试。"}
           />
-
-          {unauthorized && <KeyGenCard />}
-
-          <div className="text-center">
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              loading={retrying}
-              onClick={onRetry}
-              data-testid="device-gate-retry-btn"
-            >
-              重新验证
-            </Button>
-          </div>
-        </Card>
-        <Title level={5} type="secondary" className="text-center mt-6">
-          {denial.detail && unauthorized ? denial.detail : " "}
-        </Title>
+        )}
       </div>
     </div>
   );

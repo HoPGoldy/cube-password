@@ -76,13 +76,10 @@ const Login = () => {
     void runGateFlow();
   }, [runGateFlow]);
 
-  /** 「重新验证」：重跑门禁流程（含 auth/global 表单初始化） */
-  const onGateRetry = useCallback(() => runGateFlow(), [runGateFlow]);
-
   if (gateChecking) return <PageLoading />;
 
   if (gateDenial) {
-    return <DeviceGatePage denial={gateDenial} onRetry={onGateRetry} />;
+    return <DeviceGatePage denial={gateDenial} />;
   }
 
   if (!isInitialized) {

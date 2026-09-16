@@ -51,9 +51,9 @@ export const useRevokeDevice = () => {
 
 export type { SchemaDeviceItemType };
 
-// ========== 设备门开关（docs/plans/gate-switch T02） ==========
+// ========== 设备验证开关（docs/plans/gate-switch T02） ==========
 
-/** 设备门开关状态 + 受信设备数（管理页初始渲染与首次开启引导判定） */
+/** 设备验证开关状态 + 受信设备数（管理页初始渲染与首次开启引导判定） */
 export const gateConfigQueryOptions = {
   queryKey: ["gateConfig"],
   queryFn: () =>
@@ -65,7 +65,7 @@ export const useGateConfig = () => {
   return useQuery(gateConfigQueryOptions);
 };
 
-/** 切换设备门开关（开启需已有设备，后端守卫 400），成功后失效开关状态缓存 */
+/** 切换设备验证开关（开启需已有设备，后端守卫 400），成功后失效开关状态缓存 */
 export const updateGateConfigMutationOptions = {
   mutationFn: (data: SchemaDeviceGateConfigUpdateBodyType) => {
     return requestPost<SchemaDeviceGateConfigUpdateResponseType>(

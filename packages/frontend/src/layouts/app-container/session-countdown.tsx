@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { Tooltip } from "antd";
 import { useAtomValue } from "jotai";
 import {
   getSessionRemainingMs,
@@ -57,18 +58,21 @@ export const SessionCountdown = () => {
   const warning = isSessionCountdownWarning(remainingMs);
 
   return (
-    <span
-      className={`mr-3 select-none font-mono text-sm tabular-nums ${
-        warning ? "text-red-500" : "text-neutral-500 dark:text-neutral-400"
-      }`}
+    <Tooltip
       title={
         remainingMs > 0
-          ? "会话剩余时间，到期后需重新登录"
+          ? "会话剩余时间，倒计时结束后将会自动退出登录"
           : "会话已过期，请重新登录"
       }
     >
-      {formatSessionCountdown(remainingMs)}
-      {remainingMs <= 0 ? "（已过期）" : ""}
-    </span>
+      <span
+        className={`mr-3 select-none font-mono text-sm tabular-nums ${
+          warning ? "text-red-500" : "text-neutral-500 dark:text-neutral-400"
+        }`}
+      >
+        {formatSessionCountdown(remainingMs)}
+        {remainingMs <= 0 ? "（已过期）" : ""}
+      </span>
+    </Tooltip>
   );
 };

@@ -57,7 +57,7 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(resp);
     }
 
-    // 设备门拒绝（ErrorDeviceGate，40301）：在新设计下只可能意味着钥匙被拒 /
+    // 设备验证拒绝（ErrorDeviceGate，40301）：在新设计下只可能意味着钥匙被拒 /
     // 门态突变（token 即取即用，不存在客户端侧过期）。
     // 门页（login/init）上：由页面流程 catch 渲染未授权页，这里不做任何事直接
     // reject 透传；非门页意味着“会话建立后门才被激活”等罕见场景，跳登录重跑门禁。

@@ -155,7 +155,7 @@ const Init = () => {
   }
 
   if (gateDenial) {
-    return <DeviceGatePage denial={gateDenial} onRetry={runGateFlow} />;
+    return <DeviceGatePage denial={gateDenial} />;
   }
 
   return (

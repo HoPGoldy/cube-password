@@ -12,7 +12,7 @@ import {
 import type { GateDenial } from "@/services/device-gate";
 import { KeyOutlined } from "@ant-design/icons";
 import { useLoginSuccess } from "./use-login-success";
-import { APP_NAME, APP_SUBTITLE, THEME_BUTTON_COLOR } from "@/config";
+import { APP_NAME, APP_SUBTITLE } from "@/config";
 import { usePageTitle } from "@/store/global";
 import { useSetAtom, useAtomValue } from "jotai";
 import { bytesToHex, hexToBytes } from "@/lib/e2ee/format";
@@ -268,7 +268,6 @@ export const LoginPage = ({
           block
           loading={isLogin || deriving}
           type="primary"
-          style={{ background: THEME_BUTTON_COLOR }}
           onClick={onPasswordSubmit}
           data-testid="login-submit-btn"
         >

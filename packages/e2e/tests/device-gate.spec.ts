@@ -260,12 +260,14 @@ gateTest.describe("设备门 - 无钥匙拦截", () => {
       await setupGateEnabled(request);
 
       await gatePage.goto("/login");
-      // 未授权页：denied 卡片 + 重新验证按钮；密码表单不渲染
+      // 未授权页：denied Alert（无外层卡片、无重试按钮）；密码表单不渲染
       await expect(gatePage.getByTestId("device-gate-denied")).toBeVisible();
-      await expect(gatePage.getByTestId("device-gate-retry-btn")).toBeVisible();
+      await expect(gatePage.getByTestId("device-gate-retry-btn")).toHaveCount(
+        0,
+      );
       await expect(gatePage.getByTestId("login-password-input")).toHaveCount(0);
       await expect(gatePage.getByTestId("device-gate-denied")).toContainText(
-        "此设备未授权",
+        "本机没有已授权的设备钥匙",
       );
     },
   );
@@ -409,8 +411,9 @@ gateTest.describe("设备门 - pending 未录入 + 重新验证", () => {
       await gatePage.getByRole("button", { name: /生\s*成/ }).click();
       await expect(gatePage.getByText("本机钥匙已生成")).toBeVisible();
 
-      // 点「重新验证」：pending 钥匙未在服务端录入 → 验签必然失败 → 仍停留未授权页
-      await gatePage.getByTestId("device-gate-retry-btn").click();
+      // 刷新页面（文案指引的恢复方式）：pending 钥匙未在服务端录入 →
+      // 验签必然失败 → 仍停留未授权页
+      await gatePage.reload();
       await expect(gatePage.getByTestId("device-gate-denied")).toBeVisible();
 
       // 稳定性：无 reload 循环（URL 不变、denied 持续在、无密码表单）
@@ -645,7 +648,7 @@ gateTest.describe("设备门 - 即取即用语义（T02）", () => {
       await gatePage.getByTestId("login-submit-btn").click();
       await expect(gatePage.getByTestId("device-gate-denied")).toBeVisible();
       await expect(gatePage.getByTestId("device-gate-denied")).toContainText(
-        "此设备未授权",
+        "本机没有已授权的设备钥匙",
       );
       await expect(gatePage.getByTestId("login-password-input")).toHaveCount(0);
 
@@ -784,12 +787,12 @@ gateTest.describe("设备门 - 开关生命周期（T03）", () => {
         0,
       );
       await expect(
-        gatePage.getByText("开启设备门", { exact: true }),
+        gatePage.getByText("开启设备验证", { exact: true }),
       ).toHaveCount(0);
 
       // 3. 首次开启（清单为空）→ 引导卡（不调 update，后端守卫未触发）
       await gateSwitch.click();
-      const guideTitle = gatePage.getByText("开启设备门", { exact: true });
+      const guideTitle = gatePage.getByText("开启设备验证", { exact: true });
       await expect(guideTitle).toBeVisible();
 
       // 4. 生成本机钥匙串 → 保存并启用（两步调用：先 add 后 update）
@@ -849,11 +852,11 @@ gateTest.describe("设备门 - 开关生命周期（T03）", () => {
       const gateSwitch = await openDeviceManage(gatePage);
       await expect(gateSwitch).toHaveAttribute("aria-checked", "false");
       await expect(
-        gatePage.getByText("开启设备门", { exact: true }),
+        gatePage.getByText("开启设备验证", { exact: true }),
       ).toHaveCount(0);
 
       await gateSwitch.click();
-      await expect(gatePage.getByText("确定开启设备门？")).toBeVisible();
+      await expect(gatePage.getByText("确定开启设备验证？")).toBeVisible();
       await gatePage.getByRole("button", { name: "开 启" }).click();
 
       // 4. UI 复核：开关更新成功后 aria-checked 翻 true（react-query 失效重拉）

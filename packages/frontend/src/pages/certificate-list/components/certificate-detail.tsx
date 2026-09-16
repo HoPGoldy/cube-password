@@ -1,5 +1,5 @@
 import { FC, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Form, Input, Modal, Space } from "antd";
+import { App, Button, Form, Input, Modal, Space } from "antd";
 import {
   PlusOutlined,
   ExclamationCircleFilled,
@@ -133,6 +133,7 @@ export const CertificateDetailModal: FC<Props> = ({
   detailId,
   onClose,
 }) => {
+  const { modal } = App.useApp();
   const isAdd = detailId === -1;
   const [form] = Form.useForm();
   const vault = useAtomValue(stateVault);
@@ -226,7 +227,7 @@ export const CertificateDetailModal: FC<Props> = ({
 
   /** 复制完整凭证内容 */
   const onCopyTotal = () => {
-    Modal.confirm({
+    modal.confirm({
       title: "确定要复制完整凭证？",
       icon: <ExclamationCircleFilled />,
       content: "所有加密信息都将以明文展示，请确保索要凭证的人值得信赖。",
@@ -245,7 +246,7 @@ export const CertificateDetailModal: FC<Props> = ({
   /** 删除凭证 */
   const onDeleteCertificate = () => {
     if (!detailId || detailId < 0) return;
-    Modal.confirm({
+    modal.confirm({
       content: "确定删除该凭证吗？删除后将无法恢复",
       okText: "删除",
       okType: "danger",

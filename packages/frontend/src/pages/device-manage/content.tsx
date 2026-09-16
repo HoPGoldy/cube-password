@@ -5,7 +5,7 @@ import {
   Card,
   Input,
   List,
-  Modal,
+  App,
   Space,
   Spin,
   Switch,
@@ -42,7 +42,7 @@ import { messageError, messageSuccess, messageWarning } from "@/utils/message";
 const { Text } = Typography;
 
 /**
- * 设备门状态说明（开关语义见 docs/plans/gate-switch）：
+ * 设备验证状态说明（开关语义见 docs/plans/gate-switch）：
  * - 开关 ON → 门激活，登录走廊仅绑定钥匙的设备可静默过门；
  * - 开关 OFF → 不拦（纯密码模式），受信设备清单原样保留，可预绑定设备。
  */
@@ -53,8 +53,8 @@ const GateStatusAlert: FC<{ gateEnabled: boolean }> = ({ gateEnabled }) => (
     showIcon
     message={
       gateEnabled
-        ? "设备门已激活：仅绑定钥匙的设备可进入登录页，登录时自动静默过门"
-        : "设备门未开启（纯密码模式）：任何知道地址的设备都可尝试登录"
+        ? "设备验证已激活：仅绑定钥匙的设备可进入登录页，登录时自动静默过门"
+        : "设备验证未开启（纯密码模式）：任何知道地址的设备都可尝试登录"
     }
   />
 );
@@ -94,7 +94,7 @@ const GeneratedKeyCard: FC<{
   </Card>
 );
 
-/** 顶部设备门开关卡片：标题 + 说明 + Switch */
+/** 顶部设备验证开关卡片：标题 + 说明 + Switch */
 const GateSwitchCard: FC<{
   checked: boolean;
   loading: boolean;
@@ -114,6 +114,7 @@ const GateSwitchCard: FC<{
 );
 
 export const Content: FC<SettingContainerProps> = (props) => {
+  const { modal } = App.useApp();
   const isMobile = useIsMobile();
   const [inputKey, setInputKey] = useState("");
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
@@ -232,7 +233,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
       }
       setAddedDeviceId(null);
       setPendingEnable(false);
-      messageSuccess("设备门已开启，本机登录将自动静默过门");
+      messageSuccess("设备验证已开启，本机登录将自动静默过门");
     } catch (err) {
       messageError(`操作失败：${(err as Error).message}`);
     } finally {
@@ -276,30 +277,30 @@ export const Content: FC<SettingContainerProps> = (props) => {
         setAddedDeviceId(null);
         return;
       }
-      Modal.confirm({
-        title: "确定关闭设备门？",
+      modal.confirm({
+        title: "确定关闭设备验证？",
         content:
           "关闭后任何知道地址的设备都能尝试登录。受信设备清单将保留，可随时重新开启。",
-        okText: "关闭设备门",
+        okText: "关闭设备验证",
         okType: "danger",
         onOk: async () => {
           const resp = await updateGateConfig({ enabled: false });
           if (resp.code !== 200) return;
-          messageSuccess("设备门已关闭");
+          messageSuccess("设备验证已关闭");
         },
       });
       return;
     }
     if (deviceCount > 0) {
-      Modal.confirm({
-        title: "确定开启设备门？",
+      modal.confirm({
+        title: "确定开启设备验证？",
         content:
           "开启后仅授权设备可登录：未绑定钥匙串的设备将被挡在登录页之外。",
         okText: "开启",
         onOk: async () => {
           const resp = await updateGateConfig({ enabled: true });
           if (resp.code !== 200) return;
-          messageSuccess("设备门已开启");
+          messageSuccess("设备验证已开启");
         },
       });
       return;
@@ -357,29 +358,32 @@ export const Content: FC<SettingContainerProps> = (props) => {
         )}
       />
 
-      {/* 本机钥匙：生成 → 展示钥匙串 → 复制去其他设备录入 / 直接添加 */}
-      <Card size="small" type="inner" title="生成本机钥匙" className="mb-4">
-        <div className="mb-3 text-slate-500 dark:text-slate-400 cursor-default">
-          <ThunderboltOutlined className="mr-1" />
-          在本机浏览器内生成非导出私钥（私钥字节永不出浏览器密钥库）。把钥匙串录入到
-          任意一台已授权设备即可绑定本机；若服务端还没有任何设备（纯密码模式），可直接添加以绑定第一台设备。
-        </div>
-        <Button
-          type="primary"
-          loading={isGenerating}
-          onClick={onGenerate}
-          disabled={isAdding}
-        >
-          生成本机钥匙
-        </Button>
-        {generatedKey && (
-          <GeneratedKeyCard
-            deviceKey={generatedKey}
-            onAdd={onAddGeneratedKey}
-            adding={isAdding}
-          />
-        )}
-      </Card>
+      {/* 本机钥匙：生成 → 展示钥匙串 → 复制去其他设备录入 / 直接添加。
+          本机已是受信设备时隐藏（生成用于绑定新设备，由对方设备操作） */}
+      {localDeviceIds.length === 0 && (
+        <Card size="small" type="inner" title="生成本机钥匙" className="mb-4">
+          <div className="mb-3 text-slate-500 dark:text-slate-400 cursor-default">
+            <ThunderboltOutlined className="mr-1" />
+            在本机浏览器内生成非导出私钥（私钥字节永不出浏览器密钥库）。把钥匙串录入到
+            任意一台已授权设备即可绑定本机；若服务端还没有任何设备（纯密码模式），可直接添加以绑定第一台设备。
+          </div>
+          <Button
+            type="primary"
+            loading={isGenerating}
+            onClick={onGenerate}
+            disabled={isAdding}
+          >
+            生成本机钥匙
+          </Button>
+          {generatedKey && (
+            <GeneratedKeyCard
+              deviceKey={generatedKey}
+              onAdd={onAddGeneratedKey}
+              adding={isAdding}
+            />
+          )}
+        </Card>
+      )}
 
       {/* 录入其他设备生成的钥匙串（在已授权设备上操作） */}
       <Card size="small" type="inner" title="录入设备钥匙串" className="mb-4">
@@ -401,12 +405,12 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
   /** 首次开启引导卡：① 生成本机钥匙串 ② 保存并启用（两步调用，add 在前） */
   const renderFirstEnableGuide = () => (
-    <Card size="small" type="inner" title="开启设备门" className="mb-4">
+    <Card size="small" type="inner" title="开启设备验证" className="mb-4">
       <Alert
         className="mb-4"
         type="warning"
         showIcon
-        message="当前还没有任何受信设备。请先生成本机钥匙串并绑定本机，再开启设备门。"
+        message="当前还没有任何受信设备。请先生成本机钥匙串并绑定本机，再开启设备验证。"
       />
       <div className="mb-2">
         <Text strong>1. 生成本机钥匙串</Text>
@@ -427,7 +431,7 @@ export const Content: FC<SettingContainerProps> = (props) => {
         <Text strong>2. 保存并启用</Text>
       </div>
       <div className="mb-3 text-slate-500 dark:text-slate-400 text-sm cursor-default">
-        将本机登记为受信设备并开启设备门，完成后本机登录可自动静默过门。
+        将本机登记为受信设备并开启设备验证，完成后本机登录可自动静默过门。
       </div>
       <Button
         type="primary"
@@ -442,11 +446,11 @@ export const Content: FC<SettingContainerProps> = (props) => {
 
   const onRevoke = (id: string, name: string) => {
     const isLastTrustedDevice = gateEnabled && devices.length <= 1;
-    Modal.confirm({
+    modal.confirm({
       title: "确定吊销该设备？",
       content: `吊销后「${name}」将无法再通过门禁，需要重新录入钥匙串才能恢复访问。${
         isLastTrustedDevice
-          ? "这是最后一台受信设备，门开启状态下移除后将无人能通过设备验证（恢复方式：关闭设备门开关）"
+          ? "这是最后一台受信设备，门开启状态下移除后将无人能通过设备验证（恢复方式：关闭设备验证开关）"
           : ""
       }`,
       okText: "吊销",
