@@ -101,7 +101,6 @@ describe("withGateToken", () => {
     // 完整过门三步：探针拿挑战码 → verify 换 token
     expect(requestPostMock).toHaveBeenNthCalledWith(1, "device/challenge");
     expect(requestPostMock).toHaveBeenNthCalledWith(2, "device/verify", {
-      deviceId: "device-1",
       challenge: CHALLENGE,
       signature: "sig",
     });
@@ -202,30 +201,43 @@ describe("passGate", () => {
     expect(gateToken).toBe("gate-token-1");
     expect(silentVerifyMock).toHaveBeenCalledWith("device-1", CHALLENGE);
     expect(requestPostMock).toHaveBeenCalledWith("device/verify", {
-      deviceId: "device-1",
       challenge: CHALLENGE,
       signature: "sig-bytes",
     });
   });
 
-  it("本机只有 pending 钥匙时按序回退：优先已关联 id，其次 pending", async () => {
+  it("多钥匙逐把尝试：第一把被拒后换下一把并重新取挑战码", async () => {
     listLocalDeviceKeysMock.mockResolvedValue([
-      localKey(undefined),
+      localKey("device-revoked"),
       localKey("device-2"),
     ]);
     silentVerifyMock.mockResolvedValue("sig");
-    requestPostMock.mockResolvedValue({
-      success: true,
-      code: 200,
-      data: { gateToken: "t" },
-    });
+    // 第一把被服务端拒（模拟已吊销设备），第二把过
+    // 调用序列（Once 队列按注册顺序消费）：
+    //   verify#1 403 拒（模拟已吊销设备）→ challenge 探针 → verify#2 过
+    requestPostMock
+      .mockRejectedValueOnce(
+        Object.assign(new Error("403"), {
+          response: { status: 403, data: { code: 40301 } },
+        }),
+      )
+      .mockImplementationOnce(async () => ({
+        success: true,
+        code: 200,
+        data: { challenge: "challenge-2" },
+      }))
+      .mockResolvedValueOnce({
+        success: true,
+        code: 200,
+        data: { gateToken: "t2" },
+      });
 
-    await passGate(CHALLENGE);
-
-    expect(silentVerifyMock).toHaveBeenCalledWith("device-2", CHALLENGE);
+    const { gateToken } = await passGate(CHALLENGE);
+    expect(gateToken).toBe("t2");
+    expect(silentVerifyMock).toHaveBeenCalledWith("device-2", "challenge-2");
   });
 
-  it("pending 槽位记录 deviceId 字段缺省时向 verify 传 undefined", async () => {
+  it("pending 槽位记录（无 deviceId）也能参与逐把尝试", async () => {
     listLocalDeviceKeysMock.mockResolvedValue([localKey(undefined)]);
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockResolvedValue({
@@ -237,7 +249,6 @@ describe("passGate", () => {
     await passGate(CHALLENGE);
 
     expect(requestPostMock).toHaveBeenCalledWith("device/verify", {
-      deviceId: undefined,
       challenge: CHALLENGE,
       signature: "sig",
     });
@@ -249,13 +260,12 @@ describe("passGate", () => {
     expect(requestPostMock).not.toHaveBeenCalled();
   });
 
-  it("句柄缺失（ErrorNoLocalDeviceKey）→ ErrorGateDenied", async () => {
+  it("句柄缺失（ErrorNoLocalDeviceKey）且无其他钥匙 → ErrorGateDenied", async () => {
     listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
     silentVerifyMock.mockRejectedValue(
       new ErrorNoLocalDeviceKey("no local device key: device-1"),
     );
     await expect(passGate(CHALLENGE)).rejects.toThrowError(ErrorGateDenied);
-    expect(requestPostMock).not.toHaveBeenCalled();
   });
 
   it("验签 403 ErrorDeviceGate → ErrorGateDenied（区分于其他网络错误）", async () => {
@@ -288,24 +298,20 @@ describe("passGate", () => {
     );
   });
 
-  it("verify 网络失败（非门禁拒绝）→ ErrorGateUnavailable", async () => {
+  it("verify 网络失败（非门禁拒绝）→ 原样上抛，不换钥匙重试", async () => {
     listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockRejectedValue(new Error("network down"));
 
-    await expect(passGate(CHALLENGE)).rejects.toThrowError(
-      ErrorGateUnavailable,
-    );
+    await expect(passGate(CHALLENGE)).rejects.toThrowError("network down");
   });
 
-  it("verify 响应异常（success=false / 缺 gateToken）→ ErrorGateUnavailable", async () => {
+  it("verify 响应异常（success=false）→ 全部尝试后 ErrorGateDenied", async () => {
     listLocalDeviceKeysMock.mockResolvedValue([localKey("device-1")]);
     silentVerifyMock.mockResolvedValue("sig");
     requestPostMock.mockResolvedValue({ success: false, code: 200 });
 
-    await expect(passGate(CHALLENGE)).rejects.toThrowError(
-      ErrorGateUnavailable,
-    );
+    await expect(passGate(CHALLENGE)).rejects.toThrowError(ErrorGateDenied);
   });
 });
 

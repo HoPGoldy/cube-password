@@ -79,49 +79,56 @@ export const passGate = async (
     );
   }
 
-  // 1. 取本机钥匙（含 pending 槽位）
+  // 1. 取本机全部钥匙（含已关联 id 与 pending 槽位）。多轮测试/重绑后本地可能
+  //    残留多条记录，其中一些对应的服务端设备已被吊销——逐把尝试，任一通过即过门。
   let keys: Awaited<ReturnType<typeof listLocalDeviceKeys>>;
   try {
     keys = await listLocalDeviceKeys();
   } catch (err) {
     throw new ErrorGateUnavailable(`读取本机设备钥匙失败：${errorDetail(err)}`);
   }
-  const record =
-    keys.find((key) => typeof key.deviceId === "string") ?? keys[0];
-  if (!record) {
+  if (keys.length === 0) {
     throw new ErrorGateDenied("本机没有设备钥匙");
   }
 
-  // 2. 句柄签名挑战码（私钥字节不出浏览器密钥库）
-  let signature: string;
-  try {
-    signature = await silentVerify(record.deviceId, challenge);
-  } catch (err) {
-    if (err instanceof ErrorNoLocalDeviceKey) {
-      throw new ErrorGateDenied("本机没有可用的设备钥匙");
+  // 2. 逐把尝试：每轮重新取挑战码（一次性消费），签名后交服务端验签。
+  //    挑一把失败的（如已吊销的旧 id）就换下一把，全部失败才判未授权
+  for (let i = 0; i < keys.length; i += 1) {
+    const record = keys[i];
+    let attemptChallenge = challenge;
+    try {
+      if (i > 0) {
+        // 非首轮：原挑战码已被上一轮 verify 消费，重新取新码
+        const probe =
+          await requestPost<SchemaDeviceChallengeResponseType>(
+            "device/challenge",
+          );
+        if (!probe.success || !probe.data?.challenge) {
+          throw new ErrorGateUnavailable("门禁探针失败");
+        }
+        attemptChallenge = probe.data.challenge;
+      }
+      const signature = await silentVerify(record.deviceId, attemptChallenge);
+      const resp = await requestPost<SchemaDeviceVerifyResponseType>(
+        "device/verify",
+        { challenge: attemptChallenge, signature },
+      );
+      if (resp.success && resp.data?.gateToken) {
+        return { gateToken: resp.data.gateToken };
+      }
+    } catch (err) {
+      const tryNextKey =
+        err instanceof ErrorGateDenied ||
+        err instanceof ErrorNoLocalDeviceKey ||
+        isDeviceGateRejection(err);
+      if (!tryNextKey) {
+        // 非验签类失败（网络/探针等）：直接上抛，不继续尝试
+        throw err;
+      }
+      // 验签被拒 / 该记录句柄缺失：换下一把钥匙
     }
-    throw new ErrorGateUnavailable(`设备钥匙签名失败：${errorDetail(err)}`);
   }
-
-  // 3. 服务端验签换 gate token；拒绝（403 ErrorDeviceGate）→ 未授权
-  let resp: AppResponse<SchemaDeviceVerifyResponseType>;
-  try {
-    resp = await requestPost<SchemaDeviceVerifyResponseType>("device/verify", {
-      deviceId: record.deviceId,
-      challenge,
-      signature,
-    });
-  } catch (err) {
-    if (isDeviceGateRejection(err)) {
-      throw new ErrorGateDenied("设备验签未通过");
-    }
-    throw new ErrorGateUnavailable(`门禁验证请求失败：${errorDetail(err)}`);
-  }
-
-  if (!resp.success || !resp.data?.gateToken) {
-    throw new ErrorGateUnavailable("门禁验证响应异常");
-  }
-  return { gateToken: resp.data.gateToken };
+  throw new ErrorGateDenied("设备验签未通过");
 };
 
 /**
