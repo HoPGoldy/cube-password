@@ -1,15 +1,8 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Card, DatePicker, Empty, Input, Pagination, Spin } from "antd";
-import type { Dayjs } from "dayjs";
-import { LeftOutlined, SearchOutlined } from "@ant-design/icons";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Pagination } from "antd";
 import { usePageTitle } from "@/store/global";
 import { DEFAULT_PAGE_SIZE } from "@/config";
-import {
-  ColorMultiplePicker,
-  MARK_COLORS_MAP,
-} from "@/components/color-picker";
-import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { queryCertificateIndex } from "@/services/certificate";
@@ -19,19 +12,26 @@ import {
 } from "@/store/state-cert-name-index";
 import { stateIsLoggedIn } from "@/store/user";
 import { filterCertificates, type IndexedCertificate } from "./filter";
+import { CertificateListItem } from "@/pages/certificate-list/components/certificate-list-item";
+import { CertificateDetailModal } from "@/pages/certificate-list/components/certificate-detail";
+import { ColorList, CubeSearchPage } from "@hopgoldy/cube-ui";
 
 const SearchPage: FC = () => {
   usePageTitle("搜索凭证");
   const navigate = useNavigate();
-  const [keyword, setKeyword] = useState("");
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<
-    [string | undefined, string | undefined]
-  >([undefined, undefined]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [keyword, setKeyword] = useState(
+    () => searchParams.get("keyword") || "",
+  );
+  const [selectedColors, setSelectedColors] = useState<string[]>(() => {
+    const raw = searchParams.get("colors");
+    return raw ? raw.split(",").filter(Boolean) : [];
+  });
   const [currentPage, setCurrentPage] = useState(1);
+  const [detailId, setDetailId] = useState<number | undefined>();
+  const [detailGroupId, setDetailGroupId] = useState(0);
 
   const isLoggedIn = useAtomValue(stateIsLoggedIn);
-  // 登录后拉全量密文索引并用 DEK 解密构建内存明文名称索引（服务端搜索已删除）
   const { isFetching } = useQuery({
     queryKey: ["certificateIndex"],
     queryFn: queryCertificateIndex,
@@ -41,9 +41,8 @@ const SearchPage: FC = () => {
   const certNameIndex = useAtomValue(stateCertNameIndex);
   const certMetaIndex = useAtomValue(stateCertMetaIndex);
 
-  const enabled = keyword.trim().length > 0 || selectedColors.length > 0;
+  const hasQuery = keyword.trim().length > 0 || selectedColors.length > 0;
 
-  // 内存索引 → 全量条目，本地过滤 + 前端切片分页
   const allItems: IndexedCertificate[] = useMemo(() => {
     return Array.from(certNameIndex.entries()).map(([id, name]) => {
       const meta = certMetaIndex.get(id);
@@ -58,16 +57,13 @@ const SearchPage: FC = () => {
     });
   }, [certNameIndex, certMetaIndex]);
 
-  const filteredItems = useMemo(
-    () =>
-      filterCertificates(allItems, {
-        keyword,
-        colors: selectedColors,
-        startDate: dateRange[0],
-        endDate: dateRange[1],
-      }),
-    [allItems, keyword, selectedColors, dateRange],
-  );
+  const filteredItems = useMemo(() => {
+    if (!hasQuery) return [];
+    return filterCertificates(allItems, {
+      keyword,
+      colors: selectedColors,
+    });
+  }, [allItems, keyword, selectedColors, hasQuery]);
 
   const total = filteredItems.length;
   const items = filteredItems.slice(
@@ -75,118 +71,80 @@ const SearchPage: FC = () => {
     currentPage * DEFAULT_PAGE_SIZE,
   );
 
-  // 过滤条件变化时回到第一页
   useEffect(() => {
     setCurrentPage(1);
-  }, [keyword, selectedColors, dateRange]);
+  }, [keyword, selectedColors]);
+
+  const onKeywordSearch = (value: string) => {
+    setKeyword(value);
+    setCurrentPage(1);
+    if (value) searchParams.set("keyword", value);
+    else searchParams.delete("keyword");
+    setSearchParams(searchParams, { replace: true });
+  };
+
+  const onSelectColor = (colorCode: string) => {
+    const newColors = colorCode ? [colorCode] : [];
+    setSelectedColors(newColors);
+    setCurrentPage(1);
+    if (newColors.length > 0) searchParams.set("colors", newColors.join(","));
+    else searchParams.delete("colors");
+    setSearchParams(searchParams, { replace: true });
+  };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center p-3 border-b border-gray-200">
-        <Button
-          icon={<LeftOutlined />}
-          type="text"
-          onClick={() => navigate(-1)}
-        />
-        <Input
-          className="flex-1 mx-2"
-          placeholder="搜索凭证名称..."
-          prefix={<SearchOutlined />}
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          allowClear
-          autoFocus
-        />
-      </div>
-
-      <div className="px-4">
-        <ColorMultiplePicker
-          value={selectedColors}
-          onChange={setSelectedColors}
-        />
-      </div>
-
-      <div className="px-4 mt-2">
-        <DatePicker.RangePicker
-          value={
-            dateRange[0] || dateRange[1]
-              ? ([dateRange[0], dateRange[1]] as [
-                  string | undefined,
-                  string | undefined,
-                ] as unknown as [Dayjs, Dayjs])
-              : null
-          }
-          onChange={(dates) => {
-            setDateRange([
-              dates?.[0]?.format("YYYY-MM-DD"),
-              dates?.[1]?.format("YYYY-MM-DD"),
-            ]);
-          }}
-          allowEmpty={[true, true]}
-          className="w-full"
-        />
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {!enabled && (
-          <Empty
-            className="mt-[15vh]"
-            description="输入关键字或选择颜色进行搜索"
+    <>
+      <CubeSearchPage
+        keyword={keyword}
+        placeholder="请输入凭证名称，回车搜索"
+        onSearch={onKeywordSearch}
+        onBack={() => navigate(-1)}
+        desktopHeaderLeft="搜索凭证"
+        pending={!hasQuery}
+        loading={hasQuery && isFetching}
+        empty={hasQuery && !isFetching && items.length === 0}
+        emptyTitle="没有找到相关凭证"
+        emptyHint="请尝试其他关键字"
+        pendingHint="可使用关键词和颜色进行搜索"
+        filters={
+          <ColorList value={selectedColors[0] || ""} onChange={onSelectColor} />
+        }
+        mobileFilterTitle="凭证筛选"
+      >
+        {items.map((item) => (
+          <CertificateListItem
+            key={item.id}
+            layout="fill"
+            detail={{
+              id: item.id,
+              displayName: item.name,
+              markColor: item.markColor,
+              icon: item.icon,
+              updatedAt: item.updatedAt,
+            }}
+            onClick={() => {
+              setDetailGroupId(item.groupId);
+              setDetailId(item.id);
+            }}
+          />
+        ))}
+        {total > DEFAULT_PAGE_SIZE && (
+          <Pagination
+            current={currentPage}
+            total={total}
+            pageSize={DEFAULT_PAGE_SIZE}
+            onChange={setCurrentPage}
+            showSizeChanger={false}
           />
         )}
+      </CubeSearchPage>
 
-        {enabled && isFetching && (
-          <div className="flex justify-center mt-[15vh]">
-            <Spin />
-          </div>
-        )}
-
-        {enabled && !isFetching && items.length === 0 && (
-          <Empty className="mt-[15vh]" description="未找到匹配的凭证" />
-        )}
-
-        {items.map((item) => (
-          <Card
-            key={item.id}
-            size="small"
-            className="mb-3 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => navigate(`/group/${item.groupId}`)}
-          >
-            <div className="flex items-center">
-              {item.markColor && (
-                <div
-                  className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
-                  style={{
-                    backgroundColor:
-                      MARK_COLORS_MAP[item.markColor] || item.markColor,
-                  }}
-                />
-              )}
-              <div className="flex-1">
-                <div className="font-medium">{item.name}</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {item.updatedAt
-                    ? dayjs(item.updatedAt).format("YYYY-MM-DD HH:mm")
-                    : ""}
-                </div>
-              </div>
-            </div>
-          </Card>
-        ))}
-
-        {total > DEFAULT_PAGE_SIZE && (
-          <div className="flex justify-center mt-4">
-            <Pagination
-              current={currentPage}
-              total={total}
-              pageSize={DEFAULT_PAGE_SIZE}
-              onChange={setCurrentPage}
-              showSizeChanger={false}
-            />
-          </div>
-        )}
-      </div>
-    </div>
+      <CertificateDetailModal
+        groupId={detailGroupId}
+        detailId={detailId}
+        onClose={() => setDetailId(undefined)}
+      />
+    </>
   );
 };
 

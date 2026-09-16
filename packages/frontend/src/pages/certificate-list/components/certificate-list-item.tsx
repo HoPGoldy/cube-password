@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Card, Checkbox } from "antd";
 import dayjs from "dayjs";
+import { MARK_COLORS_MAP } from "@/components/color-picker";
 
 interface CertificateItem {
   id: number;
@@ -17,6 +18,8 @@ interface Props {
   /** undefined = not in select mode, boolean = select state */
   selected?: boolean;
   dragging?: boolean;
+  /** grid = certificate list columns; fill = stretch to parent width */
+  layout?: "grid" | "fill";
 }
 
 export const CertificateListItem: FC<Props> = ({
@@ -24,12 +27,17 @@ export const CertificateListItem: FC<Props> = ({
   onClick,
   selected,
   dragging,
+  layout = "grid",
 }) => {
   const { displayName, markColor, icon, updatedAt } = detail;
+  const layoutClass =
+    layout === "fill"
+      ? "w-full"
+      : "md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3";
 
   return (
     <div
-      className={`relative md:mx-2 mb-4 w-full md:w-col-1 lg:w-col-2 xl:w-col-3 inline-block ${dragging ? "after:content-[''] after:absolute after:inset-0" : ""}`}
+      className={`relative inline-block ${layoutClass} ${dragging ? "after:content-[''] after:absolute after:inset-0" : ""}`}
       data-testid={`certificate-item-${detail.id}`}
     >
       <Card
@@ -70,7 +78,9 @@ export const CertificateListItem: FC<Props> = ({
           {selected === undefined && markColor && (
             <div
               className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full"
-              style={{ backgroundColor: markColor }}
+              style={{
+                backgroundColor: MARK_COLORS_MAP[markColor] || markColor,
+              }}
             />
           )}
         </div>
