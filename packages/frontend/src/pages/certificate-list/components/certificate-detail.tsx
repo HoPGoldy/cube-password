@@ -8,7 +8,7 @@ import {
   HeartFilled,
   QuestionCircleFilled,
 } from "@ant-design/icons";
-import { ColorPicker, MARK_COLORS_MAP } from "@/components/color-picker";
+import { ColorPicker, MARK_COLORS_MAP } from "@hopgoldy/cube-ui";
 import { IconPicker } from "@/components/icon-picker";
 import {
   useCertificateDetail,
@@ -123,7 +123,7 @@ const ColorPickerController: FC<{
   <ColorPicker
     value={value}
     onChange={onChange}
-    visible={open}
+    open={open}
     onClose={onClose}
   />
 );

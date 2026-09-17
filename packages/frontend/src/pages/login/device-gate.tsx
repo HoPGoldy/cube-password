@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import { Alert, Button, Card, Input, Space, Spin, Typography } from "antd";
+import { CubeLoginPage } from "@hopgoldy/cube-ui";
 import { CopyOutlined, SafetyOutlined } from "@ant-design/icons";
 import copy from "copy-to-clipboard";
 import { generateDeviceKeyPair, suggestDeviceName } from "@/lib/device-key";
@@ -7,7 +8,7 @@ import { messageError, messageSuccess } from "@/utils/message";
 import type { GateDenial } from "@/services/device-gate";
 import { APP_NAME, APP_SUBTITLE } from "@/config";
 
-const { Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 /**
  * 登录页门禁 UI（见 docs/plans/device-gate/tasks/04-login-gate-flow.md）：
@@ -90,50 +91,40 @@ export const DeviceGatePage: FC<DeviceGatePageProps> = ({ denial }) => {
   const unauthorized = denial.kind === "unauthorized";
 
   return (
-    <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col justify-center items-center dark:text-gray-100">
-      <header className="w-screen text-center min-h-[236px]">
-        <div className="text-5xl font-bold text-mainColor dark:text-neutral-200">
-          {APP_NAME}
-        </div>
-        <div className="mt-4 text-xl text-mainColor dark:text-neutral-300">
-          {APP_SUBTITLE}
-        </div>
-      </header>
-      <div className="w-[80%] md:w-[60%] lg:w-[45%] xl:w-[35%]">
-        {unauthorized ? (
-          <>
-            <Alert
-              data-testid="device-gate-denied"
-              className="mb-4"
-              type="warning"
-              showIcon
-              icon={<SafetyOutlined />}
-              message="本机没有已授权的设备钥匙，无法进入登录页。"
-              description={
-                <span>
-                  本服务仅允许绑定钥匙的设备登录。如需授权本机：
-                  <br />
-                  1. 在下方生成本机钥匙串；
-                  <br />
-                  2. 从任一<b>已授权设备</b>打开「设置 →
-                  设备管理」页，录入该钥匙串；
-                  <br />
-                  3. 完成后刷新页面。
-                </span>
-              }
-            />
-            <KeyGenCard />
-          </>
-        ) : (
+    <CubeLoginPage title={APP_NAME} subtitle={APP_SUBTITLE} bodyWidth="wide">
+      {unauthorized ? (
+        <>
           <Alert
             data-testid="device-gate-denied"
-            type="info"
+            className="mb-4"
+            type="warning"
             showIcon
-            icon={<Spin size="small" />}
-            message={denial.detail || "设备验证暂时无法完成，请稍后刷新重试。"}
+            icon={<SafetyOutlined />}
+            message="本机没有已授权的设备钥匙，无法进入登录页。"
+            description={
+              <span>
+                本服务仅允许绑定钥匙的设备登录。如需授权本机：
+                <br />
+                1. 在下方生成本机钥匙串；
+                <br />
+                2. 从任一<b>已授权设备</b>打开「设置 →
+                设备管理」页，录入该钥匙串；
+                <br />
+                3. 完成后刷新页面。
+              </span>
+            }
           />
-        )}
-      </div>
-    </div>
+          <KeyGenCard />
+        </>
+      ) : (
+        <Alert
+          data-testid="device-gate-denied"
+          type="info"
+          showIcon
+          icon={<Spin size="small" />}
+          message={denial.detail || "设备验证暂时无法完成，请稍后刷新重试。"}
+        />
+      )}
+    </CubeLoginPage>
   );
 };

@@ -10,6 +10,7 @@ import {
   withGateToken,
 } from "@/services/device-gate";
 import type { GateDenial } from "@/services/device-gate";
+import { CubeLoginPage } from "@hopgoldy/cube-ui";
 import { KeyOutlined } from "@ant-design/icons";
 import { useLoginSuccess } from "./use-login-success";
 import { APP_NAME, APP_SUBTITLE } from "@/config";
@@ -281,23 +282,18 @@ export const LoginPage = ({
   };
 
   return (
-    <div className="h-screen w-screen bg-gray-100 dark:bg-neutral-800 flex flex-col justify-center items-center dark:text-gray-100">
-      <header className="w-screen text-center min-h-[236px]">
-        <div className="text-5xl font-bold text-mainColor dark:text-neutral-200">
-          {appTitle}
-        </div>
-        <div className="mt-4 text-xl text-mainColor dark:text-neutral-300">
-          {appSubTitle}
-        </div>
-        <div className="w-[70%] my-6 mx-auto">
+    <CubeLoginPage
+      title={appTitle}
+      subtitle={appSubTitle}
+      headerExtra={
+        lockDetail?.loginFailure?.length ? (
           <Row gutter={[12, 12]}>
-            {lockDetail?.loginFailure?.map(renderLoginFailure)}
+            {lockDetail.loginFailure.map(renderLoginFailure)}
           </Row>
-        </div>
-      </header>
-      <div className="w-[70%] md:w-[40%] lg:w-[30%] xl:w-[20%] flex flex-col items-center">
-        {lockDetail?.isBanned ? renderLockResult() : renderLoginForm()}
-      </div>
-    </div>
+        ) : undefined
+      }
+    >
+      {lockDetail?.isBanned ? renderLockResult() : renderLoginForm()}
+    </CubeLoginPage>
   );
 };

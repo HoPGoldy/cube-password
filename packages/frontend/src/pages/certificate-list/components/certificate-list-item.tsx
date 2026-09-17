@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Card, Checkbox } from "antd";
 import dayjs from "dayjs";
-import { MARK_COLORS_MAP } from "@/components/color-picker";
+import { MARK_COLORS_MAP } from "@hopgoldy/cube-ui";
 
 interface CertificateItem {
   id: number;
