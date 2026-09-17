@@ -8,7 +8,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "start:dev": "vite --host --port ${FRONTEND_PORT:-3500}",
+    "start:dev": "vite --host",
     "build": "tsc && vite build",
     "test": "vitest run"
   },
