@@ -61,10 +61,6 @@ body {
   margin-inline-end: 0px !important;
 }
 
-.ant-drawer-body {
-  @apply !p-0;
-}
-
 .ant-btn-primary:disabled {
   color: rgb(0 0 0 / 50%) !important;
 }

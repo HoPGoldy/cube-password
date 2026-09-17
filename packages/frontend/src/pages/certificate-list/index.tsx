@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAtomValue } from "jotai";
 import { stateUnlockedGroupIds } from "@/store/user";
 import { useGroupList } from "@/services/group";
@@ -21,13 +21,22 @@ import {
   RetweetOutlined,
   CloseOutlined,
   CheckSquareOutlined,
-  UserOutlined,
+  SearchOutlined,
+  UnorderedListOutlined,
 } from "@ant-design/icons";
-import { useIsMobile, MobileAccountSheet } from "@hopgoldy/cube-ui";
+import {
+  ActionButton,
+  ActionIcon,
+  CubePage,
+  useIsMobile,
+  MobileAccountSheet,
+} from "@hopgoldy/cube-ui";
+import { SidebarMobile } from "@/layouts/sidebar/mobile";
 import { messageSuccess, messageWarning } from "@/utils/message";
 
 const CertificateListPage: FC = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { groupId: groupIdStr } = useParams();
   const groupId = Number(groupIdStr);
   const { data: groupListResp, isLoading: isGroupListLoading } = useGroupList();
@@ -45,6 +54,8 @@ const CertificateListPage: FC = () => {
   const [dragging, setDragging] = useState(false);
   /** 移动端账号抽屉 */
   const [accountSheetVisible, setAccountSheetVisible] = useState(false);
+  /** 移动端分组抽屉 */
+  const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   /** 本地可排序的凭证列表（displayName 由列表接口 nameEnc 解密而来） */
   const [certificateList, setCertificateList] = useState<
     CertificateListItemView[]
@@ -64,6 +75,10 @@ const CertificateListPage: FC = () => {
     if (!certListResp?.data?.items) return;
     setCertificateList(certListResp.data.items);
   }, [certListResp?.data?.items]);
+
+  useEffect(() => {
+    setGroupDrawerOpen(false);
+  }, [groupId]);
 
   const items = certificateList;
 
@@ -240,48 +255,67 @@ const CertificateListPage: FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {isUnlocked && !isMobile && (
-        <div className="flex items-center justify-end p-3 border-b border-gray-200 dark:border-gray-700">
-          <Space>
-            <Button
+    <>
+      <CubePage
+        mobileActionBar={
+          <>
+            <ActionIcon
               icon={<SettingOutlined />}
-              onClick={() => setShowGroupConfig(true)}
+              aria-label="设置"
+              onClick={() => setAccountSheetVisible(true)}
+            />
+            <ActionIcon
+              icon={<UnorderedListOutlined />}
+              aria-label="分组"
+              onClick={() => setGroupDrawerOpen(true)}
+            />
+            <ActionIcon
+              icon={<SearchOutlined />}
+              aria-label="搜索"
+              onClick={() => navigate("/search")}
+            />
+            <ActionButton
+              icon={<PlusOutlined />}
+              disabled={!isUnlocked}
+              onClick={() => setDetailId(-1)}
+              data-testid="add-certificate-btn"
             >
-              分组配置
-            </Button>
-            {renderMoveBtn()}
-            {!selectMode && (
-              <Button
-                icon={<PlusOutlined />}
-                type="primary"
-                onClick={() => setDetailId(-1)}
-                data-testid="add-certificate-btn"
-              >
-                新建密码
-              </Button>
-            )}
-          </Space>
+              新建密码
+            </ActionButton>
+          </>
+        }
+      >
+        <div className="h-full flex flex-col overflow-hidden">
+          {isUnlocked && !isMobile && (
+            <div className="flex items-center justify-end p-3 border-b border-gray-200 dark:border-gray-700">
+              <Space>
+                <Button
+                  icon={<SettingOutlined />}
+                  onClick={() => setShowGroupConfig(true)}
+                >
+                  分组配置
+                </Button>
+                {renderMoveBtn()}
+                {!selectMode && (
+                  <Button
+                    icon={<PlusOutlined />}
+                    type="primary"
+                    onClick={() => setDetailId(-1)}
+                    data-testid="add-certificate-btn"
+                  >
+                    新建密码
+                  </Button>
+                )}
+              </Space>
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto">{renderContent()}</div>
         </div>
-      )}
-      <div className="flex-1 overflow-y-auto">{renderContent()}</div>
-      {isUnlocked && isMobile && (
-        <div className="p-3 border-t border-gray-200 flex justify-between">
-          <Button
-            icon={<UserOutlined />}
-            onClick={() => setAccountSheetVisible(true)}
-          >
-            账号
-          </Button>
-          <Button
-            icon={<PlusOutlined />}
-            type="primary"
-            onClick={() => setDetailId(-1)}
-          >
-            新建凭证
-          </Button>
-        </div>
-      )}
+      </CubePage>
+      <SidebarMobile
+        open={groupDrawerOpen}
+        onClose={() => setGroupDrawerOpen(false)}
+      />
       <MobileAccountSheet
         visible={accountSheetVisible}
         onVisibleChange={setAccountSheetVisible}
@@ -291,12 +325,14 @@ const CertificateListPage: FC = () => {
         detailId={detailId}
         onClose={() => setDetailId(undefined)}
       />
-      <GroupConfigModal
-        open={showGroupConfig}
-        group={currentGroup}
-        onClose={() => setShowGroupConfig(false)}
-      />
-    </div>
+      {currentGroup && (
+        <GroupConfigModal
+          open={showGroupConfig}
+          group={currentGroup}
+          onClose={() => setShowGroupConfig(false)}
+        />
+      )}
+    </>
   );
 };
 
