@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.1](https://github.com/HoPGoldy/cube-password/compare/v2.3.0...v2.3.1) (2026-10-03)
+
+
+### Features
+
+* adopt cube-ui ColorPicker and CubeLoginPage ([4b5da8c](https://github.com/HoPGoldy/cube-password/commit/4b5da8c8bf64606cc34d9a9e96e80849d742c7c6))
+
+
+### Bug Fixes
+
+* restore the mobile list action bar and group picker ([20a3da0](https://github.com/HoPGoldy/cube-password/commit/20a3da051f4a4f9160760c483c6b761af712f478))
+
 ## [2.3.0](https://github.com/HoPGoldy/cube-password/compare/v2.2.1...v2.3.0) (2026-09-16)
 
 
