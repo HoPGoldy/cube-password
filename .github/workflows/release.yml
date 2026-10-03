@@ -12,17 +12,25 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Get Version
-        run: echo "PACKAGE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Check docker version
-        run: docker -v
+      - uses: docker/login-action@v3
+        with:
+          username: hopgoldy
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build the Docker image
-        run: docker build -t hopgoldy/cube-password:${{ env.PACKAGE_VERSION }} .
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: hopgoldy/cube-password
+          tags: |
+            type=semver,pattern={{version}}
+          flavor: |
+            latest=auto
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u hopgoldy --password-stdin
-
-      - name: Push the Docker image
-        run: docker push hopgoldy/cube-password:${{ env.PACKAGE_VERSION }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
