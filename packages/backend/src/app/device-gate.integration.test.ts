@@ -298,6 +298,41 @@ describe.skipIf(process.env.CI_SKIP_INTEGRATION === "1")(
       expect(res.json().code).toBe(40301);
     });
 
+    it("门开启时 session 保护的 /auth/session-challenge 免门禁（带 session 即可达）", async () => {
+      // 门开状态沿用上一格；先登录拿 session（过门取 token 走走廊）
+      const gateToken = await knockThrough("dev-1", testPrivateKey);
+      const challengeRes = await api(
+        "/auth/challenge",
+        {},
+        { "x-gate-token": gateToken },
+      );
+      const code = challengeRes.json().data.code;
+      const salt = "A".repeat(64);
+      const verifier = sha512(salt + "test-pwd-123");
+      const loginRes = await api(
+        "/auth/login",
+        { hash: sha512(verifier + code) },
+        { "x-gate-token": gateToken },
+      );
+      expect(loginRes.statusCode).toBe(200);
+      const token = loginRes.json().data.token;
+
+      // 回归点：会话内流程的取码端点不带 gate token 也可达（仅凭 session），
+      // 且挑战码与全局单槽同源（popLastChallenge 消费语义一致）
+      const sessionChallenge = await api(
+        "/auth/session-challenge",
+        {},
+        { "x-session-token": token },
+      );
+      expect(sessionChallenge.statusCode).toBe(200);
+      expect(typeof sessionChallenge.json().data.code).toBe("string");
+
+      // 无 session 仍被 session hook 拒绝（401，而非门禁 40301）
+      const noSession = await api("/auth/session-challenge");
+      expect(noSession.statusCode).toBe(401);
+      expect(noSession.json().code).toBe(40102);
+    });
+
     it("门开 + 设备文件空 → 预登录路由 403（fail-closed：拦截一切，无人能过门）", async () => {
       // 沿用上一格的门开状态，仅清空设备文件
       writeFileSync(PATH_TRUSTED_DEVICES, '{"devices":[]}', "utf8");

@@ -25,7 +25,7 @@ interface DeviceServiceDeps {
   appConfigService: AppConfigService;
 }
 
-/** 敲门失败通知去重窗口：全局 1 小时 1 条（内存态，重启重置） */
+/** 敲门失败通知去重窗口：全局 1 小时 1 条（依据库内最近一条同类通知判定） */
 const KNOCK_DEDUPE_WINDOW_MS = 60 * 60 * 1000;
 
 /**
@@ -41,8 +41,6 @@ export class DeviceService {
   private gateTokenManager: GateTokenManager;
   private notificationService: NotificationService;
   private appConfigService: AppConfigService;
-  /** 上次敲门通知时刻（全局去重） */
-  private lastKnockNoticeAt = 0;
 
   constructor(deps: DeviceServiceDeps) {
     this.deviceChallengeManager = deps.deviceChallengeManager;
@@ -93,14 +91,14 @@ export class DeviceService {
    * 设备过门：任何一步失败均抛 ErrorDeviceGate（403）并尽力发一条去重通知。
    * 验签按 ieee-p1363 对齐 WebCrypto 的 raw r||s 输出（spike/verify-demo.mjs 已验证）。
    */
-  verify(
+  async verify(
     data: {
       deviceId?: string;
       challenge: string;
       signature: string;
     },
     notifyIp?: string,
-  ): { gateToken: string } {
+  ): Promise<{ gateToken: string }> {
     // pop 一次性消费：同一挑战码二次 verify 必失败（防重放）。
     // 先 pop 再查设备：未知设备同样烧掉挑战码，不给探测面。
     const expectedChallenge = this.deviceChallengeManager.popLastChallenge();
@@ -108,7 +106,7 @@ export class DeviceService {
       !expectedChallenge ||
       !timingSafeEqual(data.challenge, expectedChallenge)
     ) {
-      this.notifyKnockFailure(notifyIp, "挑战码无效或已过期");
+      await this.notifyKnockFailure(notifyIp, "挑战码无效或已过期");
       throw new ErrorDeviceGate("挑战码无效或已过期");
     }
 
@@ -125,7 +123,7 @@ export class DeviceService {
     );
 
     if (!device) {
-      this.notifyKnockFailure(
+      await this.notifyKnockFailure(
         notifyIp,
         data.deviceId ? "未知设备" : "签名验证失败",
       );
@@ -137,8 +135,6 @@ export class DeviceService {
     updateLastSeen(device.id);
     return { gateToken: this.gateTokenManager.createToken() };
   }
-
-  /** 单设备 ieee-p1363 验签（公钥损坏/签名非法均按失败处理） */
   private verifySignature(
     device: { publicKey: string },
     challenge: string,
@@ -161,14 +157,24 @@ export class DeviceService {
     }
   }
 
-  /** 敲门失败通知：NoticeType.Warning 含来源 IP，全局 1 小时窗口去重 */
-  private notifyKnockFailure(ip: string | undefined, reason: string): void {
-    const now = Date.now();
-    if (now - this.lastKnockNoticeAt < KNOCK_DEDUPE_WINDOW_MS) {
-      return;
-    }
-    this.lastKnockNoticeAt = now;
-    void this.notificationService
+  /**
+   * 敲门失败通知（全局 1 小时去重）：去重依据改为库内最近一条敲门通知的
+   * 时间（原先的内存时间戳在长测试套件里被前置敲门打开后无法重置，
+   * 吞掉后续所有敲门通知；查库版本清空通知即重置窗口，生产行为不变
+   * ——1 小时内的敲门仍只落一条，后端重启也不再丢失去重状态）
+   */
+  private async notifyKnockFailure(
+    ip: string | undefined,
+    reason: string,
+  ): Promise<void> {
+    const hasRecent = await this.notificationService
+      .hasRecentNotice(
+        "陌生设备尝试访问",
+        new Date(Date.now() - KNOCK_DEDUPE_WINDOW_MS),
+      )
+      .catch(() => true); // 查库失败按已去重处理（宁可不通知也不轰炸）
+    if (hasRecent) return;
+    await this.notificationService
       .createNotice(
         "陌生设备尝试访问",
         `${ip ?? "未知来源"} 的设备未通过门禁验证（${reason}）。如非本人操作，请检查服务地址是否泄露。`,

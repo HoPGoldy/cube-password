@@ -58,7 +58,7 @@ const webCryptoStyleSign = (privateKey: KeyObject, data: string): string => {
 };
 
 const makeDeps = (
-  notices: { title: string; content: string; type: number }[] = [],
+  notices: { title: string; content: string; type: number; at: number }[] = [],
 ) => {
   const gateTokenManager = new GateTokenManager();
   const deps = {
@@ -66,9 +66,12 @@ const makeDeps = (
     gateTokenManager,
     notificationService: {
       createNotice: async (title: string, content: string, type: number) => {
-        notices.push({ title, content, type });
+        notices.push({ title, content, type, at: Date.now() });
       },
       hasUnread: async () => false,
+      /** 与真实实现同语义：同标题通知存在且落库时刻在窗口内即去重 */
+      hasRecentNotice: async (title: string, since: Date) =>
+        notices.some((n) => n.title === title && n.at >= since.getTime()),
     },
     appConfigService: makeAppConfigStub(),
   } as ConstructorParameters<typeof DeviceService>[0];
@@ -128,7 +131,11 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     const { challenge } = await service.getChallenge();
     const signature = webCryptoStyleSign(privateKey, challenge);
 
-    const { gateToken } = service.verify({ deviceId, challenge, signature });
+    const { gateToken } = await service.verify({
+      deviceId,
+      challenge,
+      signature,
+    });
     expect(gateToken).toEqual(expect.any(String));
     // 签发的 token 能过门禁校验
     expect(gateTokenManager.validateToken(gateToken)).toBe(true);
@@ -145,13 +152,13 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     );
     sigBuf[0] ^= 0xff; // 篡改 1 字节
 
-    expect(() =>
+    await expect(
       service.verify({
         deviceId,
         challenge,
         signature: sigBuf.toString("base64"),
       }),
-    ).toThrowError(ErrorDeviceGate);
+    ).rejects.toThrowError(ErrorDeviceGate);
   });
 
   it("rejects a signature signed by a foreign key", async () => {
@@ -163,9 +170,9 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     const { challenge } = await service.getChallenge();
     const signature = webCryptoStyleSign(attacker.privateKey, challenge);
 
-    expect(() =>
+    await expect(
       service.verify({ deviceId: "device-1", challenge, signature }),
-    ).toThrowError(ErrorDeviceGate);
+    ).rejects.toThrowError(ErrorDeviceGate);
   });
 
   it("updates lastSeenAt after a successful verify", async () => {
@@ -175,7 +182,7 @@ describe("DeviceService.verify - ieee-p1363 验签", () => {
     const { challenge } = await service.getChallenge();
     // verify 时刻推进 2 分钟（在 5 分钟挑战码 TTL 内，且早于同一时刻的 lastSeenAt）
     vi.setSystemTime(new Date("2026-02-10T08:02:00Z"));
-    service.verify({
+    await service.verify({
       deviceId,
       challenge,
       signature: webCryptoStyleSign(privateKey, challenge),
@@ -197,39 +204,39 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     const { challenge } = await service.getChallenge();
     const signature = webCryptoStyleSign(privateKey, challenge);
 
-    expect(
-      service.verify({ deviceId, challenge, signature }).gateToken,
-    ).toEqual(expect.any(String));
+    await expect(
+      service.verify({ deviceId, challenge, signature }),
+    ).resolves.toMatchObject({ gateToken: expect.any(String) });
 
     // 同一挑战码重放：pop 已消费 → 403
-    expect(() =>
+    await expect(
       service.verify({ deviceId, challenge, signature }),
-    ).toThrowError(ErrorDeviceGate);
+    ).rejects.toThrowError(ErrorDeviceGate);
   });
 
   it("rejects a challenge that was never issued", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey, deviceId } = seedDevice();
-    expect(() =>
+    await expect(
       service.verify({
         deviceId,
         challenge: "never-issued",
         signature: webCryptoStyleSign(privateKey, "never-issued"),
       }),
-    ).toThrowError(ErrorDeviceGate);
+    ).rejects.toThrowError(ErrorDeviceGate);
   });
 
   it("rejects an unknown deviceId", async () => {
     const service = new DeviceService(makeDeps().deps);
     const { privateKey } = seedDevice();
     const { challenge } = await service.getChallenge();
-    expect(() =>
+    await expect(
       service.verify({
         deviceId: "ghost",
         challenge,
         signature: webCryptoStyleSign(privateKey, challenge),
       }),
-    ).toThrowError(ErrorDeviceGate);
+    ).rejects.toThrowError(ErrorDeviceGate);
   });
 
   it("deviceId omitted: verifies against all trusted devices (cross-device enrollment)", async () => {
@@ -240,7 +247,7 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     const { challenge } = await service.getChallenge();
 
     // 不携带 deviceId：服务端遍历全部设备验签，命中 device-b
-    const { gateToken } = service.verify({
+    const { gateToken } = await service.verify({
       challenge,
       signature: webCryptoStyleSign(second.privateKey, challenge),
     });
@@ -253,12 +260,12 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
     // 未受信的陌生钥签名
     const { privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
     const { challenge } = await service.getChallenge();
-    expect(() =>
+    await expect(
       service.verify({
         challenge,
         signature: webCryptoStyleSign(privateKey, challenge),
       }),
-    ).toThrowError(ErrorDeviceGate);
+    ).rejects.toThrowError(ErrorDeviceGate);
   });
 
   it("device challenge and login challenge managers are independent", async () => {
@@ -273,9 +280,9 @@ describe("DeviceService.verify - 挑战码一次性消费（防重放）", () =>
 
     const { privateKey, deviceId } = seedDevice();
     const signature = webCryptoStyleSign(privateKey, deviceChallenge);
-    expect(() =>
+    await expect(
       service.verify({ deviceId, challenge: deviceChallenge, signature }),
-    ).not.toThrowError();
+    ).resolves.toMatchObject({ gateToken: expect.any(String) });
   });
 });
 
@@ -285,14 +292,14 @@ describe("DeviceService.verify - 敲门失败通知去重", () => {
     const service = new DeviceService(deps);
     seedDevice();
 
-    // 两次失败（未知设备 + 未知设备）；createNotice 桩同步入列，无需 flush
+    // 两次失败（未知设备）：窗口内只有第一条落通知（查库去重）
     const knock = () =>
       service.verify(
         { deviceId: "ghost", challenge: "x", signature: "y" },
         "203.0.113.7",
       );
-    expect(knock).toThrowError(ErrorDeviceGate);
-    expect(knock).toThrowError(ErrorDeviceGate);
+    await expect(knock()).rejects.toThrowError(ErrorDeviceGate);
+    await expect(knock()).rejects.toThrowError(ErrorDeviceGate);
 
     expect(notices).toHaveLength(1);
     expect(notices[0].type).toBe(NoticeType.Warning);
@@ -309,17 +316,17 @@ describe("DeviceService.verify - 敲门失败通知去重", () => {
         { deviceId: "ghost", challenge: "x", signature: "y" },
         "ip",
       );
-    expect(knock).toThrowError(ErrorDeviceGate);
+    await expect(knock()).rejects.toThrowError(ErrorDeviceGate);
     expect(notices).toHaveLength(1);
 
     // 去重窗口内不再落通知
     vi.advanceTimersByTime(60 * 60 * 1000 - 1);
-    expect(knock).toThrowError(ErrorDeviceGate);
+    await expect(knock()).rejects.toThrowError(ErrorDeviceGate);
     expect(notices).toHaveLength(1);
 
-    // 窗口过后重新落一条
-    vi.advanceTimersByTime(1);
-    expect(knock).toThrowError(ErrorDeviceGate);
+    // 窗口过后重新落一条（推进越过 1h 边界：通知时刻已严格早于窗口起点）
+    vi.advanceTimersByTime(2);
+    await expect(knock()).rejects.toThrowError(ErrorDeviceGate);
     expect(notices).toHaveLength(2);
   });
 
@@ -329,7 +336,7 @@ describe("DeviceService.verify - 敲门失败通知去重", () => {
     const { privateKey, deviceId } = seedDevice();
 
     const { challenge } = await service.getChallenge();
-    service.verify({
+    await service.verify({
       deviceId,
       challenge,
       signature: webCryptoStyleSign(privateKey, challenge),

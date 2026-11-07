@@ -31,6 +31,17 @@ export const queryChallenge = ({ gateToken }: GateTokenConfig = {}) => {
   });
 };
 
+/**
+ * 会话内流程（改密码 / 分组解锁 / 解绑 OTP）取登录挑战码：
+ * 走 session 保护的 /auth/session-challenge（requestPost 自动携带
+ * X-Session-Token），不受设备门约束——门只守登录走廊（disableAuth 的
+ * 预登录路由），已登录用户取码无需再过走廊。挑战码与服务端全局单槽
+ * 同源（popLastChallenge 消费语义与 /auth/challenge 完全一致）。
+ */
+export const querySessionChallenge = () => {
+  return requestPost<SchemaChallengeResponseType>("auth/session-challenge");
+};
+
 /** 初始化（首次设置主密码） */
 export const useInit = () => {
   return useMutation({

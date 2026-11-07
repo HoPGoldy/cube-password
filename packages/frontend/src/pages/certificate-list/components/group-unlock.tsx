@@ -3,7 +3,7 @@ import { Button, Input } from "antd";
 import { LockOutlined, KeyOutlined } from "@ant-design/icons";
 import { useUnlockGroup } from "@/services/group";
 import { sha512 } from "@/utils/crypto";
-import { queryChallenge } from "@/services/auth";
+import { querySessionChallenge } from "@/services/auth";
 import { messageError, messageSuccess } from "@/utils/message";
 import type { SchemaGroupItemType } from "@shared-types/group";
 import { stateUnlockedGroupIds } from "@/store/user";
@@ -59,7 +59,16 @@ export const GroupUnlock: FC<Props> = ({ group }) => {
 
       // v2：argon2id(password, salt, kdfParams) → 64B，前 32B KEK（丢弃）
       // + 后 32B V，约 0.5s；unlock hash = SHA512(hex(V) + challenge)
-      const challengeResp = await queryChallenge();
+      // 取码走 session 保护的 /auth/session-challenge（免设备门：会话内流程不借道登录走廊）
+      let challengeResp;
+      try {
+        challengeResp = await querySessionChallenge();
+      } catch (err) {
+        messageError(
+          `挑战码获取失败：${err instanceof Error ? err.message : String(err)}`,
+        );
+        return;
+      }
       if (!challengeResp.success) return;
       const challengeCode = challengeResp.data!.code;
       let verifier: Uint8Array;

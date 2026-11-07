@@ -133,12 +133,30 @@ export async function loginWithPassword(
   password: string,
 ): Promise<SessionInfo> {
   // 1. Get salt + kdfParams（POST /auth/global 不消费 challenge，可在 login 前任意顺序发起；
-  //    kdfParams 未初始化时缺省，回落默认参数）
-  const globalResp = await request.post(`${BASE}/auth/global`, {
-    data: {},
-  });
-  const globalBody = await globalResp.json();
-  expect(globalBody.success).toBe(true);
+  //    kdfParams 未初始化时缺省，回落默认参数）。
+  //    门态容错：首步不带 gate token，撞上前序用例残留的门开状态（开门用例
+  //    收尾的 disable 提交与钩子清理存在毫秒级竞态）会 40301——有限重试
+  //    等待清理落地；其余失败（如未初始化）保持原断言语义直接抛出
+  let globalBody: {
+    success: boolean;
+    code?: number;
+    message?: string;
+    data: { salt: string; kdfParams?: unknown };
+  };
+  for (let attempt = 0; ; attempt += 1) {
+    const globalResp = await request.post(`${BASE}/auth/global`, {
+      data: {},
+    });
+    globalBody = await globalResp.json();
+    if (globalBody.success) break;
+    const gateDenied =
+      globalBody.code === 40301 || globalBody.message === "此设备未授权访问";
+    if (!gateDenied || attempt >= 10) {
+      expect(globalBody.success).toBe(true);
+      throw new Error("unreachable: expect should have thrown");
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
   const salt: string = globalBody.data.salt;
   const kdfParams = parseKdfParamsOrDefault(globalBody.data.kdfParams);
 

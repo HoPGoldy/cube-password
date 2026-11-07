@@ -1,8 +1,8 @@
-import { FC, useState } from "react";
-import { Alert, Button, Col, Form, Input, Row, Space } from "antd";
+import { FC } from "react";
+import { Button, Col, Form, Input, Row, Space } from "antd";
 import { useAtomValue, useSetAtom } from "jotai";
 import { stateVault, stateUser } from "@/store/user";
-import { queryChallenge, useChangePassword } from "@/services/auth";
+import { querySessionChallenge, useChangePassword } from "@/services/auth";
 import { messageError, messageWarning, messageSuccess } from "@/utils/message";
 import { useIsMobile } from "@hopgoldy/cube-ui";
 import { SettingContainerProps } from "@/components/setting-container";
@@ -18,7 +18,6 @@ import {
   ErrorInvalidV2Format,
   ErrorUnsupportedDekVersion,
 } from "@/lib/e2ee";
-import { useZxcvbnWarning } from "@/utils/password-strength";
 
 export const Content: FC<SettingContainerProps> = (props) => {
   const [form] = Form.useForm();
@@ -26,8 +25,6 @@ export const Content: FC<SettingContainerProps> = (props) => {
   const vault = useAtomValue(stateVault);
   const setVault = useSetAtom(stateVault);
   const isMobile = useIsMobile();
-  const checkStrength = useZxcvbnWarning();
-  const [strengthWarning, setStrengthWarning] = useState("");
   const { mutateAsync: postChangePassword, isPending: isChangingPassword } =
     useChangePassword();
 
@@ -71,16 +68,9 @@ export const Content: FC<SettingContainerProps> = (props) => {
       throw err;
     }
 
-    // ② zxcvbn 校验新密码强度（评分 < 3 警告，不拦截）；
-    //    懒加载 import + zxcvbn 计算可能抛错，先清除旧密码密钥材料再上抛
-    try {
-      const warning = await checkStrength(newPassword);
-      setStrengthWarning(warning ?? "");
-    } catch (err) {
-      oldKek.fill(0);
-      oldVerifier.fill(0);
-      throw err;
-    }
+    // ② 新密码强度仅由输入框旁的强度条呈现：不再弹警告 Alert——
+    //    提交成功后弹窗即刻关闭，警告来不及看清；且单人自管场景本就
+    //    不拦截弱密码，弹警告只有噪音没有价值
 
     // ③ 新 salt → argon2id → (newKEK, newV)，沿用库内当前 kdfParams（成本不变）
     const newSalt = randomBytes(SALT_LENGTH);
@@ -112,11 +102,15 @@ export const Content: FC<SettingContainerProps> = (props) => {
       newVerifier.fill(0);
     }
 
-    // ⑤ 提交 re-wrap 结果，后端不销毁 session；请求本身抛错时先清密钥材料再上抛
+    // ⑤ 提交 re-wrap 结果，后端不销毁 session；请求本身抛错时先清密钥材料再上抛。
+    // 取码走 session 保护的 /auth/session-challenge（自动带 X-Session-Token）：
+    // 曾裸调 /auth/challenge（预登录路由），设备门开启时被 403 静默拦截，
+    // 弹窗看似成功而密码实际未改——会话内流程不应借道登录走廊
     let resp: Awaited<ReturnType<typeof postChangePassword>>;
     try {
-      const challengeResp = await queryChallenge();
+      const challengeResp = await querySessionChallenge();
       if (!challengeResp.success) {
+        messageError("密码修改失败：挑战码获取失败，请重试");
         oldKek.fill(0);
         oldVerifier.fill(0);
         newVerifier.fill(0);
@@ -131,12 +125,18 @@ export const Content: FC<SettingContainerProps> = (props) => {
         totp: totp || undefined,
       });
     } catch (err) {
+      // 门禁失败（钥匙被吊销等）已由 base 拦截器跳登录页/渲染未授权提示，
+      // 这里补一条明确文案，避免用户误以为改密成功
+      messageError(
+        `密码修改失败：${err instanceof Error ? err.message : String(err)}`,
+      );
       oldKek.fill(0);
       oldVerifier.fill(0);
       newVerifier.fill(0);
       throw err;
     }
     if (resp.code !== 200) {
+      messageError("密码修改失败，密码未被更改");
       oldKek.fill(0);
       oldVerifier.fill(0);
       newVerifier.fill(0);
@@ -198,11 +198,6 @@ export const Content: FC<SettingContainerProps> = (props) => {
               <Input.Password placeholder="请输入" />
             </Form.Item>
           </Col>
-          {strengthWarning && (
-            <Col span={24}>
-              <Alert type="warning" showIcon message={strengthWarning} />
-            </Col>
-          )}
           <Col span={24}>
             <Form.Item
               label="重复新密码"

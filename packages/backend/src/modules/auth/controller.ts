@@ -123,6 +123,24 @@ export const registerAuthController = (options: RegisterOptions) => {
     },
   );
 
+  // POST /api/auth/session-challenge — 会话内取登录挑战码
+  // （改密码 / 分组解锁 / 解绑 OTP 等已登录流程用；与 /auth/challenge 唯一
+  // 差异是需要 session——不设 disableAuth，因此不受设备门约束：
+  // gate 守登录走廊，session 守房间，已登录取码无需再过走廊）
+  server.post(
+    "/auth/session-challenge",
+    {
+      schema: {
+        description: "获取登录挑战码（需登录，会话内流程专用）",
+        tags: ["auth"],
+        response: { 200: SchemaChallengeResponse },
+      },
+    },
+    async () => {
+      return { code: authService.getChallenge() };
+    },
+  );
+
   // POST /api/auth/change-password — 修改密码
   server.post(
     "/auth/change-password",

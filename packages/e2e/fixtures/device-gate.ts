@@ -100,9 +100,37 @@ export const resetGateConfig = (): void => {
   let db: DatabaseSync | null = null;
   try {
     db = new DatabaseSync(GATE_DB_PATH);
-    db.exec("DELETE FROM AppConfig WHERE key = 'deviceGateEnabled'");
-  } catch {
-    // 库文件尚不存在或被占用：忽略（兜底路径，不应让 hook 崩溃）
+    // 并发防御（实测两条失败路径）：
+    // 1. DELETE 瞬时撞上后端写锁（SQLITE_BUSY）——静默吞锁会残留 true，
+    //    后续用例 bootstrap 读到门开旧态渲染 denied 页；
+    // 2. 后端侧迟到的写事务提交会把已 DELETE 的行「复活」——DELETE 成功
+    //    不代表行真的消失。因此删后必须回读确认，行仍在则重删；
+    // 有限重试穷尽后上抛显式暴露，不让状态泄漏污染后续用例
+    db.exec("PRAGMA busy_timeout = 2000");
+    const select = db.prepare(
+      "SELECT value FROM AppConfig WHERE key = 'deviceGateEnabled'",
+    );
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        db.exec("DELETE FROM AppConfig WHERE key = 'deviceGateEnabled'");
+        const chk = select.get();
+
+        console.log(
+          `[resetGateConfig ${new Date().toISOString()}] after DELETE check=${JSON.stringify(chk)}`,
+        );
+        if (!chk) return; // 回读确认行已消失
+      } catch (err) {
+        const msg = String((err as Error)?.message ?? "");
+        if (msg.includes("no such table")) return; // 未初始化：跳过
+        if (!msg.includes("locked") && !msg.includes("busy")) throw err;
+      }
+      if (attempt >= 20) {
+        throw new Error(
+          `resetGateConfig: 开关行删除后仍存在（迟到写复活），重试 ${attempt} 次未收敛`,
+        );
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+    }
   } finally {
     db?.close();
   }
@@ -185,6 +213,51 @@ export const disableGateViaApi = async (
 };
 
 /**
+ * 从页面响应流截获最新的 /auth/login session token：互踢语义下只有最后
+ * 一次登录的 session 存活，用例若以 UI 登录收尾，API 侧旧 session 已失效，
+ * 需用截获的 token 走 session 接口（如关门）。
+ */
+export const captureSessionToken = (
+  page: import("@playwright/test").Page,
+): (() => Promise<string>) => {
+  let latest = "";
+  let notify: (() => void) | undefined;
+  const promise = new Promise<void>((resolve) => {
+    notify = resolve;
+  });
+  const handler = async (response: import("@playwright/test").Response) => {
+    if (!response.url().includes("/api/auth/login")) return;
+    try {
+      const body = await response.json();
+      if (body?.data?.token) {
+        latest = body.data.token as string;
+        notify?.();
+      }
+    } catch {
+      // 非 JSON / 中断的响应忽略
+    }
+  };
+  page.on("response", handler);
+  return async (): Promise<string> => {
+    if (!latest) await promise;
+    return latest;
+  };
+};
+
+/** 用截获的浏览器 session token 关门（互踢后只有该 session 存活） */
+export const closeGateWithSessionToken = async (
+  request: APIRequestContext,
+  getLatestToken: () => Promise<string>,
+): Promise<void> => {
+  const token = await getLatestToken();
+  const resp = await request.post(`${BASE}/device/gate-config-update`, {
+    data: { enabled: false },
+    headers: { "X-Session-Token": token },
+  });
+  expect(resp.status()).toBe(200);
+};
+
+/**
  * 一步构造「门激活态」（新语义 = 清单非空 + 开关开启，双条件）：
  * 登录 → 录入一把新 Node 侧钥匙 → gate-config-update true。
  * 返回 session 与录入设备——门开后 loginWithPassword 会被 403，
@@ -196,11 +269,27 @@ export const setupGateEnabled = async (
   session: SessionInfo;
   device: { id: string; key: NodeSideKey };
 }> => {
-  const session = await loginWithPassword(request, GATE_E2E_PASSWORD);
+  // 布局首步的 /auth/global 不带 gate token，若撞上前一用例残留的门开
+  // 状态（开门用例收尾的 disable 响应提交与钩子清理存在毫秒级竞态）会
+  // 403——每次重试前直删开关行兜底，再重试登录（穷尽才真正失败）
+  let session: SessionInfo;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      session = await loginWithPassword(request, GATE_E2E_PASSWORD);
+      break;
+    } catch (err) {
+      if (attempt >= 10) throw err;
+      resetGateConfig();
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
   const key = await generateNodeSideKey();
-  const id = await addTrustedDeviceViaApi(request, session, key.publicKey);
-  await enableGateViaApi(request, session);
-  return { session, device: { id, key } };
+  // 布局要求清单仅含本设备：前置钩子的清理可能被后端迟到的
+  // updateLastSeen/注册写回复活，注册前显式清空一次
+  writeTrustedDevices([]);
+  const id = await addTrustedDeviceViaApi(request, session!, key.publicKey);
+  await enableGateViaApi(request, session!);
+  return { session: session!, device: { id, key } };
 };
 
 // ---------- 钥匙串组装（与前后端 cube-device-key:v1 格式一致） ----------
@@ -509,6 +598,18 @@ interface GatePageFixtures {
  * 「全新 context 访问」用例直接用原始 browser.newContext 构造）。
  * 注意 workers=1（playwright.config），文件操作与前后端无并发竞争。
  */
+// 门状态兜底重置：注册必须在 base.extend 之前（派生实例只继承此刻之前
+// base 上已有的 hooks——曾把 hooks 放在 extend 之后注册在 base 上，导致
+// gateTest 用例的门开关从不清理、开门状态跨用例泄漏，偶发 denied/403 flaky）
+base.beforeEach(() => {
+  resetTrustedDevicesFile();
+  resetGateConfig();
+});
+base.afterEach(() => {
+  resetTrustedDevicesFile();
+  resetGateConfig();
+});
+
 export const gateTest = base.extend<GatePageFixtures>({
   gatePage: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -519,12 +620,7 @@ export const gateTest = base.extend<GatePageFixtures>({
 });
 
 // 门状态兜底重置：即便个别用例中途失败，也不把激活态（设备清单 + 门开关）
-// 泄漏给后续 spec（每条用例层面再显式控制）
-base.beforeEach(() => {
-  resetTrustedDevicesFile();
-  resetGateConfig();
-});
-base.afterEach(() => {
-  resetTrustedDevicesFile();
-  resetGateConfig();
-});
+// 泄漏给后续 spec（每条用例层面再显式控制）。
+// 注意必须注册在 gateTest 实例上：hooks 曾注册在 base 上，而 gateTest 经
+// base.extend() 派生后不继承此后在 base 上注册的 hooks——曾导致 device-gate
+// 用例的门开关从不被清理、开门状态跨用例泄漏（偶发 denied/403 flaky 的根源）

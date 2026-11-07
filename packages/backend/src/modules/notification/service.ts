@@ -68,4 +68,15 @@ export class NotificationService {
   async removeAll(): Promise<void> {
     await this.prisma.notification.deleteMany();
   }
+
+  /**
+   * 指定时间之后是否已存在同标题通知（时间窗去重判定；
+   * 通知被删除即视为窗口重置）
+   */
+  async hasRecentNotice(title: string, since: Date): Promise<boolean> {
+    const count = await this.prisma.notification.count({
+      where: { title, date: { gte: since } },
+    });
+    return count > 0;
+  }
 }

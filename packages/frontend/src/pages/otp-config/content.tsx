@@ -3,7 +3,7 @@ import { Button, Form, Input, Modal, QRCode, Space, Spin } from "antd";
 import { useSetAtom, useAtomValue } from "jotai";
 import { stateUser, stateVault } from "@/store/user";
 import { sha512 } from "@/utils/crypto";
-import { queryChallenge } from "@/services/auth";
+import { querySessionChallenge } from "@/services/auth";
 import { useOtpQrcode, useBindOtp, useUnbindOtp } from "@/services/otp";
 import { messageWarning, messageSuccess } from "@/utils/message";
 import { useIsMobile } from "@hopgoldy/cube-ui";
@@ -63,7 +63,16 @@ export const Content: FC<SettingContainerProps> = (props) => {
       return;
     }
 
-    const challengeResp = await queryChallenge();
+    // 取码走 session 保护的 /auth/session-challenge（免设备门：会话内流程不借道登录走廊）
+    let challengeResp;
+    try {
+      challengeResp = await querySessionChallenge();
+    } catch (err) {
+      messageWarning(
+        `挑战码获取失败：${err instanceof Error ? err.message : String(err)}`,
+      );
+      return;
+    }
     if (!challengeResp.success) return;
 
     // hash = SHA512(hex(V) + challengeCode)，V = argon2id(主密码, salt) 后 32B
