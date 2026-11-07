@@ -55,8 +55,10 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
   };
 
   const onCreatePassword = () => {
-    const alphabet = userInfo?.createPwdAlphabet ?? DEFAULT_PASSWORD_ALPHABET;
-    const length = userInfo?.createPwdLength ?? DEFAULT_PASSWORD_LENGTH;
+    // 空串也兜底为默认字符集：customAlphabet('') 会因字母表为空永远
+    // 凑不满指定位数而死循环（曾致页面卡死）；用户存空串语义即用默认
+    const alphabet = userInfo?.createPwdAlphabet || DEFAULT_PASSWORD_ALPHABET;
+    const length = userInfo?.createPwdLength || DEFAULT_PASSWORD_LENGTH;
     const generate = customAlphabet(alphabet, +length);
     const newPassword = generate();
 
