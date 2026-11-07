@@ -13,6 +13,8 @@ import {
   SafetyOutlined,
   SnippetsOutlined,
   HighlightOutlined,
+  UserOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import { useAtomValue } from "jotai";
 import { Sidebar } from "../sidebar";
@@ -118,6 +120,13 @@ export const AppContainer = () => {
       accountMenuStats={accountMenuStats}
       accountMenuItems={accountMenuItems}
       onLogoutBtnClick={onLogout}
+      // 移动端抽屉登出行：左侧用户 icon（参照 cube-diary），右侧登出 icon
+      logoutLabel={
+        <>
+          <UserOutlined /> &nbsp;登出
+        </>
+      }
+      logoutExtra={<LogoutOutlined />}
       about={{
         name: appVersion?.name ?? "",
         version: appVersion?.version,
