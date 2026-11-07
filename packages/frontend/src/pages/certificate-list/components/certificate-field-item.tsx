@@ -2,7 +2,7 @@ import { FC, useMemo } from "react";
 import { Input, Button, Row, Col, message } from "antd";
 import type { InputProps } from "antd";
 import type { TextAreaProps } from "antd/es/input";
-import { CloseOutlined, GiftOutlined } from "@ant-design/icons";
+import { CloseOutlined, ExportOutlined, GiftOutlined } from "@ant-design/icons";
 import { openNewTab } from "@/utils/common";
 import { useAtomValue } from "jotai";
 import { stateUser } from "@/store/user";
@@ -42,7 +42,10 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
       !!["用户名", "名称", "name"].find((text) =>
         value?.label?.toLowerCase().includes(text),
       ),
-      !!["http://", "https://"].find((text) => value?.value?.includes(text)),
+      // 网址判定：协议头或 www. 开头（用户常省略协议头，如 www.baidu.com）
+      !!value?.value &&
+        (/^https?:\/\//i.test(value.value) ||
+          /^www\.[^\s]+/i.test(value.value)),
     ];
   }, [value?.label, value?.value]);
 
@@ -78,10 +81,8 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
     if (!disabled) return;
     if (!value || !value.value) return;
 
-    if (isLink) {
-      openNewTab(value.value);
-      return;
-    }
+    // 网址字段与普通字段一致：点击复制（跳转由右侧独立按钮发起，
+    // 避免误触直接离开应用）
     copy(value.value);
     messageApi.success({
       key: COPY_MESSAGE_KEY,
@@ -108,6 +109,33 @@ export const CertificateFieldItem: FC<CertificateFieldItemProps> = (props) => {
     if (isPassword) {
       return <Input.Password {...commonProps} />;
     }
+
+    // 网址字段：输入框内右侧线框跳转 icon（类似密码框的眼睛）。
+    // 网址必然单行，用 Input 而非 TextArea（TextArea 不支持 suffix）。
+    // 无协议头的值（www.xxx.com）补 https:// 再打开，否则会被浏览器
+    // 当相对路径解析成站内地址。点击 icon 需阻止冒泡，避免同时触发复制
+    if (isLink) {
+      const href = /^https?:\/\//i.test(value?.value ?? "")
+        ? (value?.value ?? "")
+        : `https://${value?.value ?? ""}`;
+      return (
+        <Input
+          {...commonProps}
+          suffix={
+            disabled ? (
+              <ExportOutlined
+                className="text-gray-400 hover:text-sky-500 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openNewTab(href);
+                }}
+              />
+            ) : undefined
+          }
+        />
+      );
+    }
+
     return (
       <Input.TextArea
         {...(commonProps as unknown as TextAreaProps)}
