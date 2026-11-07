@@ -73,6 +73,10 @@ axiosInstance.interceptors.response.use(
 
     if (status === 401) {
       logout();
+      // 401 统一提示「登录已过期」：后端 ErrorNeedLogin 的「未授权访问」
+      // 对用户过于生硬（登出/互踢/session 过期场景都是这条）
+      showGlobalMessage("warning", "登录已过期");
+      return Promise.reject(resp);
     }
 
     if (data?.message) {
