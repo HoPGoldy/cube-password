@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.4.0](https://github.com/HoPGoldy/cube-password/compare/v2.3.1...v2.4.0) (2026-11-11)
+
+
+### Features
+
+* **certificate:** link field copy-on-click with inline jump icon ([c79cc47](https://github.com/HoPGoldy/cube-password/commit/c79cc4741da50969fa2bbc42408a6107a94af03a))
+* **ui:** 移动端抽屉登出行定制（UserOutlined + LogoutOutlined） ([904c8e0](https://github.com/HoPGoldy/cube-password/commit/904c8e0db29e9b2f04858883eb6c3eff0bf7eb09))
+
+
+### Bug Fixes
+
+* **auth:** change-password flow bypassed by device gate via pre-login challenge ([f5c883c](https://github.com/HoPGoldy/cube-password/commit/f5c883cfd4b9df72299a2ebed440fcd6c240ff39))
+* **certificate:** password generate button dead-loop on empty custom alphabet ([3787984](https://github.com/HoPGoldy/cube-password/commit/378798458ebec7a5fdb3cd770fb15f00a2d38752))
+* **ui:** 401 统一提示「登录已过期」替代后端的「未授权访问」 ([cfd71bc](https://github.com/HoPGoldy/cube-password/commit/cfd71bc72be096d1f4fe5058389bb9e55f107cc1))
+
 ## [2.3.1](https://github.com/HoPGoldy/cube-password/compare/v2.3.0...v2.3.1) (2026-10-03)
 
 
