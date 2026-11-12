@@ -1,5 +1,18 @@
 name: release
 
+# 通用 cube-app 生产发布：模板化设计，新建 cube-app 仓库直接复用本文件，
+# 无需改动任何参数——镜像名自动取自仓库名（cube-xxx → Docker Hub hopgoldy/cube-xxx
+# + 腾讯云 CCR cube-app/cube-xxx 双推）。
+#
+# 需要在仓库 Settings → Environments → production 配置：
+#   secrets.DOCKERHUB_TOKEN        Docker Hub hopgoldy 账号的 access token
+#   secrets.CCR_PASSWORD           腾讯云 CCR 密码（用户名见 CCR_USERNAME）
+# 可选 variables（不配则用默认值）：
+#   vars.DOCKERHUB_NAMESPACE       默认 hopgoldy
+#   vars.CCR_REGISTRY              默认 ccr.ccs.tencentyun.com
+#   vars.CCR_NAMESPACE             默认 cube-app
+#   vars.CCR_USERNAME              默认 272256000
+
 on:
   push:
     tags:
@@ -8,21 +21,45 @@ on:
 jobs:
   build-publish-docker:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v5
 
       - uses: docker/setup-buildx-action@v3
 
+      # 镜像名由仓库名自动推导：cube-password → hopgoldy/cube-password
+      # + ccr.ccs.tencentyun.com/cube-app/cube-password
+      - name: Derive image names from repository
+        id: images
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || 'hopgoldy' }}
+          CCR_REGISTRY: ${{ vars.CCR_REGISTRY || 'ccr.ccs.tencentyun.com' }}
+          CCR_NAMESPACE: ${{ vars.CCR_NAMESPACE || 'cube-app' }}
+        run: |
+          echo "dockerhub=${DOCKERHUB_NAMESPACE}/${REPO_NAME}" >> "$GITHUB_OUTPUT"
+          echo "ccr=${CCR_REGISTRY}/${CCR_NAMESPACE}/${REPO_NAME}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/login-action@v3
         with:
-          username: hopgoldy
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_NAMESPACE || 'hopgoldy' }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Tencent CCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.CCR_REGISTRY || 'ccr.ccs.tencentyun.com' }}
+          username: ${{ vars.CCR_USERNAME || '272256000' }}
+          password: ${{ secrets.CCR_PASSWORD }}
 
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: hopgoldy/cube-password
+          images: |
+            ${{ steps.images.outputs.dockerhub }}
+            ${{ steps.images.outputs.ccr }}
           tags: |
             type=semver,pattern={{version}}
           flavor: |
