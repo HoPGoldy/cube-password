@@ -14,7 +14,10 @@ interface DraggableProps<T> {
   sortableOptions?: Sortable.Options;
 }
 
-const DEFAULT_SORTABLE_OPTIONS: Sortable.Options = {};
+const DEFAULT_SORTABLE_OPTIONS: Sortable.Options = {
+  // 使用 Sortable 的自定义拖拽预览，避免浏览器原生拖拽镜像附带阴影
+  forceFallback: true,
+};
 
 export const Draggable: <T>(props: DraggableProps<T>) => ReactElement = (
   props,
