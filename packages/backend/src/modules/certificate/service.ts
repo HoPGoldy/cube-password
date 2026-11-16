@@ -114,17 +114,30 @@ export class CertificateService {
     // 写门禁：目标分组必须已解锁
     this.assertGroupsUnlocked([data.groupId]);
 
-    const cert = await this.prisma.certificate.create({
-      data: {
-        // 旧明文列停止业务写入（迁移期只读）；新数据仅写 nameEnc
-        name: data.name ?? "",
-        nameEnc: data.nameEnc ?? "",
-        groupId: data.groupId,
-        content: data.content ?? "",
-        markColor: data.markColor,
-        icon: data.icon,
-        order: data.order ?? -1,
-      },
+    const cert = await this.prisma.$transaction(async (tx) => {
+      let order = data.order;
+      if (order === undefined) {
+        // 新凭证排在当前分组首位；仅减小新条目的 order，避免改写既有排序和更新时间
+        const firstItem = await tx.certificate.findFirst({
+          where: { groupId: data.groupId },
+          orderBy: { order: "asc" },
+          select: { order: true },
+        });
+        order = (firstItem?.order ?? 0) - 1;
+      }
+
+      return await tx.certificate.create({
+        data: {
+          // 旧明文列停止业务写入（迁移期只读）；新数据仅写 nameEnc
+          name: data.name ?? "",
+          nameEnc: data.nameEnc ?? "",
+          groupId: data.groupId,
+          content: data.content ?? "",
+          markColor: data.markColor,
+          icon: data.icon,
+          order,
+        },
+      });
     });
     return { id: cert.id };
   }

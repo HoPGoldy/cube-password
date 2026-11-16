@@ -54,7 +54,7 @@ export const CertificateListItem: FC<Props> = ({
             </div>
           )}
 
-          <div className={icon ? "ml-[68px]" : ""}>
+          <div className={`${icon ? "ml-[68px]" : ""} min-w-0 flex-1`}>
             <div
               className="font-bold text-lg text-ellipsis whitespace-nowrap overflow-hidden"
               data-testid="certificate-item-name"
