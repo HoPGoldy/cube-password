@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.4.1-rc.2](https://github.com/HoPGoldy/cube-password/compare/v2.4.1-rc.1...v2.4.1-rc.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* **ui:** 移除凭证拖拽时的原生阴影 ([7d03c3b](https://github.com/HoPGoldy/cube-password/commit/7d03c3b6f86e959ba5e26195335f1946398f5be9))
+
 ## [2.4.1-rc.1](https://github.com/HoPGoldy/cube-password/compare/v2.4.0...v2.4.1-rc.1) (2026-11-16)
 
 
