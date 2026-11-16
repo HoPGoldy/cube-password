@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.4.1-rc.1](https://github.com/HoPGoldy/cube-password/compare/v2.4.0...v2.4.1-rc.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **certificate:** 修正凭证卡片溢出与新建排序 ([f9ce194](https://github.com/HoPGoldy/cube-password/commit/f9ce194c9c6e920446fe2a308f0f696e855d2024))
+
 ## [2.4.0](https://github.com/HoPGoldy/cube-password/compare/v2.3.1...v2.4.0) (2026-11-11)
 
 
