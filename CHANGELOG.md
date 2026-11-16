@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.5.0](https://github.com/HoPGoldy/cube-password/compare/v2.4.1-rc.2...v2.5.0) (2026-11-16)
+
 ## [2.4.1-rc.2](https://github.com/HoPGoldy/cube-password/compare/v2.4.1-rc.1...v2.4.1-rc.2) (2026-11-16)
 
 
