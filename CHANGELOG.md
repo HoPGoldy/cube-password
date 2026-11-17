@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.6.0](https://github.com/HoPGoldy/cube-password/compare/v2.5.0...v2.6.0) (2026-11-17)
+
+
+### Features
+
+* **ui:** 主题色切换为青绿并统一全站主题 ([0849ea0](https://github.com/HoPGoldy/cube-password/commit/0849ea0eb408315e327a8d0715ca52c1c48dc98a))
+
+
+### Bug Fixes
+
+* **ui:** 换回 1.0 版本的 favicon ([6877277](https://github.com/HoPGoldy/cube-password/commit/687727753ced9c7753e5e916f3781a894fb2c974))
+
 ## [2.5.0](https://github.com/HoPGoldy/cube-password/compare/v2.4.1-rc.2...v2.5.0) (2026-11-16)
 
 ## [2.4.1-rc.2](https://github.com/HoPGoldy/cube-password/compare/v2.4.1-rc.1...v2.4.1-rc.2) (2026-11-16)
