@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Card, Checkbox } from "antd";
+import { Card, Checkbox, theme } from "antd";
 import dayjs from "dayjs";
 import { MARK_COLORS_MAP } from "@hopgoldy/cube-ui";
 
@@ -29,6 +29,7 @@ export const CertificateListItem: FC<Props> = ({
   dragging,
   layout = "grid",
 }) => {
+  const { token } = theme.useToken();
   const { displayName, markColor, icon, updatedAt } = detail;
   const layoutClass =
     layout === "fill"
@@ -42,7 +43,16 @@ export const CertificateListItem: FC<Props> = ({
     >
       <Card
         size="small"
-        className={`ring-gray-300 dark:ring-gray-600 active:bg-gray-100 dark:active:bg-gray-700 transition hover:ring active:ring-0 cursor-pointer ${selected ? "ring-2 ring-pink-500 border-pink-500" : ""}`}
+        className="ring-gray-300 dark:ring-gray-600 active:bg-gray-100 dark:active:bg-gray-700 transition hover:ring active:ring-0 cursor-pointer"
+        // 选中态跟随主题色（与 ConfigProvider 的 colorPrimary 同源）
+        style={
+          selected
+            ? {
+                boxShadow: `0 0 0 2px ${token.colorPrimary}`,
+                borderColor: token.colorPrimary,
+              }
+            : undefined
+        }
         onClick={onClick}
       >
         <div className="flex items-center">

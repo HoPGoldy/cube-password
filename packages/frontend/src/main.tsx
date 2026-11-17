@@ -13,6 +13,7 @@ import { useInitMessage } from "./utils/message";
 import { CubeConfigProvider } from "@hopgoldy/cube-ui";
 import "@hopgoldy/cube-ui/styles.css";
 import { initDayjs } from "./utils/dayjs";
+import { THEME_PRIMARY_COLOR } from "./config";
 
 initDayjs();
 
@@ -32,7 +33,7 @@ const App = () => {
  * @see https://github.com/SortableJS/react-sortablejs/issues/241
  */
 createRoot(document.getElementById("root")!).render(
-  <CubeConfigProvider>
+  <CubeConfigProvider primaryColor={THEME_PRIMARY_COLOR}>
     <QueryClientProvider client={queryClient}>
       <AntdApp className="h-full">
         <App />
