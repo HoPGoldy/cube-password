@@ -1,9 +1,12 @@
 ---
-name: how-to-release
-description: 当用户要求发布新版本、打 release、打 tag 或推 Docker 镜像时使用。
+name: how-to-release-version
+description: 当用户要求发布新版本、打 release、打 tag 或推 Docker 镜像时使用（版本号与 tag 管理，产出 Docker Hub 镜像；生产部署见 cube-app 的 how-to-release-prod）。
 ---
 
-# How to Release
+# How to Release（版本发布）
+
+> 范围：本仓库的版本号 / tag / CI 镜像推送。镜像构建完成后如何更新到
+> 生产环境，见 cube-app 仓库的 `.agents/skills/how-to-release-prod`。
 
 ## 一、必要知识
 
