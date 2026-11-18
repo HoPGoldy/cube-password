@@ -101,6 +101,17 @@ const CertificateListPage: FC = () => {
       return;
     }
 
+    const targetGroup = groupList.find((group) => group.id === newGroupId);
+    const isTargetLocked =
+      targetGroup &&
+      targetGroup.lockType !== "None" &&
+      !unlockedGroupIds.has(targetGroup.id);
+    if (isTargetLocked) {
+      // 前端先行拦截，避免 axios 的全局 403 处理把当前页跳走；保留选择便于改选目标
+      messageWarning("请先解锁分组再移动凭证");
+      return;
+    }
+
     const resp = await runMoveCertificate({ ids, newGroupId });
     if (resp.code !== 200) return;
 

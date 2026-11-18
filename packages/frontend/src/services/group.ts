@@ -28,6 +28,18 @@ export const useAddGroup = () => {
   });
 };
 
+/** 更新分组排序 */
+export const useUpdateGroupSort = () => {
+  return useMutation({
+    mutationFn: (ids: number[]) => {
+      return requestPost("group/sort", { ids });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groupList"] });
+    },
+  });
+};
+
 /** 解锁分组 */
 export const useUnlockGroup = () => {
   return useMutation({
