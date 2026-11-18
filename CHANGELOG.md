@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.8.0](https://github.com/HoPGoldy/cube-password/compare/v2.7.0...v2.8.0) (2026-11-18)
+
+
+### Features
+
+* **group:** 支持拖拽排序并优化锁定分组移动提示 ([3d17f10](https://github.com/HoPGoldy/cube-password/commit/3d17f10255da6174ce811342d9acd8ad763d6811))
+
 ## [2.7.0](https://github.com/HoPGoldy/cube-password/compare/v2.6.0...v2.7.0) (2026-11-18)
 
 
