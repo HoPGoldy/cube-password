@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.7.0](https://github.com/HoPGoldy/cube-password/compare/v2.6.0...v2.7.0) (2026-11-18)
+
+
+### Features
+
+* **group:** 锁定分组支持在未解锁状态下删除 ([5ea850f](https://github.com/HoPGoldy/cube-password/commit/5ea850f994f0f6f8401a7a59b922a1f3eb05cfff))
+
 ## [2.6.0](https://github.com/HoPGoldy/cube-password/compare/v2.5.0...v2.6.0) (2026-11-17)
 
 
