@@ -7,6 +7,7 @@ import {
   SchemaGroupUpdateConfigBody,
   SchemaGroupUnlockBody,
   SchemaGroupDeleteBody,
+  SchemaGroupDeleteResponse,
   SchemaGroupSortBody,
   SchemaGroupSetDefaultBody,
 } from "@/types/group";
@@ -111,11 +112,11 @@ export const registerGroupController = (options: RegisterOptions) => {
         description: "删除分组",
         tags: ["group"],
         body: SchemaGroupDeleteBody,
+        response: { 200: SchemaGroupDeleteResponse },
       },
     },
     async (request) => {
-      await groupService.deleteGroup(request.body.id);
-      return {};
+      return await groupService.deleteGroup(request.body.id);
     },
   );
 

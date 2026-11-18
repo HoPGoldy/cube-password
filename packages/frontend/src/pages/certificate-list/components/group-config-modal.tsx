@@ -8,9 +8,9 @@ import {
   Segmented,
   Button,
   Space,
-  Result,
+  Tooltip,
 } from "antd";
-import { DeleteOutlined, WarningOutlined } from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import {
   DEFAULT_KDF_PARAMS,
   deriveMasterKey,
@@ -18,16 +18,12 @@ import {
   SALT_LENGTH,
 } from "@/lib/e2ee";
 import { bytesToHex } from "@/lib/e2ee/format";
-import { messageSuccess, messageWarning } from "@/utils/message";
-import {
-  useDeleteGroup,
-  useSetDefaultGroup,
-  useUpdateGroupConfig,
-} from "@/services/group";
+import { messageSuccess } from "@/utils/message";
+import { useSetDefaultGroup, useUpdateGroupConfig } from "@/services/group";
 import type { SchemaGroupItemType } from "@shared-types/group";
 import { stateUnlockedGroupIds, stateUser } from "@/store/user";
-import { useAtom, useSetAtom } from "jotai";
-import { useNavigate } from "react-router-dom";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { GroupDeleteConfirm } from "./group-delete-confirm";
 
 const useLockTypeOptions = () => {
   const [userInfo] = useAtom(stateUser);
@@ -44,25 +40,26 @@ const useLockTypeOptions = () => {
 interface GroupConfigModalProps {
   open: boolean;
   group: SchemaGroupItemType;
+  /** 是否为最后一个分组（至少保留一个，禁止删除） */
+  isLastGroup?: boolean;
   onClose: () => void;
 }
 
 export const GroupConfigModal: FC<GroupConfigModalProps> = ({
   open,
   group,
+  isLastGroup = false,
   onClose,
 }) => {
   const [form] = Form.useForm();
-  const navigate = useNavigate();
   const [userInfo, setUserInfo] = useAtom(stateUser);
+  const unlockedGroupIds = useAtomValue(stateUnlockedGroupIds);
   const setUnlockedGroupIds = useSetAtom(stateUnlockedGroupIds);
-  const { mutateAsync: runDeleteGroup, isPending: deleting } = useDeleteGroup();
   const { mutateAsync: runSetDefault, isPending: settingDefault } =
     useSetDefaultGroup();
   const { mutateAsync: runUpdateConfig, isPending: updatingConfig } =
     useUpdateGroupConfig();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const lockType = Form.useWatch("lockType", form);
   const [prevLockType, setPrevLockType] = useState<string>();
   const isDefaultGroup = userInfo?.defaultGroupId === group.id;
@@ -88,37 +85,6 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
     );
   };
 
-  const onCancelDeleteConfirm = () => {
-    setShowDeleteConfirm(false);
-    setDeleteConfirmInput("");
-  };
-
-  const onDeleteGroup = async () => {
-    if (deleteConfirmInput !== group.name) {
-      messageWarning("分组名称不正确");
-      onCancelDeleteConfirm();
-      return;
-    }
-
-    const resp = await runDeleteGroup({ id: group.id });
-    if (resp.code !== 200) {
-      onCancelDeleteConfirm();
-      return;
-    }
-
-    onCancelDeleteConfirm();
-    onCancelModal();
-    messageSuccess("分组删除成功");
-
-    // 列表由 useDeleteGroup 的 invalidate 自动刷新，这里只需导航到默认分组
-    const newDefault = userInfo?.defaultGroupId;
-    if (newDefault && newDefault !== group.id) {
-      navigate(`/group/${newDefault}`);
-    } else {
-      navigate("/");
-    }
-  };
-
   const onSaveConfig = async () => {
     const values = await form.validateFields();
 
@@ -139,6 +105,20 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
       kdfParams = JSON.stringify(DEFAULT_KDF_PARAMS);
     }
 
+    // 给组上锁时先把该组移出解锁集再请求：useUpdateGroupConfig 成功后立刻失效
+    // 证书列表缓存，若此刻页面观察者仍 enabled，会对刚上锁的分组发起
+    // certificate/list（服务端 403），被全局拦截器重定向到 403 页。
+    // 请求失败则回滚本地解锁态。
+    const willLock = values.lockType !== "None";
+    const wasUnlocked = unlockedGroupIds.has(group.id);
+    if (willLock) {
+      setUnlockedGroupIds((prev: Set<number>) => {
+        const next = new Set(prev);
+        next.delete(group.id);
+        return next;
+      });
+    }
+
     const resp = await runUpdateConfig({
       id: group.id,
       lockType: values.lockType,
@@ -146,21 +126,19 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
       passwordSalt,
       kdfParams,
     });
-    if (resp.code !== 200) return;
+    if (resp.code !== 200) {
+      if (willLock && wasUnlocked) {
+        setUnlockedGroupIds((prev: Set<number>) => new Set(prev).add(group.id));
+      }
+      return;
+    }
 
     messageSuccess("保存成功");
     onCancelModal();
 
-    // 列表（含 lockType/salt/kdfParams）由 useUpdateGroupConfig 的 invalidate 自动刷新；
-    // 解锁态双向同步：lockType 变为 "None" 自动解锁（派生条件命中即可，集合中没有也无关）；
-    // 给组设上 Password/Totp 锁则立即上锁（把该组移出解锁集，本 session 须重新输入密码解锁）
-    if (values.lockType !== "None") {
-      setUnlockedGroupIds((prev: Set<number>) => {
-        const next = new Set(prev);
-        next.delete(group.id);
-        return next;
-      });
-    }
+    // 列表（含 lockType/salt/kdfParams）由 useUpdateGroupConfig 的 invalidate 自动刷新。
+    // 解锁态双向同步：lockType 变为 "None" 时按派生条件自动解锁；
+    // 上锁则已在请求前移出解锁集，本 session 须重新输入密码解锁。
   };
 
   return (
@@ -171,13 +149,18 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
         onCancel={onCancelModal}
         footer={
           <Space>
-            <Button
-              icon={<DeleteOutlined />}
-              danger
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              删除
-            </Button>
+            <Tooltip title={isLastGroup ? "至少保留一个分组" : undefined}>
+              <span>
+                <Button
+                  icon={<DeleteOutlined />}
+                  danger
+                  disabled={isLastGroup}
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  删除
+                </Button>
+              </span>
+            </Tooltip>
             <Button
               disabled={isDefaultGroup}
               onClick={onSetDefaultGroup}
@@ -251,55 +234,12 @@ export const GroupConfigModal: FC<GroupConfigModalProps> = ({
           </Row>
         </Form>
       </Modal>
-      <Modal
+      <GroupDeleteConfirm
         open={showDeleteConfirm}
-        closable={false}
-        width={400}
-        onCancel={onCancelDeleteConfirm}
-        footer={false}
-      >
-        <Result
-          className="p-0"
-          icon={<WarningOutlined className="!text-yellow-400" />}
-          title="分组删除确认"
-          subTitle={
-            <div className="text-black">
-              分组删除后，其中的凭证将被 <b>一并删除</b>{" "}
-              且无法恢复，如果确定要删除，请在下方输入"{group.name}"
-            </div>
-          }
-          extra={
-            <Row gutter={[8, 8]}>
-              <Col span={24}>
-                <Input
-                  placeholder="请输入分组名称"
-                  value={deleteConfirmInput}
-                  onChange={(e) => setDeleteConfirmInput(e.target.value)}
-                  onKeyUp={(e) => {
-                    if (e.key === "Enter") onDeleteGroup();
-                  }}
-                />
-              </Col>
-              <Col span={12}>
-                <Button block onClick={onCancelDeleteConfirm}>
-                  返回
-                </Button>
-              </Col>
-              <Col span={12}>
-                <Button
-                  type="primary"
-                  danger
-                  block
-                  onClick={onDeleteGroup}
-                  loading={deleting}
-                >
-                  删除
-                </Button>
-              </Col>
-            </Row>
-          }
-        />
-      </Modal>
+        group={group}
+        onClose={() => setShowDeleteConfirm(false)}
+        onDeleted={onCancelModal}
+      />
     </>
   );
 };

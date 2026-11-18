@@ -3,6 +3,7 @@ import { queryClient, requestPost } from "./base";
 import type {
   SchemaGroupAddBodyType,
   SchemaGroupAddResponseType,
+  SchemaGroupDeleteResponseType,
   SchemaGroupItemType,
 } from "@shared-types/group";
 
@@ -43,11 +44,11 @@ export const useUnlockGroup = () => {
   });
 };
 
-/** 删除分组 */
+/** 删除分组（返回删除后的默认分组 id，供本地状态同步与导航） */
 export const useDeleteGroup = () => {
   return useMutation({
     mutationFn: (data: { id: number }) => {
-      return requestPost("group/delete", data);
+      return requestPost<SchemaGroupDeleteResponseType>("group/delete", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groupList"] });

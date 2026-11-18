@@ -20,3 +20,10 @@ export class ErrorGroupLockTypeUnknown extends ErrorBadRequest {
     this.code = 40022;
   }
 }
+
+export class ErrorGroupLastOne extends ErrorBadRequest {
+  constructor() {
+    super("至少保留一个分组，无法删除");
+    this.code = 40023;
+  }
+}

@@ -6,6 +6,7 @@ import { parseKdfParams } from "@cube-password/shared/kdf-params";
 import { verifySync } from "otplib";
 import { ErrorBadRequest } from "@/types/error";
 import {
+  ErrorGroupLastOne,
   ErrorGroupLockTypeUnknown,
   ErrorGroupNotFound,
   ErrorGroupUnlockFailed,
@@ -188,10 +189,43 @@ export class GroupService {
     this.sessionManager.addUnlockedGroup(id);
   }
 
-  async deleteGroup(id: number): Promise<void> {
+  /**
+   * 删除分组（凭证按外键级联删除）。
+   *
+   * 分组锁只保护「读」，不保护「删」：锁定分组同样可删（否则忘记分组密码时
+   * 数据将永远无法清理）。删除的唯一限制是至少保留一个分组。
+   *
+   * 若删除的是默认分组，在同一事务内把 defaultGroupId 改到剩余的第一个分组，
+   * 避免用户登录后落到已不存在的分组（/group/<id> 显示「未知分组」）。
+   *
+   * @returns 删除后的默认分组 id（供前端更新本地状态并导航）
+   */
+  async deleteGroup(id: number): Promise<{ defaultGroupId: number }> {
     const group = await this.prisma.group.findUnique({ where: { id } });
     if (!group) throw new ErrorGroupNotFound();
-    await this.prisma.group.delete({ where: { id } });
+
+    const groupCount = await this.prisma.group.count();
+    if (groupCount <= 1) throw new ErrorGroupLastOne();
+
+    return await this.prisma.$transaction(async (tx) => {
+      await tx.group.delete({ where: { id } });
+
+      const user = await tx.user.findFirst();
+      if (!user) return { defaultGroupId: 0 };
+      if (user.defaultGroupId !== id) {
+        return { defaultGroupId: user.defaultGroupId };
+      }
+
+      const next = await tx.group.findFirst({
+        orderBy: [{ order: "asc" }, { id: "asc" }],
+      });
+      const defaultGroupId = next?.id ?? 0;
+      await tx.user.update({
+        where: { id: user.id },
+        data: { defaultGroupId },
+      });
+      return { defaultGroupId };
+    });
   }
 
   async sort(ids: number[]): Promise<void> {

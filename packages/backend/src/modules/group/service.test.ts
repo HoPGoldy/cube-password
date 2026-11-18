@@ -191,3 +191,116 @@ describe("GroupService.unlock - Password 锁 kdfParams 校验", () => {
     expect(sessionManager.isGroupUnlocked(1)).toBe(true);
   });
 });
+
+/**
+ * 删除分组的桩：只实现 deleteGroup 用到的查询/事务接口
+ * （Prisma 行为不在单测范围内，这里验证的是业务规则：保留至少一个分组、
+ * 删除默认分组时把 defaultGroupId 切到剩余第一个分组）。
+ */
+const makeDeleteService = (options: {
+  groups: { id: number; name: string; order: number }[];
+  user: { id: number; defaultGroupId: number } | null;
+}) => {
+  let groups = [...options.groups];
+  const removedIds: number[] = [];
+  const userUpdates: { defaultGroupId: number }[] = [];
+
+  const tx = {
+    group: {
+      delete: async ({ where }: { where: { id: number } }) => {
+        removedIds.push(where.id);
+        groups = groups.filter((g) => g.id !== where.id);
+      },
+      findFirst: async () => {
+        const sorted = [...groups].sort(
+          (a, b) => a.order - b.order || a.id - b.id,
+        );
+        return sorted[0] ?? null;
+      },
+    },
+    user: {
+      findFirst: async () => options.user,
+      update: async ({ data }: { data: { defaultGroupId: number } }) => {
+        userUpdates.push(data);
+        if (options.user) options.user.defaultGroupId = data.defaultGroupId;
+      },
+    },
+  };
+
+  const prisma = {
+    group: {
+      findUnique: async ({ where }: { where: { id: number } }) =>
+        groups.find((g) => g.id === where.id) ?? null,
+      count: async () => groups.length,
+    },
+    $transaction: async <T>(fn: (t: typeof tx) => Promise<T>): Promise<T> =>
+      fn(tx),
+  };
+
+  const service = new GroupService({
+    prisma: prisma as never,
+    sessionManager: new SessionManager(),
+    challengeManager: new ChallengeManager(),
+  });
+
+  return { service, removedIds, userUpdates };
+};
+
+describe("GroupService.deleteGroup - 删除分组", () => {
+  it("删除非默认分组：返回当前默认分组，不改动用户配置", async () => {
+    const { service, removedIds, userUpdates } = makeDeleteService({
+      groups: [
+        { id: 1, name: "默认分组", order: 0 },
+        { id: 2, name: "测试分组", order: 1 },
+      ],
+      user: { id: 1, defaultGroupId: 1 },
+    });
+
+    await expect(service.deleteGroup(2)).resolves.toEqual({
+      defaultGroupId: 1,
+    });
+    expect(removedIds).toEqual([2]);
+    expect(userUpdates).toEqual([]);
+  });
+
+  it("删除默认分组：defaultGroupId 切到剩余分组中 order 最小的一个", async () => {
+    const { service, removedIds, userUpdates } = makeDeleteService({
+      groups: [
+        { id: 1, name: "默认分组", order: 0 },
+        { id: 3, name: "后创建的分组", order: 5 },
+        { id: 2, name: "排序靠前的分组", order: 2 },
+      ],
+      user: { id: 1, defaultGroupId: 1 },
+    });
+
+    await expect(service.deleteGroup(1)).resolves.toEqual({
+      defaultGroupId: 2,
+    });
+    expect(removedIds).toEqual([1]);
+    expect(userUpdates).toEqual([{ defaultGroupId: 2 }]);
+  });
+
+  it("只剩一个分组时拒绝删除（锁定分组同样受此限制）", async () => {
+    const { service, removedIds } = makeDeleteService({
+      groups: [{ id: 1, name: "唯一分组", order: 0 }],
+      user: { id: 1, defaultGroupId: 1 },
+    });
+
+    await expect(service.deleteGroup(1)).rejects.toThrow(
+      "至少保留一个分组，无法删除",
+    );
+    expect(removedIds).toEqual([]);
+  });
+
+  it("分组不存在时报「分组不存在」", async () => {
+    const { service } = makeDeleteService({
+      groups: [
+        { id: 1, name: "默认分组", order: 0 },
+        { id: 2, name: "测试分组", order: 1 },
+      ],
+      user: { id: 1, defaultGroupId: 1 },
+    });
+
+    await expect(service.deleteGroup(99)).rejects.toThrow("分组不存在");
+  });
+});

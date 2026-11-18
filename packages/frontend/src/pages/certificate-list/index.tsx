@@ -13,8 +13,9 @@ import { GroupUnlock } from "./components/group-unlock";
 import { CertificateDetailModal } from "./components/certificate-detail";
 import { CertificateListItem } from "./components/certificate-list-item";
 import { GroupConfigModal } from "./components/group-config-modal";
+import { GroupDeleteConfirm } from "./components/group-delete-confirm";
 import { Draggable } from "@/components/draggable";
-import { Button, Dropdown, Empty, Result, Space, Spin } from "antd";
+import { Button, Dropdown, Empty, Result, Space, Spin, Tooltip } from "antd";
 import {
   PlusOutlined,
   SettingOutlined,
@@ -23,6 +24,7 @@ import {
   CheckSquareOutlined,
   SearchOutlined,
   UnorderedListOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import {
   ActionButton,
@@ -44,6 +46,8 @@ const CertificateListPage: FC = () => {
   const unlockedGroupIds = useAtomValue(stateUnlockedGroupIds);
   const [detailId, setDetailId] = useState<number | undefined>();
   const [showGroupConfig, setShowGroupConfig] = useState(false);
+  /** 锁定分组页的删除确认（锁定分组不进分组配置，单独提供删除入口） */
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   /** 移动凭证选择模式 */
   const [selectMode, setSelectMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Record<number, boolean>>(
@@ -286,25 +290,47 @@ const CertificateListPage: FC = () => {
         }
       >
         <div className="h-full flex flex-col overflow-hidden">
-          {isUnlocked && !isMobile && (
+          {!isMobile && (
             <div className="flex items-center justify-end p-3 border-b border-gray-200 dark:border-gray-700">
               <Space>
-                <Button
-                  icon={<SettingOutlined />}
-                  onClick={() => setShowGroupConfig(true)}
-                >
-                  分组配置
-                </Button>
-                {renderMoveBtn()}
-                {!selectMode && (
-                  <Button
-                    icon={<PlusOutlined />}
-                    type="primary"
-                    onClick={() => setDetailId(-1)}
-                    data-testid="add-certificate-btn"
+                {isUnlocked ? (
+                  <>
+                    <Button
+                      icon={<SettingOutlined />}
+                      onClick={() => setShowGroupConfig(true)}
+                    >
+                      分组配置
+                    </Button>
+                    {renderMoveBtn()}
+                    {!selectMode && (
+                      <Button
+                        icon={<PlusOutlined />}
+                        type="primary"
+                        onClick={() => setDetailId(-1)}
+                        data-testid="add-certificate-btn"
+                      >
+                        新建密码
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <Tooltip
+                    title={
+                      groupList.length <= 1 ? "至少保留一个分组" : undefined
+                    }
                   >
-                    新建密码
-                  </Button>
+                    <span>
+                      <Button
+                        icon={<DeleteOutlined />}
+                        danger
+                        disabled={groupList.length <= 1}
+                        onClick={() => setShowDeleteConfirm(true)}
+                        data-testid="delete-locked-group-btn"
+                      >
+                        删除分组
+                      </Button>
+                    </span>
+                  </Tooltip>
                 )}
               </Space>
             </div>
@@ -326,11 +352,19 @@ const CertificateListPage: FC = () => {
         onClose={() => setDetailId(undefined)}
       />
       {currentGroup && (
-        <GroupConfigModal
-          open={showGroupConfig}
-          group={currentGroup}
-          onClose={() => setShowGroupConfig(false)}
-        />
+        <>
+          <GroupConfigModal
+            open={showGroupConfig}
+            group={currentGroup}
+            isLastGroup={groupList.length <= 1}
+            onClose={() => setShowGroupConfig(false)}
+          />
+          <GroupDeleteConfirm
+            open={showDeleteConfirm}
+            group={currentGroup}
+            onClose={() => setShowDeleteConfirm(false)}
+          />
+        </>
       )}
     </>
   );

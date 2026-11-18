@@ -100,6 +100,16 @@ export const SchemaGroupDeleteBody = Type.Object({
   id: Type.Number(),
 });
 
+export const SchemaGroupDeleteResponse = Type.Object({
+  defaultGroupId: Type.Number({
+    description:
+      "删除后的默认分组 id（删除默认分组时已切到剩余的第一个分组；供前端同步本地状态）",
+  }),
+});
+export type SchemaGroupDeleteResponseType = Type.Static<
+  typeof SchemaGroupDeleteResponse
+>;
+
 // 排序
 export const SchemaGroupSortBody = Type.Object({
   ids: Type.Array(Type.Number()),
